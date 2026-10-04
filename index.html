@@ -95,7 +95,7 @@
 </div>
 <section id="technicalView" hidden>
  <section class="panel">
-  <div class="head"><div><h2>Fibo Musang — CB1 Entry</h2><small>Execution M1 · struktur swing · Fibo 0 → CB1(100) · touch CB1 = ENTRY</small></div><span class="badge neutral" id="techFeed">OFFLINE</span></div>
+  <div class="head"><div><h2>Fibo Musang — CB1 Entry</h2><small>Execution M1 · trend filter mung MA20/MA50 M5 + M15 · touch CB1 = ENTRY</small></div><span class="badge neutral" id="techFeed">OFFLINE</span></div>
   <div class="tech-status"><span id="techStatus">Belum mengambil data.</span><span id="techUpdated" class="mono">—</span></div>
   <div class="tech-grid">
    <div class="tech-card"><span class="label">Signal</span><strong id="techSignal" class="tech-signal neutral">WAIT</strong><small id="techScore">—</small></div>
@@ -109,7 +109,7 @@
    <div class="tech-card"><span class="label">Fibo 0.0</span><strong id="techFib0">—</strong><small>Swing anchor</small></div>
    <div class="tech-card"><span class="label">Fibo 100 / CB1</span><strong id="techFib100">—</strong><small>ENTRY level</small></div>
    <div class="tech-card"><span class="label">CB1</span><strong id="techCB1">—</strong><small id="techCB1State">—</small></div>
-   <div class="tech-card"><span class="label">Entry event</span><strong id="techZone">—</strong><small id="techZoneState">—</small></div>
+   <div class="tech-card"><span class="label">Trend M5</span><strong id="techZone">—</strong><small id="techZoneState">—</small></div>
   </div>
   <div class="tech-actions">
    <button class="primary" id="techRefresh" type="button">Refresh Fibo Musang</button>
@@ -117,9 +117,9 @@
   </div>
  </section>
  <section class="panel">
-  <div class="head"><div><h2>Rule Fibo Musang — CB1 Entry</h2><small>CB1 break ora ditunggu. Yen harga nyentuh level CB1, entry aktif.</small></div></div>
+  <div class="head"><div><h2>Rule Fibo Musang — CB1 Entry</h2><small>Trend mung MA20/MA50 M5 lan M15. CB1 break ora ditunggu.</small></div></div>
   <div class="rulelist" id="techRules"><div class="empty">Belum ada data.</div></div>
-  <div class="tech-warn">SELL: swing high/new high → CB1 = low struktur antar high → touch CB1 = entry SELL. BUY simetris. Fibo 0→CB1(100), target 161.8 / 261.8 / 423.6. Setup ambigu = WAIT.</div>
+  <div class="tech-warn">CB1 M1 dadi level entry. BUY/SELL mung valid yen MA20 vs MA50 ing M5 lan M15 selaras karo arah CB1. Fibo 0→CB1(100), target 161.8 / 261.8 / 423.6.</div>
  </section>
  <section class="panel">
   <div class="head"><div><h2>Level Fibo aktif</h2><small>0 / 23.6 / 38.2 / 50 / 61.8 / 100(CB1) / 161.8 / 200 / 261.8 / 423.6</small></div></div>
@@ -146,7 +146,7 @@
    <div class="tech-card"><span class="label">Astro date</span><strong id="comboAstroDate">—</strong><small>Jadwal WIB sing lagi dihitung</small></div>
    <div class="tech-card"><span class="label">Candle M1</span><strong id="comboCandle">—</strong><small>Feed Twelve Data</small></div>
   </div>
-  <div class="tech-warn">ENTRY mung metu yen Astrology BUY + CB1 BUY kesentuh, utawa Astrology SELL + CB1 SELL kesentuh. Ora nunggu CB1 break lan ora nunggu retest Zone IB. NEUTRAL / TRANSITION / arah beda = WAIT.</div>
+  <div class="tech-warn">ENTRY mung metu yen Astrology + arah CB1 + MA20/MA50 M5 + MA20/MA50 M15 kabeh selaras. Ora nunggu CB1 break utawa retest Zone IB. NEUTRAL / TRANSITION / trend beda = WAIT.</div>
  </section>
 </section>
 
@@ -542,7 +542,7 @@ $('dateInput').value=T.today();clock();setInterval(clock,1000);run();
 <script>
 (function(){
 'use strict';
-const API='https://cebonk-xau-api.enggarprasetiyo330.workers.dev/xau?interval=1min&outputsize=500';
+const API_BASE='https://cebonk-xau-api.enggarprasetiyo330.workers.dev/xau';
 const $=id=>document.getElementById(id);
 const PIVOT_DEPTH=2, SL_BUFFER_ATR=0.15, ENTRY_HOLD_BARS=5;
 let autoTimer=null,loading=false;
@@ -563,6 +563,15 @@ $('tabCombined').addEventListener('click',()=>show('combined'));
 function parseUtc(s){return new Date(String(s).replace(' ','T')+'Z').getTime();}
 function wib(ms){return new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(ms))+' WIB';}
 function n(v,d=2){return Number.isFinite(v)?v.toFixed(d):'—';}
+function sma(values,period){
+ if(values.length<period)return NaN;
+ return values.slice(-period).reduce((a,b)=>a+b,0)/period;
+}
+function trendMA(candles){
+ const closes=candles.map(c=>c.close),ma20=sma(closes,20),ma50=sma(closes,50);
+ const direction=!Number.isFinite(ma20)||!Number.isFinite(ma50)?'WAIT':ma20>ma50?'BUY':ma20<ma50?'SELL':'WAIT';
+ return {ma20,ma50,direction};
+}
 function atr(candles,period=14){
  if(candles.length<=period) return NaN;
  const tr=[];for(let i=1;i<candles.length;i++){const c=candles[i],p=candles[i-1];tr.push(Math.max(c.high-c.low,Math.abs(c.high-p.close),Math.abs(c.low-p.close)));}
@@ -620,13 +629,21 @@ function rr(entry,sl,tp){const risk=Math.abs(entry-sl),reward=Math.abs(tp-entry)
 function ruleHtml(label,ok,detail){return '<div class="rule '+(ok?'ok':'bad')+'"><b>'+(ok?'✓ ':'✕ ')+label+'</b><span>'+detail+'</span></div>';}
 
 async function refreshTech(){
- if(loading)return;loading=true;$('techRefresh').disabled=true;$('techStatus').textContent='Mengambil 500 candle M1…';
+ if(loading)return;loading=true;$('techRefresh').disabled=true;$('techStatus').textContent='Mengambil M1 + M5 + M15…';
  try{
-  const res=await fetch(API,{cache:'no-store'}),data=await res.json();
-  if(!res.ok||!data.ok)throw new Error(data.message||data.error||('HTTP '+res.status));
-  const candles=(data.values||[]).map(v=>({ms:parseUtc(v.datetime),open:+v.open,high:+v.high,low:+v.low,close:+v.close})).filter(c=>Number.isFinite(c.close)).sort((a,b)=>a.ms-b.ms);
-  if(candles.length<100)throw new Error('Data M1 kurang saka 100 candle.');
-  const last=candles[candles.length-1],a=atr(candles,14),p=pivots(candles),structure=latestStructure(p),setup=bestSetup(candles,p);
+  const urls=[
+   API_BASE+'?interval=1min&outputsize=500',
+   API_BASE+'?interval=5min&outputsize=100',
+   API_BASE+'?interval=15min&outputsize=100'
+  ];
+  const responses=await Promise.all(urls.map(u=>fetch(u,{cache:'no-store'})));
+  const payloads=await Promise.all(responses.map(r=>r.json()));
+  for(let i=0;i<responses.length;i++)if(!responses[i].ok||!payloads[i].ok)throw new Error(payloads[i].message||payloads[i].error||('HTTP '+responses[i].status));
+  const parse=x=>(x.values||[]).map(v=>({ms:parseUtc(v.datetime),open:+v.open,high:+v.high,low:+v.low,close:+v.close})).filter(c=>Number.isFinite(c.close)).sort((a,b)=>a.ms-b.ms);
+  const candles=parse(payloads[0]),m5=parse(payloads[1]),m15=parse(payloads[2]);
+  if(candles.length<100||m5.length<50||m15.length<50)throw new Error('Data MA durung cukup.');
+  const last=candles[candles.length-1],a=atr(candles,14),p=pivots(candles),setup=bestSetup(candles,p);
+  const trend5=trendMA(m5),trend15=trendMA(m15);
   let signal='WAIT',stage='NO SETUP',entry=NaN,sl=NaN,tp1=NaN,tp2=NaN,tp3=NaN,fib=null,direction='WAIT',entryMs=NaN,touchFresh=false;
   if(setup){
    direction=setup.direction;
@@ -638,36 +655,38 @@ async function refreshTech(){
     entryMs=candles[setup.touchIndex].ms;
     const barsAgo=(candles.length-1)-setup.touchIndex;
     touchFresh=barsAgo<=ENTRY_HOLD_BARS;
-    stage=touchFresh?'CB1 ENTRY ACTIVE':'CB1 TOUCHED / EXPIRED';
-    if(touchFresh)signal=direction;
+    const trendAligned=trend5.direction===direction&&trend15.direction===direction;
+    stage=touchFresh?(trendAligned?'CB1 ENTRY + TREND OK':'CB1 TOUCH / TREND WAIT'):'CB1 TOUCHED / EXPIRED';
+    if(touchFresh&&trendAligned)signal=direction;
    }else stage='WAIT CB1 TOUCH';
   }
   const ageMin=Math.max(0,Math.round((Date.now()-last.ms)/60000));
   $('techSignal').textContent=signal;$('techSignal').className='tech-signal '+(signal==='BUY'?'buy':signal==='SELL'?'sell':'neutral');
   $('techScore').textContent=setup?direction+' CB1 setup':'Ora ana setup valid';
-  $('techStage').textContent=stage;$('techStructure').textContent='PA: '+structure.label;
+  $('techStage').textContent=stage;$('techStructure').textContent='M5 '+trend5.direction+' · M15 '+trend15.direction;
   $('techEntry').textContent=setup?n(entry):'—';$('techSL').textContent=setup?n(sl):'—';$('techTP1').textContent=setup?n(tp1):'—';$('techTP2').textContent=setup?n(tp2):'—';$('techTP3').textContent=setup?n(tp3):'—';
   $('techRR1').textContent=setup?'RR 1:'+n(rr(entry,sl,tp1),2):'—';$('techRR2').textContent=setup?'RR 1:'+n(rr(entry,sl,tp2),2):'—';$('techRR3').textContent=setup?'RR 1:'+n(rr(entry,sl,tp3),2):'—';
   $('techAtr').textContent=n(a);$('techAge').textContent='umur candle '+ageMin+' menit';
   $('techFib0').textContent=setup?n(setup.anchor0.price):'—';$('techFib100').textContent=setup?n(setup.cb1.price):'—';
   $('techCB1').textContent=setup?n(setup.cb1.price):'—';$('techCB1State').textContent=setup?(setup.touchIndex>=0?'TOUCHED':'MENUNGGU TOUCH'):'—';
-  $('techZone').textContent=setup&&setup.touchIndex>=0?wib(entryMs):'—';$('techZoneState').textContent=touchFresh?'ENTRY AKTIF':setup&&setup.touchIndex>=0?'event lama':'belum entry';
+  $('techZone').textContent=trend5.direction;$('techZone').className=trend5.direction==='BUY'?'buy':trend5.direction==='SELL'?'sell':'neutral';$('techZoneState').textContent='MA20 '+n(trend5.ma20)+' · MA50 '+n(trend5.ma50)+' | M15 '+trend15.direction+' ('+n(trend15.ma20)+' / '+n(trend15.ma50)+')';
   $('techCandleTime').textContent=setup&&setup.touchIndex>=0?wib(entryMs):wib(last.ms);
-  $('techUpdated').textContent='Update '+wib(Date.now());$('techStatus').textContent='Feed M1 aktif · '+candles.length+' candle · provider '+data.provider;
+  $('techUpdated').textContent='Update '+wib(Date.now());$('techStatus').textContent='Feed M1/M5/M15 aktif · trend MA20/MA50 · provider '+payloads[0].provider;
   $('techFeed').textContent=ageMin<=5?'LIVE':'STALE';$('techFeed').className='badge '+(ageMin<=5?'buy':'transition');
 
+  const trendAligned=!!setup&&trend5.direction===direction&&trend15.direction===direction;
   const rules=[
-   ['Swing 0 valid',!!setup,setup?(direction+' @ '+n(setup.anchor0.price)):'Belum ada'],
+   ['Trend M5 MA20/MA50',!!setup&&trend5.direction===direction,'MA20 '+n(trend5.ma20)+' · MA50 '+n(trend5.ma50)+' → '+trend5.direction],
+   ['Trend M15 MA20/MA50',!!setup&&trend15.direction===direction,'MA20 '+n(trend15.ma20)+' · MA50 '+n(trend15.ma50)+' → '+trend15.direction],
    ['CB1 terbentuk',!!setup,setup?('CB1 '+n(setup.cb1.price)):'Belum ada'],
-   ['Fibo 0 → 100',!!setup,setup?('0 '+n(setup.anchor0.price)+' → 100/CB1 '+n(setup.cb1.price)):'Belum valid'],
    ['Harga touch CB1',!!setup&&setup.touchIndex>=0,setup&&setup.touchIndex>=0?wib(entryMs):'Belum touch'],
-   ['Entry window aktif',touchFresh,touchFresh?direction+' aktif nganti '+ENTRY_HOLD_BARS+' bar M1':'WAIT']
+   ['ENTRY valid',touchFresh&&trendAligned,touchFresh&&trendAligned?direction+' · M5+M15 SELARAS':'WAIT']
   ];
   $('techRules').innerHTML=rules.map(x=>ruleHtml(x[0],x[1],x[2])).join('');
   $('techFibBody').innerHTML=fib?Object.entries(fib).map(([k,v])=>'<tr><td>'+k+'</td><td>'+n(v)+'</td><td>'+(k==='100.0'?'CB1 / ENTRY':k==='161.8'?'TP1':k==='261.8'?'TP2':k==='423.6'?'TP3':k==='0.0'?'Swing 0':'Retracement / extension')+'</td></tr>').join(''):'<tr><td colspan="3">Belum ada Fibo valid.</td></tr>';
   $('techCandleBody').innerHTML=candles.slice(-20).reverse().map(c=>'<tr><td class="mono">'+wib(c.ms)+'</td><td>'+n(c.open)+'</td><td>'+n(c.high)+'</td><td>'+n(c.low)+'</td><td>'+n(c.close)+'</td></tr>').join('');
 
-  window.CEBONK_TECH_STATE={signal,direction,stage,entry,sl,tp:tp2,tp1,tp2,tp3,rr1:rr(entry,sl,tp1),rr2:rr(entry,sl,tp2),rr3:rr(entry,sl,tp3),lastMs:last.ms,entryMs,lastClose:last.close,atr:a,ageMin,updatedMs:Date.now(),cb1:setup?.cb1?.price??NaN};
+  window.CEBONK_TECH_STATE={signal,direction,stage,entry,sl,tp:tp2,tp1,tp2,tp3,rr1:rr(entry,sl,tp1),rr2:rr(entry,sl,tp2),rr3:rr(entry,sl,tp3),lastMs:last.ms,entryMs,lastClose:last.close,atr:a,ageMin,updatedMs:Date.now(),cb1:setup?.cb1?.price??NaN,trend5,trend15};
   window.dispatchEvent(new Event('cebonk-tech-update'));
  }catch(e){
   $('techStatus').textContent='Gagal: '+e.message;$('techFeed').textContent='ERROR';$('techFeed').className='badge sell';
@@ -691,7 +710,7 @@ function renderCombined(){
  $('comboTechScore').textContent=t.direction+' · '+t.stage;
  $('comboDecision').textContent=decision;$('comboDecision').className=aligned?(astroState==='BUY'?'buy':'sell'):'neutral';
  $('comboStatus').textContent=aligned?'SELARAS':'WAIT';$('comboStatus').className='badge '+(aligned?(astroState==='BUY'?'buy':'sell'):'neutral');
- $('comboReason').textContent=aligned?'Astrology searah lan harga nyentuh CB1 → entry.':!validAstro?('Astrology '+astroState+' → ora entry.'):(t.signal==='WAIT'?'CB1 durung aktif / wis expired.':'Arah beda: Astro '+astroState+' vs CB1 '+t.signal+'.');
+ $('comboReason').textContent=aligned?'Astrology searah + CB1 touch + MA20/MA50 M5 & M15 selaras → entry.':!validAstro?('Astrology '+astroState+' → ora entry.'):(t.signal==='WAIT'?'CB1 durung aktif, wis expired, utawa trend M5/M15 ora selaras.':'Arah beda: Astro '+astroState+' vs CB1 '+t.signal+'.');
  $('comboEntry').textContent=aligned?comboFmt(t.entry):'—';$('comboSL').textContent=aligned?comboFmt(t.sl):'—';
  $('comboTP1').textContent=aligned?comboFmt(t.tp1):'—';$('comboTP2').textContent=aligned?comboFmt(t.tp2):'—';$('comboTP3').textContent=aligned?comboFmt(t.tp3):'—';
  $('comboRR1').textContent=aligned&&Number.isFinite(t.rr1)?'RR 1:'+comboFmt(t.rr1):'—';$('comboRR2').textContent=aligned&&Number.isFinite(t.rr2)?'RR 1:'+comboFmt(t.rr2):'—';$('comboRR3').textContent=aligned&&Number.isFinite(t.rr3)?'RR 1:'+comboFmt(t.rr3):'—';
