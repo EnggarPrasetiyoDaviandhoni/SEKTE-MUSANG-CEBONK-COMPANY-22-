@@ -1,0 +1,15 @@
+{
+  "model": "CEBONK_C2_WEB_V1_35ce78b4",
+  "fromWIB": "2026-01-01",
+  "toWIB": "2027-12-31",
+  "dailyWindowWIB": "06:00–24:00",
+  "outsideWindow": "WAIT",
+  "gridMinutes": 5,
+  "days": 730,
+  "windows": 2576,
+  "generatedUTC": "2026-10-04T11:40:51.069Z",
+  "experimental": true,
+  "sourceCommit": "35ce78b437c26ca28577e835676c5655113579cf",
+  "software": "astronomy-engine@2.1.19",
+  "priceValidation": false
+}
