@@ -27,7 +27,7 @@
 @media(max-width:760px){.viewtabs{margin-top:10px}.tech-grid{grid-template-columns:1fr 1fr;padding:10px}.tech-card{padding:10px}.tech-card strong{font-size:18px}.tech-signal{font-size:28px!important}.rulelist{grid-template-columns:1fr;padding:10px}.tech-actions{padding:0 10px 10px}}
 @media(prefers-reduced-motion:no-preference){button{transition:background .15s,opacity .15s}}
 </style>
-<link id="pdfModeStyle" rel="stylesheet" href="assets/musang-pdf.css?v=2.0.0">
+<link rel="stylesheet" href="assets/auto-combined.css?v=3.0.0">
 </head>
 <body>
 <main class="wrap">
@@ -37,7 +37,6 @@
 </header>
 <nav class="viewtabs" aria-label="Mode analisis">
  <button class="viewtab active" id="tabAstro" type="button">ASTROLOGY</button>
- <button class="viewtab" id="tabTechnical" type="button">FIBO MUSANG PDF</button>
  <button class="viewtab" id="tabCombined" type="button">COMBINED 1</button>
 </nav>
 <div id="astroView">
@@ -94,10 +93,7 @@
 <details><summary>Sumber perhitungan & informasi teknis</summary><p><a href="https://github.com/cosinekitty/astronomy/tree/v2.1.19/source/js" target="_blank" rel="noopener noreferrer">Astronomy Engine 2.1.19 — dokumentasi & lisensi MIT</a>. Konversi geocentric EQJ → ECT, true obliquity dan sidereal time digunakan konsisten untuk ASC/MC.</p><p><a href="https://data.iana.org/time-zones/tzdb/africa" target="_blank" rel="noopener noreferrer">IANA tzdb — aturan Africa/Cairo</a>. Koordinat konfigurasi mengikuti titik acuan Luxor dari <a href="https://kusnuzon.github.io/fx-project/tools/fx-tools/AstroCycleFX.html" target="_blank" rel="noopener noreferrer">web contoh</a>; aplikasi ini bukan salinan atau implementasi resmi Astrodox.</p><p>SSOT: satu CFG. Modul terpisah: waktu, geometri ASC/MC, ephemeris, aspek, model eksperimen, dan tampilan. Tidak ada fallback posisi planet rekaan bila library gagal.</p></details>
 
 </div>
-<section id="technicalView" hidden></section>
 <section id="combinedView" hidden></section>
-<section id="combined2View" hidden></section>
-<section id="pdfZonesView" hidden></section>
 <footer><span>CEBONK XAUUSD · ASTROLOGY + FIBO MUSANG + COMBINED</span><span>Riset, bukan jaminan hasil trading.</span></footer>
 <noscript><div class="error">JavaScript harus diaktifkan agar aplikasi bisa menghitung.</div></noscript>
 </main>
@@ -486,11 +482,8 @@ $('dateInput').value=T.today();clock();setInterval(clock,1000);run();
 })();
 
 </script>
-
-
-
-<script src="assets/musang-pdf-core.js?v=2.0.0"></script>
-<script id="pdfModeLoader" src="assets/musang-pdf-ui.js?v=2.0.0"></script>
+<script src="assets/auto-combined-core.js?v=3.0.0"></script>
+<script id="autoCombinedLoader" src="assets/auto-combined-ui.js?v=3.0.0"></script>
 <script src="assets/astro-news-v1.js?v=1.0.0"></script>
 </body>
 </html>

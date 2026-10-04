@@ -1,49 +1,60 @@
-/** CEBONK XAUUSD DATA API v2.1.0 — HTF support for SND/SNR.
- * Deploy to the existing Worker. Keep TWELVE_DATA_KEY as a Cloudflare Secret.
- * No API key is embedded here. GitHub commit does NOT deploy Cloudflare.
- */
+/* AUTO_SOP_API_V3 | same Worker, same TWELVE_DATA_KEY Secret.
+   GET /health and GET /xau?interval=1day&outputsize=300
+   Adds native daily/weekly/monthly data, never builds fake MN1 from 500 M1 bars.
+   Public read-only data proxy; CORS is not authentication or a global quota guard. */
 const ORIGIN='https://enggarprasetiyodaviandhoni.github.io';
-const TTL=Object.freeze({'1min':20,'5min':45,'15min':90,'30min':150,'45min':150,'1h':600,'2h':600,'4h':1800,'1day':3600,'1week':14400,'1month':21600});
-function headers(){return {'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':ORIGIN,'Access-Control-Allow-Methods':'GET,OPTIONS','Access-Control-Allow-Headers':'Content-Type','Vary':'Origin','X-Content-Type-Options':'nosniff'};}
-function json(data,status=200,extra={}){return new Response(JSON.stringify(data),{status,headers:{...headers(),'Cache-Control':'no-store',...extra}});}
-export default {
- async fetch(request,env,ctx){
-  if(request.method==='OPTIONS')return new Response(null,{status:204,headers:headers()});
-  if(request.method!=='GET')return json({ok:false,error:'METHOD_NOT_ALLOWED'},405);
-  const url=new URL(request.url),origin=request.headers.get('Origin');
-  if(origin&&origin!==ORIGIN)return json({ok:false,error:'ORIGIN_NOT_ALLOWED'},403);
-  if(url.pathname==='/'||url.pathname==='/health')return json({ok:true,service:'CEBONK XAUUSD DATA API',version:'2.1.0',symbol:'XAU/USD',secretConfigured:!!env.TWELVE_DATA_KEY,intervals:Object.keys(TTL),htfEnabled:true,timeUtc:new Date().toISOString()});
-  if(url.pathname!=='/xau')return json({ok:false,error:'NOT_FOUND'},404);
-  if(!env.TWELVE_DATA_KEY)return json({ok:false,error:'TWELVE_DATA_KEY_NOT_CONFIGURED'},503);
-  for(const key of url.searchParams.keys())if(!['interval','outputsize'].includes(key))return json({ok:false,error:'INVALID_PARAMETER'},400);
-  const interval=url.searchParams.get('interval')||'5min';
-  if(!Object.hasOwn(TTL,interval))return json({ok:false,error:'INVALID_INTERVAL',allowed:Object.keys(TTL)},400);
-  const raw=url.searchParams.get('outputsize')||'300';if(!/^\d+$/.test(raw))return json({ok:false,error:'INVALID_OUTPUTSIZE'},400);
-  const outputsize=Math.max(50,Math.min(500,Number(raw)));
-  const key=new Request(url.origin+'/__cache_v210/'+interval+'/'+outputsize);
-  const cache=caches.default,hit=await cache.match(key);if(hit)return hit;
-  const u=new URL('https://api.twelvedata.com/time_series');
-  Object.entries({symbol:'XAU/USD',interval,outputsize:String(outputsize),order:'DESC',timezone:'UTC',apikey:env.TWELVE_DATA_KEY}).forEach(([k,v])=>u.searchParams.set(k,v));
-  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),10000);let response,data;
-  try{response=await fetch(u.toString(),{headers:{Accept:'application/json'},signal:ctl.signal});data=await response.json();}
-  catch(e){return json({ok:false,error:'UPSTREAM_UNAVAILABLE',message:'Provider timeout/network/JSON error; no fallback prices.'},502);}
-  finally{clearTimeout(timer);}
-  if(!response.ok||data?.status==='error'){
-   const code=Number(data?.code)||response.status,status=code===429?429:code===401||code===403?403:502;
-   return json({ok:false,error:'TWELVE_DATA_ERROR',code,message:code===429?'Kuota API habis / rate limit.':code===401?'API key ditolak.':code===403?'Akses instrumen / timeframe perlu diperiksa pada paket provider.':'Provider gagal; tidak ada data pengganti.'},status,code===429?{'Retry-After':'65'}:{});
+const INTERVALS=['1min','5min','15min','30min','45min','1h','2h','4h','1day','1week','1month'];
+const DAILY=new Set(['1day','1week','1month']);
+const TTL={'1min':60,'5min':120,'15min':300,'30min':600,'45min':600,'1h':900,'2h':1800,'4h':1800,'1day':14400,'1week':21600,'1month':43200};
+const flight=new Map();
+function headers(extra={}){return {'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':ORIGIN,'Access-Control-Allow-Methods':'GET,OPTIONS','Access-Control-Allow-Headers':'Content-Type','Vary':'Origin','X-Content-Type-Options':'nosniff',...extra};}
+function json(data,status=200,extra={}){return new Response(JSON.stringify(data),{status,headers:headers(extra)});}
+async function pull(env,interval,size){
+ if(!env.TWELVE_DATA_KEY)return json({ok:false,error:'TWELVE_DATA_KEY_NOT_CONFIGURED'},503,{'Cache-Control':'no-store'});
+ const u=new URL('https://api.twelvedata.com/time_series');
+ for(const [k,v] of Object.entries({symbol:'XAU/USD',interval,outputsize:String(size),order:'DESC',timezone:'UTC',apikey:env.TWELVE_DATA_KEY}))u.searchParams.set(k,v);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+ try{
+  const res=await fetch(u.toString(),{headers:{Accept:'application/json'},signal:controller.signal});
+  let data;try{data=await res.json();}catch(e){return json({ok:false,error:'UPSTREAM_INVALID_JSON'},502);}
+  if(!res.ok||data.status==='error'){
+   const code=Number(data.code||res.status),status=code===429?429:[401,403].includes(code)?403:502;
+   return json({ok:false,error:status===429?'UPSTREAM_QUOTA':status===403?'UPSTREAM_ACCESS_DENIED':'TWELVE_DATA_ERROR',code},status,{'Cache-Control':'no-store','Retry-After':status===429?'300':'60'});
   }
-  if(data?.meta?.symbol!=='XAU/USD'||data?.meta?.interval!==interval)return json({ok:false,error:'UPSTREAM_META_MISMATCH'},502);
-  if(!Array.isArray(data.values)||!data.values.length)return json({ok:false,error:'UPSTREAM_NO_DATA'},502);
-  const daily=['1day','1week','1month'].includes(interval),exchangeTimezone=data.meta.exchange_timezone;
-  if(daily&&(typeof exchangeTimezone!=='string'||!exchangeTimezone))return json({ok:false,error:'EXCHANGE_TIMEZONE_MISSING'},502);
-  let values;
-  try{values=data.values.map(v=>{
-   if(typeof v.datetime!=='string')throw Error('datetime');const row={datetime:v.datetime};
-   for(const k of ['open','high','low','close']){if(v[k]===null||v[k]===''||v[k]===undefined)throw Error('empty');row[k]=Number(v[k]);if(!Number.isFinite(row[k])||row[k]<=0)throw Error('OHLC');}
-   if(row.high<Math.max(row.open,row.close)||row.low>Math.min(row.open,row.close)||row.low>row.high)throw Error('range');
-   row.volume=v.volume==null?null:Number(v.volume);if(row.volume!==null&&!Number.isFinite(row.volume))row.volume=null;return row;
-  });}catch(e){return json({ok:false,error:'INVALID_UPSTREAM_OHLC'},502);}
-  const out=json({ok:true,version:'2.1.0',provider:'Twelve Data',symbol:'XAU/USD',interval,timezone:daily?exchangeTimezone:'UTC',exchangeTimezone:exchangeTimezone||null,datetimeBasis:daily?'EXCHANGE_CALENDAR':'UTC',fetchedAtUtc:new Date().toISOString(),count:values.length,values},200,{'Cache-Control':'public, max-age='+TTL[interval],'X-CEBONK-Cache-TTL':String(TTL[interval])});
-  ctx.waitUntil(cache.put(key,out.clone()).catch(()=>{}));return out;
- }
-};
+  if(data.meta?.symbol!=='XAU/USD'||data.meta?.interval!==interval||!Array.isArray(data.values)||!data.values.length)return json({ok:false,error:'UPSTREAM_SCHEMA_INVALID'},502);
+  const calendarTimezone=DAILY.has(interval)?(data.meta.exchange_timezone||data.meta.timezone||null):null;
+  if(DAILY.has(interval)){
+   if(!calendarTimezone)return json({ok:false,error:'EXCHANGE_TIMEZONE_MISSING'},502);
+   try{new Intl.DateTimeFormat('en',{timeZone:calendarTimezone}).format(new Date());}catch(e){return json({ok:false,error:'EXCHANGE_TIMEZONE_INVALID'},502);}
+  }
+  const values=[];
+  for(const v of data.values){
+   if(typeof v.datetime!=='string')return json({ok:false,error:'UPSTREAM_TIMESTAMP_INVALID'},502);
+   const c={datetime:v.datetime};for(const k of ['open','high','low','close']){
+    if(v[k]===null||v[k]===''||v[k]===undefined)return json({ok:false,error:'UPSTREAM_OHLC_MISSING'},502);
+    c[k]=Number(v[k]);if(!Number.isFinite(c[k])||c[k]<=0)return json({ok:false,error:'UPSTREAM_OHLC_INVALID'},502);
+   }
+   if(c.high<Math.max(c.open,c.close)||c.low>Math.min(c.open,c.close)||c.low>c.high)return json({ok:false,error:'UPSTREAM_OHLC_ORDER'},502);
+   c.volume=v.volume==null?null:Number(v.volume);values.push(c);
+  }
+  return json({ok:true,apiVersion:3,provider:'Twelve Data',symbol:'XAU/USD',interval,timezone:DAILY.has(interval)?calendarTimezone:'UTC',calendarTimezone,
+   dateBasis:DAILY.has(interval)?'EXCHANGE_CALENDAR':'UTC_INTRADAY',fetchedAtUtc:new Date().toISOString(),count:values.length,values},200,{'Cache-Control':'public, max-age='+TTL[interval]});
+ }catch(e){return json({ok:false,error:'UPSTREAM_NETWORK_OR_TIMEOUT'},502,{'Cache-Control':'no-store'});}finally{clearTimeout(timer);}
+}
+export default {async fetch(request,env,ctx){
+ const origin=request.headers.get('Origin');if(origin&&origin!==ORIGIN)return json({ok:false,error:'ORIGIN_NOT_ALLOWED'},403);
+ if(request.method==='OPTIONS')return new Response(null,{status:204,headers:headers({'Access-Control-Max-Age':'86400'})});
+ if(request.method!=='GET')return json({ok:false,error:'METHOD_NOT_ALLOWED'},405,{Allow:'GET, OPTIONS'});
+ const url=new URL(request.url);
+ if(url.pathname==='/'||url.pathname==='/health')return json({ok:true,service:'CEBONK XAUUSD DATA API',apiVersion:3,symbol:'XAU/USD',secretConfigured:!!env.TWELVE_DATA_KEY,intervals:INTERVALS,timeUtc:new Date().toISOString()},200,{'Cache-Control':'no-store'});
+ if(url.pathname!=='/xau')return json({ok:false,error:'NOT_FOUND'},404);
+ const interval=url.searchParams.get('interval')||'5min';if(!INTERVALS.includes(interval))return json({ok:false,error:'INVALID_INTERVAL',allowed:INTERVALS},400);
+ const raw=url.searchParams.get('outputsize')||'300';if(!/^\d+$/.test(raw))return json({ok:false,error:'INVALID_OUTPUTSIZE'},400);
+ const size=Math.max(50,Math.min(500,Number(raw)));
+ const key=new Request(url.origin+'/xau?interval='+interval+'&outputsize='+size),cache=caches.default;
+ let cached;try{cached=await cache.match(key);}catch(e){}if(cached)return cached;
+ const id=interval+':'+size;let pending=flight.get(id);
+ if(!pending){pending=pull(env,interval,size);flight.set(id,pending);}
+ try{const response=(await pending).clone();if(response.ok)ctx.waitUntil(cache.put(key,response.clone()).catch(()=>{}));return response;}
+ finally{if(flight.get(id)===pending)flight.delete(id);}
+}};
