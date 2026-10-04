@@ -1,7 +1,9 @@
+> CURRENT ROUTING: this new-system SOP belongs to COMBINED 2 only. COMBINED 1 is restored from 3ead2e75 and must not be overwritten. Older scope notes below describe the earlier migration, not authorization to delete Combined 1.
+
 # CEBONK AUTO SOP — v3.1.0
 
 ## Scope requested 4 October 2026
-Remove the crossed-out FIBO MUSANG PDF, COMBINED 2 and SNR/SND tabs and their manual forms. Retain ASTROLOGY, COMBINED 1 and ASTROLOGY NEWS. COMBINED 1 now runs the single automatic SOP. Old modules remain in Git history/repository for audit but are not loaded. Local manual annotations are not consumed or silently deleted. No MT5 EA is changed.
+Remove the crossed-out FIBO MUSANG PDF, COMBINED 2 and SNR/SND tabs and their manual forms. Retain ASTROLOGY, COMBINED 2 and ASTROLOGY NEWS. COMBINED 2 now runs the single automatic SOP. Old modules remain in Git history/repository for audit but are not loaded. Local manual annotations are not consumed or silently deleted. No MT5 EA is changed.
 
 ## Pipeline
 Astrology direction/time -> automatic MN1/W1/D1/H4/H1 location -> Initial Break -> separate CB1 close break -> subsequent Zone IB retest -> ENTRY observation or WAIT. BUY/SELL symmetric. No direct CB1 entry, MA20/50, RSI or ATR. No manual zone/price/review input.
@@ -32,7 +34,7 @@ Missing macro intervals appear as API_PERLU_UPGRADE / errors; complete 5-TF cove
 Browser refresh every five minutes while Combined is visible. Manual refresh bounded to >=65 seconds; HTF requests are cached longer. Five-minute polling can miss M1 signals. Closed/stale markets produce WAIT. Browser/edge caching reduces usage but is not a global daily quota guarantee, especially for many visitors. Public redisplay remains subject to the provider's account permissions.
 
 ## Operation
-Open COMBINED 1: scan starts automatically, no price form. Read KEPUTUSAN, Astrology window, active zone/key, Musang stage, target/RR and five-TF data coverage. Optional TF selector M1/M5/M15, default M1. The other two tabs retain their prior functionality. There are no order submissions, Telegram broadcasts, position management, profit guarantees or empirical accuracy claims.
+Open COMBINED 2: scan starts automatically, no price form. Read KEPUTUSAN, Astrology window, active zone/key, Musang stage, target/RR and five-TF data coverage. Optional TF selector M1/M5/M15, default M1. The other two tabs retain their prior functionality. There are no order submissions, Telegram broadcasts, position management, profit guarantees or empirical accuracy claims.
 
 ## Validation
 Synthetic deterministic engine tests, mocked Worker tests, actual-host browser navigation/error tests, and existing Astrology News regression checks. Tests do not establish profitability. No live broker execution or real-price strategy backtest was performed.

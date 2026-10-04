@@ -1,4 +1,6 @@
 'use strict';
+if(require('node:fs').readFileSync('index.html','utf8').includes('id="combinedSplitLoader"')){console.log('COMBINED SPLIT PROTECTED: legacy install must not replace either mode.');process.exit(0);}
+
 const fs=require('node:fs'),assert=require('node:assert/strict');
 let html=fs.readFileSync('index.html','utf8');
 const marker='<script id="pdfModeLoader"';assert.ok(html.includes(marker),'Current PDF loader required');

@@ -1,0 +1,14 @@
+{
+  "restoredFrom": "3ead2e75c4b6f014e6fad163aaf6d05cef71c009",
+  "legacyBlob": "f50cfd064eed91173d5ab44bc097a88341f0512a",
+  "helpersSHA256": "890ef79201a2d1923f31facc428b903f9ab0f4dcf04f9d2a121a3e9a6e046326",
+  "calculationSHA256": "bb4ceecc922c489af9da0fd45eb4548a8be0600d249d1279946d02d97e7f7bc7",
+  "newCoreSHA256": "937e74b7736eba127b8ab28b1bd36231a94d327161ae65c6b1ac270f9c2913b7",
+  "locationCoreSHA256": "cfbdad09b3a2d5afeb045d1bfef7bc37681441841d06bdd2a98976a4dfbc76ac",
+  "newsSHA256": "348927ac5aa35a7e78cdd7be5d5d6f9e66cfba17003ac5f26df3636b658c21bc",
+  "modes": {
+    "COMBINED_1": "Astrology + SMA20/50 M15/M5 + M1 CB1 touch",
+    "COMBINED_2": "Astrology + automatic MN1/W1/D1/H4/H1 SND/SNR fresh-first + Musang IB/CB1 break/retest"
+  },
+  "executionEnabled": false
+}

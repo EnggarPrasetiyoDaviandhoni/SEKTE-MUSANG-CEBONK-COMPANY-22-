@@ -1,13 +1,13 @@
-/* COMBINED 1 AUTO. Three tabs only. No manual price/review forms. */
+/* COMBINED 2 AUTO. New system in its separate tab. No manual price/review forms. */
 (function(root){
 'use strict';
 function mount(){
- const A=root.CebonkAuto,C=root.CebonkCore,$=id=>document.getElementById(id),nav=document.querySelector('.viewtabs'),view=$('combinedView');
+ const A=root.CebonkAuto,C=root.CebonkCore,$=id=>document.getElementById(id),nav=document.querySelector('.viewtabs'),view=$('combined2View');
  if(!A||!C||!nav||!view||$('autoRun'))return;
- ['tabTechnical','tabCombined2','tabZones','technicalView','combined2View','pdfZonesView'].forEach(id=>$(id)?.remove());
- $('tabCombined').textContent='COMBINED 1';
- view.innerHTML=`<header class="au-hero"><div class="eyebrow">SEKTE MUSANG · CEBONK COMPANY 22</div><h2>COMBINED 1 · AUTO</h2><span class="badge neutral">v3.1.0</span><p>ASTROLOGY → SND/SNR FRESH → FIBO MUSANG</p><small>Tanpa isi zona manual. Model eksperimen + otomasi Level 2; dudu order MT5.</small></header>
- <section class="panel"><div class="au-toolbar"><label>TF eksekusi <select id="autoTF"><option>M1</option><option>M5</option><option>M15</option></select></label><button id="autoRun" class="primary" type="button">PERBARUI SCAN</button><label class="check"><input id="autoRefresh" type="checkbox" checked>Auto 5 menit</label></div><p id="autoStatus" class="au-status" role="status">Pilih COMBINED 1 kanggo miwiti scanner otomatis.</p><p id="autoWarning" class="au-warning" hidden></p></section>
+ ['tabTechnical','tabZones','pdfZonesView'].forEach(id=>$(id)?.remove());
+ $('tabCombined2').textContent='COMBINED 2';
+ view.innerHTML=`<header class="au-hero"><div class="eyebrow">SEKTE MUSANG · CEBONK COMPANY 22</div><h2>COMBINED 2 · AUTO</h2><span class="badge neutral">v3.1.0</span><p>ASTROLOGY → SND/SNR FRESH → FIBO MUSANG</p><small>Tanpa isi zona manual. Model eksperimen + otomasi Level 2; dudu order MT5.</small></header>
+ <section class="panel"><div class="au-toolbar"><label>TF eksekusi <select id="autoTF"><option>M1</option><option>M5</option><option>M15</option></select></label><button id="autoRun" class="primary" type="button">PERBARUI SCAN</button><label class="check"><input id="autoRefresh" type="checkbox" checked>Auto 5 menit</label></div><p id="autoStatus" class="au-status" role="status">Pilih COMBINED 2 kanggo miwiti scanner otomatis.</p><p id="autoWarning" class="au-warning" hidden></p></section>
  <section class="au-decision panel" aria-live="polite"><span class="label">KEPUTUSAN</span><strong id="autoDecision">WAIT</strong><p id="autoReason">Nunggu data.</p><small id="autoStamp">—</small></section>
  <div class="au-grid"><section class="panel au-card"><span class="label">ASTROLOGY · HARI INI WIB</span><strong id="autoAstro">—</strong><small id="autoWindow">—</small></section><section class="panel au-card"><span class="label">LOKASI AKTIF</span><strong id="autoLocation">—</strong><small id="autoKey">—</small></section><section class="panel au-card"><span class="label">FIBO MUSANG</span><strong id="autoMusang">—</strong><small id="autoIB">IB → CB1 break → retest Zone IB</small></section><section class="panel au-card"><span class="label">ENTRY / SL</span><strong id="autoEntry">—</strong><small id="autoSL">—</small></section></div>
  <section class="panel"><div class="head"><h3>TARGET FIBO</h3><small>RR saka jarak nyata</small></div><div class="au-targets" id="autoTargets"><p>—</p></div></section>
@@ -73,7 +73,7 @@ function mount(){
   $('autoWarning').hidden=!incomplete;$('autoWarning').textContent=upgrade?'CAKUPAN PARSIAL: Worker lawas durung mbukak D1/W1/MN1. Upgrade Worker sapisan nganggo kode sing wis disiapke. Ora perlu isi harga manual.':incomplete?'CAKUPAN PARSIAL: sawetara TF durung valid. Delok status saben TF ing ngisor.':'';
   $('autoStamp').textContent='Candle '+tf+' '+wib(last?.ms)+' · '+(fresh?'OHLC TERBARU':'STALE / PASAR TUTUP / DATA KURANG');
   $('autoAudit').textContent=JSON.stringify({version:A.CFG.version,decision,stage:r.stage,setup:r.setup||null,eventAt:r.eventAt||null,expiresAt:r.expiresAt||null,coverage,errors:Object.fromEntries(errors),lastCandle:last?.ms,executionEnabled:false},null,2);
-  root.CEBONK_AUTO_STATE={decision,event:r,coverage,errors:Object.fromEntries(errors),executionEnabled:false};
+  root.CEBONK_AUTO_STATE={mode:'COMBINED_2',decision,event:r,coverage,errors:Object.fromEntries(errors),executionEnabled:false};root.CEBONK_C2_STATE=root.CEBONK_AUTO_STATE;
  }
  async function scan(){
   if(loading)return;if(Date.now()-attempt<65000){$('autoStatus').textContent='Tunggu 65 detik antar refresh supaya irit kuota.';return;}
@@ -85,16 +85,16 @@ function mount(){
   }catch(e){invalidate('SCAN ERROR: '+e.message);}finally{loading=false;$('autoRun').disabled=false;}
  }
  function showCombined(){
-  $('astroView').hidden=true;const news=$('astroNewsView');if(news)news.hidden=true;view.hidden=false;
-  nav.querySelectorAll('.viewtab').forEach(b=>b.classList.toggle('active',b.id==='tabCombined'));
-  try{history.replaceState(null,'','#combined-1');}catch(e){}if(!loading&&Date.now()-lastPoll>=65000)scan();else render();
+  $('astroView').hidden=true;if($('combinedView'))$('combinedView').hidden=true;const news=$('astroNewsView');if(news)news.hidden=true;view.hidden=false;
+  nav.querySelectorAll('.viewtab').forEach(b=>b.classList.toggle('active',b.id==='tabCombined2'));
+  try{history.replaceState(null,'','#combined-2');}catch(e){}if(!loading&&Date.now()-lastPoll>=65000)scan();else render();
  }
- $('tabCombined').addEventListener('click',showCombined);
+ $('tabCombined2').addEventListener('click',showCombined);
  $('tabAstro').addEventListener('click',()=>{view.hidden=true;$('astroView').hidden=false;nav.querySelectorAll('.viewtab').forEach(b=>b.classList.toggle('active',b.id==='tabAstro'));try{history.replaceState(null,'','#astrology');}catch(e){}});
  $('autoRun').addEventListener('click',scan);$('autoTF').addEventListener('change',()=>{invalidate('TF diganti. Nunggu scan anyar.');scan();});
  $('autoCopyWorker').addEventListener('click',async()=>{try{const res=await fetch('cloudflare-worker.js?auto-sop=3.0.0');if(!res.ok)throw new Error('Ora bisa muat kode');const txt=await res.text();if(!txt.includes('AUTO_SOP_API_V3'))throw new Error('Kode upgrade durung kasedhiya');try{await navigator.clipboard.writeText(txt);$('autoWorkerStatus').textContent='Kode tersalin. Paste neng Worker lawas → Deploy. Secret ora diganti.';}catch(e){$('autoWorkerText').hidden=false;$('autoWorkerText').value=txt;$('autoWorkerText').select();$('autoWorkerStatus').textContent='Salin kode ing kotak iki; ora ana token rahasia.';}}catch(e){$('autoWorkerStatus').textContent=e.message;}});
  setInterval(()=>{if(view.hidden)return;if(!loading&&lastDecision&&Math.floor(Date.now()/60000)!==lastRenderedMinute)render();if($('autoRefresh').checked&&!loading&&Date.now()-lastPoll>=300000&&document.visibilityState==='visible')scan();},1000);
- if(['#combined-1','#combined-2','#musang-pdf','#snr-snd'].includes(location.hash))showCombined();
+ if(['#combined-2','#musang-pdf','#snr-snd'].includes(location.hash))showCombined();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })(window);

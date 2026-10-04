@@ -1,4 +1,6 @@
 'use strict';
+if(require('node:fs').readFileSync('index.html','utf8').includes('id="combinedSplitLoader"')){console.log('COMBINED SPLIT PROTECTED: legacy install must not replace either mode.');process.exit(0);}
+
 const fs=require('node:fs'),assert=require('node:assert/strict');
 const file=process.argv[2]||'index.html',original=fs.readFileSync(file,'utf8');let html=original;
 const scripts=s=>[...s.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(x=>x[1]);
