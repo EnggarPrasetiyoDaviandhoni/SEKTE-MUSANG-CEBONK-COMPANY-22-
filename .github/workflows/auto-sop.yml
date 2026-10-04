@@ -1,0 +1,79 @@
+name: Verify and install automatic Combined SOP
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/auto-combined*'
+      - 'worker/auto-sop-v3.mjs'
+      - 'tests/auto-*'
+      - 'tools/install-auto-sop.cjs'
+      - '.github/workflows/auto-sop.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: auto-sop-install
+  cancel-in-progress: false
+jobs:
+  verify-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Deterministic scanner and mocked Worker tests
+        run: |
+          node --check assets/auto-combined-core.js
+          node --check assets/auto-combined-ui.js
+          node --check worker/auto-sop-v3.mjs
+          node tests/auto-combined.test.cjs
+          node tests/auto-worker.test.mjs
+      - name: Guarded installer and preserved Astrology News regression
+        run: |
+          node tools/install-auto-sop.cjs
+          cp index.html /tmp/auto-index-once.html
+          node tools/install-auto-sop.cjs
+          cmp index.html /tmp/auto-index-once.html
+          node tests/astro-news.test.cjs
+      - name: Install pinned browser test dependencies
+        run: |
+          npm install --prefix /tmp/cebonk-auto-test --no-save --package-lock=false --ignore-scripts playwright@1.55.1 astronomy-engine@2.1.19
+          /tmp/cebonk-auto-test/node_modules/.bin/playwright install --with-deps chromium
+      - name: Actual-host browser and real ephemeris integration
+        env:
+          NODE_PATH: /tmp/cebonk-auto-test/node_modules
+          ASTRONOMY_MODULE: /tmp/cebonk-auto-test/node_modules/astronomy-engine
+        run: |
+          node tests/astro-news.test.cjs
+          node tests/auto-combined.browser.cjs
+      - name: Save browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-sop-browser
+          path: test-artifacts/
+          if-no-files-found: ignore
+      - name: Report current API capabilities without exposing secrets
+        run: |
+          node --input-type=module <<'JS'
+          try {
+            const r=await fetch('https://cebonk-xau-api.enggarprasetiyo330.workers.dev/health',{signal:AbortSignal.timeout(8000)});
+            const d=await r.json();
+            console.log(JSON.stringify({healthHTTP:r.status,apiVersion:d.apiVersion||1,intervals:d.intervals||null,cloudflareDeployedByThisWorkflow:false}));
+          } catch(e) { console.log('LIVE_API_CHECK_UNAVAILABLE; Cloudflare has not been deployed by this workflow.'); }
+          JS
+      - name: Activate tested web and publish upgraded Worker source only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html cloudflare-worker.js
+          if ! git diff --cached --quiet; then
+            git commit -m 'Activate COMBINED 1 AUTO; remove crossed-out manual tabs; prepare HTF Worker source'
+            git push origin HEAD:main
+          fi
+      - name: Request Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
