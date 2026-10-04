@@ -28,8 +28,11 @@ jobs:
         run: |
           git rev-parse HEAD > /tmp/news-attack-base
           sha256sum index.html assets/combined1-legacy.js assets/auto-combined-core.js assets/auto-combined-ui.js assets/snd-auto-core.js assets/astro-news-v1.js cloudflare-worker.js ea/combined2/src/CEBONK_COMBINED2.mq5 ea/combined2/src/C2Core.mqh ea/combined2/data/CEBONK_C2_ASTRO.csv > /tmp/news-protected
-      - name: Build hash-pinned standalone source without modifying original
-        run: python3 ea/combined2/news_attack/tools/build.py
+      - name: Harden then build hash-pinned standalone source without modifying original
+        run: |
+          python3 ea/combined2/news_attack/tools/harden-release.py
+          python3 ea/combined2/news_attack/tools/harden-release.py
+          python3 ea/combined2/news_attack/tools/build.py
       - name: News timing, CSV, persistent event cap and Telegram encoding tests
         run: |
           set -o pipefail
@@ -52,13 +55,14 @@ jobs:
           name: CEBONK-COMBINED2-NEWS-ATTACK
           path: ea/combined2/news_attack/dist/
           if-no-files-found: error
-      - name: Publish only the new News Attack distribution
+      - name: Publish only the new News Attack source and distribution
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ea/combined2/news_attack/src ea/combined2/news_attack/tests ea/combined2/news_attack/README.md
           git add -f ea/combined2/news_attack/dist
           if ! git diff --cached --quiet; then
-            git commit -m 'Publish isolated Combined 2 News Attack v1.10 and verified source package'
+            git commit -m 'Publish hardened Combined 2 News Attack v1.10 and validated source package'
             base=$(cat /tmp/news-attack-base)
             git fetch origin main
             if ! git diff --quiet "$base" origin/main -- ea/combined2/news_attack ea/combined2/src ea/combined2/data; then
