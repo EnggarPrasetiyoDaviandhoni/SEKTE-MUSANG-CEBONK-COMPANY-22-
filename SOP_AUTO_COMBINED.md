@@ -1,10 +1,10 @@
-# CEBONK AUTO SOP — v3.0.0
+# CEBONK AUTO SOP — v3.1.0
 
 ## Scope requested 4 October 2026
 Remove the crossed-out FIBO MUSANG PDF, COMBINED 2 and SNR/SND tabs and their manual forms. Retain ASTROLOGY, COMBINED 1 and ASTROLOGY NEWS. COMBINED 1 now runs the single automatic SOP. Old modules remain in Git history/repository for audit but are not loaded. Local manual annotations are not consumed or silently deleted. No MT5 EA is changed.
 
 ## Pipeline
-Astrology direction/time -> automatic MN1/W1/D1/H4/H1 location -> key-level confluence -> Initial Break -> separate CB1 close break -> subsequent Zone IB retest -> ENTRY observation or WAIT. BUY/SELL symmetric. No direct CB1 entry, MA20/50, RSI or ATR. No manual zone/price/review input.
+Astrology direction/time -> automatic MN1/W1/D1/H4/H1 location -> Initial Break -> separate CB1 close break -> subsequent Zone IB retest -> ENTRY observation or WAIT. BUY/SELL symmetric. No direct CB1 entry, MA20/50, RSI or ATR. No manual zone/price/review input.
 
 Astrology uses the existing unmodified CebonkCore experimental score. Combined automatically calculates the current WIB date, 06:00–00:00; historical dates selected in the Astrology tab do not drive live signals. Astrology must agree at the retest and now in the same window. Astrology News remains separate, not a new automatic news gate.
 
@@ -14,9 +14,9 @@ The provided FIBO_MUSANG_ID.pdf is an Indonesian screenshot compilation, not the
 The following numeric detector rules are engineering choices, not rules quoted from the PDF:
 - Strict pivots: two candles each side, available only after right-side candles close.
 - SNR: pivot wick-to-body band; zero-width bands skipped.
-- SND: up to four base candles, body/range <=0.50; departure body/range >=0.65, range >=1.5 times average base range, close beyond base. RBR/DBR/DBD/RBD from incoming/outgoing candle direction. Zero-range/flat formations skipped.
+- SNR/SND location rules now use assets/snd-auto-core.js: confirmed swing -> bounded wick/body zone (0.08–0.50 median of previous 20 source-bar ranges). SND additionally requires close displacement beyond the source candle and >=1.5 median ranges within three candles. No RBR/RBD/DBR/DBD pattern classifier. These are engineering definitions, not rules attributed to the PDF. Unexplained source-history gaps yield DATA_GAP, not FRESH.
 - Freshness: after formation/departure, count distinct overlap episodes, not consecutive candles. Close beyond distal boundary means BROKEN; never reuse the original role. FRESH priority, TESTED once eligible, more visits skipped. This is ranking policy, not measured win probability.
-- Key levels: previous completed D1/W1/MN1 high/low and confirmed swings. Must fall within the zone plus 10% of its width; same source candle and TF cannot count as independent confirmation. Key levels never trigger entries.
+- Key levels: previous completed D1/W1/MN1 high/low and confirmed swings. Optional confluence, not a mandatory extra signal gate. Must fall within the zone plus 10% of its width; same source candle and TF cannot count as independent confirmation. Key levels never trigger entries.
 - Nested/confluence: distinct same-side TF zones must geometrically contain/overlap. Used for ranking, not a fabricated extra probability score. Opposing eligible locations containing the retest price block entry.
 - Musang: New High/New Low pair and intervening CB1; opposite candle followed by one-to-one body close break provides the IB candidate. CB1 must lie outside Zone IB in the break direction. Search bounded to 25 candles after the new extreme. No pre-confirmation pivot hindsight.
 - Fibo 0: relevant broken body boundary; 100: close of the first valid CB1 break, frozen thereafter. SL beyond source-zone wick +5% of body-zone width. Target references 1.618 / 2.618 / 4.23; RR calculated, not fixed at 2.
@@ -41,3 +41,6 @@ Primary API references reviewed 2026-10-04:
 - https://twelvedata.com/docs/markets/market-state (time_series: daily timezone parameter is ignored; exchange calendar applies)
 - https://support.twelvedata.com/en/articles/5656039-how-to-get-historical-prices
 - https://developers.cloudflare.com/workers/configuration/secrets/
+
+## v3.1.0 location reconciliation
+Preserves the current three-tab automatic host and existing Musang execution, not the earlier manual screens. FRESH is ranked before TESTED even when TESTED is nearer; only the current Astrology side is shown in the primary candidate list. BROKEN/DATA_GAP are excluded. Key levels cannot demote a standalone FRESH location to ineligible. Status is assessed from CLOSED native source bars, not tick-complete history: a touch within an unfinished HTF candle can be unobserved until it closes. Retest counts are a lower bound at source TF. Requests now run sequentially, use provider timestamps, and exclude expired cached frames from decisions. This is a research observation engine, not a broker-execution system or empirically validated strategy.

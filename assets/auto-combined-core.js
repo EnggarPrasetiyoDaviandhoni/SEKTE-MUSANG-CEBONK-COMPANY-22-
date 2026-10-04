@@ -1,14 +1,17 @@
-/* CEBONK AUTO SOP v3.0.0. Automatic observations, NOT broker orders.
+/* CEBONK AUTO SOP v3.1.0. Automatic observations, NOT broker orders.
    PDF-aligned subset: one-to-one IB -> separate CB1 break -> later Zone IB retest.
    Numeric detection, SND/SNR, key proximity and expiry are disclosed engineering rules.
    No MA/RSI/ATR, manual prices, fabricated candles or hindsight entry resurrection. */
 (function(root){
 'use strict';
+// LOCATION_SCANNER_V310: reuse tested no-pattern SND/SNR rules, preserve Musang.
+const Locations=root.CebonkSNDAuto||(typeof module!=='undefined'&&module.exports?require('./snd-auto-core.js'):null);
+if(!Locations)throw Error('SND_AUTO_CORE_NOT_LOADED');
 const MIN=60000,DAY=86400000;
-const CFG=Object.freeze({version:'3.0.0',context:['MN1','W1','D1','H4','H1'],
+const CFG=Object.freeze({version:'3.1.0',context:['MN1','W1','D1','H4','H1'],
  frames:{M1:'1min',M5:'5min',M15:'15min',H1:'1h',H4:'4h',D1:'1day',W1:'1week',MN1:'1month'},
  minutes:{M1:1,M5:5,M15:15,H1:60,H4:240},ratios:[1.618,2.618,4.23],
- depth:2,maxBase:4,baseBody:0.5,departureBody:0.65,departureSize:1.5,keyTolerance:0.1,
+ depth:2,keyTolerance:0.1,
  slBuffer:0.05,maxRetests:1,setupSearch:25});
 const assert=(v,m)=>{if(!v)throw new Error(m);};
 const finite=x=>typeof x==='number'&&Number.isFinite(x);
@@ -65,26 +68,10 @@ function life(z,b,until=Infinity){
  return {...z,tests,lastTest,status:tests?'TESTED':'FRESH',brokenAt:null};
 }
 function zones(b,tf,until=Infinity){
- const out=[];
- for(const p of pivots(b)){
-  if(p.knownAt>until)continue;const c=b[p.i],k=p.kind==='high'?'RESISTANCE':'SUPPORT',bb=body(c);
-  const low=k==='SUPPORT'?c.low:bb.high,high=k==='SUPPORT'?bb.low:c.high;
-  if(!(high>low))continue;
-  out.push({id:tf+':'+k+':'+c.ms,tf,kind:k,low,high,sourceMs:c.ms,bornAt:p.knownAt,formation:'PIVOT_2',initialDeparted:true});
- }
- for(let j=2;j<b.length;j++){
-  const dep=b[j];if(dep.end>until||br(dep)<CFG.departureBody||sign(dep)===0)continue;
-  let start=j-1;while(start>=0&&j-start<=CFG.maxBase&&br(b[start])<=CFG.baseBody)start--;
-  start++;if(start===j)continue;const base=b.slice(start,j),previous=b[start-1];if(!previous||sign(previous)===0)continue;
-  const high=Math.max(...base.map(c=>c.high)),low=Math.min(...base.map(c=>c.low)),avg=base.reduce((s,c)=>s+c.high-c.low,0)/base.length;
-  const buy=sign(dep)>0;
-  if(!(avg>0&&(dep.high-dep.low)>=CFG.departureSize*avg&&(buy?dep.close>high:dep.close<low)))continue;
-  const kind=buy?'DEMAND':'SUPPLY',pattern=(sign(previous)>0?'R':'D')+'B'+(buy?'R':'D');
-  const proximal=buy?Math.max(...base.map(c=>body(c).high)):Math.min(...base.map(c=>body(c).low));
-  const z={id:tf+':'+kind+':'+b[start].ms+':'+dep.ms,tf,kind,low:buy?low:proximal,high:buy?proximal:high,sourceMs:b[start].ms,bornAt:dep.end,formation:pattern,initialDeparted:true};
-  if(z.high>z.low)out.push(z);
- }
- return out.map(z=>life(z,b,until)).sort((a,b)=>b.bornAt-a.bornAt).slice(0,120);
+ const closed=b.filter(c=>c.end<=until).map(c=>({...c,closed:true}));
+ return Locations.scan({tf,closed,bars:closed}).map(z=>({...z,
+  sourceMs:z.originMs,bornAt:z.createdAt,tests:z.retests,lastTest:z.visits.length?z.visits[z.visits.length-1].end:null,
+  formation:['DEMAND','SUPPLY'].includes(z.kind)?'SWING_DISPLACEMENT':'SWING_REACTION',initialDeparted:true}));
 }
 function keys(b,tf,until=Infinity){
  const closed=b.filter(c=>c.end<=until),out=[];if(!closed.length)return out;
@@ -94,18 +81,23 @@ function keys(b,tf,until=Infinity){
  for(const p of pivots(closed).slice(-12))out.push({id:tf+':SWING:'+p.kind+':'+p.ms,tf,price:p.price,sourceMs:p.ms,knownAt:p.knownAt,label:tf+' swing '+p.kind});
  return out;
 }
-function context(zs,ks,direction,price,at){
- const eligible=zs.filter(z=>z.bornAt<=at&&z.status!=='BROKEN'&&z.tests<=CFG.maxRetests);
- const aligned=eligible.filter(z=>side(z)===direction&&price>=z.low&&price<=z.high);
- const opposed=eligible.filter(z=>side(z)!==direction&&price>=z.low&&price<=z.high);
- const candidates=aligned.map(z=>{
+function rankLocations(zs,ks,direction,price,at){
+ const eligible=zs.filter(z=>z.bornAt<=at&&['FRESH','TESTED'].includes(z.status)&&z.tests<=CFG.maxRetests);
+ return eligible.filter(z=>side(z)===direction).map(z=>{
   const tol=(z.high-z.low)*CFG.keyTolerance;
   const confluence=ks.filter(k=>k.knownAt<=at&&k.price>=z.low-tol&&k.price<=z.high+tol&&!(k.tf===z.tf&&k.sourceMs===z.sourceMs));
   const peers=eligible.filter(x=>side(x)===direction&&x.tf!==z.tf&&overlap(z,x));
   const nested=peers.filter(x=>(z.low>=x.low&&z.high<=x.high)||(x.low>=z.low&&x.high<=z.high));
-  return {...z,keys:confluence,nested:[...new Set(nested.map(x=>x.tf))],confluenceTF:[...new Set(peers.map(x=>x.tf))]};
- }).sort((a,b)=>a.tests-b.tests||b.nested.length-a.nested.length||b.keys.length-a.keys.length||CFG.context.indexOf(a.tf)-CFG.context.indexOf(b.tf));
- return {selected:candidates.find(z=>z.keys.length)||null,candidates,opposed};
+  return {...z,keys:confluence,nested:[...new Set(nested.map(x=>x.tf))],confluenceTF:[...new Set(peers.map(x=>x.tf))],
+   distance:finite(price)?Math.max(z.low-price,price-z.high,0):Infinity};
+ }).sort((a,b)=>(a.status==='FRESH'?0:1)-(b.status==='FRESH'?0:1)||b.confluenceTF.length-a.confluenceTF.length||b.nested.length-a.nested.length||
+  (['SUPPLY','DEMAND'].includes(b.kind)?1:0)-(['SUPPLY','DEMAND'].includes(a.kind)?1:0)||b.keys.length-a.keys.length||
+  a.distance/(a.scale||a.high-a.low)-b.distance/(b.scale||b.high-b.low)||b.bornAt-a.bornAt);
+}
+function context(zs,ks,direction,price,at){
+ const candidates=rankLocations(zs,ks,direction,price,at).filter(z=>price>=z.low&&price<=z.high);
+ const opposed=zs.filter(z=>z.bornAt<=at&&['FRESH','TESTED'].includes(z.status)&&z.tests<=CFG.maxRetests&&side(z)!==direction&&price>=z.low&&price<=z.high);
+ return {selected:candidates[0]||null,candidates,opposed};
 }
 function patterns(b,tf='M1'){
  const p=pivots(b),out=[],step=CFG.minutes[tf]*MIN;
@@ -169,11 +161,11 @@ function combine(r,astro,ctx,now,fresh,coverage){
  if(r.stage!=='RETEST_VALID')return out;
  const atEvent=astro.groups.find(g=>r.eventStart>=g.start&&r.eventStart<g.end),d=r.setup.direction;
  if(!live||!atEvent||live.state!==d||atEvent.state!==d||live.start!==atEvent.start)return {...out,reason:'Astrology beda arah / window wis rampung.'};
- if(!ctx||!ctx.selected)return {...out,reason:'Nunggu zone FRESH/TESTED 1x + key level searah ing rega retest.'};
+ if(!ctx||!ctx.selected)return {...out,reason:'Nunggu SND/SNR otomatis searah ing rega retest; FRESH utama, TESTED 1x cadangan.'};
  if(ctx.opposed.length)return {...out,reason:'Konflik lokasi Supply/Demand aktif.'};
  if(now>=r.expiresAt)return {...out,reason:'Retest wis expired.'};
- return {...out,decision:'ENTRY '+d,reason:'Astrology + lokasi + key level + IB/CB1/retest selaras. Pengamatan, dudu order.',event:r,location:ctx.selected};
+ return {...out,decision:'ENTRY '+d,reason:'Astrology → SND/SNR otomatis → IB/CB1/retest selaras. Pengamatan, dudu order.',event:r,location:ctx.selected};
 }
-const API=Object.freeze({CFG,localUTC,calendarEnd,parse,pivots,zones,life,keys,context,patterns,evaluate,musang,combine,side});
+const API=Object.freeze({CFG,localUTC,calendarEnd,parse,pivots,zones,life,keys,rankLocations,context,patterns,evaluate,musang,combine,side});
 root.CebonkAuto=API;if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);

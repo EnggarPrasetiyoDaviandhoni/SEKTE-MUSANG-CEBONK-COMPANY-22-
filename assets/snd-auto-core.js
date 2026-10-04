@@ -51,7 +51,6 @@ function largeGap(a,b,tf){
  const gap=b.ms-a.end;if(gap<=0)return false;
  if(tf==='MN1')return gap>5*D;if(tf==='W1')return gap>3*D;if(tf==='D1')return gap>3*D;
  // Weekend closure allowance only; no pretending arbitrary intraday gaps are complete history.
- if(gap<=2*H)return false;
  const day=new Date(a.end).getUTCDay();return !(gap<=3*D&&[5,6,0].includes(day));
 }
 function lifecycle(z,bars,tf){

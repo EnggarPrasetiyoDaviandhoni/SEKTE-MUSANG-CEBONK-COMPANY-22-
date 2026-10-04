@@ -12,7 +12,7 @@ const data=interval=>{
   const o=4000+Math.sin(i/4)*4,c=o+Math.cos(i)*0.1;
   values.push({datetime:new Date(t).toISOString().slice(0,steps[interval]?19:10).replace('T',' '),open:o,high:Math.max(o,c)+0.5,low:Math.min(o,c)-0.5,close:c});
  }
- return {ok:true,provider:'SYNTHETIC TEST FIXTURE',symbol:'XAU/USD',interval,timezone:'UTC',calendarTimezone:'UTC',values};
+ return {ok:true,provider:'SYNTHETIC TEST FIXTURE',symbol:'XAU/USD',interval,timezone:'UTC',calendarTimezone:'UTC',fetchedAtUtc:new Date(NOW).toISOString(),values};
 };
 const server=http.createServer((req,res)=>{try{const name=decodeURIComponent(new URL(req.url,'http://x').pathname),file=path.resolve(root,'.'+(name==='/'?'/index.html':name));if(!file.startsWith(root+path.sep))throw Error('path');res.setHeader('Content-Type',file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':'text/html');res.end(fs.readFileSync(file));}catch(e){res.statusCode=404;res.end('Not found');}});
 (async()=>{
