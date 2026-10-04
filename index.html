@@ -4,12 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<meta name="description" content="Scanner astrology riset XAUUSD: 10 benda langit, ASC/MC Luxor, dan konversi otomatis Luxor ke WIB setiap 5 menit.">
-<title>CEBONK • Luxor → WIB • Astrology 5M</title>
+<meta name="description" content="CEBONK XAUUSD dashboard: Astrology Luxor→WIB 5M dan Technical XAU/USD M5 berbasis data Twelve Data.">
+<title>CEBONK • XAUUSD • Astrology + Technical</title>
 <style>
 :root{--bg:#080e17;--panel:#101a28;--panel2:#142134;--line:#26364c;--text:#e8eff8;--muted:#9eafc5;--accent:#f0c16c;--cyan:#70d7dc;--buy:#83dfb3;--sell:#ff9b9b;--amber:#f1c779}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:var(--text)}button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:wait;opacity:.45}input,select,button{border:1px solid var(--line);border-radius:8px;background:#0d1725;color:var(--text);padding:10px 12px;min-height:44px;max-width:100%}input:focus-visible,button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}input[type=checkbox]{width:18px;min-height:18px;accent-color:var(--accent)}button.primary{background:var(--accent);color:#152033;border-color:var(--accent);font-weight:750}button.ghost{background:transparent}a{color:var(--cyan)}.wrap{width:min(1160px,100%);margin:auto;padding:22px 20px 32px}.eyebrow{font-size:11px;font-weight:750;letter-spacing:1.8px;color:var(--accent)}.hero{border-bottom:1px solid var(--line);padding:3px 0 19px;display:flex;justify-content:space-between;align-items:center;gap:16px}.hero h1{font-size:clamp(26px,4vw,39px);line-height:1.15;letter-spacing:-1.1px;margin:8px 0}.hero p{color:var(--muted);margin:8px 0 0;font-size:13px}.version{border:1px solid var(--line);border-radius:999px;white-space:nowrap;padding:7px 12px;font-size:12px;color:var(--cyan)}.clocks{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px;padding:20px 0}.clock{min-width:0}.clock label,.label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:5px}.clock strong{font-size:29px;letter-spacing:1px;font-variant-numeric:tabular-nums}.clock small{display:block;color:var(--muted);font-size:12px}.bridge{text-align:center;color:var(--cyan);font-size:12px}.bridge b{display:block;font-size:24px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin:0 0 16px;overflow:hidden}.controls{padding:16px;display:grid;grid-template-columns:1fr 1.7fr 1.15fr auto;gap:12px;align-items:end}.controls label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}.controls input,.controls select{width:100%}.control-footer{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:0 16px 15px;font-size:12px;color:var(--muted)}.check{display:flex;align-items:center;gap:9px;cursor:pointer}.check span{line-height:1.4}.note{padding:13px 15px;background:#252014;border:1px solid #584a2d;border-radius:10px;color:#e9d4ab;font-size:12px;margin-bottom:16px}.note strong{color:#ffe2ac}.note p{margin:4px 0}.statusline{display:flex;align-items:center;gap:12px;margin:0 0 13px;min-height:26px;font-size:12px;color:var(--muted)}.statusline progress{width:110px;height:6px;accent-color:var(--cyan)}.error{padding:12px;color:#ffb8b8;border:1px solid #6f3d44;background:#291a22;border-radius:8px;margin-bottom:14px;font-size:13px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.metric{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px}.metric strong{display:block;font-size:23px;margin:6px 0 2px;font-variant-numeric:tabular-nums}.metric small{color:var(--muted);font-size:11px;display:block}.buy{color:var(--buy)}.sell{color:var(--sell)}.neutral,.data{color:#b5c2d2}.transition{color:var(--amber)}.badge{display:inline-flex;gap:4px;align-items:center;font-size:11px;font-weight:750;border:1px solid currentColor;border-radius:6px;padding:3px 7px;white-space:nowrap}.head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px}.head h2,.head h3{font-size:15px;margin:0}.head small{font-size:11px;color:var(--muted)}.head .actions{display:flex;gap:8px;flex-wrap:wrap}.head button{min-height:36px;font-size:12px;padding:6px 10px}.empty{padding:22px 16px;color:var(--muted);font-size:13px}.timeline-row{display:grid;grid-template-columns:170px 112px 1fr;gap:14px;padding:13px 16px;border-bottom:1px solid #223047;align-items:start}.timeline-row:last-child{border-bottom:0}.timeline-time{font-variant-numeric:tabular-nums;font-weight:650;font-size:14px}.timeline-row small{font-size:11px;color:var(--muted);display:block;margin-top:3px}.timeline-info{font-size:12px;overflow-wrap:anywhere}.timeline-info b{font-weight:600}.inspect{padding:15px 16px;border-bottom:1px solid var(--line)}.inspect-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}.inspect-top p{margin:0;font-size:12px;color:var(--muted)}.stepper{display:flex;align-items:center;gap:6px}.stepper button{padding:7px 11px}.stepper select{min-width:125px;padding:8px}.inspect-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.inspect-tile{background:var(--panel2);border-radius:8px;padding:10px 12px}.inspect-tile strong{display:block;font-size:15px}.inspect-tile small{display:block;font-size:11px;color:var(--muted)}.scroller{overflow:auto;max-width:100%;scrollbar-color:#405470 var(--panel)}table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}th,td{text-align:left;padding:10px 13px;border-bottom:1px solid #223047}th{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);background:#0c1522;font-weight:650;position:sticky;top:0;z-index:1}td small{font-size:10px;color:var(--muted)}tbody tr:last-child td{border-bottom:0}.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.muted{color:var(--muted)}.raw{max-height:440px}tr.selected{background:#20334a}.footnote{padding:11px 16px;color:var(--muted);font-size:11px;border-top:1px solid var(--line)}.tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tabs select{min-height:35px;padding:5px 9px;font-size:12px}.raw tr[data-index]{cursor:pointer}.raw tr[data-index]:hover{background:#1b2e43}details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0 16px;margin-bottom:12px;font-size:12px}summary{cursor:pointer;font-weight:650;padding:14px 0}details p{color:var(--muted);margin:4px 0 12px}details pre{font:11px/1.5 ui-monospace,Consolas,monospace;overflow:auto;padding:12px;background:#080f19;border:1px solid var(--line);border-radius:8px;max-height:270px}footer{font-size:11px;color:var(--muted);padding-top:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}#manualCopy{width:100%;height:130px;background:#08111c;color:var(--text);padding:10px}.hint{font-size:11px;color:var(--muted)}[hidden]{display:none!important}#results[data-stale=true]{opacity:.45}#results[data-stale=true] button,#results[data-stale=true] select{pointer-events:none}
 @media(max-width:760px){.wrap{padding:16px 12px 24px}.hero{align-items:flex-start;gap:8px}.eyebrow{font-size:9px;letter-spacing:1.1px}.version{font-size:10px;padding:5px 8px;margin-top:3px}.clocks{gap:10px;padding:16px 0}.clock strong{font-size:23px}.clock small{font-size:10px}.bridge{font-size:10px}.controls{grid-template-columns:1fr 1fr;padding:13px;gap:10px}.controls .mode-control{grid-column:1/-1;grid-row:2}.controls .run-control{grid-column:1/-1}.controls .run-control button{width:100%}.control-footer{padding:0 13px 13px;align-items:flex-start;gap:9px}.metrics{grid-template-columns:1fr 1fr;gap:8px}.metric{padding:12px}.metric strong{font-size:21px}.metric .label{font-size:10px;letter-spacing:.3px}.timeline-row{grid-template-columns:1fr auto;gap:6px 10px;padding:12px}.timeline-info{grid-column:1/-1}.timeline-row small{font-size:10px}.head{padding:12px;align-items:flex-start;flex-wrap:wrap;gap:8px}.head h2{font-size:14px}.inspect{padding:12px}.inspect-grid{grid-template-columns:1fr 1fr}.inspect-grid .inspect-tile:last-child{grid-column:1/-1}.clock label{font-size:9px;letter-spacing:.5px}.note{padding:11px 12px}.statusline{font-size:11px}.hero h1{font-size:29px}.hero p{font-size:11px}.head .actions{width:100%}.head .actions button{flex:1}.inspect-top .stepper{width:100%}.stepper select{flex:1}.raw{max-height:370px}}
+.viewtabs{display:flex;gap:8px;margin:14px 0 16px;padding:5px;background:#0b1420;border:1px solid var(--line);border-radius:12px}
+.viewtab{flex:1;border:0;background:transparent;color:var(--muted);font-weight:800}
+.viewtab.active{background:var(--panel2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+.tech-status{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:12px}
+.tech-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px}
+.tech-card{background:var(--panel2);border:1px solid #25364d;border-radius:10px;padding:12px}
+.tech-card .label{font-size:10px}.tech-card strong{display:block;font-size:21px;margin-top:4px;font-variant-numeric:tabular-nums}
+.tech-signal{font-size:36px!important;letter-spacing:.5px}
+.tech-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:0 14px 14px}
+.tech-actions select{min-width:130px}.tech-actions button{min-width:130px}
+.rulelist{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px}
+.rule{padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#0d1725;font-size:12px}
+.rule.ok{border-color:#2f7c58}.rule.bad{border-color:#714048}.rule b{display:block;margin-bottom:2px}
+.tech-warn{padding:10px 14px;color:var(--muted);font-size:11px;border-top:1px solid var(--line)}
+@media(max-width:760px){.viewtabs{margin-top:10px}.tech-grid{grid-template-columns:1fr 1fr;padding:10px}.tech-card{padding:10px}.tech-card strong{font-size:18px}.tech-signal{font-size:28px!important}.rulelist{grid-template-columns:1fr;padding:10px}.tech-actions{padding:0 10px 10px}}
 @media(prefers-reduced-motion:no-preference){button{transition:background .15s,opacity .15s}}
 </style>
 </head>
@@ -19,6 +34,11 @@
  <div><div class="eyebrow">SEKTE MUSANG · CEBONK COMPANY 22</div><h1>Luxor <span style="color:var(--cyan)">→</span> WIB</h1><p>ASTROLOGY XAUUSD / XAUUSDc · 10 benda langit + ASC/MC · Scanner 5 menit</p></div>
  <span class="version">v2.0 / 5M</span>
 </header>
+<nav class="viewtabs" aria-label="Mode analisis">
+ <button class="viewtab active" id="tabAstro" type="button">ASTROLOGY</button>
+ <button class="viewtab" id="tabTechnical" type="button">TECHNICAL</button>
+</nav>
+<div id="astroView">
 <section class="clocks" aria-label="Jam sekarang, bukan tanggal hasil scan">
  <div class="clock"><label>Jam Luxor sekarang <span id="liveLuxorOffset"></span></label><strong id="clockLuxor">—</strong><small id="clockLuxorDate">—</small></div>
  <div class="bridge"><b>→</b><span id="clockDifference">—</span></div>
@@ -70,7 +90,39 @@
 <details><summary>Cara baca & batasan versi ini</summary><p>Tanggal input selalu tanggal jadwal WIB. Setiap slot diubah menjadi satu timestamp UTC; posisi planet dan ASC/MC dihitung pada timestamp yang sama, lalu ditampilkan dalam WIB dan jam Luxor. Mengganti mode jam Luxor tidak mengubah posisi langit pada timestamp UTC yang sama.</p><p>Mode otomatis mengikuti aturan Africa/Cairo: UTC+2 atau UTC+3 menurut tanggal. Versi ini menyertakan snapshot aturan IANA yang diperiksa 3 Oktober 2026 untuk rentang 2020–2040, sehingga tidak bergantung pada database zona waktu Android yang mungkin lama. Aturan tahun mendatang dapat berubah; aplikasi harus diperbarui bila aturan resmi berubah. Mode UTC+3 tetap hanya untuk menyamai konvensi waktu pada web contoh, bukan selalu jam sipil Luxor.</p><p>Model arah masih formula eksperimen V1. Tidak ada backtest, data harga, persen confidence, rule Astrodox tervalidasi, atau kepastian profit. Tidak ada order MT5 maupun sinyal Telegram otomatis. Sebutan “inti” hanya skor absolut tertinggi di dalam window terpanjang. Menonaktifkan model menampilkan DATA, bukan memaksa BUY/SELL.</p><p>Belum mencakup Nodes, Chiron, Lilith, rumah astrologi lengkap, atau asteroid. Angka dari layanan lain dapat berbeda bila memakai sidereal, topocentric, mean ecliptic, koordinat, orb, atau acuan waktu berbeda.</p><p>Butuh internet untuk memuat Astronomy Engine sekali setiap pembukaan bila belum tersedia di cache. File dapat dipublikasikan sebagai <code>index.html</code>. Tidak memuat font, gambar, akun, API key, atau tracker eksternal.</p></details>
 <details><summary>Aturan model V1 yang dipakai (terbuka, belum tervalidasi)</summary><p>Hanya aspek antarplanet masuk ke penjumlahan skor. BUY bila skor ≥ 1.15; SELL bila skor ≤ −1.15; di antaranya NEUTRAL atau TRANSITION bila perubahan skor antarslot ≥ 0.55. Bobot berikut diwarisi dari prototype, bukan hasil riset XAUUSD.</p><pre id="modelRules"></pre></details>
 <details><summary>Sumber perhitungan & informasi teknis</summary><p><a href="https://github.com/cosinekitty/astronomy/tree/v2.1.19/source/js" target="_blank" rel="noopener noreferrer">Astronomy Engine 2.1.19 — dokumentasi & lisensi MIT</a>. Konversi geocentric EQJ → ECT, true obliquity dan sidereal time digunakan konsisten untuk ASC/MC.</p><p><a href="https://data.iana.org/time-zones/tzdb/africa" target="_blank" rel="noopener noreferrer">IANA tzdb — aturan Africa/Cairo</a>. Koordinat konfigurasi mengikuti titik acuan Luxor dari <a href="https://kusnuzon.github.io/fx-project/tools/fx-tools/AstroCycleFX.html" target="_blank" rel="noopener noreferrer">web contoh</a>; aplikasi ini bukan salinan atau implementasi resmi Astrodox.</p><p>SSOT: satu CFG. Modul terpisah: waktu, geometri ASC/MC, ephemeris, aspek, model eksperimen, dan tampilan. Tidak ada fallback posisi planet rekaan bila library gagal.</p></details>
-<footer><span>CEBONK ASTROLOGY · LUXOR → WIB · v2.0</span><span>Riset, bukan jaminan hasil trading.</span></footer>
+
+</div>
+<section id="technicalView" hidden>
+ <section class="panel">
+  <div class="head"><div><h2>XAU/USD Technical Signal</h2><small>Feed Twelve Data · M5 · M15 dibentuk dari candle M5 · refresh maksimal tiap 5 menit</small></div><span class="badge neutral" id="techFeed">OFFLINE</span></div>
+  <div class="tech-status"><span id="techStatus">Belum mengambil data.</span><span id="techUpdated" class="mono">—</span></div>
+  <div class="tech-grid">
+   <div class="tech-card"><span class="label">Signal</span><strong id="techSignal" class="tech-signal neutral">WAIT</strong><small id="techScore">—</small></div>
+   <div class="tech-card"><span class="label">Harga / Entry</span><strong id="techEntry">—</strong><small id="techCandleTime">—</small></div>
+   <div class="tech-card"><span class="label">Stop Loss</span><strong id="techSL">—</strong><small>1.50 × ATR(14) M5</small></div>
+   <div class="tech-card"><span class="label">Take Profit</span><strong id="techTP">—</strong><small>3.00 × ATR(14) M5 · RR 1:2</small></div>
+   <div class="tech-card"><span class="label">EMA20 M5</span><strong id="techEma20M5">—</strong><small id="techM5Trend">—</small></div>
+   <div class="tech-card"><span class="label">EMA50 M5</span><strong id="techEma50M5">—</strong><small>struktur lokal</small></div>
+   <div class="tech-card"><span class="label">RSI(14) M5</span><strong id="techRsi">—</strong><small id="techRsiState">—</small></div>
+   <div class="tech-card"><span class="label">ATR(14) M5</span><strong id="techAtr">—</strong><small id="techAge">—</small></div>
+  </div>
+  <div class="tech-actions">
+   <button class="primary" id="techRefresh" type="button">Refresh Technical</button>
+   <label class="check"><input id="techAuto" type="checkbox" checked><span>Auto refresh 5 menit</span></label>
+  </div>
+ </section>
+ <section class="panel">
+  <div class="head"><div><h2>Rule Technical V1</h2><small>BUY/SELL hanya keluar bila trend M15 + struktur M5 selaras dan skor minimal 4/5.</small></div></div>
+  <div class="rulelist" id="techRules"><div class="empty">Belum ada data.</div></div>
+  <div class="tech-warn">Technical V1 adalah rule-based baseline untuk pengujian, bukan jaminan profit. Feed XAU/USD Twelve Data dapat berbeda dari harga broker XAUUSDc/NOZAX.</div>
+ </section>
+ <section class="panel">
+  <div class="head"><div><h2>Candle M5 terbaru</h2><small>12 candle terakhir dari backend Cloudflare Worker.</small></div></div>
+  <div class="scroller"><table><thead><tr><th>Waktu WIB</th><th>Open</th><th>High</th><th>Low</th><th>Close</th></tr></thead><tbody id="techCandleBody"><tr><td colspan="5">—</td></tr></tbody></table></div>
+ </section>
+</section>
+
+<footer><span>CEBONK XAUUSD · ASTROLOGY + TECHNICAL</span><span>Riset, bukan jaminan hasil trading.</span></footer>
 <noscript><div class="error">JavaScript harus diaktifkan agar aplikasi bisa menghitung.</div></noscript>
 </main>
 <script>
@@ -456,5 +508,116 @@ $('dateInput').value=T.today();clock();setInterval(clock,1000);run();
 })();
 
 </script>
+
+<script>
+(function(){
+'use strict';
+const API='https://cebonk-xau-api.enggarprasetiyo330.workers.dev/xau?interval=5min&outputsize=300';
+const $=id=>document.getElementById(id);
+let autoTimer=null,loading=false;
+
+function show(mode){
+ const astro=mode==='astro';
+ $('astroView').hidden=!astro;$('technicalView').hidden=astro;
+ $('tabAstro').classList.toggle('active',astro);$('tabTechnical').classList.toggle('active',!astro);
+ if(!astro) refreshTech();
+}
+$('tabAstro').addEventListener('click',()=>show('astro'));
+$('tabTechnical').addEventListener('click',()=>show('technical'));
+
+function ema(values,period){
+ if(values.length<period) return NaN;
+ const k=2/(period+1);let e=values.slice(0,period).reduce((a,b)=>a+b,0)/period;
+ for(let i=period;i<values.length;i++) e=values[i]*k+e*(1-k);
+ return e;
+}
+function rsi(values,period=14){
+ if(values.length<=period) return NaN;
+ let gain=0,loss=0;
+ for(let i=values.length-period;i<values.length;i++){const d=values[i]-values[i-1];if(d>=0)gain+=d;else loss-=d;}
+ if(loss===0) return 100;const rs=(gain/period)/(loss/period);return 100-(100/(1+rs));
+}
+function atr(candles,period=14){
+ if(candles.length<=period) return NaN;
+ const trs=[];for(let i=1;i<candles.length;i++){const c=candles[i],p=candles[i-1];trs.push(Math.max(c.high-c.low,Math.abs(c.high-p.close),Math.abs(c.low-p.close)));}
+ return trs.slice(-period).reduce((a,b)=>a+b,0)/period;
+}
+function parseUtc(s){return new Date(String(s).replace(' ','T')+'Z').getTime();}
+function aggregate15(candles){
+ const buckets=new Map();
+ for(const c of candles){
+  const key=Math.floor(c.ms/900000)*900000;
+  let b=buckets.get(key);
+  if(!b){b={ms:key,open:c.open,high:c.high,low:c.low,close:c.close};buckets.set(key,b);}
+  else{b.high=Math.max(b.high,c.high);b.low=Math.min(b.low,c.low);b.close=c.close;}
+ }
+ return [...buckets.values()].sort((a,b)=>a.ms-b.ms);
+}
+function wib(ms){
+ return new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(ms))+' WIB';
+}
+function n(v,d=2){return Number.isFinite(v)?v.toFixed(d):'—';}
+function ruleHtml(label,ok,detail){return '<div class="rule '+(ok?'ok':'bad')+'"><b>'+(ok?'✓ ':'✕ ')+label+'</b><span>'+detail+'</span></div>';}
+
+async function refreshTech(){
+ if(loading) return;loading=true;$('techRefresh').disabled=true;$('techStatus').textContent='Mengambil 300 candle M5…';
+ try{
+  const res=await fetch(API,{cache:'no-store'});const data=await res.json();
+  if(!res.ok||!data.ok) throw new Error(data.message||data.error||('HTTP '+res.status));
+  const candles=(data.values||[]).map(v=>({ms:parseUtc(v.datetime),open:+v.open,high:+v.high,low:+v.low,close:+v.close})).filter(c=>Number.isFinite(c.close)).sort((a,b)=>a.ms-b.ms);
+  if(candles.length<60) throw new Error('Data candle kurang dari 60.');
+  const m15=aggregate15(candles),close5=candles.map(c=>c.close),close15=m15.map(c=>c.close),last=candles[candles.length-1];
+  const e20=ema(close5,20),e50=ema(close5,50),e20_15=ema(close15,20),e50_15=ema(close15,50),r=rsi(close5,14),a=atr(candles,14);
+
+  const buyRules=[
+   ['Trend M15',last.close>e50_15&&e20_15>e50_15,'EMA20 M15 '+n(e20_15)+' > EMA50 '+n(e50_15)],
+   ['Struktur M5',e20>e50,'EMA20 '+n(e20)+' > EMA50 '+n(e50)],
+   ['Harga > EMA20',last.close>e20,'Close '+n(last.close)+' > '+n(e20)],
+   ['RSI BUY zone',r>=52&&r<=70,'RSI '+n(r,1)+' · target 52–70'],
+   ['Candle bullish',last.close>=last.open,'O '+n(last.open)+' → C '+n(last.close)]
+  ];
+  const sellRules=[
+   ['Trend M15',last.close<e50_15&&e20_15<e50_15,'EMA20 M15 '+n(e20_15)+' < EMA50 '+n(e50_15)],
+   ['Struktur M5',e20<e50,'EMA20 '+n(e20)+' < EMA50 '+n(e50)],
+   ['Harga < EMA20',last.close<e20,'Close '+n(last.close)+' < '+n(e20)],
+   ['RSI SELL zone',r<=48&&r>=30,'RSI '+n(r,1)+' · target 30–48'],
+   ['Candle bearish',last.close<=last.open,'O '+n(last.open)+' → C '+n(last.close)]
+  ];
+  const bs=buyRules.filter(x=>x[1]).length,ss=sellRules.filter(x=>x[1]).length;
+  let signal='WAIT',rules=bs>=ss?buyRules:sellRules;
+  if(buyRules[0][1]&&buyRules[1][1]&&bs>=4)signal='BUY';
+  else if(sellRules[0][1]&&sellRules[1][1]&&ss>=4)signal='SELL';
+
+  const entry=last.close;
+  const sl=signal==='BUY'?entry-1.5*a:signal==='SELL'?entry+1.5*a:NaN;
+  const tp=signal==='BUY'?entry+3*a:signal==='SELL'?entry-3*a:NaN;
+  const ageMin=Math.max(0,Math.round((Date.now()-last.ms)/60000));
+
+  $('techSignal').textContent=signal;$('techSignal').className='tech-signal '+(signal==='BUY'?'buy':signal==='SELL'?'sell':'neutral');
+  $('techScore').textContent='BUY '+bs+'/5 · SELL '+ss+'/5';
+  $('techEntry').textContent=n(entry);$('techSL').textContent=n(sl);$('techTP').textContent=n(tp);
+  $('techEma20M5').textContent=n(e20);$('techEma50M5').textContent=n(e50);$('techRsi').textContent=n(r,1);$('techAtr').textContent=n(a);
+  $('techM5Trend').textContent=e20>e50?'M5 bullish':e20<e50?'M5 bearish':'M5 flat';
+  $('techRsiState').textContent=r>=52?'momentum buy':r<=48?'momentum sell':'netral';
+  $('techAge').textContent='umur candle '+ageMin+' menit';
+  $('techCandleTime').textContent=wib(last.ms);
+  $('techUpdated').textContent='Update '+wib(Date.now());
+  $('techStatus').textContent='Feed aktif · '+candles.length+' candle · provider '+data.provider;
+  $('techFeed').textContent=ageMin<=20?'LIVE':'STALE';$('techFeed').className='badge '+(ageMin<=20?'buy':'transition');
+  $('techRules').innerHTML=rules.map(x=>ruleHtml(x[0],x[1],x[2])).join('');
+  $('techCandleBody').innerHTML=candles.slice(-12).reverse().map(c=>'<tr><td class="mono">'+wib(c.ms)+'</td><td>'+n(c.open)+'</td><td>'+n(c.high)+'</td><td>'+n(c.low)+'</td><td>'+n(c.close)+'</td></tr>').join('');
+ }catch(e){
+  $('techStatus').textContent='Gagal: '+e.message;$('techFeed').textContent='ERROR';$('techFeed').className='badge sell';
+ }finally{loading=false;$('techRefresh').disabled=false;}
+}
+$('techRefresh').addEventListener('click',refreshTech);
+$('techAuto').addEventListener('change',function(){
+ if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
+ if(this.checked) autoTimer=setInterval(refreshTech,300000);
+});
+autoTimer=setInterval(()=>{if($('techAuto').checked&&!$('technicalView').hidden)refreshTech();},300000);
+})();
+</script>
+
 </body>
 </html>
