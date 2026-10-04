@@ -95,21 +95,21 @@
 </div>
 <section id="technicalView" hidden>
  <section class="panel">
-  <div class="head"><div><h2>Fibo Musang — XAU/USD</h2><small>Execution M1 · struktur price action · IB → CB1 break → retest Zone IB → entry</small></div><span class="badge neutral" id="techFeed">OFFLINE</span></div>
+  <div class="head"><div><h2>Fibo Musang — CB1 Entry</h2><small>Execution M1 · struktur swing · Fibo 0 → CB1(100) · touch CB1 = ENTRY</small></div><span class="badge neutral" id="techFeed">OFFLINE</span></div>
   <div class="tech-status"><span id="techStatus">Belum mengambil data.</span><span id="techUpdated" class="mono">—</span></div>
   <div class="tech-grid">
    <div class="tech-card"><span class="label">Signal</span><strong id="techSignal" class="tech-signal neutral">WAIT</strong><small id="techScore">—</small></div>
    <div class="tech-card"><span class="label">Stage</span><strong id="techStage">—</strong><small id="techStructure">—</small></div>
-   <div class="tech-card"><span class="label">Entry</span><strong id="techEntry">—</strong><small id="techCandleTime">—</small></div>
+   <div class="tech-card"><span class="label">CB1 / Entry</span><strong id="techEntry">—</strong><small id="techCandleTime">—</small></div>
    <div class="tech-card"><span class="label">Stop Loss</span><strong id="techSL">—</strong><small>Swing 0 + buffer ATR</small></div>
    <div class="tech-card"><span class="label">TP1 · 161.8</span><strong id="techTP1">—</strong><small id="techRR1">—</small></div>
    <div class="tech-card"><span class="label">TP2 · 261.8</span><strong id="techTP2">—</strong><small id="techRR2">—</small></div>
    <div class="tech-card"><span class="label">TP3 · 423.6</span><strong id="techTP3">—</strong><small id="techRR3">—</small></div>
    <div class="tech-card"><span class="label">ATR(14) M1</span><strong id="techAtr">—</strong><small id="techAge">—</small></div>
    <div class="tech-card"><span class="label">Fibo 0.0</span><strong id="techFib0">—</strong><small>Swing anchor</small></div>
-   <div class="tech-card"><span class="label">Fibo 100</span><strong id="techFib100">—</strong><small>Impulse end</small></div>
+   <div class="tech-card"><span class="label">Fibo 100 / CB1</span><strong id="techFib100">—</strong><small>ENTRY level</small></div>
    <div class="tech-card"><span class="label">CB1</span><strong id="techCB1">—</strong><small id="techCB1State">—</small></div>
-   <div class="tech-card"><span class="label">Zone IB</span><strong id="techZone">—</strong><small id="techZoneState">—</small></div>
+   <div class="tech-card"><span class="label">Entry event</span><strong id="techZone">—</strong><small id="techZoneState">—</small></div>
   </div>
   <div class="tech-actions">
    <button class="primary" id="techRefresh" type="button">Refresh Fibo Musang</button>
@@ -117,12 +117,12 @@
   </div>
  </section>
  <section class="panel">
-  <div class="head"><div><h2>Fibo Musang Detector V1</h2><small>Trend didefinisikan saka HH-HL / LH-LL; ora nganggo EMA utawa RSI.</small></div></div>
+  <div class="head"><div><h2>Rule Fibo Musang — CB1 Entry</h2><small>CB1 break ora ditunggu. Yen harga nyentuh level CB1, entry aktif.</small></div></div>
   <div class="rulelist" id="techRules"><div class="empty">Belum ada data.</div></div>
-  <div class="tech-warn">V1 iki minangka detector mekanis saka materi Musang: struktur → Zone IB → CB1 break → retest → entry. Setup ambigu dibalekke WAIT. Feed XAU/USD Twelve Data bisa beda karo XAUUSDc broker.</div>
+  <div class="tech-warn">SELL: swing high/new high → CB1 = low struktur antar high → touch CB1 = entry SELL. BUY simetris. Fibo 0→CB1(100), target 161.8 / 261.8 / 423.6. Setup ambigu = WAIT.</div>
  </section>
  <section class="panel">
-  <div class="head"><div><h2>Level Fibo aktif</h2><small>0 / 23.6 / 38.2 / 50 / 61.8 / 100 / 161.8 / 200 / 261.8 / 423.6</small></div></div>
+  <div class="head"><div><h2>Level Fibo aktif</h2><small>0 / 23.6 / 38.2 / 50 / 61.8 / 100(CB1) / 161.8 / 200 / 261.8 / 423.6</small></div></div>
   <div class="scroller"><table><thead><tr><th>Level</th><th>Harga</th><th>Keterangan</th></tr></thead><tbody id="techFibBody"><tr><td colspan="3">—</td></tr></tbody></table></div>
  </section>
  <section class="panel">
@@ -133,7 +133,7 @@
 
 <section id="combinedView" hidden>
  <section class="panel">
-  <div class="head"><div><h2>Combined — Astrology × Fibo Musang</h2><small>Astrology = master arah/jam. Fibo Musang M1 = timing entry.</small></div><span class="badge neutral" id="comboStatus">WAIT</span></div>
+  <div class="head"><div><h2>Combined — Astrology × Fibo Musang CB1</h2><small>Astrology = master arah/jam. Fibo Musang M1 = CB1 entry.</small></div><span class="badge neutral" id="comboStatus">WAIT</span></div>
   <div class="tech-grid">
    <div class="tech-card"><span class="label">Astrology aktif</span><strong id="comboAstro" class="neutral">—</strong><small id="comboWindow">—</small></div>
    <div class="tech-card"><span class="label">Fibo Musang</span><strong id="comboTech" class="neutral">—</strong><small id="comboTechScore">—</small></div>
@@ -146,7 +146,7 @@
    <div class="tech-card"><span class="label">Astro date</span><strong id="comboAstroDate">—</strong><small>Jadwal WIB sing lagi dihitung</small></div>
    <div class="tech-card"><span class="label">Candle M1</span><strong id="comboCandle">—</strong><small>Feed Twelve Data</small></div>
   </div>
-  <div class="tech-warn">ENTRY mung metu yen Astrology BUY + Fibo Musang BUY, utawa Astrology SELL + Fibo Musang SELL. CB1 break tok durung entry; wajib retest Zone IB. NEUTRAL / TRANSITION / arah beda = WAIT.</div>
+  <div class="tech-warn">ENTRY mung metu yen Astrology BUY + CB1 BUY kesentuh, utawa Astrology SELL + CB1 SELL kesentuh. Ora nunggu CB1 break lan ora nunggu retest Zone IB. NEUTRAL / TRANSITION / arah beda = WAIT.</div>
  </section>
 </section>
 
@@ -544,7 +544,7 @@ $('dateInput').value=T.today();clock();setInterval(clock,1000);run();
 'use strict';
 const API='https://cebonk-xau-api.enggarprasetiyo330.workers.dev/xau?interval=1min&outputsize=500';
 const $=id=>document.getElementById(id);
-const PIVOT_DEPTH=2, BASE_LOOKBACK=10, BASE_BODY_MAX=0.60, SL_BUFFER_ATR=0.15;
+const PIVOT_DEPTH=2, SL_BUFFER_ATR=0.15, ENTRY_HOLD_BARS=5;
 let autoTimer=null,loading=false;
 
 function show(mode){
@@ -563,7 +563,6 @@ $('tabCombined').addEventListener('click',()=>show('combined'));
 function parseUtc(s){return new Date(String(s).replace(' ','T')+'Z').getTime();}
 function wib(ms){return new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(ms))+' WIB';}
 function n(v,d=2){return Number.isFinite(v)?v.toFixed(d):'—';}
-function bodyRatio(c){const r=c.high-c.low;return r>0?Math.abs(c.close-c.open)/r:1;}
 function atr(candles,period=14){
  if(candles.length<=period) return NaN;
  const tr=[];for(let i=1;i<candles.length;i++){const c=candles[i],p=candles[i-1];tr.push(Math.max(c.high-c.low,Math.abs(c.high-p.close),Math.abs(c.low-p.close)));}
@@ -584,146 +583,91 @@ function pivots(candles,depth=PIVOT_DEPTH){
 }
 function latestStructure(p){
  if(p.highs.length<2||p.lows.length<2) return {direction:'WAIT',label:'Struktur belum cukup'};
- const h1=p.highs[p.highs.length-2],h2=p.highs[p.highs.length-1];
- const l1=p.lows[p.lows.length-2],l2=p.lows[p.lows.length-1];
+ const h1=p.highs[p.highs.length-2],h2=p.highs[p.highs.length-1],l1=p.lows[p.lows.length-2],l2=p.lows[p.lows.length-1];
  if(h2.price>h1.price&&l2.price>l1.price) return {direction:'BUY',label:'HH + HL'};
  if(h2.price<h1.price&&l2.price<l1.price) return {direction:'SELL',label:'LH + LL'};
  return {direction:'WAIT',label:'Mixed / transition'};
 }
-function setupFromReversal(candles,p,direction){
- if(direction==='SELL'){
-  if(p.highs.length<2) return null;
-  const h2=p.highs[p.highs.length-1],h1=p.highs[p.highs.length-2];
-  if(h2.price<=h1.price) return null; // new high before bearish break
-  const between=p.lows.filter(x=>x.i>h1.i&&x.i<h2.i);
-  if(!between.length) return null;
-  const cb1=between.reduce((a,b)=>b.price<a.price?b:a);
-  const breakIndex=candles.findIndex((c,i)=>i>h2.i&&c.close<cb1.price);
-  if(breakIndex<0) return {direction,anchor0:h2,cb1,breakIndex:-1,stage:'WAIT CB1 BREAK'};
-  const lowsAfter=p.lows.filter(x=>x.i>breakIndex);
-  let end=lowsAfter.length?lowsAfter[lowsAfter.length-1]:null;
-  if(!end){
-   let idx=breakIndex;for(let i=breakIndex;i<candles.length;i++)if(candles[i].low<candles[idx].low)idx=i;
-   end={i:idx,price:candles[idx].low,ms:candles[idx].ms};
-  }
-  return {direction,anchor0:h2,cb1,breakIndex,end,stage:'CB1 BROKEN'};
- }
- if(direction==='BUY'){
-  if(p.lows.length<2) return null;
-  const l2=p.lows[p.lows.length-1],l1=p.lows[p.lows.length-2];
-  if(l2.price>=l1.price) return null; // new low before bullish break
-  const between=p.highs.filter(x=>x.i>l1.i&&x.i<l2.i);
-  if(!between.length) return null;
-  const cb1=between.reduce((a,b)=>b.price>a.price?b:a);
-  const breakIndex=candles.findIndex((c,i)=>i>l2.i&&c.close>cb1.price);
-  if(breakIndex<0) return {direction,anchor0:l2,cb1,breakIndex:-1,stage:'WAIT CB1 BREAK'};
-  const highsAfter=p.highs.filter(x=>x.i>breakIndex);
-  let end=highsAfter.length?highsAfter[highsAfter.length-1]:null;
-  if(!end){
-   let idx=breakIndex;for(let i=breakIndex;i<candles.length;i++)if(candles[i].high>candles[idx].high)idx=i;
-   end={i:idx,price:candles[idx].high,ms:candles[idx].ms};
-  }
-  return {direction,anchor0:l2,cb1,breakIndex,end,stage:'CB1 BROKEN'};
- }
- return null;
+function makeSellSetup(candles,p){
+ if(p.highs.length<2) return null;
+ const h1=p.highs[p.highs.length-2],h2=p.highs[p.highs.length-1];
+ if(h2.price<=h1.price) return null;
+ const between=p.lows.filter(x=>x.i>h1.i&&x.i<h2.i);
+ if(!between.length) return null;
+ const cb1=between.reduce((a,b)=>b.price<a.price?b:a);
+ const touchIndex=candles.findIndex((c,i)=>i>h2.i&&c.low<=cb1.price&&c.high>=cb1.price);
+ return {direction:'SELL',anchor0:h2,cb1,touchIndex};
 }
-function zoneIB(candles,breakIndex){
- if(breakIndex<1) return null;
- const start=Math.max(0,breakIndex-BASE_LOOKBACK);
- const candidates=[];
- for(let i=start;i<breakIndex;i++){
-  const c=candles[i];
-  if(bodyRatio(c)<=BASE_BODY_MAX) candidates.push({i,c});
- }
- if(!candidates.length){
-  const i=Math.max(start,breakIndex-1),c=candles[i];return {i,low:c.low,high:c.high};
- }
- const last=candidates[candidates.length-1];
- let lo=last.c.low,hi=last.c.high,first=last.i;
- for(let i=last.i-1;i>=Math.max(start,last.i-2);i--){
-  const c=candles[i];
-  if(bodyRatio(c)<=BASE_BODY_MAX){lo=Math.min(lo,c.low);hi=Math.max(hi,c.high);first=i;} else break;
- }
- return {i:first,last:last.i,low:lo,high:hi};
+function makeBuySetup(candles,p){
+ if(p.lows.length<2) return null;
+ const l1=p.lows[p.lows.length-2],l2=p.lows[p.lows.length-1];
+ if(l2.price>=l1.price) return null;
+ const between=p.highs.filter(x=>x.i>l1.i&&x.i<l2.i);
+ if(!between.length) return null;
+ const cb1=between.reduce((a,b)=>b.price>a.price?b:a);
+ const touchIndex=candles.findIndex((c,i)=>i>l2.i&&c.low<=cb1.price&&c.high>=cb1.price);
+ return {direction:'BUY',anchor0:l2,cb1,touchIndex};
+}
+function bestSetup(candles,p){
+ const s=makeSellSetup(candles,p),b=makeBuySetup(candles,p);
+ return [s,b].filter(Boolean).sort((x,y)=>y.anchor0.i-x.anchor0.i)[0]||null;
 }
 function fibPrices(direction,a0,a100){
- const range=Math.abs(a0-a100);
- const f=r=>direction==='SELL'?a0-r*range:a0+r*range;
+ const range=Math.abs(a0-a100),f=r=>direction==='SELL'?a0-r*range:a0+r*range;
  return {'0.0':f(0),'23.6':f(.236),'38.2':f(.382),'50.0':f(.5),'61.8':f(.618),'100.0':f(1),'161.8':f(1.618),'200.0':f(2),'261.8':f(2.618),'423.6':f(4.236)};
-}
-function retest(candles,setup,zone){
- if(!setup||setup.breakIndex<0||!zone) return null;
- const from=Math.max(setup.breakIndex+1,zone.last+1);
- for(let i=from;i<candles.length;i++){
-  const c=candles[i],touch=c.high>=zone.low&&c.low<=zone.high;
-  if(!touch) continue;
-  const mid=(zone.low+zone.high)/2;
-  if(setup.direction==='SELL'&&c.close<c.open&&c.close<=mid) return {i,c};
-  if(setup.direction==='BUY'&&c.close>c.open&&c.close>=mid) return {i,c};
- }
- return null;
 }
 function rr(entry,sl,tp){const risk=Math.abs(entry-sl),reward=Math.abs(tp-entry);return risk>0?reward/risk:NaN;}
 function ruleHtml(label,ok,detail){return '<div class="rule '+(ok?'ok':'bad')+'"><b>'+(ok?'✓ ':'✕ ')+label+'</b><span>'+detail+'</span></div>';}
-function bestSetup(candles,p){
- // Detect recent reversal setups in both directions; prefer the most recent anchor.
- const s=setupFromReversal(candles,p,'SELL'),b=setupFromReversal(candles,p,'BUY');
- const arr=[s,b].filter(Boolean).sort((x,y)=>(y.anchor0?.i||-1)-(x.anchor0?.i||-1));
- return arr[0]||null;
-}
 
 async function refreshTech(){
- if(loading) return;loading=true;$('techRefresh').disabled=true;$('techStatus').textContent='Mengambil 500 candle M1…';
+ if(loading)return;loading=true;$('techRefresh').disabled=true;$('techStatus').textContent='Mengambil 500 candle M1…';
  try{
   const res=await fetch(API,{cache:'no-store'}),data=await res.json();
-  if(!res.ok||!data.ok) throw new Error(data.message||data.error||('HTTP '+res.status));
+  if(!res.ok||!data.ok)throw new Error(data.message||data.error||('HTTP '+res.status));
   const candles=(data.values||[]).map(v=>({ms:parseUtc(v.datetime),open:+v.open,high:+v.high,low:+v.low,close:+v.close})).filter(c=>Number.isFinite(c.close)).sort((a,b)=>a.ms-b.ms);
-  if(candles.length<100) throw new Error('Data M1 kurang saka 100 candle.');
+  if(candles.length<100)throw new Error('Data M1 kurang saka 100 candle.');
   const last=candles[candles.length-1],a=atr(candles,14),p=pivots(candles),structure=latestStructure(p),setup=bestSetup(candles,p);
-  let signal='WAIT',stage='NO SETUP',entry=NaN,sl=NaN,tp1=NaN,tp2=NaN,tp3=NaN,zone=null,re=null,fib=null,direction='WAIT';
+  let signal='WAIT',stage='NO SETUP',entry=NaN,sl=NaN,tp1=NaN,tp2=NaN,tp3=NaN,fib=null,direction='WAIT',entryMs=NaN,touchFresh=false;
   if(setup){
-   direction=setup.direction;stage=setup.stage;
-   if(setup.breakIndex>=0&&setup.end){
-    zone=zoneIB(candles,setup.breakIndex);
-    re=retest(candles,setup,zone);
-    fib=fibPrices(direction,setup.anchor0.price,setup.end.price);
-    if(re){
-     stage='RETEST VALID';signal=direction;entry=re.c.close;
-     sl=direction==='SELL'?setup.anchor0.price+SL_BUFFER_ATR*a:setup.anchor0.price-SL_BUFFER_ATR*a;
-     tp1=fib['161.8'];tp2=fib['261.8'];tp3=fib['423.6'];
-    }else stage='WAIT RETEST ZONE IB';
-   }
+   direction=setup.direction;
+   fib=fibPrices(direction,setup.anchor0.price,setup.cb1.price);
+   entry=setup.cb1.price;
+   sl=direction==='SELL'?setup.anchor0.price+SL_BUFFER_ATR*a:setup.anchor0.price-SL_BUFFER_ATR*a;
+   tp1=fib['161.8'];tp2=fib['261.8'];tp3=fib['423.6'];
+   if(setup.touchIndex>=0){
+    entryMs=candles[setup.touchIndex].ms;
+    const barsAgo=(candles.length-1)-setup.touchIndex;
+    touchFresh=barsAgo<=ENTRY_HOLD_BARS;
+    stage=touchFresh?'CB1 ENTRY ACTIVE':'CB1 TOUCHED / EXPIRED';
+    if(touchFresh)signal=direction;
+   }else stage='WAIT CB1 TOUCH';
   }
   const ageMin=Math.max(0,Math.round((Date.now()-last.ms)/60000));
   $('techSignal').textContent=signal;$('techSignal').className='tech-signal '+(signal==='BUY'?'buy':signal==='SELL'?'sell':'neutral');
-  $('techScore').textContent=direction==='WAIT'?'Ora ana setup valid':direction+' setup';
+  $('techScore').textContent=setup?direction+' CB1 setup':'Ora ana setup valid';
   $('techStage').textContent=stage;$('techStructure').textContent='PA: '+structure.label;
-  $('techEntry').textContent=n(entry);$('techSL').textContent=n(sl);$('techTP1').textContent=n(tp1);$('techTP2').textContent=n(tp2);$('techTP3').textContent=n(tp3);
-  $('techRR1').textContent=Number.isFinite(entry)?'RR 1:'+n(rr(entry,sl,tp1),2):'—';
-  $('techRR2').textContent=Number.isFinite(entry)?'RR 1:'+n(rr(entry,sl,tp2),2):'—';
-  $('techRR3').textContent=Number.isFinite(entry)?'RR 1:'+n(rr(entry,sl,tp3),2):'—';
+  $('techEntry').textContent=setup?n(entry):'—';$('techSL').textContent=setup?n(sl):'—';$('techTP1').textContent=setup?n(tp1):'—';$('techTP2').textContent=setup?n(tp2):'—';$('techTP3').textContent=setup?n(tp3):'—';
+  $('techRR1').textContent=setup?'RR 1:'+n(rr(entry,sl,tp1),2):'—';$('techRR2').textContent=setup?'RR 1:'+n(rr(entry,sl,tp2),2):'—';$('techRR3').textContent=setup?'RR 1:'+n(rr(entry,sl,tp3),2):'—';
   $('techAtr').textContent=n(a);$('techAge').textContent='umur candle '+ageMin+' menit';
-  $('techFib0').textContent=setup?n(setup.anchor0.price):'—';$('techFib100').textContent=setup&&setup.end?n(setup.end.price):'—';
-  $('techCB1').textContent=setup?n(setup.cb1.price):'—';$('techCB1State').textContent=setup?(setup.breakIndex>=0?'BROKEN':'BELUM BREAK'):'—';
-  $('techZone').textContent=zone?(n(zone.low)+' – '+n(zone.high)):'—';$('techZoneState').textContent=re?'RETEST VALID':zone?'menunggu retest':'—';
-  $('techCandleTime').textContent=re?wib(re.c.ms):wib(last.ms);
-  $('techUpdated').textContent='Update '+wib(Date.now());
-  $('techStatus').textContent='Feed M1 aktif · '+candles.length+' candle · provider '+data.provider;
+  $('techFib0').textContent=setup?n(setup.anchor0.price):'—';$('techFib100').textContent=setup?n(setup.cb1.price):'—';
+  $('techCB1').textContent=setup?n(setup.cb1.price):'—';$('techCB1State').textContent=setup?(setup.touchIndex>=0?'TOUCHED':'MENUNGGU TOUCH'):'—';
+  $('techZone').textContent=setup&&setup.touchIndex>=0?wib(entryMs):'—';$('techZoneState').textContent=touchFresh?'ENTRY AKTIF':setup&&setup.touchIndex>=0?'event lama':'belum entry';
+  $('techCandleTime').textContent=setup&&setup.touchIndex>=0?wib(entryMs):wib(last.ms);
+  $('techUpdated').textContent='Update '+wib(Date.now());$('techStatus').textContent='Feed M1 aktif · '+candles.length+' candle · provider '+data.provider;
   $('techFeed').textContent=ageMin<=5?'LIVE':'STALE';$('techFeed').className='badge '+(ageMin<=5?'buy':'transition');
 
   const rules=[
-   ['Struktur price action',structure.direction!=='WAIT',structure.label],
-   ['Setup reversal Musang',!!setup,setup?direction+' anchor 0 @ '+n(setup.anchor0.price):'Belum terbentuk'],
-   ['CB1 break',!!setup&&setup.breakIndex>=0,setup?'CB1 '+n(setup.cb1.price):'—'],
-   ['Zone IB',!!zone,zone?n(zone.low)+' – '+n(zone.high):'Belum ditandai'],
-   ['Retest Zone IB',!!re,re?wib(re.c.ms):'Belum retest']
+   ['Swing 0 valid',!!setup,setup?(direction+' @ '+n(setup.anchor0.price)):'Belum ada'],
+   ['CB1 terbentuk',!!setup,setup?('CB1 '+n(setup.cb1.price)):'Belum ada'],
+   ['Fibo 0 → 100',!!setup,setup?('0 '+n(setup.anchor0.price)+' → 100/CB1 '+n(setup.cb1.price)):'Belum valid'],
+   ['Harga touch CB1',!!setup&&setup.touchIndex>=0,setup&&setup.touchIndex>=0?wib(entryMs):'Belum touch'],
+   ['Entry window aktif',touchFresh,touchFresh?direction+' aktif nganti '+ENTRY_HOLD_BARS+' bar M1':'WAIT']
   ];
   $('techRules').innerHTML=rules.map(x=>ruleHtml(x[0],x[1],x[2])).join('');
-  const fibRows=fib?Object.entries(fib).map(([k,v])=>'<tr><td>'+k+'</td><td>'+n(v)+'</td><td>'+(k==='161.8'?'TP1':k==='261.8'?'TP2':k==='423.6'?'TP3':k==='0.0'?'Swing 0':k==='100.0'?'Impulse 100':'Retracement / extension')+'</td></tr>').join(''):'<tr><td colspan="3">Belum ada leg Fibo valid.</td></tr>';
-  $('techFibBody').innerHTML=fibRows;
+  $('techFibBody').innerHTML=fib?Object.entries(fib).map(([k,v])=>'<tr><td>'+k+'</td><td>'+n(v)+'</td><td>'+(k==='100.0'?'CB1 / ENTRY':k==='161.8'?'TP1':k==='261.8'?'TP2':k==='423.6'?'TP3':k==='0.0'?'Swing 0':'Retracement / extension')+'</td></tr>').join(''):'<tr><td colspan="3">Belum ada Fibo valid.</td></tr>';
   $('techCandleBody').innerHTML=candles.slice(-20).reverse().map(c=>'<tr><td class="mono">'+wib(c.ms)+'</td><td>'+n(c.open)+'</td><td>'+n(c.high)+'</td><td>'+n(c.low)+'</td><td>'+n(c.close)+'</td></tr>').join('');
 
-  window.CEBONK_TECH_STATE={signal,direction,stage,entry,sl,tp:tp2,tp1,tp2,tp3,rr1:rr(entry,sl,tp1),rr2:rr(entry,sl,tp2),rr3:rr(entry,sl,tp3),lastMs:last.ms,lastClose:last.close,atr:a,ageMin,updatedMs:Date.now(),cb1:setup?.cb1?.price??NaN,zone};
+  window.CEBONK_TECH_STATE={signal,direction,stage,entry,sl,tp:tp2,tp1,tp2,tp3,rr1:rr(entry,sl,tp1),rr2:rr(entry,sl,tp2),rr3:rr(entry,sl,tp3),lastMs:last.ms,entryMs,lastClose:last.close,atr:a,ageMin,updatedMs:Date.now(),cb1:setup?.cb1?.price??NaN};
   window.dispatchEvent(new Event('cebonk-tech-update'));
  }catch(e){
   $('techStatus').textContent='Gagal: '+e.message;$('techFeed').textContent='ERROR';$('techFeed').className='badge sell';
@@ -734,40 +678,29 @@ function comboFmt(v){return Number.isFinite(v)?v.toFixed(2):'—';}
 function comboWib(ms){return Number.isFinite(ms)?new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(ms))+' WIB':'—';}
 function renderCombined(){
  const a=window.CEBONK_ASTRO_STATE,t=window.CEBONK_TECH_STATE;
- if(!a){
-  $('comboAstro').textContent='NO DATA';$('comboAstro').className='neutral';
-  $('comboDecision').textContent='WAIT';$('comboReason').textContent='Astrology durung siap.';return;
- }
+ if(!a){$('comboAstro').textContent='NO DATA';$('comboAstro').className='neutral';$('comboDecision').textContent='WAIT';$('comboReason').textContent='Astrology durung siap.';return;}
  $('comboAstroDate').textContent=a.iso||'—';
- if(!t){
-  $('comboTech').textContent='NO DATA';$('comboTech').className='neutral';
-  $('comboDecision').textContent='WAIT';$('comboReason').textContent='Fibo Musang durung siap.';return;
- }
- const g=(a.groups||[]).find(x=>t.lastMs>=x.start&&t.lastMs<x.end)||null;
+ if(!t){$('comboTech').textContent='NO DATA';$('comboTech').className='neutral';$('comboDecision').textContent='WAIT';$('comboReason').textContent='Fibo Musang durung siap.';return;}
+ const eventMs=Number.isFinite(t.entryMs)?t.entryMs:t.lastMs;
+ const g=(a.groups||[]).find(x=>eventMs>=x.start&&eventMs<x.end)||null;
  const astroState=g?g.state:'OUTSIDE',validAstro=astroState==='BUY'||astroState==='SELL',aligned=validAstro&&astroState===t.signal;
  const decision=aligned?'ENTRY '+astroState:'WAIT';
  $('comboAstro').textContent=astroState;$('comboAstro').className=astroState==='BUY'?'buy':astroState==='SELL'?'sell':'neutral';
- $('comboWindow').textContent=g?(comboWib(g.start)+' – '+comboWib(g.end)):'Ora ana window Astrology ing candle iki';
+ $('comboWindow').textContent=g?(comboWib(g.start)+' – '+comboWib(g.end)):'Ora ana window Astrology ing event CB1';
  $('comboTech').textContent=t.signal;$('comboTech').className=t.signal==='BUY'?'buy':t.signal==='SELL'?'sell':'neutral';
  $('comboTechScore').textContent=t.direction+' · '+t.stage;
  $('comboDecision').textContent=decision;$('comboDecision').className=aligned?(astroState==='BUY'?'buy':'sell'):'neutral';
  $('comboStatus').textContent=aligned?'SELARAS':'WAIT';$('comboStatus').className='badge '+(aligned?(astroState==='BUY'?'buy':'sell'):'neutral');
- $('comboReason').textContent=aligned?'Astrology lan Fibo Musang searah + retest Zone IB valid.':!validAstro?('Astrology '+astroState+' → ora entry.'):(t.signal==='WAIT'?'Fibo Musang durung tekan retest valid.':'Arah beda: Astro '+astroState+' vs Musang '+t.signal+'.');
+ $('comboReason').textContent=aligned?'Astrology searah lan harga nyentuh CB1 → entry.':!validAstro?('Astrology '+astroState+' → ora entry.'):(t.signal==='WAIT'?'CB1 durung aktif / wis expired.':'Arah beda: Astro '+astroState+' vs CB1 '+t.signal+'.');
  $('comboEntry').textContent=aligned?comboFmt(t.entry):'—';$('comboSL').textContent=aligned?comboFmt(t.sl):'—';
  $('comboTP1').textContent=aligned?comboFmt(t.tp1):'—';$('comboTP2').textContent=aligned?comboFmt(t.tp2):'—';$('comboTP3').textContent=aligned?comboFmt(t.tp3):'—';
- $('comboRR1').textContent=aligned&&Number.isFinite(t.rr1)?'RR 1:'+comboFmt(t.rr1):'—';
- $('comboRR2').textContent=aligned&&Number.isFinite(t.rr2)?'RR 1:'+comboFmt(t.rr2):'—';
- $('comboRR3').textContent=aligned&&Number.isFinite(t.rr3)?'RR 1:'+comboFmt(t.rr3):'—';
- $('comboEntryTime').textContent=aligned?comboWib(t.lastMs):'—';$('comboCandle').textContent=comboWib(t.lastMs);
+ $('comboRR1').textContent=aligned&&Number.isFinite(t.rr1)?'RR 1:'+comboFmt(t.rr1):'—';$('comboRR2').textContent=aligned&&Number.isFinite(t.rr2)?'RR 1:'+comboFmt(t.rr2):'—';$('comboRR3').textContent=aligned&&Number.isFinite(t.rr3)?'RR 1:'+comboFmt(t.rr3):'—';
+ $('comboEntryTime').textContent=aligned?comboWib(eventMs):'—';$('comboCandle').textContent=comboWib(eventMs);
 }
 window.addEventListener('cebonk-astro-update',renderCombined);
 window.addEventListener('cebonk-tech-update',renderCombined);
-
 $('techRefresh').addEventListener('click',refreshTech);
-$('techAuto').addEventListener('change',function(){
- if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
- if(this.checked) autoTimer=setInterval(refreshTech,300000);
-});
+$('techAuto').addEventListener('change',function(){if(autoTimer){clearInterval(autoTimer);autoTimer=null;}if(this.checked)autoTimer=setInterval(refreshTech,300000);});
 autoTimer=setInterval(()=>{if($('techAuto').checked&&!$('technicalView').hidden)refreshTech();},300000);
 })();
 </script>
