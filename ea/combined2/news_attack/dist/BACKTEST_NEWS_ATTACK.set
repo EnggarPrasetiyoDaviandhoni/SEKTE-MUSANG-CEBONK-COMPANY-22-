@@ -1,0 +1,17 @@
+InpSymbol=XAUUSDc
+InpMagic=220202
+InpExecutionTF=5
+InpAutopilot=true
+InpAllowRealAccount=false
+InpAcceptExperimentalAstro=true
+InpFixedLot=0.01
+InpMaxSpreadPoints=70
+InpAstroSource=1
+InpAstroCSV=CEBONK_C2_ASTRO.csv
+InpServerUTCMinutes=180
+InpTelegram=false
+InpMT5Push=false
+InpRunMode=1
+InpNewsSource=1
+InpAllowNewsCSVReplay=true
+InpNewsCSV=CEBONK_C2_NEWS.csv

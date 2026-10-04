@@ -1,0 +1,73 @@
+PASS Before pre-lock is normal
+PASS Pre-lock starts inclusively
+PASS One second before release blocked
+PASS Release instant blocked
+PASS Cooldown end minus one blocked
+PASS Attack opens at +2min
+PASS Final attack second accepted
+PASS +15min excluded from attack
+PASS Unhealthy data always WAIT
+PASS Insufficient lookback coverage rejected
+PASS Coverage ending at forward horizon rejected
+PASS Live event first seen after release cannot attack
+PASS Simultaneous known release stays one group
+PASS Next event pre-lock overrides first attack
+PASS Next event cooldown overrides first attack
+PASS Latest release owns overlapping attack
+PASS Normal candle wholly outside reserved window
+PASS Normal cannot bypass lock at send time
+PASS Normal retest cannot cross prior news episode
+PASS New normal candle after full episode allowed
+PASS Future normal retest rejected
+PASS First eligible M1 retest closes at +3min
+PASS Cooldown retest cannot enter at attack-open instant
+PASS M1 CB1 must break after release
+PASS CB1 break cannot come after retest start
+PASS Retest close exactly at attack end rejected
+PASS Forming retest cannot enter
+PASS M5 same-direction confirmed break supports M1
+PASS M5 opposite side rejected
+PASS M5 last close at CB1 is not beyond it
+PASS M5 confirmation age expires
+PASS No future M5 pivot confirmation
+PASS No future M5 break
+PASS M5 unbroken CB1 rejected
+PASS Expired M5 retest not reused
+PASS Invalid M5 structure rejected
+PASS Ambiguous M5 structure rejected
+PASS SELL mirrored confirmation
+PASS Verified empty calendar is normal, not fabricated news
+PASS Missing calendar is not a news-free calendar
+PASS 3200 second-level boundary checks
+POLICY_TESTS 41
+PASS original normal price/SL/risk/Astrology functions byte-identical; separate routing, protected single order path, UTF8/TXT identity and source guards.
+PASS Full unsigned ID accepted
+PASS Unsigned overflow rejected
+PASS Zero negative malformed IDs rejected
+PASS Explicit retrospective CSV replay accepted
+PASS Tester replay consent required
+PASS Wrong currency rejected
+PASS Wrong importance rejected
+PASS Truncated CSV count rejected
+PASS Duplicate news IDs rejected
+PASS Chronological sorting independent of file order
+PASS Event outside coverage rejected
+PASS Packaged placeholder fails closed
+PASS Empty file not treated as no events
+PASS Verified zero-row coverage accepted
+PASS Live CSV retains export observation time
+PASS Future-dated live snapshot rejected
+PASS New event has no attempt
+PASS Group reserved and flushed once before send
+PASS All simultaneous IDs reserved
+PASS Distinct later event still eligible
+PASS Restart retains group cap
+PASS Rescheduled stable ID cannot trade again
+PASS Tester does not inherit live terminal reservation
+PASS Tester in-memory event cap works
+PASS HTML dynamic values escaped
+PASS JSON quote slash newline escaped
+PASS Telegram retry_after parsed
+PASS Retry fallback bounded
+PASS Retry upper bound
+ADAPTER_TESTS 29

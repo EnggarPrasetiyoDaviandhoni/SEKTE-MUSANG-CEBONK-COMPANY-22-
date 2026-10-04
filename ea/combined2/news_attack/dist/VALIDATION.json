@@ -1,0 +1,14 @@
+{
+  "version": "1.10",
+  "policy_tests": 41,
+  "second_level_boundary_checks": 3200,
+  "normal_core_preserved": true,
+  "source_wiring": "PASS",
+  "metaeditor_compile": "NOT_RUN",
+  "mt5_backtest": "NOT_RUN",
+  "broker_execution": "NOT_RUN",
+  "telegram_delivery": "NOT_TESTED_WITH_REAL_CREDENTIALS",
+  "profitability": "NOT_ESTABLISHED",
+  "mocked_adapter_tests": 29,
+  "calendar_csv_dedup_html_json": "PASS in mocked C++ environment"
+}
