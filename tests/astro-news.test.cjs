@@ -6,7 +6,8 @@ const text=fs.readFileSync(host,'utf8');
 const scripts=[...text.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(m=>m[1]);
 const coreScript=scripts.find(s=>s.includes('root.CebonkCore=Core;'));
 assert.ok(coreScript,'Host exposes the single original astronomy core');
-const box={module:{exports:{}},setTimeout,console};vm.runInNewContext(coreScript,box);const C=box.module.exports;
+// Share Date with the library: instanceof Date must work across the VM boundary.
+const box={module:{exports:{}},setTimeout,console,Date};vm.runInNewContext(coreScript,box);const C=box.module.exports;
 let passes=0;
 function test(name,fn){fn();passes++;console.log('PASS '+name);}
 const M=60000,R=Date.parse('2026-10-02T12:30:00Z');
