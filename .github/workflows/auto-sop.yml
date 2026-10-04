@@ -64,14 +64,26 @@ jobs:
             console.log(JSON.stringify({healthHTTP:r.status,apiVersion:d.apiVersion||1,intervals:d.intervals||null,cloudflareDeployedByThisWorkflow:false}));
           } catch(e) { console.log('LIVE_API_CHECK_UNAVAILABLE; Cloudflare has not been deployed by this workflow.'); }
           JS
-      - name: Activate tested web and publish upgraded Worker source only
+      - name: Activate tested web while preserving concurrent additions
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html cloudflare-worker.js
           if ! git diff --cached --quiet; then
             git commit -m 'Activate COMBINED 1 AUTO; remove crossed-out manual tabs; prepare HTF Worker source'
-            git push origin HEAD:main
+            published=false
+            for attempt in 1 2 3; do
+              parent=$(git rev-parse HEAD^)
+              git fetch origin main
+              if ! git diff --quiet "$parent" origin/main -- index.html cloudflare-worker.js assets/auto-combined-core.js assets/auto-combined-ui.js assets/auto-combined.css assets/astro-news-v1.js worker/auto-sop-v3.mjs tools/install-auto-sop.cjs; then
+                echo 'Overlapping source change detected. Stop rather than overwrite it.'
+                exit 1
+              fi
+              git rebase --onto origin/main "$parent"
+              if git push origin HEAD:main; then published=true; break; fi
+              sleep 2
+            done
+            test "$published" = true
           fi
       - name: Request Pages rebuild
         env:
