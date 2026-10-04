@@ -24,7 +24,7 @@ void Notice(const string event,const string text,const string mode="SYSTEM") {
  ArrayResize(gQueue,n+1);gQueue[n].event=event;gQueue[n].tries=0;gQueue[n].pushed=false;
  string detail=StringSubstr(text,0,2600); // bounded BEFORE escaping; no broken HTML tags
  gQueue[n].push=event+" | "+mode+" | "+InpSymbol+" | "+detail;
- gQueue[n].text="<b>"+Html(StringSubstr(InpTelegramBrand,0,90))+"</b>\n<b>"+NoticeTitle(event)+"</b>\n"+
+ gQueue[n].text="<b>"+Html(StringSubstr(InpTelegramBrand,0,90))+"</b>\n<b>"+Html(NoticeTitle(event))+"</b>\n"+
  "━━━━━━━━━━━━━━━━━━\n<b>COMBINED 2 · "+Html(mode)+"</b>\n"+
  Html(InpSymbol)+" | "+Html(WIB(NowUTC()))+"\nAUTOPILOT: <b>"+(gAuto?"ON":"OFF — SINYAL TOK")+"</b>\n"+
  "━━━━━━━━━━━━━━━━━━\n"+Html(detail)+"\n━━━━━━━━━━━━━━━━━━\n<b>OJO FULLMARGIN COK</b>";

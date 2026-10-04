@@ -56,6 +56,8 @@ PASS Packaged placeholder fails closed
 PASS Empty file not treated as no events
 PASS Verified zero-row coverage accepted
 PASS Live CSV retains export observation time
+PASS Live snapshot valid at cache limit
+PASS Repeated reads cannot refresh stale live CSV
 PASS Future-dated live snapshot rejected
 PASS New event has no attempt
 PASS Group reserved and flushed once before send
@@ -70,4 +72,4 @@ PASS JSON quote slash newline escaped
 PASS Telegram retry_after parsed
 PASS Retry fallback bounded
 PASS Retry upper bound
-ADAPTER_TESTS 29
+ADAPTER_TESTS 31

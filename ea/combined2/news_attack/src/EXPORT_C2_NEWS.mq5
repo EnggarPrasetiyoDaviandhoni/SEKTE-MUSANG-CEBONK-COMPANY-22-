@@ -4,15 +4,16 @@
 #property version "1.00"
 input datetime InpFromUTC=D'2026.01.01 00:00';
 input datetime InpToUTC=0; // 0 = now UTC. Never export unknown future as an empty calendar.
-input int InpHistoricalServerUTCMinutes=180;
-input bool InpConfirmHistoricalOffset=false; // split history across broker DST changes
+input bool InpAutoCurrentServerOffset=true;
+input int InpCalendarServerUTCMinutes=180;
+input bool InpConfirmCalendarOffset=false; // Calendar uses CURRENT server offset; historical QUOTE DST is separate
 struct NewsExportRow { ulong id; long utc; string name; };
 void OnStart() {
  long from=(long)InpFromUTC,to=InpToUTC==0?(long)TimeGMT():(long)InpToUTC;
- if(!InpConfirmHistoricalOffset||MathAbs(InpHistoricalServerUTCMinutes)>840||from<946684800||to<=from||to>(long)TimeGMT()||to-from>370*86400){
-  Print("NEWS EXPORT: verify historical server UTC offset, <=370 days and no future coverage.");return;
+ if(!InpConfirmCalendarOffset||MathAbs(InpCalendarServerUTCMinutes)>840||from<946684800||to<=from||to>(long)TimeGMT()||to-from>370*86400){
+  Print("NEWS EXPORT: verify CURRENT calendar server UTC offset, <=370 days and no future coverage.");return;
  }
- int offset=InpHistoricalServerUTCMinutes*60;MqlCalendarValue values[];ResetLastError();
+ int offset=InpAutoCurrentServerOffset?(int)MathRound(((double)TimeTradeServer()-(double)TimeGMT())/900.0)*900:InpCalendarServerUTCMinutes*60;MqlCalendarValue values[];ResetLastError();
  int count=CalendarValueHistory(values,(datetime)(from+offset),(datetime)(to+offset),NULL,"USD");
  if(count<0||GetLastError()!=0||count>30000){Print("NEWS EXPORT FAILED ",GetLastError(),". Existing file unchanged.");return;}
  NewsExportRow rows[];
@@ -29,6 +30,7 @@ void OnStart() {
  for(int i=1;i<ArraySize(rows);i++){NewsExportRow x=rows[i];int j=i-1;
   while(j>=0&&(rows[j].utc>x.utc||(rows[j].utc==x.utc&&rows[j].id>x.id))){rows[j+1]=rows[j];j--;}rows[j+1]=x;
  }
+ if(InpAutoCurrentServerOffset&&offset!=(int)MathRound(((double)TimeTradeServer()-(double)TimeGMT())/900.0)*900){Print("Offset changed; export aborted.");return;}
  int f=FileOpen("CEBONK_C2_NEWS.csv",FILE_WRITE|FILE_TXT|FILE_ANSI,0,CP_UTF8);if(f==INVALID_HANDLE){Print("Cannot open output ",GetLastError());return;}
  FileWriteString(f,"CEBONK_NEWS_V1,"+(string)from+","+(string)to+","+(string)(long)TimeGMT()+","+(string)ArraySize(rows)+"\r\n");
  FileWriteString(f,"value_id,release_epoch,currency,importance,name\r\n");

@@ -81,7 +81,7 @@ Teks dynamic di-escape kanggo HTML/JSON; token lan response mentah ora dicetak. 
 CalendarValueHistory lan WebRequest ora bisa diandelake langsung ing Strategy Tester. EA nggunakake CSV lokal kanggo backtest. Paket wis ngemot jadwal Astrology asli `CEBONK_C2_ASTRO.csv` (coverage 2026-2027); ora ngemot tanggal/hasil news rekaan.
 
 1. Compile script `EXPORT_C2_NEWS.mq5` lan lebokke neng MQL5/Scripts.
-2. Jalanake script neng terminal online. Set FromUTC/ToUTC (ToUTC=0 tegese saiki), offset SERVER historis sing bener, banjur `InpConfirmHistoricalOffset=true`. Yen sejarah broker ngalami DST, ekspor/tes saben rentang offset konstan. Script ora ngekspor masa depan sing durung dingerteni minangka kalender kosong.
+2. Jalanake script neng terminal online. Set FromUTC/ToUTC (ToUTC=0 tegese saiki), offset kalender SERVER SAAT EKSPOR sing bener, banjur `InpConfirmCalendarOffset=true`. Default exporter nggunakake offset server saiki otomatis. Kalender lan quote historis beda: kanggo backtest quote sing ngalami DST, tes saben rentang offset historis konstan. Script ora ngekspor masa depan sing durung dingerteni minangka kalender kosong.
 3. Script nulis `MQL5/Files/CEBONK_C2_NEWS.csv` saka kalender nyata. File placeholder ing ZIP sengaja invalid: **aja nimpa hasil ekspor nyata karo placeholder**.
 4. Lebokke Astrology CSV neng MQL5/Files, banjur pakai preset `BACKTEST_NEWS_ATTACK.set` utawa `BACKTEST_NORMAL_AND_NEWS.set`. Preset nyetel `InpAllowNewsCSVReplay=true` lan trading tester ON. Aja nganggo preset tester kanggo live tanpa review.
 
@@ -103,3 +103,6 @@ Referensi implementasi resmi:
 - https://www.mql5.com/en/book/advanced/calendar/calendar_cache_tester
 - https://www.mql5.com/en/docs/network/webrequest
 - https://core.telegram.org/bots/api#sendmessage
+
+## Pemeriksaan tambahan sebelum distribusi
+Live CSV ditolak yen umur ekspor ngluwihi InpNewsMaxCacheSeconds; maca file maneh ora nggawe jadwal lawas dadi anyar. Mode live standar tetep kalender MT5. Timer jaringan nganggo jam server sing terus mlaku, ora gumantung ana tick; tes Telegram isih bisa dilayani nalika pasar tutup. Native MQL API/compiler lan akun Telegram nyata isih durung diuji. Kanggo backtest, simpen CSV asli ing MQL5/Files sadurunge compile/recompile EA supaya tester_file bisa nyalin menyang agen. Offset kalender saat ekspor nggunakake CURRENT server offset; offset quote tester yaiku offset HISTORIS broker sing kudu sampeyan verifikasi.

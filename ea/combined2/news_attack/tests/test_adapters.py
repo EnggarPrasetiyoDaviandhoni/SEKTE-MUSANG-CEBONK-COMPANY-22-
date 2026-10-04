@@ -40,7 +40,7 @@ std::vector<C2NewsItem> gNews;std::vector<long>gNewsAttempted;std::vector<ulong>
 long gNewsFrom=0,gNewsTo=0,gNewsUpdated=0,mockNow=1790944200;
 bool gTester=true,InpAllowNewsCSVReplay=true,InpCSVCommonFolder=false,gNewsOK=false;
 string gNewsError,InpNewsCSV="test.csv",gScope="scope.",fileText;size_t fp=0;
-std::unordered_map<string,double>globals;int flushes=0;
+std::unordered_map<string,double>globals;int flushes=0;const int InpNewsMaxCacheSeconds=180;
 long NowUTC(){return mockNow;}
 int StringLen(const string&s){return (int)s.size();}
 ushort StringGetCharacter(const string&s,int i){return (unsigned char)s.at(i);}
@@ -81,7 +81,8 @@ int main(){
  fileText="CEBONK_NEWS_V1,0,0,0,0\nvalue_id,release_epoch,currency,importance,name\n";check(!NewsCSV(),"Packaged placeholder fails closed");
  fileText="";check(!NewsCSV(),"Empty file not treated as no events");
  fileText=csv("",0);check(NewsCSV()&&gNews.empty(),"Verified zero-row coverage accepted");
- fileText=csv("1,1790944200,USD,HIGH,Test\n");gTester=false;check(NewsCSV()&&gNews[0].known==1790940000,"Live CSV retains export observation time");
+ fileText=csv("1,1790944200,USD,HIGH,Test\n");gTester=false;mockNow=1790940001;check(NewsCSV()&&gNews[0].known==1790940000,"Live CSV retains export observation time");
+ mockNow=1790940180;check(NewsCSV(),"Live snapshot valid at cache limit");mockNow++;check(!NewsCSV(),"Repeated reads cannot refresh stale live CSV");
  mockNow=1790930000;check(!NewsCSV(),"Future-dated live snapshot rejected");mockNow=1790944200;
  gNews={{1,1790944200,0,"a"},{2,1790944200,0,"b"},{3,1790944800,0,"c"}};
  check(!NewsUsed(1790944200),"New event has no attempt");ReserveNews(1790944200);

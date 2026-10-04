@@ -80,7 +80,7 @@ bool NewsCSV() {
  if(valid)valid=meta[0]=="CEBONK_NEWS_V1"&&DigitsOnly(meta[1])&&DigitsOnly(meta[2])&&DigitsOnly(meta[3])&&DigitsOnly(meta[4]);
  if(valid){from=StringToInteger(meta[1]);to=StringToInteger(meta[2]);exported=StringToInteger(meta[3]);long declared=StringToInteger(meta[4]);expected=declared<=20000?(int)declared:-1;
   valid=from>=946684800&&to>from&&to-from<=370*86400&&exported>=946684800&&expected>=0&&expected<=20000;
-  if(!gTester&&exported>NowUTC()+60)valid=false;
+  if(!gTester&&(exported>NowUTC()||NowUTC()-exported>InpNewsMaxCacheSeconds))valid=false;
  }
  string header=FileReadString(f);StringTrimRight(header);
  valid=valid&&header=="value_id,release_epoch,currency,importance,name";
@@ -184,11 +184,12 @@ bool NewsM5Confirm(const C2Event &s,C2Event &confirmation) {
 }
 bool NetworkSlot() {
  if(gTester)return false;
- int phase=(int)((long)TimeCurrent()%60);
+ long clock=(long)TimeTradeServer();if(clock<=0)clock=(long)TimeLocal();
+ int phase=(int)(clock%60); // clock advances even when weekend has no ticks
  return phase>=20&&phase<=45; // keep synchronous HTTP/calendar away from first ticks of a new M1 bar
 }
 bool ValidateNewsInputs() {
- return InpRunMode>=C2_NORMAL_ONLY&&InpRunMode<=C2_NORMAL_AND_NEWS&&InpNewsPreBlockMinutes>=0&&InpNewsPreBlockMinutes<=120&&
+ return InpRunMode>=C2_NORMAL_ONLY&&InpRunMode<=C2_NORMAL_AND_NEWS&&InpNewsSource>=C2_NEWS_MT5_CALENDAR&&InpNewsSource<=C2_NEWS_LOCAL_CSV&&InpNewsPreBlockMinutes>=0&&InpNewsPreBlockMinutes<=120&&
   InpNewsStartAfterMinutes>=1&&InpNewsEndAfterMinutes>InpNewsStartAfterMinutes&&InpNewsEndAfterMinutes<=120&&
   InpNewsM5MaxAgeMinutes>=5&&InpNewsM5MaxAgeMinutes<=240&&InpNewsPollSeconds>=15&&InpNewsPollSeconds<=120&&
   InpNewsMaxCacheSeconds>=InpNewsPollSeconds&&InpNewsMaxCacheSeconds<=600&&StringLen(InpTelegramBrand)>0&&StringLen(InpTelegramBrand)<=90;

@@ -9,6 +9,6 @@
   "broker_execution": "NOT_RUN",
   "telegram_delivery": "NOT_TESTED_WITH_REAL_CREDENTIALS",
   "profitability": "NOT_ESTABLISHED",
-  "mocked_adapter_tests": 29,
+  "mocked_adapter_tests": 31,
   "calendar_csv_dedup_html_json": "PASS in mocked C++ environment"
 }

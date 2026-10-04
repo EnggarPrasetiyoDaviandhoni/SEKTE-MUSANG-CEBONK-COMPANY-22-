@@ -104,6 +104,8 @@ for name in ['Prepare','AstrologyMatches','Location','LoadBars','ParseSchedule',
  orig=old if name in ['Prepare','AstrologyMatches','Location','LoadBars','ParseSchedule'] else core
  assert function(ea,name)==function(orig,name),name+' drift'
 assert core in ea
+assert 'long clock=(long)TimeTradeServer()' in ea
+assert 'NowUTC()-exported>InpNewsMaxCacheSeconds' in ea
 assert ea.count('OrderSend(')==1
 assert ea.index('if(news)ReserveNews(release)')<ea.index('bool sent=OrderSend')
 for required in ['InpRunMode=C2_NORMAL_AND_NEWS','InpExecutionTF=PERIOD_M5','InpFixedLot=0.01','InpMaxSpreadPoints=70','InpAutopilot=false','InpAllowRealAccount=false','InpAcceptExperimentalAstro=false','NEWS_EVENT_ALREADY_ATTEMPTED','if(!gTester)GlobalVariablesFlush();','if(gTester)NewsHeartbeat();','CALENDAR_IMPORTANCE_HIGH','CALENDAR_TIMEMODE_DATETIME','"USD"','NetworkSlot()','parse_mode']:
