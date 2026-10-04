@@ -1,0 +1,61 @@
+name: Verify and install Astrology News
+on:
+  push:
+    branches: [main]
+    paths:
+      - assets/astro-news-v1.js
+      - tests/astro-news.test.cjs
+      - .github/workflows/astro-news.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: astro-news-install
+  cancel-in-progress: false
+jobs:
+  verify-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Syntax and pure tests against the existing host core
+        run: |
+          node --check assets/astro-news-v1.js
+          node tests/astro-news.test.cjs
+      - name: Verify actual ephemeris with the pinned existing library
+        run: |
+          npm install --prefix /tmp/cebonk-news-test --no-save --package-lock=false --ignore-scripts astronomy-engine@2.1.19
+          ASTRONOMY_MODULE=/tmp/cebonk-news-test/node_modules/astronomy-engine node tests/astro-news.test.cjs
+      - name: Insert only the isolated module loader
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p=Path('index.html')
+          before=p.read_text(encoding='utf-8')
+          tag='<script src="assets/astro-news-v1.js?v=1.0.0"></script>'
+          assert 'root.CebonkCore=Core;' in before, 'Missing original core'
+          assert 'id="combinedView"' in before, 'Unexpected host layout'
+          assert before.count('</body>')==1, 'Invalid host'
+          if tag not in before:
+              assert 'assets/astro-news-v1.js' not in before, 'Different module version; reconcile first'
+              after=before.replace('</body>',tag+'\n</body>')
+              assert after.replace(tag+'\n','')==before, 'Unexpected edits to the original app'
+              p.write_text(after,encoding='utf-8')
+          print('INDEX_SHA256',hashlib.sha256(p.read_bytes()).hexdigest())
+          print('Original Astrology, CB1, MA filters and Combined code were not modified.')
+          PY
+          if ! git diff --quiet -- index.html; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add index.html
+            git commit -m 'Load isolated Astrology News planner; retain existing engines'
+            git push origin HEAD:main
+          fi
+      - name: Request Pages rebuild after generated loader commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
