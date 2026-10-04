@@ -37,6 +37,7 @@
 <nav class="viewtabs" aria-label="Mode analisis">
  <button class="viewtab active" id="tabAstro" type="button">ASTROLOGY</button>
  <button class="viewtab" id="tabTechnical" type="button">TECHNICAL</button>
+ <button class="viewtab" id="tabCombined" type="button">COMBINED</button>
 </nav>
 <div id="astroView">
 <section class="clocks" aria-label="Jam sekarang, bukan tanggal hasil scan">
@@ -122,7 +123,24 @@
  </section>
 </section>
 
-<footer><span>CEBONK XAUUSD · ASTROLOGY + TECHNICAL</span><span>Riset, bukan jaminan hasil trading.</span></footer>
+<section id="combinedView" hidden>
+ <section class="panel">
+  <div class="head"><div><h2>Combined — Astrology × Technical</h2><small>Astrology = master arah/jam. Technical = validator entry M5.</small></div><span class="badge neutral" id="comboStatus">WAIT</span></div>
+  <div class="tech-grid">
+   <div class="tech-card"><span class="label">Astrology aktif</span><strong id="comboAstro" class="neutral">—</strong><small id="comboWindow">—</small></div>
+   <div class="tech-card"><span class="label">Technical</span><strong id="comboTech" class="neutral">—</strong><small id="comboTechScore">—</small></div>
+   <div class="tech-card"><span class="label">Keputusan</span><strong id="comboDecision" class="neutral">WAIT</strong><small id="comboReason">Menunggu data.</small></div>
+   <div class="tech-card"><span class="label">Entry</span><strong id="comboEntry">—</strong><small id="comboEntryTime">—</small></div>
+   <div class="tech-card"><span class="label">Stop Loss</span><strong id="comboSL">—</strong><small>Technical ATR M5</small></div>
+   <div class="tech-card"><span class="label">Take Profit</span><strong id="comboTP">—</strong><small>RR 1:2</small></div>
+   <div class="tech-card"><span class="label">Astro date</span><strong id="comboAstroDate">—</strong><small>Jadwal WIB sing lagi dihitung</small></div>
+   <div class="tech-card"><span class="label">Candle Technical</span><strong id="comboCandle">—</strong><small>Feed Twelve Data</small></div>
+  </div>
+  <div class="tech-warn">ENTRY mung metu yen Astrology BUY + Technical BUY, utawa Astrology SELL + Technical SELL. NEUTRAL / TRANSITION / arah beda = WAIT. Technical ora oleh mbalikke arah Astrology.</div>
+ </section>
+</section>
+
+<footer><span>CEBONK XAUUSD · ASTROLOGY + TECHNICAL + COMBINED</span><span>Riset, bukan jaminan hasil trading.</span></footer>
 <noscript><div class="error">JavaScript harus diaktifkan agar aplikasi bisa menghitung.</div></noscript>
 </main>
 <script>
@@ -388,7 +406,7 @@ async function loadLibrary(){
  try{await libPromise;}finally{libPromise=null;}
 }
 function clearResults(){
- current=null;
+ current=null;window.CEBONK_ASTRO_STATE=null;
  for(const id of ['dominant','entryStart','entryCore','entryEnd','entryStartLuxor','entryCoreLuxor','entryEndLuxor']) $(id).textContent='—';
  $('duration').textContent='Belum ada hasil';$('dominant').className='neutral';
  $('timeline').innerHTML='<div class="empty">Belum ada hasil perhitungan yang valid.</div>';
@@ -467,6 +485,8 @@ async function run(){
   await loadLibrary();
   const samples=await C.scan(engine,iso,start,model,p=>{$('progress').value=p;status(`Menghitung posisi & aspek 5 menit · ${p}%`);});
   current={iso,mode,start,model,samples,groups:C.segments(samples)};render();
+  window.CEBONK_ASTRO_STATE=current;
+  window.dispatchEvent(new Event('cebonk-astro-update'));
   const offsets=[...new Set(samples.map(s=>T.luxorOffset(s.ms,mode)))].map(T.offsetLabel).join(' / ');
   status(`${samples.length} slot selesai · Luxor ${offsets} → WIB UTC+7 · koordinat Luxor aktif · model ${model?'EKSPERIMEN':'OFF'}`);
  }catch(e){clearResults();error(e.message||String(e));status('Perhitungan gagal — tidak ada sinyal yang diterbitkan.');}
@@ -517,13 +537,17 @@ const $=id=>document.getElementById(id);
 let autoTimer=null,loading=false;
 
 function show(mode){
- const astro=mode==='astro';
- $('astroView').hidden=!astro;$('technicalView').hidden=astro;
- $('tabAstro').classList.toggle('active',astro);$('tabTechnical').classList.toggle('active',!astro);
- if(!astro) refreshTech();
+ const astro=mode==='astro',technical=mode==='technical',combined=mode==='combined';
+ $('astroView').hidden=!astro;$('technicalView').hidden=!technical;$('combinedView').hidden=!combined;
+ $('tabAstro').classList.toggle('active',astro);
+ $('tabTechnical').classList.toggle('active',technical);
+ $('tabCombined').classList.toggle('active',combined);
+ if(technical||combined) refreshTech();
+ if(combined) renderCombined();
 }
 $('tabAstro').addEventListener('click',()=>show('astro'));
 $('tabTechnical').addEventListener('click',()=>show('technical'));
+$('tabCombined').addEventListener('click',()=>show('combined'));
 
 function ema(values,period){
  if(values.length<period) return NaN;
@@ -606,10 +630,48 @@ async function refreshTech(){
   $('techFeed').textContent=ageMin<=20?'LIVE':'STALE';$('techFeed').className='badge '+(ageMin<=20?'buy':'transition');
   $('techRules').innerHTML=rules.map(x=>ruleHtml(x[0],x[1],x[2])).join('');
   $('techCandleBody').innerHTML=candles.slice(-12).reverse().map(c=>'<tr><td class="mono">'+wib(c.ms)+'</td><td>'+n(c.open)+'</td><td>'+n(c.high)+'</td><td>'+n(c.low)+'</td><td>'+n(c.close)+'</td></tr>').join('');
+  window.CEBONK_TECH_STATE={signal,entry,sl,tp,bs,ss,lastMs:last.ms,lastClose:last.close,atr:a,ageMin,updatedMs:Date.now()};
+  window.dispatchEvent(new Event('cebonk-tech-update'));
  }catch(e){
   $('techStatus').textContent='Gagal: '+e.message;$('techFeed').textContent='ERROR';$('techFeed').className='badge sell';
  }finally{loading=false;$('techRefresh').disabled=false;}
 }
+function comboFmt(v){return Number.isFinite(v)?v.toFixed(2):'—';}
+function comboWib(ms){return Number.isFinite(ms)?new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(ms))+' WIB':'—';}
+function renderCombined(){
+ const a=window.CEBONK_ASTRO_STATE,t=window.CEBONK_TECH_STATE;
+ if(!a){
+  $('comboAstro').textContent='NO DATA';$('comboAstro').className='neutral';
+  $('comboDecision').textContent='WAIT';$('comboReason').textContent='Astrology durung siap.';
+  return;
+ }
+ $('comboAstroDate').textContent=a.iso||'—';
+ if(!t){
+  $('comboTech').textContent='NO DATA';$('comboTech').className='neutral';
+  $('comboDecision').textContent='WAIT';$('comboReason').textContent='Technical durung siap.';
+  return;
+ }
+ const g=(a.groups||[]).find(x=>t.lastMs>=x.start&&t.lastMs<x.end)||null;
+ const astroState=g?g.state:'OUTSIDE';
+ const validAstro=astroState==='BUY'||astroState==='SELL';
+ const aligned=validAstro&&astroState===t.signal;
+ const decision=aligned?'ENTRY '+astroState:'WAIT';
+ $('comboAstro').textContent=astroState;$('comboAstro').className=astroState==='BUY'?'buy':astroState==='SELL'?'sell':'neutral';
+ $('comboWindow').textContent=g?(comboWib(g.start)+' – '+comboWib(g.end)):'Ora ana window Astrology ing candle iki';
+ $('comboTech').textContent=t.signal;$('comboTech').className=t.signal==='BUY'?'buy':t.signal==='SELL'?'sell':'neutral';
+ $('comboTechScore').textContent='BUY '+t.bs+'/5 · SELL '+t.ss+'/5';
+ $('comboDecision').textContent=decision;$('comboDecision').className=aligned?(astroState==='BUY'?'buy':'sell'):'neutral';
+ $('comboStatus').textContent=aligned?'SELARAS':'WAIT';$('comboStatus').className='badge '+(aligned?(astroState==='BUY'?'buy':'sell'):'neutral');
+ $('comboReason').textContent=aligned?'Astrology lan Technical searah.':!validAstro?('Astrology '+astroState+' → ora entry.'):(t.signal==='WAIT'?'Technical durung valid.':'Arah beda: Astro '+astroState+' vs Tech '+t.signal+'.');
+ $('comboEntry').textContent=aligned?comboFmt(t.entry):'—';
+ $('comboSL').textContent=aligned?comboFmt(t.sl):'—';
+ $('comboTP').textContent=aligned?comboFmt(t.tp):'—';
+ $('comboEntryTime').textContent=aligned?comboWib(t.lastMs):'—';
+ $('comboCandle').textContent=comboWib(t.lastMs);
+}
+window.addEventListener('cebonk-astro-update',renderCombined);
+window.addEventListener('cebonk-tech-update',renderCombined);
+
 $('techRefresh').addEventListener('click',refreshTech);
 $('techAuto').addEventListener('change',function(){
  if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
