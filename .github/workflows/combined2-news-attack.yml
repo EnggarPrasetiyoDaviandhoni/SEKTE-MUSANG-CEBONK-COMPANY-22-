@@ -1,0 +1,74 @@
+name: Build Combined 2 News Attack
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ea/combined2/news_attack/src/**'
+      - 'ea/combined2/news_attack/tools/**'
+      - 'ea/combined2/news_attack/tests/**'
+      - 'ea/combined2/news_attack/README.md'
+      - '.github/workflows/combined2-news-attack.yml'
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: combined2-news-attack-package
+  cancel-in-progress: false
+jobs:
+  validate-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Protect original EA, Combined 1, web and existing schedules
+        run: |
+          git rev-parse HEAD > /tmp/news-attack-base
+          sha256sum index.html assets/combined1-legacy.js assets/auto-combined-core.js assets/auto-combined-ui.js assets/snd-auto-core.js assets/astro-news-v1.js cloudflare-worker.js ea/combined2/src/CEBONK_COMBINED2.mq5 ea/combined2/src/C2Core.mqh ea/combined2/data/CEBONK_C2_ASTRO.csv > /tmp/news-protected
+      - name: Build hash-pinned standalone source without modifying original
+        run: python3 ea/combined2/news_attack/tools/build.py
+      - name: News timing, CSV, persistent event cap and Telegram encoding tests
+        run: |
+          set -o pipefail
+          python3 ea/combined2/news_attack/tests/test_policy.py | tee ea/combined2/news_attack/dist/VALIDATION.log
+          python3 ea/combined2/news_attack/tests/test_adapters.py | tee -a ea/combined2/news_attack/dist/VALIDATION.log
+      - name: Original price engine differential and JS regression tests
+        run: |
+          set -o pipefail
+          python3 ea/combined2/tests/test-native.py | tee ea/combined2/news_attack/dist/ORIGINAL_CORE_REGRESSION.log
+          node tests/auto-combined.test.cjs
+          node tests/snd-auto.test.cjs
+      - name: Package and verify source isolation
+        run: |
+          python3 ea/combined2/news_attack/tools/package.py
+          sha256sum -c /tmp/news-protected
+          git diff --exit-code -- index.html assets cloudflare-worker.js ea/combined2/src ea/combined2/data ea/combined2/dist
+      - name: Save downloadable source package and actual validation logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: CEBONK-COMBINED2-NEWS-ATTACK
+          path: ea/combined2/news_attack/dist/
+          if-no-files-found: error
+      - name: Publish only the new News Attack distribution
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f ea/combined2/news_attack/dist
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish isolated Combined 2 News Attack v1.10 and verified source package'
+            base=$(cat /tmp/news-attack-base)
+            git fetch origin main
+            if ! git diff --quiet "$base" origin/main -- ea/combined2/news_attack ea/combined2/src ea/combined2/data; then
+              echo 'Concurrent overlapping source change: stop, do not overwrite.'
+              exit 1
+            fi
+            git rebase --onto origin/main "$base"
+            git push origin HEAD:main
+          fi
+      - name: Refresh downloadable website files only - not a trading deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
