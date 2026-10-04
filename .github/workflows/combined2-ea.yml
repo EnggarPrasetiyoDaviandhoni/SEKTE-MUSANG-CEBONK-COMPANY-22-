@@ -1,0 +1,76 @@
+name: Build Combined 2 M5 EA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ea/combined2/src/**'
+      - 'ea/combined2/tests/**'
+      - 'ea/combined2/tools/**'
+      - 'ea/combined2/package.json'
+      - '.github/workflows/combined2-ea.yml'
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: combined2-ea-package
+  cancel-in-progress: false
+jobs:
+  validate-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - name: Protect existing web and Combined 1
+        run: |
+          git rev-parse HEAD > /tmp/c2-ea-base
+          sha256sum index.html assets/combined1-legacy.js assets/auto-combined-core.js assets/auto-combined-ui.js assets/snd-auto-core.js assets/astro-news-v1.js cloudflare-worker.js > /tmp/c2-protected
+          mkdir -p ea/combined2/dist
+      - name: Differential price-engine and original regressions
+        run: |
+          set -o pipefail
+          python3 ea/combined2/tests/test-native.py | tee ea/combined2/dist/VALIDATION.log
+          node tests/auto-combined.test.cjs
+          node tests/snd-auto.test.cjs
+      - name: Install pinned ephemeris library
+        working-directory: ea/combined2
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Generate original model schedules, not hand-entered directions
+        working-directory: ea/combined2
+        run: node tools/generate-astro.cjs 2026-01-01 2027-12-31
+      - name: Package and verify isolated scope
+        run: |
+          python3 ea/combined2/tools/package.py
+          sha256sum -c /tmp/c2-protected
+          git diff --exit-code -- index.html assets cloudflare-worker.js
+      - name: Save complete EA package and validation
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CEBONK-COMBINED2-M5-EA
+          path: ea/combined2/dist/
+          if-no-files-found: error
+      - name: Publish only new EA files and generated schedules
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ea/combined2/dist ea/combined2/data ea/combined2/vendor ea/combined2/package-lock.json
+          git add -f ea/combined2/dist/VALIDATION.log
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish Combined 2 M5 EA package and 2026-2027 original-model astrology windows'
+            base=$(cat /tmp/c2-ea-base)
+            git fetch origin main
+            if ! git diff --quiet "$base" origin/main -- ea/combined2; then
+              echo 'Concurrent EA change: stop instead of overwriting.'
+              exit 1
+            fi
+            git rebase --onto origin/main "$base"
+            git push origin HEAD:main
+          fi
+      - name: Publish CSV data through existing Pages - no web logic changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
