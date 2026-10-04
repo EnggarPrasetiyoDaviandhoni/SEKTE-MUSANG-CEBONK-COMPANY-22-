@@ -1,0 +1,84 @@
+name: Restore Combined 1 and separate Combined 2
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/restore-combined1.cjs'
+      - 'assets/combined-tabs.js'
+      - 'tests/combined-split*'
+      - '.github/workflows/combined-split.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: restore-combined-split
+  cancel-in-progress: false
+jobs:
+  verify-and-restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Restore historical calculations and rename new view without deleting either
+        run: |
+          git rev-parse HEAD > /tmp/combined-split-base
+          sha256sum assets/auto-combined-core.js assets/snd-auto-core.js assets/astro-news-v1.js cloudflare-worker.js > /tmp/combined-protected
+          node tools/restore-combined1.cjs
+          cp index.html /tmp/split-once.html
+          node tools/restore-combined1.cjs
+          cmp index.html /tmp/split-once.html
+          sha256sum -c /tmp/combined-protected
+          node --check assets/combined1-legacy.js
+          node --check assets/combined-tabs.js
+          node --check assets/auto-combined-ui.js
+          node tests/combined-split.test.cjs
+          node tests/auto-combined.test.cjs
+          node tests/snd-auto.test.cjs
+          node tests/auto-worker.test.mjs
+          node tests/astro-news.test.cjs
+      - name: Install pinned browser dependencies
+        run: |
+          npm install --prefix /tmp/cebonk-split-test --no-save --package-lock=false --ignore-scripts playwright@1.55.1 astronomy-engine@2.1.19
+          /tmp/cebonk-split-test/node_modules/.bin/playwright install --with-deps chromium
+      - name: Check both systems, routing, original signal and failure isolation
+        env:
+          NODE_PATH: /tmp/cebonk-split-test/node_modules
+          ASTRONOMY_MODULE: /tmp/cebonk-split-test/node_modules/astronomy-engine
+        run: |
+          node tests/astro-news.test.cjs
+          node tests/combined-split.browser.cjs
+          node tests/auto-combined.browser.cjs
+      - name: Save visual checks and restored source package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-split-validation
+          path: |
+            test-artifacts/
+            archive/
+            assets/combined1-legacy.js
+          if-no-files-found: ignore
+      - name: Publish tested separation without overwriting concurrent changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html assets/combined1-legacy.js assets/auto-combined-ui.js tests/auto-combined.browser.cjs tools/install-auto-sop.cjs tools/install-musang-pdf.cjs tools/install-snd-auto.cjs archive/combined1-original-3ead2e75.html archive/combined-mode-integrity.json SOP_AUTO_COMBINED.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Restore ORIGINAL Combined 1 MA20/50 CB1; assign new SND Musang system to Combined 2'
+            base=$(cat /tmp/combined-split-base)
+            git fetch origin main
+            if ! git diff --quiet "$base" origin/main -- index.html assets/combined1-legacy.js assets/auto-combined-ui.js assets/auto-combined-core.js assets/snd-auto-core.js assets/astro-news-v1.js tests/auto-combined.browser.cjs tools/install-auto-sop.cjs tools/install-musang-pdf.cjs tools/install-snd-auto.cjs SOP_AUTO_COMBINED.md tools/restore-combined1.cjs; then
+              echo 'Overlapping changes detected. Stop, never force-push either SOP.'
+              exit 1
+            fi
+            git rebase --onto origin/main "$base"
+            git push origin HEAD:main
+          fi
+      - name: Request website build only - no MT5 or Cloudflare changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
