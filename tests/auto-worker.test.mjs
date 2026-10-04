@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import W from '../worker/auto-sop-v3.mjs';
+let passed=0,calls=0,mode='ok',seenUrl='';
+const store=new Map();globalThis.caches={default:{async match(r){return store.get(r.url)?.clone()},async put(r,v){store.set(r.url,v.clone())}}};
+globalThis.fetch=async u=>{calls++;seenUrl=u;const q=new URL(u);if(mode==='network')throw new Error('key must not leak');if(mode==='quota')return Response.json({status:'error',code:429,message:'SECRET_SENTINEL'},{status:200});
+return Response.json({meta:{symbol:'XAU/USD',interval:q.searchParams.get('interval'),exchange_timezone:mode==='unknown'?undefined:'Australia/Sydney'},values:[{datetime:'2026-10-01',open:'100',high:'110',low:'90',close:mode==='bad'?null:'105'}]});};
+const env={TWELVE_DATA_KEY:'SECRET_SENTINEL'},ctx={waitUntil:p=>p};
+const request=(path,extra={})=>W.fetch(new Request('https://unit.workers.dev'+path,extra),env,ctx);
+async function t(name,fn){store.clear();mode='ok';await fn();passed++;console.log('PASS '+name);}
+await t('Health exposes capabilities not key',async()=>{const r=await request('/health'),s=await r.text();assert.ok(!s.includes(env.TWELVE_DATA_KEY));assert.ok(JSON.parse(s).intervals.includes('1month'));});
+await t('Daily passes correct exchange timezone',async()=>{const r=await request('/xau?interval=1day&outputsize=300');assert.equal(r.status,200);assert.equal((await r.json()).calendarTimezone,'Australia/Sydney');});
+await t('Monthly is native upstream interval',async()=>{await request('/xau?interval=1month&outputsize=120');assert.equal(new URL(seenUrl).searchParams.get('interval'),'1month');});
+await t('Unknown daily zone fails closed',async()=>{mode='unknown';assert.equal((await request('/xau?interval=1day')).status,502);});
+await t('Null OHLC fails closed',async()=>{mode='bad';assert.equal((await request('/xau?interval=1min')).status,502);});
+await t('Outputsize capped',async()=>{await request('/xau?interval=1min&outputsize=9000');assert.equal(new URL(seenUrl).searchParams.get('outputsize'),'500');});
+await t('Unknown query cannot force cache miss',async()=>{const n=calls;await request('/xau?interval=1min&outputsize=300&x=1');await request('/xau?interval=1min&outputsize=300&x=2');assert.equal(calls-n,1);});
+await t('Invalid interval rejected',async()=>assert.equal((await request('/xau?interval=bad')).status,400));
+await t('Malformatted size rejected',async()=>assert.equal((await request('/xau?outputsize=NaN')).status,400));
+await t('Quota failure redacts upstream message',async()=>{mode='quota';const r=await request('/xau');assert.equal(r.status,429);assert.ok(!(await r.text()).includes('SECRET_SENTINEL'));});
+await t('Network failure redacts URL',async()=>{mode='network';const r=await request('/xau');assert.equal(r.status,502);assert.ok(!(await r.text()).includes('key'));});
+await t('Different browser origin rejected',async()=>assert.equal((await request('/xau',{headers:{Origin:'https://elsewhere.test'}})).status,403));
+console.log('WORKER_TOTAL_PASS',passed);
