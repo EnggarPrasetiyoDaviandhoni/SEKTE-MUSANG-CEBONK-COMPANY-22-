@@ -1,0 +1,62 @@
+name: Verify and install Musang PDF Combined
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/musang-pdf*'
+      - 'tests/musang-pdf*'
+      - 'tools/install-musang-pdf.cjs'
+      - '.github/workflows/musang-pdf.yml'
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: musang-pdf-install
+  cancel-in-progress: false
+jobs:
+  verify-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Syntax and deterministic tests
+        run: |
+          node --check assets/musang-pdf-core.js
+          node --check assets/musang-pdf-ui.js
+          node tests/musang-pdf.test.cjs
+      - name: Guarded installer and original News regression
+        run: |
+          node tools/install-musang-pdf.cjs
+          cp index.html /tmp/cebonk-first-install.html
+          node tools/install-musang-pdf.cjs
+          cmp index.html /tmp/cebonk-first-install.html
+          npm install --prefix /tmp/cebonk-pdf-test --no-save --package-lock=false --ignore-scripts astronomy-engine@2.1.19 playwright@1.56.1
+          ASTRONOMY_MODULE=/tmp/cebonk-pdf-test/node_modules/astronomy-engine node tests/astro-news.test.cjs
+      - name: Browser integration on actual host with synthetic test data
+        run: |
+          node /tmp/cebonk-pdf-test/node_modules/playwright/cli.js install --with-deps chromium
+          PLAYWRIGHT_MODULE=/tmp/cebonk-pdf-test/node_modules/playwright node tests/musang-pdf.browser.cjs
+      - name: Save browser test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: musang-pdf-browser-checks
+          path: test-artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Activate tested web module only
+        run: |
+          if ! git diff --quiet -- index.html; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add index.html
+            git commit -m 'Activate reviewed Musang PDF Combined 1/2; preserve Astrology and News'
+            git push origin HEAD:main
+          fi
+      - name: Request Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${{ github.repository }}/pages/builds" > /dev/null
