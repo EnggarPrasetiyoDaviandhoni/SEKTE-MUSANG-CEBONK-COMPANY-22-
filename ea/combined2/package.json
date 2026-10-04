@@ -1,0 +1,1 @@
+{"name":"cebonk-combined2-mt5","version":"1.0.0","private":true,"description":"Combined 2 M5 MT5 EA and pinned experimental astrology schedules; no Combined 1 changes","scripts":{"astro":"node tools/generate-astro.cjs","test":"python3 tests/test-native.py"},"dependencies":{"astronomy-engine":"2.1.19"}}
