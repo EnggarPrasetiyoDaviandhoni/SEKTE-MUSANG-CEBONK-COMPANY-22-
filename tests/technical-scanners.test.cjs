@@ -31,12 +31,29 @@ test('Cut profit SELL TF2 MidBB invalidation',()=>assert(T.cutProfitDecision('SE
 test('pivots closed confirmation',()=>{const b=[bar(1,2,0,1,0,1),bar(1,3,1,2,1,2),bar(2,5,2,4,2,3),bar(4,3,1,2,3,4),bar(2,2,0,1,4,5)];const p=T.pivots(b,2);assert.equal(p.highs[0].price,5);assert.equal(p.highs[0].knownAt,5);});
 function seqBars(n,base=105){const a=[];for(let i=0;i<n;i++){const o=base+(i%3)*0.1,c=o+0.2;a.push(bar(o,Math.max(o,c)+0.3,Math.min(o,c)-0.3,c,i*60000,(i+1)*60000));}return a;}
 test('Liquidity map finds swing low',()=>{const a=seqBars(30,105);a[10]={...a[10],open:102,high:103,low:100,close:102};for(const i of [8,9,11,12])a[i]={...a[i],low:101+i%2};const m=T.mapLiquidity(a,'BUY');assert(m.some(x=>x.type==='SWING_LOW'&&x.price===100));});
+test('Liquidity lookback excludes stale TF1 levels',()=>{
+ const a=[];for(let i=0;i<100;i++){const o=100+i;a.push(bar(o,o+1,o-1,o+.5,i*60000,(i+1)*60000));}
+ a[65]={...a[65],low:1};
+ assert(T.mapLiquidity(a,'BUY',{liquidityLookback:80}).some(x=>x.type==='SWING_LOW'&&x.price===1));
+ assert(!T.mapLiquidity(a,'BUY',{liquidityLookback:20}).some(x=>x.price===1));
+});
 test('Liquidity BUY sweep displacement break retest',()=>{
  const t1=seqBars(30,105);t1[10]={...t1[10],open:102,high:103,low:100,close:102};for(const i of [8,9,11,12])t1[i]={...t1[i],low:101.5};
  const t2=seqBars(45,103);for(let i=24;i<30;i++)t2[i]={...t2[i],open:103,high:104+i%2,low:102.5,close:103.2};
  t2[30]={...t2[30],open:102,high:104,low:99,close:101};t2[31]={...t2[31],open:101,high:108,low:100.8,close:107};
  const t3=seqBars(50,107);t3[34]={...t3[34],open:107,high:108,low:105.5,close:106.8};t3[35]={...t3[35],open:106.6,high:107.5,low:103.8,close:106.5};
  const now=t3[35].end+30000,pkg={id:'TEST',tf1:'M15',tf2:'M5',tf3:'M1'};const r=T.findLiquiditySetup({M15:t1,M5:t2,M1:t3},pkg,'BUY',now,{sweepSearch:20});assert.equal(r.status,'VALID');assert.equal(r.direction,'BUY');assert(r.sl<r.entry&&r.tp>r.entry);
+});
+test('Liquidity skips expired retest and selects newer valid retest',()=>{
+ const t1=seqBars(30,105);t1[10]={...t1[10],open:102,high:103,low:100,close:102};for(const i of [8,9,11,12])t1[i]={...t1[i],low:101.5};
+ const t2=seqBars(45,103);for(let i=24;i<30;i++)t2[i]={...t2[i],open:103,high:104+i%2,low:102.5,close:103.2};
+ t2[30]={...t2[30],open:102,high:104,low:99,close:101};t2[31]={...t2[31],open:101,high:108,low:100.8,close:107};
+ const t3=seqBars(50,107);
+ t3[31]={...t3[31],open:106.6,high:107.5,low:103.8,close:106.5};
+ t3[38]={...t3[38],open:106.7,high:107.6,low:103.9,close:106.6};
+ const now=t3[38].end+30000,pkg={id:'TEST',tf1:'M15',tf2:'M5',tf3:'M1'};
+ const r=T.findLiquiditySetup({M15:t1,M5:t2,M1:t3},pkg,'BUY',now,{sweepSearch:20});
+ assert.equal(r.status,'VALID');assert.equal(r.eventAt,t3[38].end);assert(r.validUntil>now);
 });
 test('Liquidity SELL sweep displacement break retest',()=>{
  const t1=seqBars(30,95);t1[10]={...t1[10],open:98,high:100,low:97,close:98};for(const i of [8,9,11,12])t1[i]={...t1[i],high:98.5};
