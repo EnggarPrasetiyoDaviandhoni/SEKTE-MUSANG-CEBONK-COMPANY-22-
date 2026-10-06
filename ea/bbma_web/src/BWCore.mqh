@@ -1,4 +1,4 @@
-// CEBONK BBMA WEB EA v1.01 - deterministic BBMA core.
+// CEBONK BBMA WEB EA v1.02 - deterministic BBMA core.
 // Port of assets/technical-scanners-core.js BBMA rules only.
 // Closed candles only. No ATR, martingale, recovery, BE, trailing, or layering.
 #ifndef CEBONK_BW_CORE
@@ -120,8 +120,11 @@ bool BWCSMAt(const BWBar &e[],const int i,const int dir){
  return x.close<x.open&&x.close<x.lower&&(x.open>=x.lower||p.close>=p.lower);
 }
 
-int BWFirstEndAtOrAfter(const BWBar &e[],const long ms){
- for(int i=0;i<ArraySize(e);i++)if(e[i].end>=ms)return i;return -1;
+int BWFirstEndAfter(const BWBar &e[],const long ms){
+ for(int i=0;i<ArraySize(e);i++)if(e[i].end>ms)return i;return -1;
+}
+int BWWindowEnd(const int start,const int count,const int size){
+ if(start<0||size<=0)return -1;return MathMin(size-1,start+MathMax(1,count)-1);
 }
 int BWAtOrBefore(const BWBar &e[],const long ms){
  int idx=-1;for(int i=0;i<ArraySize(e);i++){if(e[i].end<=ms)idx=i;else break;}return idx;
@@ -139,34 +142,49 @@ bool BWScanDirection(const string symbol,const int pkgIndex,const int dir,const 
  if(!BWLoadClosedBars(symbol,p.tf1,barsNeeded,a)||!BWLoadClosedBars(symbol,p.tf2,barsNeeded,b)||!BWLoadClosedBars(symbol,p.tf3,barsNeeded,c)){
   why="DATA_KURANG";return false;
  }
- int reStart=MathMax(BW_BB_PERIOD,ArraySize(a)-1-BW_RE_AGE),ri=-1;
- for(int i=ArraySize(a)-1;i>=reStart;i--)if(BWReentryAt(a,i,dir)){ri=i;break;}
- if(ri<0){why="TF1_REENTRY_WAIT";return false;}
- long reEnd=a[ri].end;
- int bi0=BWFirstEndAtOrAfter(b,reEnd);if(bi0<0){why="TF2_AFTER_REENTRY_WAIT";return false;}
- int bi=-1;string type="";
- int bEnd=MathMin(ArraySize(b)-1,bi0+BW_TF2_AGE);
- for(int i=bi0;i<=bEnd;i++){
-  bool csak=BWCSAKAt(b,i,dir),csm=BWCSMAt(b,i,dir);
-  if(csak||csm){bi=i;type=csak?"CSAK":"CSM";break;}
+ int reStart=MathMax(0,ArraySize(a)-BW_RE_AGE);
+ bool sawRe=false,sawTf2Window=false,sawTf2=false,sawTf3Window=false,sawTf3=false,sawSLWait=false,sawRiskInvalid=false;
+ bool found=false;long latestExpired=0;BWSignal best;ZeroMemory(best);
+ for(int ri=ArraySize(a)-1;ri>=reStart;ri--){
+  if(!BWReentryAt(a,ri,dir))continue;
+  sawRe=true;long reEnd=a[ri].end;
+  int bi0=BWFirstEndAfter(b,reEnd);if(bi0<0)continue;
+  sawTf2Window=true;int bEnd=BWWindowEnd(bi0,BW_TF2_AGE,ArraySize(b));
+  for(int bi=bi0;bi<=bEnd;bi++){
+   bool csak=BWCSAKAt(b,bi,dir),csm=BWCSMAt(b,bi,dir);if(!csak&&!csm)continue;
+   sawTf2=true;string type=csak?"CSAK":"CSM";long confirmEnd=b[bi].end;
+   int ci0=BWFirstEndAfter(c,confirmEnd);if(ci0<0)continue;
+   sawTf3Window=true;int cEnd=BWWindowEnd(ci0,BW_TF3_AGE,ArraySize(c));
+   for(int ci=ci0;ci<=cEnd;ci++){
+    if(!BWCSMAt(c,ci,dir))continue;
+    sawTf3=true;BWBar event=c[ci];int hold=BWSignalHoldSeconds(p.tf3);long validUntil=event.end+hold;
+    if(hold<=0||nowServer<event.end)continue;
+    if(nowServer>=validUntil){if(event.end>latestExpired)latestExpired=event.end;continue;}
+    int t2i=BWAtOrBefore(b,event.end);if(t2i<0||!BWIndicatorOK(b[t2i])){sawSLWait=true;continue;}
+    double sl=dir>0?b[t2i].lower-slBuffer:b[t2i].upper+slBuffer;
+    double risk=MathAbs(event.close-sl);if(!(risk>0&&BWFin(sl))){sawRiskInvalid=true;continue;}
+    BWSignal cand;ZeroMemory(cand);cand.valid=true;cand.dir=dir;cand.pkg=pkgIndex;cand.rr=rr;
+    cand.reAt=reEnd;cand.tf2At=confirmEnd;cand.eventAt=event.end;cand.validUntil=validUntil;cand.tf2Type=type;
+    cand.referenceEntry=event.close;cand.structuralSL=sl;
+    if(!found||cand.eventAt>best.eventAt||
+       (cand.eventAt==best.eventAt&&cand.tf2At>best.tf2At)||
+       (cand.eventAt==best.eventAt&&cand.tf2At==best.tf2At&&cand.reAt>best.reAt)){
+      best=cand;found=true;
+    }
+   }
+  }
  }
- if(bi<0){why="TF2_CSAK_CSM_WAIT";return false;}
- long confirmEnd=b[bi].end;
- int ci0=BWFirstEndAtOrAfter(c,confirmEnd);if(ci0<0){why="TF3_AFTER_TF2_WAIT";return false;}
- int ci=-1,cEnd=MathMin(ArraySize(c)-1,ci0+BW_TF3_AGE);
- for(int i=ci0;i<=cEnd;i++)if(BWCSMAt(c,i,dir)){ci=i;break;}
- if(ci<0){why="TF3_CSM_WAIT";return false;}
- BWBar event=c[ci];int hold=BWSignalHoldSeconds(p.tf3);long validUntil=event.end+hold;
- if(hold<=0||nowServer<event.end||nowServer>=validUntil){why="SIGNAL_EXPIRED";return false;}
- int t2i=BWAtOrBefore(b,event.end);if(t2i<0||!BWIndicatorOK(b[t2i])){why="TF2_SL_DATA_WAIT";return false;}
- double sl=dir>0?b[t2i].lower-slBuffer:b[t2i].upper+slBuffer;
- double risk=MathAbs(event.close-sl);
- if(!(risk>0&&BWFin(sl))){why="RISK_INVALID";return false;}
- out.valid=true;out.reAt=reEnd;out.tf2At=confirmEnd;out.eventAt=event.end;out.validUntil=validUntil;out.tf2Type=type;
- out.referenceEntry=event.close;out.structuralSL=sl;
- return true;
+ if(found){out=best;why="";return true;}
+ if(latestExpired>0){why="SIGNAL_EXPIRED";return false;}
+ if(!sawRe){why="TF1_REENTRY_WAIT";return false;}
+ if(!sawTf2Window){why="TF2_AFTER_REENTRY_WAIT";return false;}
+ if(!sawTf2){why="TF2_CSAK_CSM_WAIT";return false;}
+ if(!sawTf3Window){why="TF3_AFTER_TF2_WAIT";return false;}
+ if(!sawTf3){why="TF3_CSM_WAIT";return false;}
+ if(sawSLWait){why="TF2_SL_DATA_WAIT";return false;}
+ if(sawRiskInvalid){why="RISK_INVALID";return false;}
+ why="TF3_CSM_WAIT";return false;
 }
-
 bool BWLatestCutSignal(const string symbol,const int pkgIndex,const int dir,bool &oppositeCSM,bool &midBreak){
  oppositeCSM=false;midBreak=false;BWPackageSpec p;BWGetPackage(pkgIndex,p);BWBar t2[],t3[];
  if(!BWLoadClosedBars(symbol,p.tf2,40,t2)||!BWLoadClosedBars(symbol,p.tf3,40,t3))return false;
