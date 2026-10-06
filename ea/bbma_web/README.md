@@ -1,4 +1,4 @@
-# CEBONK BBMA WEB EA v1.01
+# CEBONK BBMA WEB EA v1.02
 
 EA MT5 modular lan ringkes kanggo port **SCANNER BBMA** website menyang eksekusi broker. Folder iki anyar; web, Liquidity Sweep, Combined 2, News Attack lawas, lan Cloudflare Worker ora diowahi.
 
@@ -31,6 +31,9 @@ Kabeh nggunakake candle sing wis close. Baseline indikator padha karo `assets/te
 - Re-entry age 6 bar.
 - TF2 confirm age 6 bar.
 - TF3 confirm age 6 bar.
+- Urutan wektu saiki **strict**: candle TF2 kudu close **sawise** TF1 Re-entry close, lan TF3 CSM kudu close **sawise** TF2 confirm close. Same-close ora dianggep urutan valid.
+- `reAge/tf2Age/tf3Age = 6` saiki bener-bener maksimal **6 candle**, ora 7 amarga batas indeks inklusif.
+- Yen CSM lawas wis expired, scanner ora mandheg; mesin nerusake nggoleki lan milih **chain valid paling anyar** ing window umur sing padha.
 - Signal TF3 ora langsung mati sakbar close: valid window = **1 bar TF3 utawa minimal 5 menit**, endi sing luwih dawa. Dadi M1/M5 minimal 5 menit, M15 15 menit.
 - EA re-evaluate nalika candle anyar muncul ing **M1, M5, M15, M30, H1, H4**, ora mung TF eksekusi.
 
