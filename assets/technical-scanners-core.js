@@ -1,11 +1,11 @@
-/* CEBONK TECHNICAL SCANNERS v1.1.0
+/* CEBONK TECHNICAL SCANNERS v1.2.0
    Astrology is direction/time gate. Technical engines are deterministic closed-candle scanners.
    BBMA source rules follow prior project SOP: RE-ENTRY -> CSAK/CSM -> CSM.
    Liquidity rules are an engineering scanner: map -> sweep+displacement+break -> retest.
 */
 (function(root){
 'use strict';
-const MIN=60000, VERSION='1.1.0';
+const MIN=60000, VERSION='1.2.0';
 const CFG=Object.freeze({
   version:VERSION,
   packages:Object.freeze([
@@ -95,26 +95,65 @@ function bbmaPackage(data,pkg,astro,now=Date.now(),opts={}){
 function pivots(bars,depth=CFG.liquidityPivotDepth){
  const highs=[],lows=[];for(let i=depth;i<bars.length-depth;i++){let hi=true,lo=true;for(let k=1;k<=depth;k++){if(bars[i].high<=bars[i-k].high||bars[i].high<bars[i+k].high)hi=false;if(bars[i].low>=bars[i-k].low||bars[i].low>bars[i+k].low)lo=false;}const knownAt=bars[i+depth].end;if(hi)highs.push({i,price:bars[i].high,knownAt,type:'SWING_HIGH'});if(lo)lows.push({i,price:bars[i].low,knownAt,type:'SWING_LOW'});}return {highs,lows};
 }
-function mapLiquidity(bars,dir){
- if(bars.length<15)return [];const p=pivots(bars),ranges=bars.slice(-30).map(x=>x.high-x.low),tol=Math.max(1e-9,(median(ranges)||0)*CFG.equalToleranceRange),src=dir==='BUY'?p.lows:p.highs,out=[];
- for(const x of src.slice(-12))out.push({price:x.price,knownAt:x.knownAt,type:x.type,index:x.i});
- for(let i=1;i<src.length;i++){const a=src[i-1],b=src[i];if(Math.abs(a.price-b.price)<=tol)out.push({price:(a.price+b.price)/2,knownAt:Math.max(a.knownAt,b.knownAt),type:dir==='BUY'?'EQUAL_LOW':'EQUAL_HIGH',index:b.i});}
+function mapLiquidity(bars,dir,opts={}){
+ const lookback=Math.max(15,Math.floor(opts.liquidityLookback??CFG.liquidityLookback));
+ if(bars.length<15)return [];
+ const offset=Math.max(0,bars.length-lookback),work=bars.slice(offset),p=pivots(work);
+ const ranges=work.slice(-30).map(x=>x.high-x.low),tol=Math.max(1e-9,(median(ranges)||0)*CFG.equalToleranceRange);
+ const src=dir==='BUY'?p.lows:p.highs,out=[];
+ for(const x of src.slice(-12))out.push({price:x.price,knownAt:x.knownAt,type:x.type,index:x.i+offset});
+ for(let i=1;i<src.length;i++){
+  const a=src[i-1],b=src[i];
+  if(Math.abs(a.price-b.price)<=tol)out.push({price:(a.price+b.price)/2,knownAt:Math.max(a.knownAt,b.knownAt),type:dir==='BUY'?'EQUAL_LOW':'EQUAL_HIGH',index:b.i+offset});
+ }
  return out.sort((a,b)=>b.knownAt-a.knownAt).slice(0,12);
 }
 function medianBody(bars,endIdx,look=20){return median(bars.slice(Math.max(0,endIdx-look+1),endIdx+1).map(x=>Math.abs(x.close-x.open)));}
 function findLiquiditySetup(data,pkg,dir,now,opts={}){
- const t1=data[pkg.tf1]||[],t2=data[pkg.tf2]||[],t3=data[pkg.tf3]||[];if(t1.length<20||t2.length<25||t3.length<20)return {status:'WAIT',reason:'DATA_KURANG',direction:dir};
- const levels=mapLiquidity(t1,dir);if(!levels.length)return {status:'WAIT',reason:'TF1_LIQUIDITY_WAIT',direction:dir};
+ const t1=data[pkg.tf1]||[],t2=data[pkg.tf2]||[],t3=data[pkg.tf3]||[];
+ if(t1.length<20||t2.length<25||t3.length<20)return {status:'WAIT',reason:'DATA_KURANG',direction:dir};
+ const levels=mapLiquidity(t1,dir,opts);if(!levels.length)return {status:'WAIT',reason:'TF1_LIQUIDITY_WAIT',direction:dir};
  const scanStart=Math.max(1,t2.length-(opts.sweepSearch??CFG.sweepSearch));
+ let best=null,latestExpired=null;
  for(let li=0;li<levels.length;li++){
-  const level=levels[li];for(let i=scanStart;i<t2.length;i++){
-   const s=t2[i];if(s.end<level.knownAt)continue;const swept=dir==='BUY'?(s.low<level.price&&s.close>level.price):(s.high>level.price&&s.close<level.price);if(!swept)continue;
-   const sweepExtreme=dir==='BUY'?s.low:s.high;const pre=t2.slice(Math.max(0,i-(opts.structureLookback??CFG.structureLookback)),i);if(pre.length<3)continue;const structure=dir==='BUY'?Math.max(...pre.map(x=>x.high)):Math.min(...pre.map(x=>x.low));
-   let di=-1;for(let j=i;j<=Math.min(t2.length-1,i+(opts.displacementBars??CFG.displacementBars));j++){const x=t2[j],mb=medianBody(t2,j-1)||medianBody(t2,j)||0,body=Math.abs(x.close-x.open),directional=dir==='BUY'?x.close>x.open:x.close<x.open,broken=dir==='BUY'?x.close>structure:x.close<structure;if(directional&&broken&&body>=mb*(opts.displacementBodyMultiple??CFG.displacementBodyMultiple)){di=j;break;}}
-   if(di<0)continue;const d=t2[di],breakAt=d.end,ci0=t3.findIndex(x=>x.end>=breakAt);if(ci0<0)continue;
-   for(let k=ci0;k<t3.length;k++){const x=t3[k];const retest=dir==='BUY'?(x.low<=structure&&x.close>structure):(x.high>=structure&&x.close<structure);if(!retest)continue;const hold=signalHoldMs(pkg.tf3,opts),validUntil=x.end+hold;if(now<x.end||now>=validUntil)return {status:'WAIT',reason:'SIGNAL_EXPIRED',direction:dir,eventAt:x.end,validUntil};const buffer=finite(opts.slBuffer)?opts.slBuffer:CFG.slBuffer,entry=x.close,sl=dir==='BUY'?sweepExtreme-buffer:sweepExtreme+buffer,risk=Math.abs(entry-sl),rr=finite(opts.rr)?opts.rr:CFG.rr,tp=dir==='BUY'?entry+risk*rr:entry-risk*rr;if(!(risk>0&&finite(tp)))continue;return {status:'VALID',direction:dir,package:pkg.id,liquidityType:level.type,liquidity:level.price,sweepAt:s.end,sweepExtreme,breakAt,structure,eventAt:x.end,validUntil,entry,sl,tp,rr,tf1Label:`${level.type} ${level.price.toFixed(2)}`,tf2Label:`SWEEP + DISPLACEMENT + BREAK ${dir}`,tf3Label:`RETEST ${dir}`};}
+  const level=levels[li];
+  for(let i=scanStart;i<t2.length;i++){
+   const s=t2[i];if(s.end<level.knownAt)continue;
+   const swept=dir==='BUY'?(s.low<level.price&&s.close>level.price):(s.high>level.price&&s.close<level.price);
+   if(!swept)continue;
+   const sweepExtreme=dir==='BUY'?s.low:s.high;
+   const pre=t2.slice(Math.max(0,i-(opts.structureLookback??CFG.structureLookback)),i);
+   if(pre.length<3)continue;
+   const structure=dir==='BUY'?Math.max(...pre.map(x=>x.high)):Math.min(...pre.map(x=>x.low));
+   let di=-1;
+   for(let j=i;j<=Math.min(t2.length-1,i+(opts.displacementBars??CFG.displacementBars));j++){
+    const x=t2[j],mb=medianBody(t2,j-1)||medianBody(t2,j)||0,body=Math.abs(x.close-x.open);
+    const directional=dir==='BUY'?x.close>x.open:x.close<x.open;
+    const broken=dir==='BUY'?x.close>structure:x.close<structure;
+    if(directional&&broken&&body>=mb*(opts.displacementBodyMultiple??CFG.displacementBodyMultiple)){di=j;break;}
+   }
+   if(di<0)continue;
+   const d=t2[di],breakAt=d.end,ci0=t3.findIndex(x=>x.end>=breakAt);if(ci0<0)continue;
+   for(let k=t3.length-1;k>=ci0;k--){
+    const x=t3[k],retest=dir==='BUY'?(x.low<=structure&&x.close>structure):(x.high>=structure&&x.close<structure);
+    if(!retest)continue;
+    const hold=signalHoldMs(pkg.tf3,opts),validUntil=x.end+hold;
+    if(now<x.end)continue;
+    if(now>=validUntil){
+     if(!latestExpired||x.end>latestExpired.eventAt)latestExpired={status:'WAIT',reason:'SIGNAL_EXPIRED',direction:dir,eventAt:x.end,validUntil};
+     continue;
+    }
+    const buffer=finite(opts.slBuffer)?opts.slBuffer:CFG.slBuffer,entry=x.close,sl=dir==='BUY'?sweepExtreme-buffer:sweepExtreme+buffer;
+    const risk=Math.abs(entry-sl),rr=finite(opts.rr)?opts.rr:CFG.rr,tp=dir==='BUY'?entry+risk*rr:entry-risk*rr;
+    if(!(risk>0&&finite(tp)))continue;
+    const candidate={status:'VALID',direction:dir,package:pkg.id,liquidityType:level.type,liquidity:level.price,sweepAt:s.end,sweepExtreme,breakAt,structure,eventAt:x.end,validUntil,entry,sl,tp,rr,tf1Label:`${level.type} ${level.price.toFixed(2)}`,tf2Label:`SWEEP + DISPLACEMENT + BREAK ${dir}`,tf3Label:`RETEST ${dir}`};
+    if(!best||candidate.eventAt>best.eventAt||(candidate.eventAt===best.eventAt&&candidate.sweepAt>best.sweepAt))best=candidate;
+    break;
+   }
   }
  }
+ if(best)return best;
+ if(latestExpired)return latestExpired;
  return {status:'WAIT',reason:'SWEEP_BREAK_RETEST_WAIT',direction:dir};
 }
 function liquidityPackage(data,pkg,astro,now=Date.now(),opts={}){
