@@ -1,10 +1,10 @@
-// CEBONK COMPANY 22 | BBMA WEB EA | v1.01
+// CEBONK COMPANY 22 | BBMA WEB EA | v1.02
 // Web-aligned BBMA: TF1 RE-ENTRY -> TF2 CSAK/CSM -> TF3 CSM.
 // Astrology is master direction/time. Astrology News overrides normal Astrology during a news episode.
 // Fixed lot only. SL = TF2 opposite Bollinger Band +/- fixed price buffer. TP = actual-entry RR.
 // No ATR, martingale, recovery, layering, BE, trailing, or strategy partial close.
 #property strict
-#property version "1.01"
+#property version "1.02"
 #property description "CEBONK BBMA WEB EA. Modular, closed-candle, fixed lot. Demo/backtest verification required."
 #property tester_file "CEBONK_C2_ASTRO.csv"
 #property tester_file "CEBONK_C2_NEWS.csv"
@@ -185,7 +185,7 @@ int OnInit(){
  gM1=(long)iTime(InpSymbol,PERIOD_M1,0);gM5=(long)iTime(InpSymbol,PERIOD_M5,0);gM15=(long)iTime(InpSymbol,PERIOD_M15,0);
  gM30=(long)iTime(InpSymbol,PERIOD_M30,0);gH1=(long)iTime(InpSymbol,PERIOD_H1,0);gH4=(long)iTime(InpSymbol,PERIOD_H4,0);
  EventSetTimer(1);BWHeartbeat();
- BWNotice("EA_STARTED","BBMA WEB v1.01 | fixed lot | RR "+DoubleToString(InpRR,2)+" | SL TF2 BB + buffer | Astrology News "+(InpUseAstrologyNews?"ON":"OFF"),InpSymbol,gTester,gAuto);
+ BWNotice("EA_STARTED","BBMA WEB v1.02 | fixed lot | RR "+DoubleToString(InpRR,2)+" | SL TF2 BB + buffer | Astrology News "+(InpUseAstrologyNews?"ON":"OFF"),InpSymbol,gTester,gAuto);
  if(InpTelegramTestOnStart)BWNotice("TELEGRAM_TEST","Tes notifikasi. Ora ana order.",InpSymbol,gTester,gAuto);
  return INIT_SUCCEEDED;
 }
