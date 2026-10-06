@@ -21,6 +21,9 @@ ok('closed bars only', 'CopyRates(symbol,tf,1,need,r)' in core)
 ok('tf1 reentry', 'BWReentryAt' in core and 'TF1_REENTRY_WAIT' in core)
 ok('tf2 csak/csm', 'BWCSAKAt' in core and 'TF2_CSAK_CSM_WAIT' in core)
 ok('tf3 csm', 'BWCSMAt' in core and 'TF3_CSM_WAIT' in core)
+ok('strict tf sequencing', 'BWFirstEndAfter(b,reEnd)' in core and 'BWFirstEndAfter(c,confirmEnd)' in core and 'BWFirstEndAtOrAfter' not in core)
+ok('exact age windows', 'BWWindowEnd(bi0,BW_TF2_AGE' in core and 'BWWindowEnd(ci0,BW_TF3_AGE' in core and 'ArraySize(a)-BW_RE_AGE' in core)
+ok('latest valid chain', 'cand.eventAt>best.eventAt' in core and 'latestExpired' in core)
 ok('fixed lot default', 'InpFixedLot=0.01' in main)
 ok('spread 70', 'InpMaxSpreadPoints=70' in main)
 ok('rr2', 'InpRR=2.0' in main)
@@ -55,4 +58,4 @@ for p,limit in [
 ]:
     ok(f'compact {p.name}', p.stat().st_size < limit)
 
-print('TOTAL PASS 32')
+print('TOTAL PASS 35')

@@ -9,7 +9,7 @@ on:
       - 'assets/technical-scanners-ui.js'
       - 'ea/bbma_web/src/CEBONK_BBMA_WEB.mq5'
       - 'ea/bbma_web/src/BWCore.mqh'
-      - 'ea/bbma_web/dist/CEBONK_BBMA_WEB_v1.01.txt'
+      - 'ea/bbma_web/dist/*.txt'
       - 'tests/technical-scanners*.cjs'
       - '.github/workflows/technical-scanners.yml'
   pull_request:
@@ -19,7 +19,7 @@ on:
       - 'assets/technical-scanners-ui.js'
       - 'ea/bbma_web/src/CEBONK_BBMA_WEB.mq5'
       - 'ea/bbma_web/src/BWCore.mqh'
-      - 'ea/bbma_web/dist/CEBONK_BBMA_WEB_v1.01.txt'
+      - 'ea/bbma_web/dist/*.txt'
       - 'tests/technical-scanners*.cjs'
       - '.github/workflows/technical-scanners.yml'
   workflow_dispatch:
