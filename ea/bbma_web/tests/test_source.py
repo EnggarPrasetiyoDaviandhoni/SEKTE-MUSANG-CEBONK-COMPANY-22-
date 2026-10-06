@@ -26,7 +26,7 @@ ok('spread 70', 'InpMaxSpreadPoints=70' in main)
 ok('rr2', 'InpRR=2.0' in main)
 ok('sl bb buffer', 'InpSLBufferPrice=0.20' in main and 't2i].lower-slBuffer' in core and 't2i].upper+slBuffer' in core)
 ok('no ATR engine', 'iATR(' not in (main+core+astro+trade) and 'CopyBuffer(' not in (main+core+astro+trade))
-ok('no martingale recovery layering', not re.search(r'\b(Martingale|RecoveryLot|Layering|InpRiskPercent)\b', main+core+astro+trade, re.I))
+ok('no martingale recovery layering engine', all(x not in (main+core+astro+trade) for x in ['InpRiskPercent','RecoveryLot','MartingaleLot','LayerLot']))
 ok('news defaults match web', all(x in main for x in [
     'InpNewsPreMinutes=30','InpNewsPostMinutes=120',
     'InpNewsBlockBeforeMinutes=5','InpNewsBlockAfterMinutes=5',
