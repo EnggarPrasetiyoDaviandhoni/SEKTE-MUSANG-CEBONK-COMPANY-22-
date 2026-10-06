@@ -1,0 +1,43 @@
+name: Astrology daily whipsaw news brief
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'assets/astro-daily-brief.js'
+      - 'tests/astro-daily-brief*.cjs'
+      - '.github/workflows/astro-daily-brief.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'assets/astro-daily-brief.js'
+      - 'tests/astro-daily-brief*.cjs'
+      - '.github/workflows/astro-daily-brief.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax and daily brief tests
+        run: |
+          node --check assets/astro-daily-brief.js
+          node tests/astro-daily-brief.test.cjs
+          node tests/astro-daily-brief.integration.cjs
+      - name: Regression Astrology modules
+        run: |
+          node tests/astro-news.test.cjs
+          node tests/astro-candles.test.cjs
+          node tests/astro-candles.integration.cjs
+      - name: Request Pages rebuild on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"

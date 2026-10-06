@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('fs'),assert=require('assert');
+const index=fs.readFileSync('index.html','utf8');
+const daily=fs.readFileSync('assets/astro-daily-brief.js','utf8');
+assert(index.includes('<script src="assets/astro-daily-brief.js?v=1.0.0"></script>'),'daily loader missing');
+assert(index.indexOf('assets/astro-news-v1.js')<index.indexOf('assets/astro-daily-brief.js'),'daily brief must load after Astrology News API');
+assert(index.indexOf('assets/astro-candles.js')<index.indexOf('assets/astro-daily-brief.js'),'daily brief should load after candle summary');
+assert(index.includes('window.CEBONK_ASTRO_STATE=current;'),'legacy Astrology state publisher changed/missing');
+assert(index.includes("window.dispatchEvent(new Event('cebonk-astro-update'));"),'legacy Astrology update event changed/missing');
+for(const forbidden of ['OrderSend','trade.Buy','trade.Sell','WebRequest('])assert(!daily.includes(forbidden),'daily brief must remain display-only');
+assert(daily.includes('AWAS WHIPSAW ASTROLOGY'));
+assert(daily.includes('AWAS WHIPSAW NEWS'));
+assert(daily.includes('CebonkNews'));
+console.log('PASS daily Astrology integration');
