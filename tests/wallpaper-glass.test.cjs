@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('fs'),assert=require('assert');
+const css=fs.readFileSync('assets/wallpaper.css','utf8');
+const index=fs.readFileSync('index.html','utf8');
+assert(index.includes('assets/wallpaper.css?v=1.1.0'),'wallpaper cache version missing');
+assert(css.includes('data:image/webp;base64,'),'embedded user artwork missing');
+assert(css.includes('linear-gradient(rgba(8,14,23,.48),rgba(8,14,23,.68))'),'wallpaper readability overlay changed unexpectedly');
+assert(css.includes('--glass:rgba(10,18,29,.64)'),'desktop glass opacity missing');
+assert(css.includes('.panel,.metric,details,.ts-card,.ts-controls,.adb-box,.an-box,.tech-card,.rule'),'main glass surfaces missing');
+assert(css.includes('td{\n  background:rgba(8,15,25,.28)'),'transparent table body missing');
+assert(css.includes('th{\n  background:rgba(8,15,25,.84)'),'readable sticky header missing');
+assert(css.includes('backdrop-filter:blur(7px)'),'glass blur missing');
+assert(!css.includes('var(--cebonk-wallpaper'),'mobile wallpaper fallback bug present');
+console.log('PASS wallpaper + transparent table glass skin');
