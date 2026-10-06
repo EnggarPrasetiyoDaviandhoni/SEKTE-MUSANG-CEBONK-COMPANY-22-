@@ -1,10 +1,10 @@
-// CEBONK COMPANY 22 | BBMA WEB EA | v1.00
+// CEBONK COMPANY 22 | BBMA WEB EA | v1.01
 // Web-aligned BBMA: TF1 RE-ENTRY -> TF2 CSAK/CSM -> TF3 CSM.
 // Astrology is master direction/time. Astrology News overrides normal Astrology during a news episode.
 // Fixed lot only. SL = TF2 opposite Bollinger Band +/- fixed price buffer. TP = actual-entry RR.
 // No ATR, martingale, recovery, layering, BE, trailing, or strategy partial close.
 #property strict
-#property version "1.00"
+#property version "1.01"
 #property description "CEBONK BBMA WEB EA. Modular, closed-candle, fixed lot. Demo/backtest verification required."
 #property tester_file "CEBONK_C2_ASTRO.csv"
 #property tester_file "CEBONK_C2_NEWS.csv"
@@ -59,7 +59,7 @@ input bool InpTelegramTestOnStart=true;
 
 bool gTester=false,gAuto=false;
 string gButton="",gScope="",gLastBlock="",gLastSignalKey="";
-long gM1=0,gM5=0,gM15=0,gLastCutTry=0;
+long gM1=0,gM5=0,gM15=0,gM30=0,gH1=0,gH4=0,gLastCutTry=0;
 
 void BWPaint(){
  if(ObjectFind(0,gButton)<0)return;
@@ -159,8 +159,10 @@ void BWManageCut(){
 
 bool BWPulse(){
  long m1=(long)iTime(InpSymbol,PERIOD_M1,0),m5=(long)iTime(InpSymbol,PERIOD_M5,0),m15=(long)iTime(InpSymbol,PERIOD_M15,0);
- bool changed=(m1>0&&m1!=gM1)||(m5>0&&m5!=gM5)||(m15>0&&m15!=gM15);
- gM1=m1;gM5=m5;gM15=m15;return changed;
+ long m30=(long)iTime(InpSymbol,PERIOD_M30,0),h1=(long)iTime(InpSymbol,PERIOD_H1,0),h4=(long)iTime(InpSymbol,PERIOD_H4,0);
+ bool changed=(m1>0&&m1!=gM1)||(m5>0&&m5!=gM5)||(m15>0&&m15!=gM15)||
+              (m30>0&&m30!=gM30)||(h1>0&&h1!=gH1)||(h4>0&&h4!=gH4);
+ gM1=m1;gM5=m5;gM15=m15;gM30=m30;gH1=h1;gH4=h4;return changed;
 }
 void BWHeartbeat(){
  BWAstroPoll(gTester,InpAstroSource,InpAstroBaseURL,InpAstroCSV,InpCSVCommonFolder,InpHTTPTimeoutMs,InpLiveAutoServerUTC,InpServerUTCMinutes);
@@ -181,8 +183,9 @@ int OnInit(){
   ObjectSetInteger(0,gButton,OBJPROP_XSIZE,126);ObjectSetInteger(0,gButton,OBJPROP_YSIZE,30);BWPaint();
  }
  gM1=(long)iTime(InpSymbol,PERIOD_M1,0);gM5=(long)iTime(InpSymbol,PERIOD_M5,0);gM15=(long)iTime(InpSymbol,PERIOD_M15,0);
+ gM30=(long)iTime(InpSymbol,PERIOD_M30,0);gH1=(long)iTime(InpSymbol,PERIOD_H1,0);gH4=(long)iTime(InpSymbol,PERIOD_H4,0);
  EventSetTimer(1);BWHeartbeat();
- BWNotice("EA_STARTED","BBMA WEB v1.00 | fixed lot | RR "+DoubleToString(InpRR,2)+" | SL TF2 BB + buffer | Astrology News "+(InpUseAstrologyNews?"ON":"OFF"),InpSymbol,gTester,gAuto);
+ BWNotice("EA_STARTED","BBMA WEB v1.01 | fixed lot | RR "+DoubleToString(InpRR,2)+" | SL TF2 BB + buffer | Astrology News "+(InpUseAstrologyNews?"ON":"OFF"),InpSymbol,gTester,gAuto);
  if(InpTelegramTestOnStart)BWNotice("TELEGRAM_TEST","Tes notifikasi. Ora ana order.",InpSymbol,gTester,gAuto);
  return INIT_SUCCEEDED;
 }
