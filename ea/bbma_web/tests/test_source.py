@@ -44,7 +44,7 @@ ok('no trailing or be operations', 'PositionModify' not in (main+core+astro+trad
 ok('autopilot button only custom chart object', main.count('OBJ_BUTTON')==1)
 ok('real account locked default', 'InpAllowRealAccount=false' in main)
 ok('telegram json post', 'Content-Type: application/json' in trade and 'api.telegram.org' in trade)
-ok('experimental warning documented', 'belum dibuktekake win rate/profit' in readme)
+ok('experimental warning documented', 'durung dibuktekake win rate/profit' in readme)
 ok('no web/liquidity source touched by module', 'liquidity' not in core.lower())
 
 for p,limit in [
