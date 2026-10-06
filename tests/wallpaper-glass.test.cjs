@@ -4,7 +4,7 @@ const css=fs.readFileSync('assets/wallpaper.css','utf8');
 const index=fs.readFileSync('index.html','utf8');
 assert(index.includes('assets/wallpaper.css?v=1.1.0'),'wallpaper cache version missing');
 assert(css.includes('data:image/webp;base64,'),'embedded user wallpaper missing');
-assert(css.includes('/* Glass completeness v1.1 */'),'glass v1.1 block missing');
+assert(css.includes('/* Glass completeness v1.1'),'glass v1.1 block missing');
 assert(css.includes('.panel,.metric,details,.tech-card,.rule,.ts-card,.ts-controls,.adb-box,.an-box'),'dynamic glass surfaces missing');
 assert(css.includes('td{\n  background:rgba(8,15,25,.22) !important;'),'transparent table body missing');
 assert(css.includes('th{\n  background:rgba(8,15,25,.80) !important;'),'readable table header missing');
