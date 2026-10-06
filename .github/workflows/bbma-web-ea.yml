@@ -1,0 +1,27 @@
+name: BBMA Web EA
+
+on:
+  pull_request:
+    paths:
+      - 'ea/bbma_web/**'
+      - '.github/workflows/bbma-web-ea.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ea/bbma_web/**'
+      - '.github/workflows/bbma-web-ea.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static policy and modularity tests
+        run: python3 ea/bbma_web/tests/test_source.py
+      - name: Show source sizes
+        run: wc -c ea/bbma_web/src/*
