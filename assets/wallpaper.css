@@ -85,7 +85,6 @@ details pre,#manualCopy{background:rgba(5,11,18,.76) !important}
   body{
     background-attachment:scroll !important;
     background-position:center top !important;
-    background-image:linear-gradient(rgba(8,14,23,.54),rgba(8,14,23,.72)),var(--cebonk-wallpaper,none);
   }
   :root{--glass:rgba(10,18,29,.70);--glass-soft:rgba(8,15,25,.42)}
   .panel,.metric,details,.ts-card,.ts-controls,.adb-box,.an-box,.tech-card,.rule{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
