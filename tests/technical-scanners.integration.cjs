@@ -7,7 +7,7 @@ assert(index.includes('id="tabBBMA"'),'BBMA tab missing');
 assert(index.includes('id="tabLiquidity"'),'Liquidity tab missing');
 assert(!index.includes('id="tabCombined"'),'Combined 1 tab still active');
 assert(!index.includes('id="tabCombined2"'),'Combined 2 tab still active');
-assert(index.includes('assets/technical-scanners-core.js?v=1.1.0'),'technical core loader missing');
+assert(index.includes('assets/technical-scanners-core.js?v=1.2.0'),'technical core loader missing');
 assert(index.includes('assets/technical-scanners-ui.js?v=1.1.0'),'technical UI loader missing');
 assert(index.includes('assets/astro-news-v1.js?v=1.0.0'),'Astrology News loader missing');
 assert(!index.includes('assets/auto-combined.css'),'old Combined CSS still active');
@@ -19,6 +19,9 @@ assert(ui.includes("throw new Error('CANDLE_CLOSE_WAIT')"),'provider close-lag r
 assert(ui.includes('setInterval(syncClosedFrames,15000)'),'automatic all-TF close sync missing');
 assert(core.includes('minSignalHoldMinutes:5'),'minimum signal hold missing');
 assert(core.includes('signalHoldMs(pkg.tf3,opts)'),'TF3-aware signal hold missing');
+assert(core.includes('mapLiquidity(t1,dir,opts)'),'Liquidity lookback wiring missing');
+assert(core.includes('if(best)return best'),'Liquidity latest-valid selection missing');
+assert(core.includes('if(latestExpired)return latestExpired'),'Liquidity expired fallback missing');
 const eaCore=fs.readFileSync('ea/bbma_web/src/BWCore.mqh','utf8');
 const eaMain=fs.readFileSync('ea/bbma_web/src/CEBONK_BBMA_WEB.mq5','utf8');
 assert(eaCore.includes('#define BW_MIN_SIGNAL_HOLD_SEC 300'),'EA minimum hold missing');
