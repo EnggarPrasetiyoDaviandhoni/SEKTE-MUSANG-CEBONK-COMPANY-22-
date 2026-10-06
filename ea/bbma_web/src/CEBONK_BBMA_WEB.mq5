@@ -109,7 +109,7 @@ void BWEvaluate(){
  if(bc==0&&sc==0){BWBlock("BBMA_WAIT_NO_VALID_PACKAGE");return;}
  int dir=bc>0?1:-1,count=dir>0?bc:sc,chosen=-1;
  for(int i=0;i<BW_PACKAGE_COUNT;i++)if((dir>0&&buy[i])||(dir<0&&sell[i])){chosen=i;break;}
- if(chosen<0)return;BWSignal sig=dir>0?bs[chosen]:ss[chosen];
+ if(chosen<0)return;BWSignal sig;if(dir>0)sig=bs[chosen];else sig=ss[chosen];
  long eventUtc=BWServerToUTC(sig.eventAt,gTester,InpLiveAutoServerUTC,InpServerUTCMinutes);
  bool newsMode=false;string gate="";
  if(InpUseAstrologyNews){
