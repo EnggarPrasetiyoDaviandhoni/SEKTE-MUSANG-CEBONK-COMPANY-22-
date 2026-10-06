@@ -28,3 +28,90 @@ body,.panel,.metric,.tech-card,.inspect-tile,.rule,details,table{color:#f3f7fc}
 @media(prefers-reduced-transparency:reduce){
   .panel,.metric,.tech-card,.inspect-tile,.rule,details,.viewtabs{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(10,18,30,.90) !important}
 }
+/* Glass completeness v1.1
+   Wallpaper tetep ketok liwat panel/tabel, nanging teks tetep kontras. */
+:root{
+  --glass-main:rgba(10,18,30,.66);
+  --glass-soft:rgba(8,15,25,.24);
+  --glass-inner:rgba(13,24,38,.70);
+  --glass-line:rgba(117,145,180,.34);
+}
+body{text-shadow:0 1px 2px rgba(0,0,0,.72)}
+
+.panel,.metric,details,.tech-card,.rule,.ts-card,.ts-controls,.adb-box,.an-box{
+  background:var(--glass-main) !important;
+  border-color:var(--glass-line) !important;
+  backdrop-filter:blur(4px) saturate(1.06);
+  -webkit-backdrop-filter:blur(4px) saturate(1.06);
+  box-shadow:0 10px 28px rgba(0,0,0,.14);
+}
+.inspect-tile,.ts-prices span,.viewtab.active{
+  background:var(--glass-inner) !important;
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+}
+.viewtabs{
+  background:rgba(8,15,25,.56) !important;
+  border-color:var(--glass-line) !important;
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+}
+table{background:transparent !important}
+th{
+  background:rgba(8,15,25,.80) !important;
+  border-bottom-color:rgba(117,145,180,.38) !important;
+  color:#d7e2ef !important;
+  text-shadow:0 1px 2px #000;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+td{
+  background:rgba(8,15,25,.22) !important;
+  border-bottom-color:rgba(117,145,180,.24) !important;
+}
+tbody tr:nth-child(even) td{background:rgba(13,24,38,.28) !important}
+tbody tr:hover td,tr.selected td,.raw tr[data-index]:hover td{background:rgba(32,51,74,.58) !important}
+
+input,select,button:not(.primary){
+  background:rgba(8,15,25,.76) !important;
+  border-color:rgba(117,145,180,.38) !important;
+}
+button.primary{text-shadow:none}
+.note,.adb-warn{
+  background:rgba(45,35,18,.64) !important;
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+}
+.error,#astroNewsView .an-error{background:rgba(57,24,34,.70) !important}
+details pre,#manualCopy,#astroNewsView #anCopyText{background:rgba(5,11,18,.74) !important}
+
+.ts-summary{background:rgba(117,145,180,.22) !important}
+.ts-summary>div{background:rgba(10,18,29,.56) !important}
+.head,.inspect,.tech-status,.tech-actions,.control-footer,.adb-head,.adb-news-head{
+  background:rgba(8,15,25,.20) !important;
+}
+#astroNewsView .an-hero{
+  background:linear-gradient(120deg,rgba(40,21,28,.66),rgba(20,33,54,.66)) !important;
+}
+.panel,.metric,details,.tech-card,.rule,.ts-card,.ts-controls,.adb-box,.an-box,th,td{color:#f3f7fc}
+.muted,.label,.head small,td small,.timeline-row small,.hint,.ts-card>small,.ts-steps,.adb-row small,.adb-news-head small{
+  color:#c0ccdc !important;
+}
+
+@media(max-width:760px){
+  :root{--glass-main:rgba(10,18,30,.72);--glass-soft:rgba(8,15,25,.30)}
+  .panel,.metric,details,.tech-card,.rule,.ts-card,.ts-controls,.adb-box,.an-box{
+    backdrop-filter:blur(3px);
+    -webkit-backdrop-filter:blur(3px);
+  }
+  td{background:rgba(8,15,25,.28) !important}
+  tbody tr:nth-child(even) td{background:rgba(13,24,38,.34) !important}
+}
+
+@media(prefers-reduced-transparency:reduce){
+  :root{--glass-main:rgba(10,18,30,.90)}
+  .panel,.metric,details,.tech-card,.rule,.ts-card,.ts-controls,.adb-box,.an-box,th{
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+  }
+}
