@@ -1,0 +1,16 @@
+'use strict';
+const fs=require('fs'),assert=require('assert');
+const index=fs.readFileSync('index.html','utf8');
+const core=fs.readFileSync('assets/technical-scanners-core.js','utf8');
+const ui=fs.readFileSync('assets/technical-scanners-ui.js','utf8');
+assert(index.includes('id="tabBBMA"'),'BBMA tab missing');
+assert(index.includes('id="tabLiquidity"'),'Liquidity tab missing');
+assert(!index.includes('id="tabCombined"'),'Combined 1 tab still active');
+assert(!index.includes('id="tabCombined2"'),'Combined 2 tab still active');
+assert(index.includes('assets/technical-scanners-core.js?v=1.0.0'),'technical core loader missing');
+assert(index.includes('assets/technical-scanners-ui.js?v=1.0.0'),'technical UI loader missing');
+assert(index.includes('assets/astro-news-v1.js?v=1.0.0'),'Astrology News loader missing');
+assert(!index.includes('assets/auto-combined.css'),'old Combined CSS still active');
+for(const old of ['assets/combined1-legacy.js','assets/combined-tabs.js','assets/auto-combined-ui.js','assets/auto-combined-core.js','assets/snd-auto-core.js'])assert(!index.includes(`src="${old}`),old+' must be inactive');
+for(const bad of ['OrderSend','trade.Buy','trade.Sell'])assert(!core.includes(bad)&&!ui.includes(bad),'scanner web must not send orders');
+const T=require('../assets/technical-scanners-core.js');const r=T.scanAll({},null,Date.now());assert.equal(r.bbma.length,4);assert.equal(r.liquidity.length,4);assert.equal(r.final,'WAIT');assert.equal(r.executionEnabled,false);console.log('PASS technical scanner integration');

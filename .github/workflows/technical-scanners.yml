@@ -1,0 +1,48 @@
+name: Technical BBMA and Liquidity scanners
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'assets/technical-scanners-core.js'
+      - 'assets/technical-scanners-ui.js'
+      - 'tests/technical-scanners*.cjs'
+      - '.github/workflows/technical-scanners.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'assets/technical-scanners-core.js'
+      - 'assets/technical-scanners-ui.js'
+      - 'tests/technical-scanners*.cjs'
+      - '.github/workflows/technical-scanners.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax and deterministic scanner tests
+        run: |
+          node --check assets/technical-scanners-core.js
+          node --check assets/technical-scanners-ui.js
+          node tests/technical-scanners.test.cjs
+          node tests/technical-scanners.integration.cjs
+          node tests/astro-news.test.cjs
+      - name: Confirm legacy Combined engines are inactive
+        run: |
+          ! grep -q 'id="tabCombined"' index.html
+          ! grep -q 'id="tabCombined2"' index.html
+          grep -q 'id="tabBBMA"' index.html
+          grep -q 'id="tabLiquidity"' index.html
+      - name: Request Pages rebuild on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
