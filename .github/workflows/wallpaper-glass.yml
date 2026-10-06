@@ -1,0 +1,35 @@
+name: Web wallpaper glass skin
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'assets/wallpaper.css'
+      - 'tests/wallpaper-glass.test.cjs'
+      - '.github/workflows/wallpaper-glass.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'assets/wallpaper.css'
+      - 'tests/wallpaper-glass.test.cjs'
+      - '.github/workflows/wallpaper-glass.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify wallpaper glass CSS
+        run: node tests/wallpaper-glass.test.cjs
+      - name: Request Pages rebuild on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
