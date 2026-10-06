@@ -1,22 +1,33 @@
-/* CEBONK TECHNICAL SCANNERS UI v1.0.0. Web observation only; never sends an order. */
+/* CEBONK TECHNICAL SCANNERS UI v1.1.0. Web observation only; never sends an order. */
 (function(root){
 'use strict';
 if(typeof document==='undefined')return;
 const API='https://cebonk-xau-api.enggarprasetiyo330.workers.dev/xau',T=root.CebonkTechnicalScanners;
 const intervals={M1:'1min',M5:'5min',M15:'15min',M30:'30min',H1:'1h',H4:'4h'},frames=Object.keys(intervals),cache=new Map(),errors=new Map();
-const ttl={M1:65000,M5:65000,M15:120000,M30:180000,H1:300000,H4:600000};let loading=false,lastScan=0,result=null,rr=2,buffer=.20;
+const ttl={M1:65000,M5:65000,M15:120000,M30:180000,H1:300000,H4:600000};let loading=false,lastScan=0,result=null,rr=2,buffer=.20,lastAutoSync=0;
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),num=x=>Number.isFinite(x)?x.toFixed(2):'—';
 function wib(ms){return Number.isFinite(ms)?new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(ms))+' WIB':'—';}
 function parseTime(s){const v=String(s).trim();return Date.parse(v.endsWith('Z')?v:v.replace(' ','T')+'Z');}
-function healthy(tf){const x=cache.get(tf),now=Date.now();return !!x&&!errors.has(tf)&&now-x.fetched<ttl[tf];}
+function stepMs(tf){return (T.CFG.minutes[tf]||1)*60000;}
+function expectedClosedEnd(tf,now=Date.now()){const step=stepMs(tf);return Math.floor(now/step)*step;}
+function hasBoundaryBar(tf,x,now=Date.now()){const bars=x?.bars;if(!bars?.length)return false;return bars[bars.length-1].end>=expectedClosedEnd(tf,now);}
+function healthy(tf,now=Date.now()){const x=cache.get(tf);return !!x&&!errors.has(tf)&&now-x.fetched<ttl[tf]&&hasBoundaryBar(tf,x,now);}
 function parse(payload,tf,now){
  if(!payload||payload.ok!==true||payload.symbol!=='XAU/USD'||payload.interval!==intervals[tf]||!Array.isArray(payload.values))throw new Error('FEED_SCHEMA');
  const step=T.CFG.minutes[tf]*60000,b=payload.values.map(v=>({ms:parseTime(v.datetime),open:+v.open,high:+v.high,low:+v.low,close:+v.close})).filter(x=>[x.ms,x.open,x.high,x.low,x.close].every(Number.isFinite)).map(x=>({...x,end:x.ms+step})).filter(x=>x.end<=now).sort((a,b)=>a.ms-b.ms);
  if(b.length<35)throw new Error('HISTORY_KURANG');const last=b[b.length-1];if(now-last.end>Math.max(step*2,10*60000))throw new Error('DATA_STALE');return b;
 }
-async function feed(tf){
- if(healthy(tf))return cache.get(tf).bars;const now=Date.now(),ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),12000);
- try{const r=await fetch(API+'?interval='+intervals[tf]+'&outputsize=300',{cache:'no-store',signal:ctl.signal}),p=await r.json();if(!r.ok||p.ok!==true)throw new Error(p.error||('HTTP_'+r.status));const bars=parse(p,tf,now),fetched=Date.parse(p.fetchedAtUtc)||now;cache.set(tf,{bars,fetched});errors.delete(tf);return bars;}catch(e){cache.delete(tf);errors.set(tf,e.name==='AbortError'?'TIMEOUT':e.message);return null;}finally{clearTimeout(timer);}
+async function feed(tf,force=false){
+ const now=Date.now();if(!force&&healthy(tf,now))return cache.get(tf).bars;const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),12000);
+ try{
+  const r=await fetch(API+'?interval='+intervals[tf]+'&outputsize=300',{cache:'no-store',signal:ctl.signal}),p=await r.json();
+  if(!r.ok||p.ok!==true)throw new Error(p.error||('HTTP_'+r.status));
+  const bars=parse(p,tf,now),fetched=Date.parse(p.fetchedAtUtc)||now,last=bars[bars.length-1],expected=expectedClosedEnd(tf,now);
+  cache.set(tf,{bars,fetched});if(last.end<expected)throw new Error('CANDLE_CLOSE_WAIT');
+  errors.delete(tf);return bars;
+ }catch(e){
+  errors.set(tf,e.name==='AbortError'?'TIMEOUT':e.message);return cache.get(tf)?.bars||null;
+ }finally{clearTimeout(timer);}
 }
 function astro(){const a=root.CEBONK_ASTRO_STATE;if(!a||$('results')?.dataset.stale==='true'||$('dateInput')?.value!==root.CebonkCore?.Time?.today()||!$('modelEnabled')?.checked)return null;return a;}
 function cls(s){return String(s||'WAIT').includes('BUY')?'buy':String(s||'WAIT').includes('SELL')?'sell':String(s||'WAIT')==='CONFLICT'?'transition':'neutral';}
@@ -36,9 +47,26 @@ function render(){
  l.innerHTML=controls+finalSummary()+`<div class="note"><strong>Liquidity:</strong> TF1 map swing/equal liquidity → TF2 sweep + displacement + structure break → TF3 retest. Closed candle.</div><div class="ts-grid">${result.liquidity.map(x=>packageCard(x,'LIQ')).join('')}</div>`;
  for(const view of [b,l]){const r=view.querySelector('.tsRefresh');if(r)r.addEventListener('click',scan);const ri=view.querySelector('.tsRR'),bi=view.querySelector('.tsBuffer');if(ri)ri.addEventListener('change',()=>{rr=Math.max(1,Math.min(5,+ri.value||2));render();});if(bi)bi.addEventListener('change',()=>{buffer=Math.max(0,Math.min(20,+bi.value||0));render();});}
 }
+function rescanCached(){
+ const now=Date.now(),data={};for(const tf of frames)if(healthy(tf,now))data[tf]=cache.get(tf).bars;
+ result=T.scanAll(data,astro(),now,{rr,slBuffer:buffer});root.CEBONK_TECHNICAL_SCANNER_STATE=result;render();
+}
 async function scan(){
- if(loading)return;if(Date.now()-lastScan<60000){document.querySelectorAll('.ts-status').forEach(x=>x.textContent='Tunggu 60 detik antar refresh.');return;}loading=true;lastScan=Date.now();document.querySelectorAll('.ts-status').forEach(x=>x.textContent='Ngambil M1/M5/M15/M30/H1/H4…');
- try{for(const tf of frames)await feed(tf);const data={};for(const tf of frames)if(healthy(tf))data[tf]=cache.get(tf).bars;result=T.scanAll(data,astro(),Date.now(),{rr,slBuffer:buffer});root.CEBONK_TECHNICAL_SCANNER_STATE=result;render();document.querySelectorAll('.ts-status').forEach(x=>x.textContent='Scan rampung · '+wib(Date.now()));}catch(e){document.querySelectorAll('.ts-status').forEach(x=>x.textContent='SCAN ERROR: '+e.message);}finally{loading=false;}
+ if(loading)return;if(Date.now()-lastScan<60000){document.querySelectorAll('.ts-status').forEach(x=>x.textContent='Tunggu 60 detik antar refresh manual. Auto close-sync tetep aktif.');return;}
+ loading=true;lastScan=Date.now();document.querySelectorAll('.ts-status').forEach(x=>x.textContent='Ngambil M1/M5/M15/M30/H1/H4…');
+ try{for(const tf of frames)await feed(tf,true);rescanCached();document.querySelectorAll('.ts-status').forEach(x=>x.textContent='Scan rampung · '+wib(Date.now()));}catch(e){document.querySelectorAll('.ts-status').forEach(x=>x.textContent='SCAN ERROR: '+e.message);}finally{loading=false;}
+}
+async function syncClosedFrames(){
+ if(loading)return;const now=Date.now();if(now-lastAutoSync<15000)return;lastAutoSync=now;
+ const due=frames.filter(tf=>!healthy(tf,now));
+ if(!due.length){if(result)rescanCached();return;}
+ loading=true;document.querySelectorAll('.ts-status').forEach(x=>x.textContent='Sinkron candle close: '+due.join('/')+'…');
+ try{
+  for(const tf of due)await feed(tf,true);
+  rescanCached();
+  const waiting=frames.filter(tf=>!healthy(tf)).map(tf=>tf+':'+(errors.get(tf)||'WAIT'));
+  document.querySelectorAll('.ts-status').forEach(x=>x.textContent=waiting.length?'Nunggu close feed · '+waiting.join(' · '):'Close-sync rampung · '+wib(Date.now()));
+ }catch(e){document.querySelectorAll('.ts-status').forEach(x=>x.textContent='AUTO SYNC ERROR: '+e.message);}finally{loading=false;}
 }
 function mount(){
  if(!T||$('bbmaScannerView'))return;const nav=document.querySelector('.viewtabs'),wrap=document.querySelector('main.wrap');if(!nav||!wrap)return;
@@ -48,8 +76,8 @@ function mount(){
  function show(id,hash){for(const view of ['astroView','bbmaScannerView','liquidityScannerView','astroNewsView'])if($(view))$(view).hidden=view!==id;nav.querySelectorAll('.viewtab').forEach(b=>b.classList.toggle('active',tabs[b.id]===id));if(hash)try{history.replaceState(null,'','#'+hash);}catch(e){}if(id==='bbmaScannerView'||id==='liquidityScannerView'){if(!result||Date.now()-lastScan>=60000)scan();else render();}}
  $('tabAstro')?.addEventListener('click',()=>show('astroView','astrology'));$('tabBBMA')?.addEventListener('click',()=>show('bbmaScannerView','bbma-scanner'));$('tabLiquidity')?.addEventListener('click',()=>show('liquidityScannerView','liquidity-scanner'));
  nav.addEventListener('click',e=>{if(e.target.closest('#tabAstroNews')){for(const id of ['bbmaScannerView','liquidityScannerView'])$(id).hidden=true;}});
- root.addEventListener('cebonk-astro-update',()=>{if(result){result=T.scanAll(Object.fromEntries(frames.filter(healthy).map(tf=>[tf,cache.get(tf).bars])),astro(),Date.now(),{rr,slBuffer:buffer});render();}});
- setInterval(()=>{if(result){result=T.scanAll(Object.fromEntries(frames.filter(healthy).map(tf=>[tf,cache.get(tf).bars])),astro(),Date.now(),{rr,slBuffer:buffer});render();}},30000);
+ root.addEventListener('cebonk-astro-update',()=>{if(result)rescanCached();});
+ setInterval(syncClosedFrames,15000);
  if(location.hash==='#bbma-scanner')show('bbmaScannerView','bbma-scanner');else if(location.hash==='#liquidity-scanner')show('liquidityScannerView','liquidity-scanner');
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
