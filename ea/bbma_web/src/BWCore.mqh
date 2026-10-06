@@ -1,4 +1,4 @@
-// CEBONK BBMA WEB EA v1.00 - deterministic BBMA core.
+// CEBONK BBMA WEB EA v1.01 - deterministic BBMA core.
 // Port of assets/technical-scanners-core.js BBMA rules only.
 // Closed candles only. No ATR, martingale, recovery, BE, trailing, or layering.
 #ifndef CEBONK_BW_CORE
@@ -12,6 +12,7 @@
 #define BW_TF2_AGE 6
 #define BW_TF3_AGE 6
 #define BW_PACKAGE_COUNT 4
+#define BW_MIN_SIGNAL_HOLD_SEC 300
 
 struct BWBar {
  long start;
@@ -30,7 +31,7 @@ struct BWSignal {
  bool valid;
  int dir;              // BUY=1, SELL=-1
  int pkg;              // 0..3
- long reAt,tf2At,eventAt;
+ long reAt,tf2At,eventAt,validUntil;
  string tf2Type;       // CSAK / CSM
  double referenceEntry;
  double structuralSL;
@@ -126,6 +127,10 @@ int BWAtOrBefore(const BWBar &e[],const long ms){
  int idx=-1;for(int i=0;i<ArraySize(e);i++){if(e[i].end<=ms)idx=i;else break;}return idx;
 }
 
+int BWSignalHoldSeconds(const ENUM_TIMEFRAMES tf){
+ int step=PeriodSeconds(tf);if(step<=0)return 0;return MathMax(step,BW_MIN_SIGNAL_HOLD_SEC);
+}
+
 bool BWScanDirection(const string symbol,const int pkgIndex,const int dir,const long nowServer,
  const double rr,const double slBuffer,const int barsNeeded,BWSignal &out,string &why){
  ZeroMemory(out);out.dir=dir;out.pkg=pkgIndex;out.rr=rr;why="";
@@ -151,13 +156,13 @@ bool BWScanDirection(const string symbol,const int pkgIndex,const int dir,const 
  int ci=-1,cEnd=MathMin(ArraySize(c)-1,ci0+BW_TF3_AGE);
  for(int i=ci0;i<=cEnd;i++)if(BWCSMAt(c,i,dir)){ci=i;break;}
  if(ci<0){why="TF3_CSM_WAIT";return false;}
- BWBar event=c[ci];int step=PeriodSeconds(p.tf3);
- if(step<=0||nowServer<event.end||nowServer>=event.end+step){why="SIGNAL_EXPIRED";return false;}
+ BWBar event=c[ci];int hold=BWSignalHoldSeconds(p.tf3);long validUntil=event.end+hold;
+ if(hold<=0||nowServer<event.end||nowServer>=validUntil){why="SIGNAL_EXPIRED";return false;}
  int t2i=BWAtOrBefore(b,event.end);if(t2i<0||!BWIndicatorOK(b[t2i])){why="TF2_SL_DATA_WAIT";return false;}
  double sl=dir>0?b[t2i].lower-slBuffer:b[t2i].upper+slBuffer;
  double risk=MathAbs(event.close-sl);
  if(!(risk>0&&BWFin(sl))){why="RISK_INVALID";return false;}
- out.valid=true;out.reAt=reEnd;out.tf2At=confirmEnd;out.eventAt=event.end;out.tf2Type=type;
+ out.valid=true;out.reAt=reEnd;out.tf2At=confirmEnd;out.eventAt=event.end;out.validUntil=validUntil;out.tf2Type=type;
  out.referenceEntry=event.close;out.structuralSL=sl;
  return true;
 }

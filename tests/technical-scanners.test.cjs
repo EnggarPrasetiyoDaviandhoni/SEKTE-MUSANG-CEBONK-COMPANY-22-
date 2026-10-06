@@ -6,6 +6,10 @@ function bar(o,h,l,c,ms=0,end=ms+60000){return {open:o,high:h,low:l,close:c,ms,e
 function E(o,h,l,c,bb,ma,ms=0){return {...bar(o,h,l,c,ms,ms+60000),bb,ma5h:ma.m5h,ma10h:ma.m10h,ma5l:ma.m5l,ma10l:ma.m10l};}
 const buyBB={mid:100,upper:110,lower:90},sellBB={mid:100,upper:110,lower:90};
 test('package matrix exact',()=>assert.deepStrictEqual(T.CFG.packages.map(x=>x.id),['H4-H1-M15','H1-M15-M5','M30-M5-M1','M15-M5-M1']));
+test('signal hold covers every timeframe with 5m minimum',()=>assert.deepStrictEqual(
+  ['M1','M5','M15','M30','H1','H4'].map(tf=>T.signalHoldMs(tf)),
+  [5,5,15,30,60,240].map(x=>x*60000)
+));
 test('RE-ENTRY BUY wick + close + stack',()=>{const e=[E(104,106,101,105,buyBB,{m5h:106,m10h:105,m5l:102,m10l:103})];assert(T.reentryAt(e,0,'BUY'));});
 test('RE-ENTRY SELL wick + close + stack',()=>{const e=[E(96,99,94,95,sellBB,{m5h:98,m10h:97,m5l:94,m10l:95})];assert(T.reentryAt(e,0,'SELL'));});
 test('RE-ENTRY invalid without wick-only body',()=>{const e=[E(102,106,101,103,buyBB,{m5h:106,m10h:105,m5l:102,m10l:103})];assert(!T.reentryAt(e,0,'BUY'));});
