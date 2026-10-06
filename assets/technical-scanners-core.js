@@ -1,11 +1,11 @@
-/* CEBONK TECHNICAL SCANNERS v1.2.0
+/* CEBONK TECHNICAL SCANNERS v1.3.0
    Astrology is direction/time gate. Technical engines are deterministic closed-candle scanners.
    BBMA source rules follow prior project SOP: RE-ENTRY -> CSAK/CSM -> CSM.
    Liquidity rules are an engineering scanner: map -> sweep+displacement+break -> retest.
 */
 (function(root){
 'use strict';
-const MIN=60000, VERSION='1.2.0';
+const MIN=60000, VERSION='1.3.0';
 const CFG=Object.freeze({
   version:VERSION,
   packages:Object.freeze([
@@ -70,20 +70,55 @@ function astroGate(astro,ms,dir,now){
  if(dir&&live.state!==dir)return {ok:false,reason:'ASTROLOGY_DIRECTION_MISMATCH',live:live.state};
  return {ok:true,direction:live.state,window:live};
 }
+function firstEndAfter(e,ms){return e.findIndex(x=>x.end>ms);}
+function findBbmaChain(a,b,c,pkg,dir,now,opts={}){
+ const reAge=Math.max(1,Math.floor(opts.reAge??CFG.reAge));
+ const tf2Age=Math.max(1,Math.floor(opts.tf2Age??CFG.tf2Age));
+ const tf3Age=Math.max(1,Math.floor(opts.tf3Age??CFG.tf3Age));
+ const reStart=Math.max(0,a.length-reAge);
+ let best=null,latestExpired=null,sawRe=false,sawTf2Window=false,sawTf2=false,sawTf3Window=false,sawTf3=false,sawRiskInvalid=false;
+ for(let ri=a.length-1;ri>=reStart;ri--){
+  if(!reentryAt(a,ri,dir))continue;
+  sawRe=true;const reEnd=a[ri].end,bi0=firstEndAfter(b,reEnd);if(bi0<0)continue;
+  sawTf2Window=true;const bEnd=Math.min(b.length-1,bi0+tf2Age-1);
+  for(let bi=bi0;bi<=bEnd;bi++){
+   const csak=csakAt(b,bi,dir),csm=csmAt(b,bi,dir);if(!csak&&!csm)continue;
+   sawTf2=true;const tf2Type=csak?'CSAK':'CSM',confirmEnd=b[bi].end,ci0=firstEndAfter(c,confirmEnd);if(ci0<0)continue;
+   sawTf3Window=true;const cEnd=Math.min(c.length-1,ci0+tf3Age-1);
+   for(let ci=ci0;ci<=cEnd;ci++){
+    if(!csmAt(c,ci,dir))continue;
+    sawTf3=true;const event=c[ci],hold=signalHoldMs(pkg.tf3,opts),validUntil=event.end+hold;
+    if(now<event.end)continue;
+    if(now>=validUntil){
+     const expired={status:'WAIT',reason:'SIGNAL_EXPIRED',direction:dir,reAt:reEnd,tf2At:confirmEnd,tf2Type,eventAt:event.end,validUntil};
+     if(!latestExpired||expired.eventAt>latestExpired.eventAt||(expired.eventAt===latestExpired.eventAt&&expired.tf2At>latestExpired.tf2At))latestExpired=expired;
+     continue;
+    }
+    const t2idx=atOrBefore(b,event.end),t2=b[t2idx];if(!t2||!validIndicator(t2))continue;
+    const entry=event.close,buffer=finite(opts.slBuffer)?opts.slBuffer:CFG.slBuffer;
+    const sl=dir==='BUY'?t2.bb.lower-buffer:t2.bb.upper+buffer,risk=Math.abs(entry-sl),rr=finite(opts.rr)?opts.rr:CFG.rr,tp=dir==='BUY'?entry+risk*rr:entry-risk*rr;
+    if(!(risk>0&&finite(tp))){sawRiskInvalid=true;continue;}
+    const candidate={status:'VALID',direction:dir,package:pkg.id,reAt:reEnd,tf2At:confirmEnd,tf2Type,eventAt:event.end,validUntil,entry,sl,tp,rr,tf1Label:'RE-ENTRY '+dir,tf2Label:tf2Type+' '+dir,tf3Label:'CSM '+dir};
+    if(!best||candidate.eventAt>best.eventAt||
+      (candidate.eventAt===best.eventAt&&candidate.tf2At>best.tf2At)||
+      (candidate.eventAt===best.eventAt&&candidate.tf2At===best.tf2At&&candidate.reAt>best.reAt))best=candidate;
+   }
+  }
+ }
+ if(best)return best;
+ if(latestExpired)return latestExpired;
+ if(!sawRe)return {status:'WAIT',reason:'TF1_REENTRY_WAIT',direction:dir};
+ if(!sawTf2Window)return {status:'WAIT',reason:'TF2_AFTER_REENTRY_WAIT',direction:dir};
+ if(!sawTf2)return {status:'WAIT',reason:'TF2_CSAK_CSM_WAIT',direction:dir};
+ if(!sawTf3Window)return {status:'WAIT',reason:'TF3_AFTER_TF2_WAIT',direction:dir};
+ if(!sawTf3)return {status:'WAIT',reason:'TF3_CSM_WAIT',direction:dir};
+ if(sawRiskInvalid)return {status:'WAIT',reason:'RISK_INVALID',direction:dir};
+ return {status:'WAIT',reason:'TF3_CSM_WAIT',direction:dir};
+}
 function bbmaDirection(data,pkg,dir,now,opts={}){
  const a=enrich(data[pkg.tf1]||[]),b=enrich(data[pkg.tf2]||[]),c=enrich(data[pkg.tf3]||[]);
  if(a.length<CFG.bbPeriod+2||b.length<CFG.bbPeriod+2||c.length<CFG.bbPeriod+2)return {status:'WAIT',reason:'DATA_KURANG',direction:dir};
- const reStart=Math.max(CFG.bbPeriod,a.length-1-(opts.reAge??CFG.reAge));
- const ri=latestIndex(a,reStart,a.length-1,i=>reentryAt(a,i,dir));if(ri<0)return {status:'WAIT',reason:'TF1_REENTRY_WAIT',direction:dir};
- const reEnd=a[ri].end,bi0=b.findIndex(x=>x.end>=reEnd);if(bi0<0)return {status:'WAIT',reason:'TF2_AFTER_REENTRY_WAIT',direction:dir};
- const bi=firstIndex(b,bi0,Math.min(b.length-1,bi0+(opts.tf2Age??CFG.tf2Age)),i=>csakAt(b,i,dir)||csmAt(b,i,dir));if(bi<0)return {status:'WAIT',reason:'TF2_CSAK_CSM_WAIT',direction:dir,reAt:reEnd};
- const tf2Type=csakAt(b,bi,dir)?'CSAK':'CSM',confirmEnd=b[bi].end,ci0=c.findIndex(x=>x.end>=confirmEnd);if(ci0<0)return {status:'WAIT',reason:'TF3_AFTER_TF2_WAIT',direction:dir};
- const ci=firstIndex(c,ci0,Math.min(c.length-1,ci0+(opts.tf3Age??CFG.tf3Age)),i=>csmAt(c,i,dir));if(ci<0)return {status:'WAIT',reason:'TF3_CSM_WAIT',direction:dir,reAt:reEnd,tf2At:confirmEnd,tf2Type};
- const event=c[ci],hold=signalHoldMs(pkg.tf3,opts),validUntil=event.end+hold;if(now<event.end||now>=validUntil)return {status:'WAIT',reason:'SIGNAL_EXPIRED',direction:dir,eventAt:event.end,validUntil};
- const t2idx=atOrBefore(b,event.end),t2=b[t2idx];if(!t2||!validIndicator(t2))return {status:'WAIT',reason:'TF2_SL_DATA_WAIT',direction:dir};
- const entry=event.close,buffer=finite(opts.slBuffer)?opts.slBuffer:CFG.slBuffer,sl=dir==='BUY'?t2.bb.lower-buffer:t2.bb.upper+buffer,risk=Math.abs(entry-sl),rr=finite(opts.rr)?opts.rr:CFG.rr,tp=dir==='BUY'?entry+risk*rr:entry-risk*rr;
- if(!(risk>0&&finite(tp)))return {status:'WAIT',reason:'RISK_INVALID',direction:dir};
- return {status:'VALID',direction:dir,package:pkg.id,reAt:reEnd,tf2At:confirmEnd,tf2Type,eventAt:event.end,validUntil,entry,sl,tp,rr,tf1Label:'RE-ENTRY '+dir,tf2Label:tf2Type+' '+dir,tf3Label:'CSM '+dir};
+ return findBbmaChain(a,b,c,pkg,dir,now,opts);
 }
 function bbmaPackage(data,pkg,astro,now=Date.now(),opts={}){
  const buy=bbmaDirection(data,pkg,'BUY',now,opts),sell=bbmaDirection(data,pkg,'SELL',now,opts);
@@ -168,6 +203,6 @@ function scanAll(data,astro,now=Date.now(),opts={}){
  return {version:VERSION,bbma,liquidity,final,reason,executionEnabled:false};
 }
 function cutProfitDecision(dir,reachedR,oppositeCsm,tf2Close,tf2Mid){if(!side(dir)||!reachedR)return false;if(oppositeCsm===opposite(dir))return true;if(!finite(tf2Close)||!finite(tf2Mid))return false;return dir==='BUY'?tf2Close<tf2Mid:tf2Close>tf2Mid;}
-const API=Object.freeze({CFG,mean,median,lwma,sma,bb,enrich,reentryAt,csakAt,csmAt,signalHoldMs,astroGate,bbmaDirection,bbmaPackage,pivots,mapLiquidity,findLiquiditySetup,liquidityPackage,scanAll,cutProfitDecision});
+const API=Object.freeze({CFG,mean,median,lwma,sma,bb,enrich,reentryAt,csakAt,csmAt,firstEndAfter,signalHoldMs,findBbmaChain,astroGate,bbmaDirection,bbmaPackage,pivots,mapLiquidity,findLiquiditySetup,liquidityPackage,scanAll,cutProfitDecision});
 root.CebonkTechnicalScanners=API;if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
