@@ -17,6 +17,86 @@ test('CSAK BUY',()=>{const p=E(98,101,97,99,buyBB,{m5h:102,m10h:103,m5l:96,m10l:
 test('CSAK SELL',()=>{const p=E(102,103,99,101,sellBB,{m5h:105,m10h:106,m5l:98,m10l:97});const x=E(101,102,92,94,sellBB,{m5h:105,m10h:106,m5l:98,m10l:97},60000);assert(T.csakAt([p,x],1,'SELL'));});
 test('CSM BUY',()=>{const p=E(105,109,103,108,buyBB,{m5h:106,m10h:105,m5l:102,m10l:101});const x=E(108,113,107,112,buyBB,{m5h:106,m10h:105,m5l:102,m10l:101},60000);assert(T.csmAt([p,x],1,'BUY'));});
 test('CSM SELL',()=>{const p=E(95,97,92,93,sellBB,{m5h:99,m10h:98,m5l:94,m10l:95});const x=E(93,94,87,88,sellBB,{m5h:99,m10h:98,m5l:94,m10l:95},60000);assert(T.csmAt([p,x],1,'SELL'));});
+function buyChainBars(){
+ const a=[E(104,106,101,105,buyBB,{m5h:106,m10h:105,m5l:102,m10l:103},0)];
+ const b=[
+  E(98,101,97,99,buyBB,{m5h:102,m10h:103,m5l:96,m10l:95},60000),
+  E(99,108,98,106,buyBB,{m5h:102,m10h:103,m5l:96,m10l:95},120000)
+ ];
+ const c=[
+  E(105,109,103,108,buyBB,{m5h:106,m10h:105,m5l:102,m10l:101},180000),
+  E(108,113,107,112,buyBB,{m5h:106,m10h:105,m5l:102,m10l:101},240000)
+ ];
+ return {a,b,c};
+}
+function sellChainBars(){
+ const a=[E(96,99,94,95,sellBB,{m5h:98,m10h:97,m5l:94,m10l:95},0)];
+ const b=[
+  E(102,103,99,101,sellBB,{m5h:105,m10h:106,m5l:98,m10l:97},60000),
+  E(101,102,92,94,sellBB,{m5h:105,m10h:106,m5l:98,m10l:97},120000)
+ ];
+ const c=[
+  E(95,97,92,93,sellBB,{m5h:99,m10h:98,m5l:94,m10l:95},180000),
+  E(93,94,87,88,sellBB,{m5h:99,m10h:98,m5l:94,m10l:95},240000)
+ ];
+ return {a,b,c};
+}
+test('BBMA strict sequencing rejects TF2 same-close with TF1',()=>{
+ const a=[E(104,106,101,105,buyBB,{m5h:106,m10h:105,m5l:102,m10l:103},0)];
+ const b=[
+  E(98,101,97,99,buyBB,{m5h:102,m10h:103,m5l:96,m10l:95},-60000),
+  E(99,108,98,106,buyBB,{m5h:102,m10h:103,m5l:96,m10l:95},0)
+ ];
+ const c=buyChainBars().c,pkg={id:'TEST',tf3:'M1'};
+ const r=T.findBbmaChain(a,b,c,pkg,'BUY',300000);
+ assert.equal(r.status,'WAIT');assert.equal(r.reason,'TF2_AFTER_REENTRY_WAIT');
+});
+test('BBMA strict sequencing ignores same-close and uses later TF2 confirm',()=>{
+ const a=[E(104,106,101,105,buyBB,{m5h:106,m10h:105,m5l:102,m10l:103},0)];
+ const b=[
+  E(98,101,97,99,buyBB,{m5h:102,m10h:103,m5l:96,m10l:95},-60000),
+  E(99,108,98,106,buyBB,{m5h:102,m10h:103,m5l:96,m10l:95},0),
+  E(99,108,98,106,buyBB,{m5h:102,m10h:103,m5l:96,m10l:95},60000)
+ ];
+ const c=[
+  E(105,109,103,108,buyBB,{m5h:106,m10h:105,m5l:102,m10l:101},120000),
+  E(108,113,107,112,buyBB,{m5h:106,m10h:105,m5l:102,m10l:101},180000)
+ ];
+ const r=T.findBbmaChain(a,b,c,{id:'TEST',tf3:'M1'},'BUY',250000);
+ assert.equal(r.status,'VALID');assert.equal(r.tf2At,120000);assert.equal(r.eventAt,240000);
+});
+test('BBMA TF2 age counts exactly N post-TF1 bars',()=>{
+ const a=[E(104,106,101,105,buyBB,{m5h:106,m10h:105,m5l:102,m10l:103},0)];
+ const b=[
+  E(100,101,99,100,buyBB,{m5h:102,m10h:103,m5l:96,m10l:95},60000),
+  E(99,108,98,106,buyBB,{m5h:102,m10h:103,m5l:96,m10l:95},120000)
+ ];
+ const c=buyChainBars().c,pkg={id:'TEST',tf3:'M1'};
+ assert.equal(T.findBbmaChain(a,b,c,pkg,'BUY',300000,{tf2Age:1}).reason,'TF2_CSAK_CSM_WAIT');
+ assert.equal(T.findBbmaChain(a,b,c,pkg,'BUY',300000,{tf2Age:2}).status,'VALID');
+});
+test('BBMA skips expired CSM and selects newer valid CSM',()=>{
+ const {a,b}=buyChainBars();
+ const c=[
+  E(105,109,103,108,buyBB,{m5h:106,m10h:105,m5l:102,m10l:101},180000),
+  E(108,113,107,112,buyBB,{m5h:106,m10h:105,m5l:102,m10l:101},240000),
+  E(105,109,103,108,buyBB,{m5h:106,m10h:105,m5l:102,m10l:101},600000),
+  E(108,113,107,112,buyBB,{m5h:106,m10h:105,m5l:102,m10l:101},660000)
+ ];
+ const r=T.findBbmaChain(a,b,c,{id:'TEST',tf3:'M1'},'BUY',750000,{tf3Age:6});
+ assert.equal(r.status,'VALID');assert.equal(r.eventAt,720000);assert(r.validUntil>750000);
+});
+test('BBMA BUY and SELL chain valid on all four packages',()=>{
+ const buy=buyChainBars(),sell=sellChainBars();
+ for(const pkg of T.CFG.packages){
+  const rb=T.findBbmaChain(buy.a,buy.b,buy.c,pkg,'BUY',310000);
+  const rs=T.findBbmaChain(sell.a,sell.b,sell.c,pkg,'SELL',310000);
+  assert.equal(rb.status,'VALID',pkg.id+' BUY');
+  assert.equal(rs.status,'VALID',pkg.id+' SELL');
+  assert(rb.reAt<rb.tf2At&&rb.tf2At<rb.eventAt,pkg.id+' BUY order');
+  assert(rs.reAt<rs.tf2At&&rs.tf2At<rs.eventAt,pkg.id+' SELL order');
+ }
+});
 test('Astrology BUY alignment',()=>{const a={model:true,groups:[{state:'BUY',start:0,end:1000000}]};assert(T.astroGate(a,500000,'BUY',600000).ok);});
 test('Astrology SELL alignment',()=>{const a={model:true,groups:[{state:'SELL',start:0,end:1000000}]};assert(T.astroGate(a,500000,'SELL',600000).ok);});
 test('opposite Astrology waits',()=>{const a={model:true,groups:[{state:'SELL',start:0,end:1000000}]};assert.equal(T.astroGate(a,500000,'BUY',600000).reason,'ASTROLOGY_DIRECTION_MISMATCH');});
