@@ -1,11 +1,11 @@
-/* CEBONK TECHNICAL SCANNERS v1.0.0
+/* CEBONK TECHNICAL SCANNERS v1.1.0
    Astrology is direction/time gate. Technical engines are deterministic closed-candle scanners.
    BBMA source rules follow prior project SOP: RE-ENTRY -> CSAK/CSM -> CSM.
    Liquidity rules are an engineering scanner: map -> sweep+displacement+break -> retest.
 */
 (function(root){
 'use strict';
-const MIN=60000, VERSION='1.0.0';
+const MIN=60000, VERSION='1.1.0';
 const CFG=Object.freeze({
   version:VERSION,
   packages:Object.freeze([
@@ -18,7 +18,7 @@ const CFG=Object.freeze({
   bbPeriod:20,bbDev:2,fast:5,slow:10,reAge:6,tf2Age:6,tf3Age:6,
   liquidityPivotDepth:2,liquidityLookback:80,sweepSearch:18,displacementBars:3,
   displacementBodyMultiple:1.20,structureLookback:6,equalToleranceRange:0.12,
-  rr:2,slBuffer:0.20
+  rr:2,slBuffer:0.20,minSignalHoldMinutes:5
 });
 const finite=x=>typeof x==='number'&&Number.isFinite(x);
 const side=x=>x==='BUY'||x==='SELL';
@@ -62,6 +62,7 @@ function csmAt(e,i,dir){
 function latestIndex(e,from,to,pred){for(let i=Math.min(to,e.length-1);i>=Math.max(from,0);i--)if(pred(i))return i;return -1;}
 function firstIndex(e,from,to,pred){for(let i=Math.max(from,0);i<=Math.min(to,e.length-1);i++)if(pred(i))return i;return -1;}
 function atOrBefore(e,ms){let idx=-1;for(let i=0;i<e.length;i++){if(e[i].end<=ms)idx=i;else break;}return idx;}
+function signalHoldMs(tf,opts={}){const step=(CFG.minutes[tf]||1)*MIN,minHold=Math.max(0,opts.minSignalHoldMinutes??CFG.minSignalHoldMinutes)*MIN;return Math.max(step,minHold);}
 function astroGate(astro,ms,dir,now){
  if(!astro||!astro.model||!Array.isArray(astro.groups))return {ok:false,reason:'ASTROLOGY_NOT_READY'};
  const live=astro.groups.find(g=>now>=g.start&&now<g.end),event=astro.groups.find(g=>ms>=g.start&&ms<g.end);
@@ -78,11 +79,11 @@ function bbmaDirection(data,pkg,dir,now,opts={}){
  const bi=firstIndex(b,bi0,Math.min(b.length-1,bi0+(opts.tf2Age??CFG.tf2Age)),i=>csakAt(b,i,dir)||csmAt(b,i,dir));if(bi<0)return {status:'WAIT',reason:'TF2_CSAK_CSM_WAIT',direction:dir,reAt:reEnd};
  const tf2Type=csakAt(b,bi,dir)?'CSAK':'CSM',confirmEnd=b[bi].end,ci0=c.findIndex(x=>x.end>=confirmEnd);if(ci0<0)return {status:'WAIT',reason:'TF3_AFTER_TF2_WAIT',direction:dir};
  const ci=firstIndex(c,ci0,Math.min(c.length-1,ci0+(opts.tf3Age??CFG.tf3Age)),i=>csmAt(c,i,dir));if(ci<0)return {status:'WAIT',reason:'TF3_CSM_WAIT',direction:dir,reAt:reEnd,tf2At:confirmEnd,tf2Type};
- const event=c[ci],step=(CFG.minutes[pkg.tf3]||1)*MIN;if(now<event.end||now>=event.end+step)return {status:'WAIT',reason:'SIGNAL_EXPIRED',direction:dir,eventAt:event.end};
+ const event=c[ci],hold=signalHoldMs(pkg.tf3,opts),validUntil=event.end+hold;if(now<event.end||now>=validUntil)return {status:'WAIT',reason:'SIGNAL_EXPIRED',direction:dir,eventAt:event.end,validUntil};
  const t2idx=atOrBefore(b,event.end),t2=b[t2idx];if(!t2||!validIndicator(t2))return {status:'WAIT',reason:'TF2_SL_DATA_WAIT',direction:dir};
  const entry=event.close,buffer=finite(opts.slBuffer)?opts.slBuffer:CFG.slBuffer,sl=dir==='BUY'?t2.bb.lower-buffer:t2.bb.upper+buffer,risk=Math.abs(entry-sl),rr=finite(opts.rr)?opts.rr:CFG.rr,tp=dir==='BUY'?entry+risk*rr:entry-risk*rr;
  if(!(risk>0&&finite(tp)))return {status:'WAIT',reason:'RISK_INVALID',direction:dir};
- return {status:'VALID',direction:dir,package:pkg.id,reAt:reEnd,tf2At:confirmEnd,tf2Type,eventAt:event.end,entry,sl,tp,rr,tf1Label:'RE-ENTRY '+dir,tf2Label:tf2Type+' '+dir,tf3Label:'CSM '+dir};
+ return {status:'VALID',direction:dir,package:pkg.id,reAt:reEnd,tf2At:confirmEnd,tf2Type,eventAt:event.end,validUntil,entry,sl,tp,rr,tf1Label:'RE-ENTRY '+dir,tf2Label:tf2Type+' '+dir,tf3Label:'CSM '+dir};
 }
 function bbmaPackage(data,pkg,astro,now=Date.now(),opts={}){
  const buy=bbmaDirection(data,pkg,'BUY',now,opts),sell=bbmaDirection(data,pkg,'SELL',now,opts);
@@ -111,7 +112,7 @@ function findLiquiditySetup(data,pkg,dir,now,opts={}){
    const sweepExtreme=dir==='BUY'?s.low:s.high;const pre=t2.slice(Math.max(0,i-(opts.structureLookback??CFG.structureLookback)),i);if(pre.length<3)continue;const structure=dir==='BUY'?Math.max(...pre.map(x=>x.high)):Math.min(...pre.map(x=>x.low));
    let di=-1;for(let j=i;j<=Math.min(t2.length-1,i+(opts.displacementBars??CFG.displacementBars));j++){const x=t2[j],mb=medianBody(t2,j-1)||medianBody(t2,j)||0,body=Math.abs(x.close-x.open),directional=dir==='BUY'?x.close>x.open:x.close<x.open,broken=dir==='BUY'?x.close>structure:x.close<structure;if(directional&&broken&&body>=mb*(opts.displacementBodyMultiple??CFG.displacementBodyMultiple)){di=j;break;}}
    if(di<0)continue;const d=t2[di],breakAt=d.end,ci0=t3.findIndex(x=>x.end>=breakAt);if(ci0<0)continue;
-   for(let k=ci0;k<t3.length;k++){const x=t3[k];const retest=dir==='BUY'?(x.low<=structure&&x.close>structure):(x.high>=structure&&x.close<structure);if(!retest)continue;const step=(CFG.minutes[pkg.tf3]||1)*MIN;if(now<x.end||now>=x.end+step)return {status:'WAIT',reason:'SIGNAL_EXPIRED',direction:dir,eventAt:x.end};const buffer=finite(opts.slBuffer)?opts.slBuffer:CFG.slBuffer,entry=x.close,sl=dir==='BUY'?sweepExtreme-buffer:sweepExtreme+buffer,risk=Math.abs(entry-sl),rr=finite(opts.rr)?opts.rr:CFG.rr,tp=dir==='BUY'?entry+risk*rr:entry-risk*rr;if(!(risk>0&&finite(tp)))continue;return {status:'VALID',direction:dir,package:pkg.id,liquidityType:level.type,liquidity:level.price,sweepAt:s.end,sweepExtreme,breakAt,structure,eventAt:x.end,entry,sl,tp,rr,tf1Label:`${level.type} ${level.price.toFixed(2)}`,tf2Label:`SWEEP + DISPLACEMENT + BREAK ${dir}`,tf3Label:`RETEST ${dir}`};}
+   for(let k=ci0;k<t3.length;k++){const x=t3[k];const retest=dir==='BUY'?(x.low<=structure&&x.close>structure):(x.high>=structure&&x.close<structure);if(!retest)continue;const hold=signalHoldMs(pkg.tf3,opts),validUntil=x.end+hold;if(now<x.end||now>=validUntil)return {status:'WAIT',reason:'SIGNAL_EXPIRED',direction:dir,eventAt:x.end,validUntil};const buffer=finite(opts.slBuffer)?opts.slBuffer:CFG.slBuffer,entry=x.close,sl=dir==='BUY'?sweepExtreme-buffer:sweepExtreme+buffer,risk=Math.abs(entry-sl),rr=finite(opts.rr)?opts.rr:CFG.rr,tp=dir==='BUY'?entry+risk*rr:entry-risk*rr;if(!(risk>0&&finite(tp)))continue;return {status:'VALID',direction:dir,package:pkg.id,liquidityType:level.type,liquidity:level.price,sweepAt:s.end,sweepExtreme,breakAt,structure,eventAt:x.end,validUntil,entry,sl,tp,rr,tf1Label:`${level.type} ${level.price.toFixed(2)}`,tf2Label:`SWEEP + DISPLACEMENT + BREAK ${dir}`,tf3Label:`RETEST ${dir}`};}
   }
  }
  return {status:'WAIT',reason:'SWEEP_BREAK_RETEST_WAIT',direction:dir};
@@ -128,6 +129,6 @@ function scanAll(data,astro,now=Date.now(),opts={}){
  return {version:VERSION,bbma,liquidity,final,reason,executionEnabled:false};
 }
 function cutProfitDecision(dir,reachedR,oppositeCsm,tf2Close,tf2Mid){if(!side(dir)||!reachedR)return false;if(oppositeCsm===opposite(dir))return true;if(!finite(tf2Close)||!finite(tf2Mid))return false;return dir==='BUY'?tf2Close<tf2Mid:tf2Close>tf2Mid;}
-const API=Object.freeze({CFG,mean,median,lwma,sma,bb,enrich,reentryAt,csakAt,csmAt,astroGate,bbmaDirection,bbmaPackage,pivots,mapLiquidity,findLiquiditySetup,liquidityPackage,scanAll,cutProfitDecision});
+const API=Object.freeze({CFG,mean,median,lwma,sma,bb,enrich,reentryAt,csakAt,csmAt,signalHoldMs,astroGate,bbmaDirection,bbmaPackage,pivots,mapLiquidity,findLiquiditySetup,liquidityPackage,scanAll,cutProfitDecision});
 root.CebonkTechnicalScanners=API;if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
