@@ -37,11 +37,23 @@ jobs:
           node tools/install-auto-sop.cjs
           cmp index.html /tmp/auto-index-once.html
           node tests/astro-news.test.cjs
+      - name: Detect active web mode
+        id: webmode
+        shell: bash
+        run: |
+          if grep -q 'id="tabCombined"' index.html; then
+            echo "legacy_auto=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "legacy_auto=false" >> "$GITHUB_OUTPUT"
+            echo "Current BBMA/Liquidity web detected; legacy Combined browser suite skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Install pinned browser test dependencies
+        if: steps.webmode.outputs.legacy_auto == 'true'
         run: |
           npm install --prefix /tmp/cebonk-auto-test --no-save --package-lock=false --ignore-scripts playwright@1.55.1 astronomy-engine@2.1.19
           /tmp/cebonk-auto-test/node_modules/.bin/playwright install --with-deps chromium
       - name: Actual-host browser and real ephemeris integration
+        if: steps.webmode.outputs.legacy_auto == 'true'
         env:
           NODE_PATH: /tmp/cebonk-auto-test/node_modules
           ASTRONOMY_MODULE: /tmp/cebonk-auto-test/node_modules/astronomy-engine
@@ -49,7 +61,7 @@ jobs:
           node tests/astro-news.test.cjs
           node tests/auto-combined.browser.cjs
       - name: Save browser screenshots
-        if: always()
+        if: always() && steps.webmode.outputs.legacy_auto == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: auto-sop-browser
