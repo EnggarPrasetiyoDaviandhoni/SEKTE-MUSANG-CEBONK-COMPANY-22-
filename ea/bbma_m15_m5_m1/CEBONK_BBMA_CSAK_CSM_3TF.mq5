@@ -177,10 +177,14 @@ bool PreviousSwingRangeM15(const int currentShift,
    if(lookback < 2)
       return false;
 
-   swingHigh = -DBL_MAX;
-   swingLow  = DBL_MAX;
+   MqlRates firstBar;
+   if(!GetBar(PERIOD_M15, currentShift + 1, firstBar))
+      return false;
 
-   for(int i = 1; i <= lookback; ++i)
+   swingHigh = firstBar.high;
+   swingLow  = firstBar.low;
+
+   for(int i = 2; i <= lookback; ++i)
    {
       MqlRates bar;
       if(!GetBar(PERIOD_M15, currentShift + i, bar))
@@ -192,9 +196,7 @@ bool PreviousSwingRangeM15(const int currentShift,
          swingLow = bar.low;
    }
 
-   return (swingHigh > swingLow &&
-           swingHigh != -DBL_MAX &&
-           swingLow != DBL_MAX);
+   return (swingHigh > swingLow);
 }
 
 // CB1 / Initial Break proxy:
