@@ -1,9 +1,9 @@
-// CEBONK COMPANY 22 | LIQUIDITY SWEEP AUTO ENTRY EA | v1.02
+// CEBONK COMPANY 22 | LIQUIDITY SWEEP AUTO ENTRY EA | v1.03
 // Web-aligned Liquidity: TF1 map -> TF2 sweep+displacement+break -> TF3 retest.
-// Closed candles only. Astrology is master direction/time. Fixed-lot market execution with sweep SL and RR TP.
+// Closed candles only. 18:00-00:00 WIB focus, Astrology master, TF1 structure trend, sweep SL and RR TP.
 #property strict
-#property version "1.02"
-#property description "CEBONK LIQUIDITY SWEEP AUTO ENTRY EA. Closed-candle, fixed lot, sweep SL, RR TP."
+#property version "1.03"
+#property description "CEBONK LIQUIDITY SWEEP v1.03. 18-00 WIB, Astrology + TF1 trend + Liquidity, fixed lot."
 #property tester_file "CEBONK_C2_ASTRO.csv"
 #property tester_file "CEBONK_C2_NEWS.csv"
 
@@ -24,7 +24,13 @@ input double InpRR=2.0;
 input double InpSLBufferPrice=0.20;
 input int InpHistoryBars=120;
 
-input group "02 | ASTROLOGY WEB MASTER"
+input group "02 | FOCUS SESSION / TREND"
+input bool InpUseWIBSession=true;
+input int InpSessionStartHourWIB=18;
+input int InpSessionEndHourWIB=0;
+input bool InpUseTF1StructureTrend=true;
+
+input group "03 | ASTROLOGY WEB MASTER"
 input BW_ASTRO_SOURCE InpAstroSource=BW_ASTRO_WEB_MONTH;
 input string InpAstroBaseURL="https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/ea/combined2/data/";
 input string InpAstroCSV="CEBONK_C2_ASTRO.csv";
@@ -34,7 +40,7 @@ input int InpHTTPTimeoutMs=3000;
 input bool InpLiveAutoServerUTC=true;
 input int InpServerUTCMinutes=180;
 
-input group "03 | ASTROLOGY NEWS OVERRIDE"
+input group "04 | ASTROLOGY NEWS OVERRIDE"
 input bool InpUseAstrologyNews=true;
 input BW_NEWS_SOURCE InpNewsSource=BW_NEWS_MT5_CALENDAR;
 input string InpNewsCSV="CEBONK_C2_NEWS.csv";
@@ -48,7 +54,7 @@ input int InpNewsMinWindowMinutes=15;
 input int InpNewsPollSeconds=60;
 input int InpNewsMaxCacheSeconds=180;
 
-input group "04 | TELEGRAM / MT5"
+input group "05 | TELEGRAM / MT5"
 input bool InpTelegram=true;
 input string InpTelegramToken="";
 input string InpTelegramChatID="";
@@ -72,6 +78,7 @@ void LSStatus(const string s){
 bool LSInputsOK(){
  if(InpSymbol==""||InpMagic==0||InpFixedLot<=0||InpRR<1.0||InpRR>10.0||InpSLBufferPrice<0||InpHistoryBars<40||InpHistoryBars>1000)return false;
  if(InpMaxSpreadPoints<1||InpDeviationPoints<0||InpHTTPTimeoutMs<500)return false;
+ if(InpSessionStartHourWIB<0||InpSessionStartHourWIB>23||InpSessionEndHourWIB<0||InpSessionEndHourWIB>23)return false;
  if(InpNewsPreMinutes<5||InpNewsPreMinutes>120||InpNewsPostMinutes<30||InpNewsPostMinutes>360)return false;
  if(InpNewsBlockBeforeMinutes<0||InpNewsBlockBeforeMinutes>60||InpNewsBlockAfterMinutes<0||InpNewsBlockAfterMinutes>60)return false;
  if(InpNewsEntrySpanMinutes<5||InpNewsEntrySpanMinutes>60||InpNewsMinWindowMinutes<5||InpNewsMinWindowMinutes>60)return false;
@@ -104,18 +111,33 @@ void LSReserveSignal(const string key){
  gLastSignalKey=key;
  if(!gTester){GlobalVariableSet(gScope+key,(double)TimeCurrent());GlobalVariablesFlush();}
 }
+int LSWIBMinute(const long utc){
+ MqlDateTime d;TimeToStruct((datetime)(utc+7*3600),d);return d.hour*60+d.min;
+}
+bool LSInWIBSession(const long utc){
+ if(!InpUseWIBSession)return true;
+ int minute=LSWIBMinute(utc),start=InpSessionStartHourWIB*60,finish=InpSessionEndHourWIB*60;
+ if(start==finish)return true;
+ if(start<finish)return minute>=start&&minute<finish;
+ return minute>=start||minute<finish;
+}
+string LSSessionText(){
+ if(!InpUseWIBSession)return "SESSION OFF";
+ return StringFormat("%02d:00-%02d:00 WIB",InpSessionStartHourWIB,InpSessionEndHourWIB);
+}
 
 void LSEvaluate(){
  if(LSHasPositionOrOrder(InpSymbol)){LSStatus("SYMBOL_ALREADY_HAS_POSITION_OR_ORDER");return;}
  long nowServer=(long)TimeTradeServer();if(nowServer<=0)nowServer=(long)TimeCurrent();
  long nowUtc=BWNowUTC(gTester,InpLiveAutoServerUTC,InpServerUTCMinutes);
+ if(!LSInWIBSession(nowUtc)){LSStatus("OUTSIDE_WIB_SESSION: "+LSSessionText());return;}
 
  bool buy[BW_PACKAGE_COUNT],sell[BW_PACKAGE_COUNT];
  BWSignal bs[BW_PACKAGE_COUNT],ss[BW_PACKAGE_COUNT];
  for(int i=0;i<BW_PACKAGE_COUNT;i++){
   buy[i]=false;sell[i]=false;string wb="",ws="";
-  buy[i]=BWScanDirection(InpSymbol,i,1,nowServer,InpRR,InpSLBufferPrice,InpHistoryBars,bs[i],wb);
-  sell[i]=BWScanDirection(InpSymbol,i,-1,nowServer,InpRR,InpSLBufferPrice,InpHistoryBars,ss[i],ws);
+  buy[i]=BWScanDirection(InpSymbol,i,1,nowServer,InpRR,InpSLBufferPrice,InpHistoryBars,InpUseTF1StructureTrend,bs[i],wb);
+  sell[i]=BWScanDirection(InpSymbol,i,-1,nowServer,InpRR,InpSLBufferPrice,InpHistoryBars,InpUseTF1StructureTrend,ss[i],ws);
  }
  int bc=LSCount(buy),sc=LSCount(sell);
  if(bc>0&&sc>0){LSStatus("LIQUIDITY_PACKAGE_CONFLICT_BUY_SELL");return;}
@@ -127,6 +149,8 @@ void LSEvaluate(){
  }
  int chosen=LSChooseLatest(sigs,flags);if(chosen<0)return;
  BWSignal sig=sigs[chosen];long eventUtc=BWServerToUTC(sig.eventAt,gTester,InpLiveAutoServerUTC,InpServerUTCMinutes);
+ if(!LSInWIBSession(eventUtc)){LSStatus("TECHNICAL_EVENT_OUTSIDE_WIB_SESSION");return;}
+ if(InpUseTF1StructureTrend&&sig.tf1Trend!=dir){LSStatus("TF1_STRUCTURE_TREND_MISMATCH");return;}
 
  bool newsMode=false;string gate="";
  if(InpUseAstrologyNews){
@@ -153,7 +177,8 @@ void LSEvaluate(){
  double risk=MathAbs(sig.referenceEntry-sig.structuralSL);
  double refTP=dir>0?sig.referenceEntry+risk*InpRR:sig.referenceEntry-risk*InpRR;
  string strength=count>1?"STRONG CONFLUENCE":"VALID";
- string text=strength+" "+BWSide(dir)+" | "+mode+"\nPackages: "+LSPackages(buy,sell,dir)+"\n"+
+ string text=strength+" "+BWSide(dir)+" | "+mode+" | "+LSSessionText()+"\nPackages: "+LSPackages(buy,sell,dir)+"\n"+
+  "TF1 trend: "+BWSide(sig.tf1Trend)+(sig.tf1Trend>0?" (HH+HL)":sig.tf1Trend<0?" (LL+LH)":" (MIXED)")+"\n"+
   "TF1 "+p.id+" "+sig.liquidityType+" @ "+DoubleToString(sig.liquidity,digits)+"\n"+
   "TF2 SWEEP -> DISPLACEMENT -> BREAK @ "+DoubleToString(sig.structure,digits)+"\n"+
   "TF3 RETEST close: "+BWWIB(eventUtc)+"\n"+gate+
@@ -197,7 +222,7 @@ int OnInit(){
  gM1=(long)iTime(InpSymbol,PERIOD_M1,0);gM5=(long)iTime(InpSymbol,PERIOD_M5,0);gM15=(long)iTime(InpSymbol,PERIOD_M15,0);
  gM30=(long)iTime(InpSymbol,PERIOD_M30,0);gH1=(long)iTime(InpSymbol,PERIOD_H1,0);gH4=(long)iTime(InpSymbol,PERIOD_H4,0);
  EventSetTimer(1);LSHeartbeat();
- LSNotice("EA_STARTED","LIQUIDITY SWEEP v1.01 | AUTO ENTRY | fixed lot "+DoubleToString(InpFixedLot,2)+" | RR "+DoubleToString(InpRR,2)+" | SL sweep + buffer | Astrology News "+(InpUseAstrologyNews?"ON":"OFF"),InpSymbol,gTester,gAuto);
+ LSNotice("EA_STARTED","LIQUIDITY SWEEP v1.03 | AUTO ENTRY | "+LSSessionText()+" | TF1 trend "+(InpUseTF1StructureTrend?"ON":"OFF")+" | fixed lot "+DoubleToString(InpFixedLot,2)+" | RR "+DoubleToString(InpRR,2)+" | SL sweep + buffer | Astrology News "+(InpUseAstrologyNews?"ON":"OFF"),InpSymbol,gTester,gAuto);
  if(InpTelegramTestOnStart)LSNotice("TELEGRAM_TEST","Tes notifikasi. Ora ana order.",InpSymbol,gTester,gAuto);
  return INIT_SUCCEEDED;
 }

@@ -16,7 +16,7 @@
 struct BWBar {long start,end;double open,high,low,close;};
 struct BWPackageSpec {string id;ENUM_TIMEFRAMES tf1,tf2,tf3;};
 struct BWSignal {
- bool valid;int dir,pkg;long reAt,tf2At,eventAt,validUntil;
+ bool valid;int dir,pkg,tf1Trend;long reAt,tf2At,eventAt,validUntil;
  string tf2Type,liquidityType;double liquidity,structure,sweepExtreme;
  double referenceEntry,structuralSL,rr;
 };
@@ -96,13 +96,33 @@ int BWFirstEndAtOrAfter(const BWBar &a[],const long stamp){
 int BWHoldSeconds(const ENUM_TIMEFRAMES tf){
  return MathMax(PeriodSeconds(tf),BW_MIN_HOLD_SEC);
 }
+int BWTF1StructureTrend(const BWBar &a[]){
+ const int total=ArraySize(a),pd=BW_PIVOT_DEPTH,first=MathMax(pd,total-BW_LIQ_LOOKBACK),last=total-1-pd;
+ if(last<=first)return 0;
+ double prevHigh=0,lastHigh=0,prevLow=0,lastLow=0;int highCount=0,lowCount=0;
+ for(int i=first;i<=last;i++){
+  bool hi=true,lo=true;
+  for(int k=1;k<=pd;k++){
+   if(a[i].high<=a[i-k].high||a[i].high<a[i+k].high)hi=false;
+   if(a[i].low>=a[i-k].low||a[i].low>a[i+k].low)lo=false;
+  }
+  if(hi){prevHigh=lastHigh;lastHigh=a[i].high;highCount++;}
+  if(lo){prevLow=lastLow;lastLow=a[i].low;lowCount++;}
+ }
+ if(highCount<2||lowCount<2)return 0;
+ if(lastHigh>prevHigh&&lastLow>prevLow)return 1;
+ if(lastHigh<prevHigh&&lastLow<prevLow)return -1;
+ return 0;
+}
 bool BWScanDirection(const string symbol,const int pkgIndex,const int dir,const long now,
- const double rr,const double buffer,const int barsNeeded,BWSignal &out,string &why){
+ const double rr,const double buffer,const int barsNeeded,const bool useTrend,BWSignal &out,string &why){
  ZeroMemory(out);out.dir=dir;out.pkg=pkgIndex;out.rr=rr;why="";
  BWPackageSpec p;BWGetPackage(pkgIndex,p);BWBar a[],b[],c[];
  if(!BWLoadClosedBars(symbol,p.tf1,barsNeeded,a)||!BWLoadClosedBars(symbol,p.tf2,barsNeeded,b)||!BWLoadClosedBars(symbol,p.tf3,barsNeeded,c)){
   why="DATA_KURANG";return false;
  }
+ int tf1Trend=BWTF1StructureTrend(a);
+ if(useTrend&&tf1Trend!=dir){why=tf1Trend==0?"TF1_TREND_WAIT":"TF1_TREND_MISMATCH";return false;}
  BWLevel levels[];BWMapLiquidity(a,dir,levels);
  if(ArraySize(levels)==0){why="TF1_LIQUIDITY_WAIT";return false;}
  const int bStart=MathMax(1,ArraySize(b)-BW_SWEEP_SEARCH),hold=BWHoldSeconds(p.tf3);
@@ -134,7 +154,7 @@ bool BWScanDirection(const string symbol,const int pkgIndex,const int dir,const 
     double sl=dir>0?s.low-buffer:s.high+buffer;
     double risk=MathAbs(x.close-sl),tp=dir>0?x.close+risk*rr:x.close-risk*rr;
     if(!(risk>0&&BWFin(tp)))continue;
-    BWSignal cand;ZeroMemory(cand);cand.valid=true;cand.dir=dir;cand.pkg=pkgIndex;cand.rr=rr;
+    BWSignal cand;ZeroMemory(cand);cand.valid=true;cand.dir=dir;cand.pkg=pkgIndex;cand.tf1Trend=tf1Trend;cand.rr=rr;
     cand.reAt=s.end;cand.tf2At=breakAt;cand.eventAt=x.end;cand.validUntil=until;
     cand.referenceEntry=x.close;cand.structuralSL=sl;cand.liquidity=level.price;cand.liquidityType=level.type;
     cand.structure=structure;cand.sweepExtreme=dir>0?s.low:s.high;cand.tf2Type="SWEEP+DISPLACEMENT+BREAK";
