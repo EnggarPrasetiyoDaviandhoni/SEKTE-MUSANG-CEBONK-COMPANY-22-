@@ -6,16 +6,37 @@ EA MT5 standalone untuk alur tetap:
 
 ## Rule entry
 
-### 1. M15 CSAK = bias arah
-M15 hanya valid jika candle sudah **close** dan memenuhi salah satu:
-- **Dominant Break BUY**: bullish, body/range >= 0.60, close > high candle sebelumnya, body >= 1.10x body sebelumnya.
-- **Dominant Break SELL**: kebalikan BUY.
-- **Bullish/Bearish Engulfing**: body engulf candle sebelumnya, body/range >= 0.50.
-- **CB1 / Initial Break**: candle close menembus swing high/low struktur M15 sebelumnya. Default lookback = 4 candle, body/range minimum = 0.50.
+### 1. M15 = 4 setup + CSAK wajib
+Candle M15 pemicu harus membentuk **CSAK** lebih dulu:
+- body/range >= 0.50,
+- cross MidBB sesuai arah,
+- BUY close di bagian atas candle (default >= 0.60),
+- SELL close di bagian bawah candle (default <= 0.40).
 
-Selain pola di atas, close M15 harus berada di sisi yang benar terhadap MidBB:
-- BUY: close > MidBB.
-- SELL: close < MidBB.
+Sesudah CSAK valid, M15 harus masuk salah satu dari **4 jalur setup**:
+
+1. **IB + CSAK**
+   - candle sebelum CSAK adalah Inside Bar terhadap mother candle,
+   - BUY: CSAK close menembus high Inside Bar,
+   - SELL: CSAK close menembus low Inside Bar.
+
+2. **CB1 + CSAK**
+   - CB1 diperlakukan sebagai level pivot struktur M15 terdekat, bukan rolling-high/low breakout,
+   - BUY: CSAK close menembus pivot high terkonfirmasi,
+   - SELL: CSAK close menembus pivot low terkonfirmasi,
+   - default pencarian pivot = 8 candle M15 sebelumnya.
+
+3. **Dominant Break + CSAK**
+   - candle CSAK juga harus memenuhi Dominant Break,
+   - body/range >= 0.60,
+   - body >= 1.10x body candle sebelumnya,
+   - BUY close > high sebelumnya / SELL close < low sebelumnya.
+
+4. **Engulfing + CSAK**
+   - candle CSAK juga harus engulf body candle sebelumnya,
+   - body/range >= 0.50.
+
+Jika tidak ada salah satu dari empat kombinasi di atas, setup M15 tidak valid.
 
 ### 2. M5 CSM = konfirmasi
 CSM memakai candle close:
@@ -77,6 +98,7 @@ Notifikasi dikirim **hanya setelah order sukses**. Format dibuat ringkas:
 ```
 BBMA BUY | XAUUSDc
 TF: M15 > M5 > M1
+M15: IB + CSAK
 Entry: 0000.00
 SL: 0000.00
 TP: 0000.00
