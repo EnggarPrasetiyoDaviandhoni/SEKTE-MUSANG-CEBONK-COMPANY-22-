@@ -70,5 +70,28 @@ EA tidak memaksa/melebarkan SL jika jarak SL tidak memenuhi minimum stop broker.
 - `CEBONK_BBMA_CSAK_CSM_3TF.mq5` = source EA.
 - `CEBONK_BBMA_CSAK_CSM_3TF_DEFAULT.set` = preset default.
 
+## Telegram
+Notifikasi dikirim **hanya setelah order sukses**. Format dibuat ringkas:
+
+```
+BBMA BUY | XAUUSDc
+TF: M15 > M5 > M1
+Entry: 0000.00
+SL: 0000.00
+TP: 0000.00
+RR: 1:2.0
+```
+
+Input:
+- `InpTelegramEnabled=true`
+- `InpTelegramBotToken` = token bot Telegram.
+- `InpTelegramChatID` = chat ID tujuan.
+- `InpTelegramTimeoutMs=5000`
+
+Di MT5 buka **Tools > Options > Expert Advisors**, centang **Allow WebRequest for listed URL**, lalu tambahkan:
+`https://api.telegram.org`
+
+Token dan Chat ID sengaja tidak disimpan di repository.
+
 ## Backtest
 Backtest dengan **Every tick based on real ticks**. Evaluasi BUY dan SELL terpisah, drawdown, profit factor, expectancy, serta net profit per bulan. Jangan anggap rule ini profitable sebelum hasil backtest membuktikannya.
