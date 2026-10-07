@@ -1,4 +1,4 @@
-# CEBONK LIQUIDITY SWEEP MT5 v1.02
+# CEBONK LIQUIDITY SWEEP MT5 v1.03
 
 EA MT5 auto-entry kapisah kanggo mesin **Liquidity Sweep** sing selaras karo `assets/technical-scanners-core.js`. Modul BBMA lawas ora diowahi.
 
@@ -11,7 +11,7 @@ Paket independen:
 4. M15 → M5 → M1
 
 Urutan:
-`TF1 LIQUIDITY MAP → TF2 SWEEP + DISPLACEMENT + STRUCTURE BREAK → TF3 RETEST → ASTROLOGY GATE`
+`18:00–00:00 WIB → ASTROLOGY → TF1 STRUCTURE TREND → TF1 LIQUIDITY MAP → TF2 SWEEP + DISPLACEMENT + STRUCTURE BREAK → TF3 RETEST`
 
 TF1 map:
 - pivot depth 2;
@@ -36,6 +36,17 @@ TF3:
 
 Kabeh nggunakake **closed candle**.
 
+## Fokus session + trend
+
+- Default entry session **18:00–00:00 WIB**.
+- Wektu saiki lan **TF3 technical event** loro-lorone kudu ana nang session; sinyal lawas saka sadurunge 18:00 ora digawa mlebu.
+- Jam 00:00 mung nutup kesempatan **entry anyar**. Posisi sing wis kebuka ora dipaksa close; tetep dikelola SL/TP broker.
+- TF1 trend nggunakake struktur swing confirmed kanthi pivot depth 2, dudu MA.
+- BUY mung valid yen rong swing high terakhir nggawe **HH** lan rong swing low terakhir nggawe **HL**.
+- SELL mung valid yen rong swing high terakhir nggawe **LH** lan rong swing low terakhir nggawe **LL**.
+- Struktur mixed/ora cukup pivot = WAIT.
+- Filter bisa diatur nganggo `InpUseWIBSession`, `InpSessionStartHourWIB`, `InpSessionEndHourWIB`, lan `InpUseTF1StructureTrend`; default kabeh fokus rule iki aktif.
+
 ## Astrology
 
 Astrology tetep master direction/time kaya web. Normal gate mbutuhake arah Astrology saiki lan nalika TF3 event padha karo arah Liquidity. Astrology News bisa override jalur normal nganggo policy sing padha karo EA BBMA: USD HIGH impact, buffer release, lan window entry.
@@ -47,7 +58,7 @@ Astrology tetep master direction/time kaya web. Normal gate mbutuhake arah Astro
 - Fixed lot default `0.01`.
 - Max spread default `70 points`.
 - Maksimal 1 posisi utawa pending order per symbol, kalebu posisi manual/EA liyane.
-- Entry market yen Liquidity setup valid lan Astrology gate selaras.
+- Entry market mung yen session WIB valid, Astrology searah, TF1 structure trend searah, lan Liquidity setup valid.
 - BUY SL = ekstrem sweep low − buffer; SELL SL = ekstrem sweep high + buffer.
 - TP dihitung saka fill/quote aktual supaya RR default `1:2`.
 - SignalID di-reserve sadurunge order supaya ora double-entry; reject ora dikejar maneh.
@@ -62,7 +73,8 @@ Astrology tetep master direction/time kaya web. Normal gate mbutuhake arah Astro
 - `src/LSNotify.mqh` — Telegram/MT5 notification.
 - `src/LSTrade.mqh` — fixed-lot market execution, spread/stop/filling guards, 1 posisi/order per symbol.
 - `LIQUIDITY_SWEEP_DEFAULT.set` — preset default.
-- `dist/CEBONK_LIQUIDITY_SWEEP_v1.02.txt` — single-file TXT release auto-entry terbaru; fix parameter array MQL5 wajib by-reference.
+- `dist/CEBONK_LIQUIDITY_SWEEP_v1.03.txt` — single-file TXT release terbaru; fokus 18:00–00:00 WIB + TF1 HH/HL / LL/LH trend.
+- `dist/CEBONK_LIQUIDITY_SWEEP_v1.02.txt` — arsip compile-fix array by-reference.
 - `dist/CEBONK_LIQUIDITY_SWEEP_v1.01.txt` — arsip auto-entry sadurunge fix compile.
 - `dist/CEBONK_LIQUIDITY_SWEEP_v1.00.txt` — arsip signal-only.
 
