@@ -230,7 +230,7 @@ bool FindLatestM15Signal(int &dir, datetime &signalTime)
          continue;
 
       dir = d;
-      signalTime = bar.time;
+      signalTime = bar.time + PeriodSeconds(PERIOD_M15); // confirmed only after M15 close
       return true;
    }
 
@@ -252,7 +252,7 @@ bool FindLatestM5CSM(int &dir, datetime &signalTime)
          continue;
 
       dir = d;
-      signalTime = bar.time;
+      signalTime = bar.time + PeriodSeconds(PERIOD_M5); // confirmed only after M5 close
       return true;
    }
 
@@ -494,7 +494,8 @@ void EvaluateNewM1Bar()
       return;
 
    const int dirM1 = CSMDirection(PERIOD_M1, hBB_M1, 1);
-   if(dirM1 == 0 || dirM1 != dirM15 || m1.time < tM5)
+   const datetime tM1Confirm = m1.time + PeriodSeconds(PERIOD_M1);
+   if(dirM1 == 0 || dirM1 != dirM15 || tM1Confirm < tM5)
       return;
 
    if(gLastExecutedM1Signal == m1.time)
