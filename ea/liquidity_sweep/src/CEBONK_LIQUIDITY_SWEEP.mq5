@@ -118,7 +118,7 @@ void LSEvaluate(){
 
  int dir=bc>0?1:-1;bool flags[BW_PACKAGE_COUNT];BWSignal sigs[BW_PACKAGE_COUNT];
  for(int i=0;i<BW_PACKAGE_COUNT;i++){
-  flags[i]=dir>0?buy[i]:sell[i];sigs[i]=dir>0?bs[i]:ss[i];
+  flags[i]=dir>0?buy[i]:sell[i];if(dir>0)sigs[i]=bs[i];else sigs[i]=ss[i];
  }
  int chosen=LSChooseLatest(sigs,flags);if(chosen<0)return;
  BWSignal sig=sigs[chosen];long eventUtc=BWServerToUTC(sig.eventAt,gTester,InpLiveAutoServerUTC,InpServerUTCMinutes);
