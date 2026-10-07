@@ -11,6 +11,7 @@ M15 hanya valid jika candle sudah **close** dan memenuhi salah satu:
 - **Dominant Break BUY**: bullish, body/range >= 0.60, close > high candle sebelumnya, body >= 1.10x body sebelumnya.
 - **Dominant Break SELL**: kebalikan BUY.
 - **Bullish/Bearish Engulfing**: body engulf candle sebelumnya, body/range >= 0.50.
+- **CB1 / Initial Break**: candle close menembus swing high/low struktur M15 sebelumnya. Default lookback = 4 candle, body/range minimum = 0.50.
 
 Selain pola di atas, close M15 harus berada di sisi yang benar terhadap MidBB:
 - BUY: close > MidBB.
@@ -43,7 +44,7 @@ Jika dua kondisi terpenuhi, EA tidak entry.
 - BUY: SL = **Low BB M5**.
 - SELL: SL = **Top BB M5**.
 - Default buffer = 0 point.
-- TP = jarak entry-ke-SL x **2.0** (RR 1:2).
+- TP = jarak entry-ke-SL x **InpRiskReward**. Default **2.0**, tetapi bisa diganti dari input EA (mis. 1.5, 2.0, 3.0).
 
 EA tidak memaksa/melebarkan SL jika jarak SL tidak memenuhi minimum stop broker. Trade akan di-skip.
 
@@ -58,7 +59,7 @@ EA tidak memaksa/melebarkan SL jika jarak SL tidak memenuhi minimum stop broker.
 - Bollinger Bands: Period 20, Deviation 2.0.
 - Fixed lot: 0.01.
 - Max spread: 70 points.
-- RR: 1:2.
+- RR default: 1:2, **bisa diganti** lewat `InpRiskReward`.
 - Session broker: 07:00-00:00.
 - GMT broker: auto-scan dari server MT5.
 - M15 signal age: 4 bars.
@@ -79,7 +80,7 @@ TF: M15 > M5 > M1
 Entry: 0000.00
 SL: 0000.00
 TP: 0000.00
-RR: 1:2.0
+RR: mengikuti input InpRiskReward
 ```
 
 Input:
