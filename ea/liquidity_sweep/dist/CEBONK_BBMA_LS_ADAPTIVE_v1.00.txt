@@ -329,7 +329,8 @@ bool LSPlace(const LSSignal &s)
    if(!OrderSend(req,res)){Print("OrderSend err=",GetLastError());return false;}
    if(res.retcode!=TRADE_RETCODE_DONE&&res.retcode!=TRADE_RETCODE_DONE_PARTIAL&&res.retcode!=TRADE_RETCODE_PLACED){Print("Order ret=",res.retcode);return false;}
    double actual=res.price>0?res.price:entry;
-   LSTelegramEntry(LSSide(s.dir),s.mode,({LSPackage p;LSGetPackage(p);p.id;}),actual,sl,tp);
+   LSPackage p;LSGetPackage(p);
+   LSTelegramEntry(LSSide(s.dir),s.mode,p.id,actual,sl,tp);
    return true;
 }
 bool LSCloseProfitIfWarn(const ENUM_TIMEFRAMES tf2)
@@ -447,9 +448,10 @@ bool LSTrySignal(const int dir,const string mode,const long after,LSPackage &p)
    string key=mode+"."+(string)dir+"."+(string)sweep+"."+(string)cb+"."+p.id;
    if(LSConsumed(key))return false;
    LSSignal s;ZeroMemory(s);s.valid=true;s.dir=dir;s.mode=mode;s.regime_at=after;s.sweep_at=sweep;s.cb1_at=cb;s.liquidity=liq;s.sl=sl;
-   LSMark(key);
-   if(!gAuto){Print("SIGNAL ",mode," ",LSSide(dir)," ",p.id," | AUTOPILOT OFF");return true;}
-   return LSPlace(s);
+   if(!gAuto){LSMark(key);Print("SIGNAL ",mode," ",LSSide(dir)," ",p.id," | AUTOPILOT OFF");return true;}
+   bool placed=LSPlace(s);
+   if(placed)LSMark(key);
+   return placed;
 }
 void LSEvaluate()
 {
