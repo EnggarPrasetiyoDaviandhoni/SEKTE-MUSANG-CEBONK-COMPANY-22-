@@ -22,6 +22,8 @@ on:
       - 'assets/technical-scanners-core.js'
       - 'assets/technical-scanners-ui.js'
       - 'cloudflare-worker.js'
+      - 'worker/auto-sop-v3.mjs'
+      - 'tools/install-auto-sop.cjs'
       - 'ea/bbma_web/src/CEBONK_BBMA_WEB.mq5'
       - 'ea/bbma_web/src/BWCore.mqh'
       - 'ea/bbma_web/dist/*.txt'
