@@ -43,6 +43,10 @@ await t('H4 is built from H1 and UTC-resampled',async()=>{
  assert.ok(u.pathname.includes('/range/1/hour/'));assert.equal(d.interval,'4h');assert.equal(d.values.length,2);
  assert.equal(d.values[0].datetime,'2026-10-07T00:00:00.000Z');assert.equal(d.values[1].datetime,'2026-10-07T04:00:00.000Z');
 });
+await t('Daily preserves New York exchange calendar semantics',async()=>{
+ const r=await request('/xau?interval=1day&outputsize=50'),d=await r.json();
+ assert.equal(d.calendarTimezone,'America/New_York');assert.equal(d.dateBasis,'EXCHANGE_CALENDAR');assert.match(d.values[0].datetime,/^\d{4}-\d{2}-\d{2}$/);
+});
 await t('Monthly uses native Massive month aggregate',async()=>{
  await request('/xau?interval=1month&outputsize=120');assert.ok(new URL(seenUrl).pathname.includes('/range/1/month/'));
 });
