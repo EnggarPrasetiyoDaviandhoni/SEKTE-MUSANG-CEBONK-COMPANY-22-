@@ -1,7 +1,15 @@
 'use strict';
-if(require('node:fs').readFileSync('index.html','utf8').includes('id="combinedSplitLoader"')){console.log('COMBINED SPLIT PROTECTED: legacy install must not replace either mode.');process.exit(0);}
+const bootFs=require('node:fs'),liveIndex=bootFs.readFileSync('index.html','utf8');
+if(liveIndex.includes('id="tabBBMA"')&&liveIndex.includes('id="tabLiquidity"')){
+ const worker=bootFs.readFileSync('worker/auto-sop-v3.mjs','utf8');
+ if(!worker.includes('AUTO_SOP_API_V4'))throw new Error('Expected Massive Worker v4');
+ bootFs.writeFileSync('cloudflare-worker.js',worker);
+ console.log('CURRENT 4-TAB WEB PROTECTED: only Worker source synchronized; UI untouched.');
+ process.exit(0);
+}
+if(liveIndex.includes('id="combinedSplitLoader"')){console.log('COMBINED SPLIT PROTECTED: legacy install must not replace either mode.');process.exit(0);}
 
-const fs=require('node:fs'),assert=require('node:assert/strict');
+const fs=bootFs,assert=require('node:assert/strict');
 const file=process.argv[2]||'index.html',original=fs.readFileSync(file,'utf8');let html=original;
 const scripts=s=>[...s.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(x=>x[1]);
 const astro=s=>scripts(s).filter(x=>x.includes('root.CebonkCore=Core;')||x.includes('async function loadLibrary()'));
