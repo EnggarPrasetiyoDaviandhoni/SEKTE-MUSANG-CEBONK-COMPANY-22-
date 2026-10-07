@@ -1,4 +1,4 @@
-// CEBONK LIQUIDITY SWEEP EA v1.00 - notification only.
+// CEBONK LIQUIDITY SWEEP EA v1.01 - Telegram/MT5 notification.
 #ifndef CEBONK_LS_NOTIFY
 #define CEBONK_LS_NOTIFY
 struct LSNoticeItem { string event,text; int tries; bool pushed; };
@@ -16,12 +16,12 @@ string LSQ(const string s){
 void LSAudit(const string event,const string symbol,const string detail){
  Print("{\"ea\":\"CEBONK_LIQUIDITY_SWEEP\",\"event\":"+LSQ(event)+",\"symbol\":"+LSQ(symbol)+",\"detail\":"+LSQ(detail)+"}");
 }
-void LSNotice(const string event,const string text,const string symbol,const bool tester,const bool scannerOn){
+void LSNotice(const string event,const string text,const string symbol,const bool tester,const bool autoOn){
  LSAudit(event,symbol,text);if(tester)return;
  int n=ArraySize(gLSQueue);if(n>=32)return;ArrayResize(gLSQueue,n+1);
  gLSQueue[n].event=event;gLSQueue[n].tries=0;gLSQueue[n].pushed=false;
  gLSQueue[n].text="SEKTE MUSANG - CEBONK COMPANY 22\nLIQUIDITY SWEEP EA | "+event+"\n"+
-  symbol+" | SCANNER "+(scannerOn?"ON":"OFF")+"\n--------------------\n"+StringSubstr(text,0,3000)+
+  symbol+" | AUTOPILOT "+(autoOn?"ON":"OFF")+"\n--------------------\n"+StringSubstr(text,0,3000)+
   "\n--------------------\nOJO FULLMARGIN COK";
 }
 void LSPopNotice(){
