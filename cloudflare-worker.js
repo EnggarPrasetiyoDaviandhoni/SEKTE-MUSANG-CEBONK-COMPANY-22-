@@ -25,6 +25,11 @@ const flight=new Map();
 function headers(extra={}){return {'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':ORIGIN,'Access-Control-Allow-Methods':'GET,OPTIONS','Access-Control-Allow-Headers':'Content-Type','Vary':'Origin','X-Content-Type-Options':'nosniff',...extra};}
 function json(data,status=200,extra={}){return new Response(JSON.stringify(data),{status,headers:headers(extra)});}
 function isoDay(ms){return new Date(ms).toISOString().slice(0,10);}
+function etDay(ms){
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(ms));
+ const get=t=>parts.find(x=>x.type===t)?.value||'';
+ return get('year')+'-'+get('month')+'-'+get('day');
+}
 function providerLimit(interval,size){const x=SPEC[interval];return Math.min(50000,Math.max(50,size*(x.resample?Math.ceil(x.resample/x.step):1)+8));}
 function dateRange(interval,limit,now=Date.now()){
  const x=SPEC[interval],factor=['minute','hour'].includes(x.s)?3:2;
@@ -77,9 +82,10 @@ async function pull(env,interval,size){
   let rows=resample(normalize(data.results),spec.resample);
   if(!rows.length)return json({ok:false,error:'UPSTREAM_EMPTY',provider:PROVIDER},502,{'Cache-Control':'no-store'});
   if(rows.length>size)rows=rows.slice(-size);
-  const values=rows.map(r=>({datetime:new Date(r.t).toISOString(),open:r.open,high:r.high,low:r.low,close:r.close,volume:r.volume}));
-  return json({ok:true,apiVersion:4,provider:PROVIDER,providerTicker:TICKER,symbol:'XAU/USD',interval,timezone:'UTC',calendarTimezone:null,
-   dateBasis:'UTC_AGGREGATE',fetchedAtUtc:new Date().toISOString(),count:values.length,values},200,{'Cache-Control':'public, max-age='+TTL[interval]});
+  const calendar=['1day','1week','1month'].includes(interval),calendarTimezone=calendar?'America/New_York':null;
+  const values=rows.map(r=>({datetime:calendar?etDay(r.t):new Date(r.t).toISOString(),open:r.open,high:r.high,low:r.low,close:r.close,volume:r.volume}));
+  return json({ok:true,apiVersion:4,provider:PROVIDER,providerTicker:TICKER,symbol:'XAU/USD',interval,timezone:calendar?calendarTimezone:'UTC',calendarTimezone,
+   dateBasis:calendar?'EXCHANGE_CALENDAR':'UTC_AGGREGATE',fetchedAtUtc:new Date().toISOString(),count:values.length,values},200,{'Cache-Control':'public, max-age='+TTL[interval]});
  }catch(e){
   return json({ok:false,error:'UPSTREAM_NETWORK_OR_TIMEOUT',provider:PROVIDER,providerCode:null,upstreamHttpStatus:null,retryAfterSeconds:60},502,{'Cache-Control':'no-store','Retry-After':'60'});
  }finally{clearTimeout(timer);}
