@@ -7,20 +7,24 @@ on:
       - 'index.html'
       - 'assets/technical-scanners-core.js'
       - 'assets/technical-scanners-ui.js'
+      - 'cloudflare-worker.js'
       - 'ea/bbma_web/src/CEBONK_BBMA_WEB.mq5'
       - 'ea/bbma_web/src/BWCore.mqh'
       - 'ea/bbma_web/dist/*.txt'
       - 'tests/technical-scanners*.cjs'
+      - 'tests/technical-feed-worker.test.mjs'
       - '.github/workflows/technical-scanners.yml'
   pull_request:
     paths:
       - 'index.html'
       - 'assets/technical-scanners-core.js'
       - 'assets/technical-scanners-ui.js'
+      - 'cloudflare-worker.js'
       - 'ea/bbma_web/src/CEBONK_BBMA_WEB.mq5'
       - 'ea/bbma_web/src/BWCore.mqh'
       - 'ea/bbma_web/dist/*.txt'
       - 'tests/technical-scanners*.cjs'
+      - 'tests/technical-feed-worker.test.mjs'
       - '.github/workflows/technical-scanners.yml'
   workflow_dispatch:
 
@@ -38,6 +42,7 @@ jobs:
         run: |
           node --check assets/technical-scanners-core.js
           node --check assets/technical-scanners-ui.js
+          node tests/technical-feed-worker.test.mjs
           node tests/technical-scanners.test.cjs
           node tests/technical-scanners.integration.cjs
           node tests/astro-news.test.cjs
