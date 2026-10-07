@@ -22,7 +22,7 @@ input int    InpSessionStartHour       = 7;      // 07:00 broker/server time
 input int    InpSessionEndHour         = 24;     // 24 = 00:00 next day
 
 input group "=== TELEGRAM ==="
-input bool   InpTelegramEnabled        = false;
+input bool   InpTelegramEnabled        = true;
 input string InpTelegramBotToken       = "";
 input string InpTelegramChatID         = "";
 input int    InpTelegramTimeoutMs      = 5000;
@@ -365,7 +365,7 @@ string UrlEncodeUTF8(const string text)
 
       if(safe)
       {
-         out += CharToString((ushort)b);
+         out += CharToString(b);
       }
       else
       {
