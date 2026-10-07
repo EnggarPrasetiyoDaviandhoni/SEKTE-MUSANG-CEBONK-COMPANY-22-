@@ -261,7 +261,7 @@ bool LSRegime(const ENUM_TIMEFRAMES tf,int &dir,string &mode,long &at)
    }
    return true;
 }
-bool LSPivot(const MqlRates &r[],const int i,const int dir)bool LSPivot(const MqlRates &r[],const int i,const int dir)
+bool LSPivot(const MqlRates &r[],const int i,const int dir)
 {
    if(i<LS_PIVOT_DEPTH||i+LS_PIVOT_DEPTH>=ArraySize(r))return false;
    for(int k=1;k<=LS_PIVOT_DEPTH;k++)
@@ -466,7 +466,7 @@ bool LSCloseProfitIfWarn(const ENUM_TIMEFRAMES tf2)
    if(ok){Print("CUT PROFIT TF2 CSM/CSAK | full close | profit=",profit);gCutWarnCount=0;gCutWarnSide=0;}
    return ok;
 }
-bool LSSession()bool LSSession()
+bool LSSession()
 {
    MqlDateTime d;TimeToStruct(TimeTradeServer(),d);
    if(InpStartHourBroker==InpEndHourBroker)return true;
@@ -591,7 +591,7 @@ bool LSLatestHighImpactUSD(long &release,string &name)
    }
    if(best<=0)return false;release=best;name=bestName;return true;
 }
-bool LSConsumed(const string key)bool LSConsumed(const string key)
+bool LSConsumed(const string key)
 {
    if(gLastKey==key)return true;
    return !gTester&&GlobalVariableCheck(gScope+key);
@@ -633,7 +633,7 @@ void LSEvaluate()
    int dir=0;string mode="";long at=0;if(!LSRegime(p.tf1,dir,mode,at))return;
    LSTrySignal(dir,mode,at,p);
 }
-void LSPaint()void LSPaint()
+void LSPaint()
 {
    if(ObjectFind(0,gButton)<0)return;
    ObjectSetString(0,gButton,OBJPROP_TEXT,gAuto?"AUTOPILOT ON":"AUTOPILOT OFF");
@@ -662,7 +662,7 @@ int OnInit()
    Print("CEBONK BBMA LS ADAPTIVE v1.00 | ",p.id," | RR 1:",InpRR," | spread ",InpMaxSpreadPoints," | news cooldown ",LS_NEWS_COOLDOWN_MIN,"m");
    return INIT_SUCCEEDED;
 }
-void OnDeinit(const int reason)void OnDeinit(const int reason){EventKillTimer();if(ObjectFind(0,gButton)>=0)ObjectDelete(0,gButton);}
+void OnDeinit(const int reason){EventKillTimer();if(ObjectFind(0,gButton)>=0)ObjectDelete(0,gButton);}
 void OnTimer()
 {
    LSPackage p;LSGetPackage(p);
@@ -714,7 +714,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,const MqlTradeRequest &
    }
    gPendingMode="";gPendingPack="";gPendingSignalKey="";gPendingSL=0;gPendingDir=0;
 }
-void OnChartEvent(const int id,const long &l,const double &d,const string &s)void OnChartEvent(const int id,const long &l,const double &d,const string &s)
+void OnChartEvent(const int id,const long &l,const double &d,const string &s)
 {
    if(id==CHARTEVENT_OBJECT_CLICK&&s==gButton){gAuto=!gAuto;LSPaint();Print("AUTOPILOT ",gAuto?"ON":"OFF");}
 }
