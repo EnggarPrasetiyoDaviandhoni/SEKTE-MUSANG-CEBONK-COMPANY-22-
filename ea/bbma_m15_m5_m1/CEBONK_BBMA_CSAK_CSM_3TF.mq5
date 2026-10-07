@@ -1,5 +1,5 @@
 #property strict
-#property version   "1.01"
+#property version   "1.02"
 #property description "CEBONK BBMA 3TF: M15 CSAK (Dominant Break/Engulfing) -> M5 CSM -> M1 CSM"
 #property description "Sideways skip; SL Top/Low BB M5; TP fixed RR."
 
@@ -20,6 +20,12 @@ input bool   InpAutoPilotOnStart      = true;
 input group "=== BROKER SESSION AUTO GMT ==="
 input int    InpSessionStartHour       = 7;      // 07:00 broker/server time
 input int    InpSessionEndHour         = 24;     // 24 = 00:00 next day
+
+input group "=== TELEGRAM ==="
+input bool   InpTelegramEnabled        = false;
+input string InpTelegramBotToken       = "";
+input string InpTelegramChatID         = "";
+input int    InpTelegramTimeoutMs      = 5000;
 
 input group "=== BBMA / BOLLINGER ==="
 input int    InpBBPeriod              = 20;
@@ -336,6 +342,114 @@ bool SpreadAllowed()
    return (spreadPts <= InpMaxSpreadPoints);
 }
 
+
+string UrlEncodeUTF8(const string text)
+{
+   char bytes[];
+   StringToCharArray(text, bytes, 0, WHOLE_ARRAY, CP_UTF8);
+
+   const string hex = "0123456789ABCDEF";
+   string out = "";
+
+   for(int i = 0; i < ArraySize(bytes); ++i)
+   {
+      const uchar b = (uchar)bytes[i];
+      if(b == 0)
+         break;
+
+      const bool safe =
+         (b >= 'A' && b <= 'Z') ||
+         (b >= 'a' && b <= 'z') ||
+         (b >= '0' && b <= '9') ||
+         b == '-' || b == '_' || b == '.' || b == '~';
+
+      if(safe)
+      {
+         out += CharToString((ushort)b);
+      }
+      else
+      {
+         out += "%";
+         out += StringSubstr(hex, (int)b / 16, 1);
+         out += StringSubstr(hex, (int)b % 16, 1);
+      }
+   }
+
+   return out;
+}
+
+bool SendTelegram(const string message)
+{
+   if(!InpTelegramEnabled)
+      return true;
+
+   if(InpTelegramBotToken == "" || InpTelegramChatID == "")
+   {
+      Print("TELEGRAM SKIP: BotToken/ChatID empty.");
+      return false;
+   }
+
+   // WebRequest is not available in Strategy Tester.
+   if((bool)MQLInfoInteger(MQL_TESTER))
+      return true;
+
+   const string url =
+      "https://api.telegram.org/bot" + InpTelegramBotToken +
+      "/sendMessage?chat_id=" + UrlEncodeUTF8(InpTelegramChatID) +
+      "&text=" + UrlEncodeUTF8(message);
+
+   char data[];
+   char result[];
+   string resultHeaders;
+
+   ArrayResize(data, 0);
+   ResetLastError();
+
+   const int httpCode = WebRequest("GET",
+                                   url,
+                                   "",
+                                   "",
+                                   InpTelegramTimeoutMs,
+                                   data,
+                                   0,
+                                   result,
+                                   resultHeaders);
+
+   if(httpCode == -1)
+   {
+      PrintFormat("TELEGRAM FAIL: WebRequest error=%d. Add https://api.telegram.org to MT5 allowed URLs.",
+                  GetLastError());
+      return false;
+   }
+
+   if(httpCode != 200)
+   {
+      const string body = CharArrayToString(result, 0, -1, CP_UTF8);
+      PrintFormat("TELEGRAM FAIL: HTTP %d | %s", httpCode, body);
+      return false;
+   }
+
+   return true;
+}
+
+void NotifyTelegramEntry(const string side,
+                         const double entry,
+                         const double sl,
+                         const double tp)
+{
+   const int digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
+
+   const string msg =
+      "BBMA " + side + " | " + _Symbol + "\n" +
+      "TF: M15 > M5 > M1\n" +
+      "Entry: " + DoubleToString(entry, digits) + "\n" +
+      "SL: " + DoubleToString(sl, digits) + "\n" +
+      "TP: " + DoubleToString(tp, digits) + "\n" +
+      "RR: 1:" + DoubleToString(InpRiskReward, 1);
+
+   SendTelegram(msg);
+}
+
 double BrokerGMTOffsetHours()
 {
    const datetime server = TimeTradeServer();
@@ -458,12 +572,19 @@ bool ExecuteTrade(const int dir, const datetime m1SignalTime)
 
    gLastExecutedM1Signal = m1SignalTime;
 
-   PrintFormat("ENTRY %s | lot=%.2f | SL=%.*f | TP=%.*f | RR=1:%.2f",
+   double filledEntry = trade.ResultPrice();
+   if(filledEntry <= 0.0)
+      filledEntry = entry;
+
+   PrintFormat("ENTRY %s | lot=%.2f | ENTRY=%.*f | SL=%.*f | TP=%.*f | RR=1:%.2f",
                side,
                lot,
+               (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS), filledEntry,
                (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS), nSL,
                (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS), nTP,
                InpRiskReward);
+
+   NotifyTelegramEntry(side, filledEntry, nSL, nTP);
 
    return true;
 }
@@ -561,7 +682,8 @@ int OnInit()
       InpM15MaxAgeBars < 1 ||
       InpM5MaxAgeBars < 1 ||
       InpSessionStartHour < 0 || InpSessionStartHour > 23 ||
-      InpSessionEndHour < 0   || InpSessionEndHour > 24)
+      InpSessionEndHour < 0   || InpSessionEndHour > 24 ||
+      InpTelegramTimeoutMs < 1000)
       return INIT_PARAMETERS_INCORRECT;
 
    hBB_M15 = iBands(_Symbol, PERIOD_M15, InpBBPeriod, 0, InpBBDeviation, PRICE_CLOSE);
