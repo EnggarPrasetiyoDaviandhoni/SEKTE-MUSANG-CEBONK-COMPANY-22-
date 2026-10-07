@@ -1,7 +1,7 @@
 #property strict
-#property version   "1.02"
-#property description "CEBONK BBMA 3TF: M15 CSAK (Dominant Break/Engulfing) -> M5 CSM -> M1 CSM"
-#property description "Sideways skip; SL Top/Low BB M5; TP fixed RR."
+#property version   "1.03"
+#property description "CEBONK BBMA 3TF: M15 CSAK (Dominant Break/Engulfing/CB1 Initial Break) -> M5 CSM -> M1 CSM"
+#property description "Sideways skip; SL Top/Low BB M5; TP configurable RR."
 
 #include <Trade/Trade.mqh>
 
@@ -36,6 +36,8 @@ input int    InpM15MaxAgeBars         = 4;
 input double InpDominantMinBodyRatio  = 0.60;
 input double InpDominantBodyFactor    = 1.10;
 input double InpEngulfMinBodyRatio    = 0.50;
+input int    InpCB1LookbackBars        = 4;
+input double InpCB1MinBodyRatio        = 0.50;
 
 input group "=== M5 + M1 CSM ==="
 input int    InpM5MaxAgeBars          = 6;
@@ -166,8 +168,65 @@ bool BearishDominantBreak(const MqlRates &cur, const MqlRates &prev)
            BodySize(cur) >= BodySize(prev) * InpDominantBodyFactor);
 }
 
+
+bool PreviousSwingRangeM15(const int currentShift,
+                           const int lookback,
+                           double &swingHigh,
+                           double &swingLow)
+{
+   if(lookback < 2)
+      return false;
+
+   swingHigh = -DBL_MAX;
+   swingLow  = DBL_MAX;
+
+   for(int i = 1; i <= lookback; ++i)
+   {
+      MqlRates bar;
+      if(!GetBar(PERIOD_M15, currentShift + i, bar))
+         return false;
+
+      if(bar.high > swingHigh)
+         swingHigh = bar.high;
+      if(bar.low < swingLow)
+         swingLow = bar.low;
+   }
+
+   return (swingHigh > swingLow &&
+           swingHigh != -DBL_MAX &&
+           swingLow != DBL_MAX);
+}
+
+// CB1 / Initial Break proxy:
+// first structural break candle closes beyond the recent M15 swing range.
+// It is intentionally stricter than a 1-candle break, but lighter than
+// Dominant Break because it does not require a body-size multiple.
+bool BullishCB1InitialBreak(const MqlRates &cur, const int shift)
+{
+   if(cur.close <= cur.open || BodyRatio(cur) < InpCB1MinBodyRatio)
+      return false;
+
+   double swingHigh, swingLow;
+   if(!PreviousSwingRangeM15(shift, InpCB1LookbackBars, swingHigh, swingLow))
+      return false;
+
+   return (cur.close > swingHigh);
+}
+
+bool BearishCB1InitialBreak(const MqlRates &cur, const int shift)
+{
+   if(cur.close >= cur.open || BodyRatio(cur) < InpCB1MinBodyRatio)
+      return false;
+
+   double swingHigh, swingLow;
+   if(!PreviousSwingRangeM15(shift, InpCB1LookbackBars, swingHigh, swingLow))
+      return false;
+
+   return (cur.close < swingLow);
+}
+
 // M15 CSAK is valid only when the candle is on the correct side of MidBB
-// AND it is either a Dominant Break or an Engulfing candle.
+// AND it is Dominant Break OR Engulfing OR CB1/Initial Break.
 int M15CSAKDirection(const int shift)
 {
    MqlRates cur, prev;
@@ -178,8 +237,15 @@ int M15CSAKDirection(const int shift)
       !GetBB(hBB_M15, shift, mid, upper, lower))
       return 0;
 
-   const bool buyPattern  = BullishDominantBreak(cur, prev) || BullishEngulfing(cur, prev);
-   const bool sellPattern = BearishDominantBreak(cur, prev) || BearishEngulfing(cur, prev);
+   const bool buyPattern  =
+      BullishDominantBreak(cur, prev) ||
+      BullishEngulfing(cur, prev) ||
+      BullishCB1InitialBreak(cur, shift);
+
+   const bool sellPattern =
+      BearishDominantBreak(cur, prev) ||
+      BearishEngulfing(cur, prev) ||
+      BearishCB1InitialBreak(cur, shift);
 
    if(buyPattern && cur.close > mid)
       return 1;
@@ -681,6 +747,8 @@ int OnInit()
       InpMidSlopeLookback < 1 ||
       InpM15MaxAgeBars < 1 ||
       InpM5MaxAgeBars < 1 ||
+      InpCB1LookbackBars < 2 ||
+      InpCB1MinBodyRatio <= 0.0 || InpCB1MinBodyRatio > 1.0 ||
       InpSessionStartHour < 0 || InpSessionStartHour > 23 ||
       InpSessionEndHour < 0   || InpSessionEndHour > 24 ||
       InpTelegramTimeoutMs < 1000)
@@ -705,7 +773,8 @@ int OnInit()
 
    CreateButton();
 
-   PrintFormat("CEBONK BBMA CSAK-CSM 3TF READY | M15->M5->M1 | session %02d:00-%s broker time | broker GMT offset auto: GMT%+.1f",
+   PrintFormat("CEBONK BBMA CSAK-CSM 3TF READY | M15 DB/ENG/CB1 -> M5 CSM -> M1 CSM | RR 1:%.2f | session %02d:00-%s broker time | broker GMT offset auto: GMT%+.1f",
+               InpRiskReward,
                InpSessionStartHour,
                (InpSessionEndHour == 24 ? "00:00" : IntegerToString(InpSessionEndHour) + ":00"),
                BrokerGMTOffsetHours());
