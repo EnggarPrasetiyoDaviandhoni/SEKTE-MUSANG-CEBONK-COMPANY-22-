@@ -24,6 +24,6 @@ assert.ok(html.includes('id="tabCombined"')&&!html.includes('id="tabTechnical"')
 assert.equal((html.match(/id="autoCombinedLoader"/g)||[]).length,1);
 for(const script of scripts(html))if(script.trim())new Function(script);
 fs.writeFileSync(file,html);
-const worker=fs.readFileSync('worker/auto-sop-v3.mjs','utf8');assert.ok(worker.includes('AUTO_SOP_API_V3'));
+const worker=fs.readFileSync('worker/auto-sop-v3.mjs','utf8');assert.ok(worker.includes('AUTO_SOP_API_V4'));
 fs.writeFileSync('cloudflare-worker.js',worker); // Repo update only; DOES NOT deploy Cloudflare.
-console.log('INSTALLED: 3 tabs. COMBINED 1 AUTO, no manual price input. Cloudflare deployment separate.');
+console.log('INSTALLED: 3 tabs. COMBINED 1 AUTO, no manual price input. Cloudflare deployment separate; provider Massive requires MASSIVE_API_KEY.');

@@ -10,17 +10,19 @@ globalThis.caches={default:{
  async match(r){return store.get(r.url)?.clone()||null;},
  async put(r,v){store.set(r.url,v.clone());}
 }};
+function massiveRows(){
+ const base=Date.parse('2026-10-07T06:00:00Z');
+ return Array.from({length:12},(_,i)=>({t:base+i*60000,o:100+i,h:102+i,l:99+i,c:101+i,v:10+i}));
+}
 globalThis.fetch=async u=>{
- calls++;seenUrl=u;const q=new URL(u),interval=q.searchParams.get('interval');
+ calls++;seenUrl=u;
  if(mode==='network')throw new Error('SECRET_URL_SHOULD_NOT_LEAK');
- if(mode==='quota')return Response.json({status:'error',code:429,message:'SECRET_SENTINEL'});
- if(mode==='generic')return Response.json({status:'error',code:400,message:'SECRET_SENTINEL'});
- return Response.json({meta:{symbol:'XAU/USD',interval},values:[
-  {datetime:'2026-10-07 06:10:00',open:'100',high:'102',low:'99',close:'101'},
-  {datetime:'2026-10-07 06:11:00',open:'101',high:'103',low:'100',close:'102'}
- ]});
+ if(mode==='quota')return Response.json({status:'ERROR',message:'SECRET_SENTINEL'},{status:429});
+ if(mode==='generic')return Response.json({status:'ERROR',message:'SECRET_SENTINEL'},{status:200});
+ if(mode==='unauthorized')return Response.json({status:'NOT_AUTHORIZED',message:'SECRET_SENTINEL'},{status:200});
+ return Response.json({status:'OK',ticker:'C:XAUUSD',results:massiveRows()});
 };
-const env={TWELVE_DATA_KEY:'SECRET_SENTINEL'};
+const env={MASSIVE_API_KEY:'SECRET_SENTINEL'};
 let waits=[];
 const ctx={waitUntil(p){waits.push(Promise.resolve(p));}};
 async function request(path){
@@ -34,29 +36,37 @@ function dropFresh(){
 let passed=0;
 async function t(name,fn){clear();await fn();passed++;console.log('PASS '+name);}
 
-await t('provider error exposes safe code not raw message',async()=>{
+await t('Massive provider error exposes safe status not raw message',async()=>{
  mode='generic';const r=await request('/xau?interval=1min&outputsize=300'),d=await r.json();
- assert.equal(r.status,502);assert.equal(d.error,'TWELVE_DATA_ERROR');assert.equal(d.providerCode,400);
+ assert.equal(r.status,502);assert.equal(d.error,'MASSIVE_DATA_ERROR');assert.equal(d.provider,'Massive');
  assert.ok(!JSON.stringify(d).includes('SECRET_SENTINEL'));
 });
 await t('quota classification exposes 429 safely',async()=>{
  mode='quota';const r=await request('/xau?interval=5min&outputsize=300'),d=await r.json();
- assert.equal(r.status,429);assert.equal(d.error,'UPSTREAM_QUOTA');assert.equal(d.providerCode,429);
+ assert.equal(r.status,429);assert.equal(d.error,'UPSTREAM_QUOTA');
+});
+await t('access denial classification exposes no provider message',async()=>{
+ mode='unauthorized';const r=await request('/xau?interval=15min'),d=await r.json();
+ assert.equal(r.status,403);assert.equal(d.error,'UPSTREAM_ACCESS_DENIED');assert.ok(!JSON.stringify(d).includes('SECRET_SENTINEL'));
 });
 await t('successful response seeds stale backup cache',async()=>{
- const r=await request('/xau?interval=1min&outputsize=300');assert.equal(r.status,200);
- assert.ok([...store.keys()].some(k=>k.includes('/__backup/xau?interval=1min')));
+ const r=await request('/xau?interval=1min&outputsize=300'),d=await r.json();assert.equal(r.status,200);assert.equal(d.provider,'Massive');
+ assert.equal(d.providerTicker,'C:XAUUSD');assert.ok([...store.keys()].some(k=>k.includes('/__backup/xau?interval=1min')));
 });
 await t('upstream failure can return stale backup with diagnostics',async()=>{
  let r=await request('/xau?interval=1min&outputsize=300');assert.equal(r.status,200);
  dropFresh();mode='quota';r=await request('/xau?interval=1min&outputsize=300');const d=await r.json();
  assert.equal(r.status,200);assert.equal(d.ok,true);assert.equal(d.degraded,true);
- assert.equal(d.cacheState,'STALE_BACKUP');assert.equal(d.upstreamError,'UPSTREAM_QUOTA');assert.equal(d.upstreamCode,429);
+ assert.equal(d.cacheState,'STALE_BACKUP');assert.equal(d.upstreamError,'UPSTREAM_QUOTA');
  assert.ok(!JSON.stringify(d).includes('SECRET_SENTINEL'));
 });
 await t('network error stays fail closed without backup',async()=>{
  mode='network';const r=await request('/xau?interval=1min'),d=await r.json();
  assert.equal(r.status,502);assert.equal(d.error,'UPSTREAM_NETWORK_OR_TIMEOUT');
  assert.ok(!JSON.stringify(d).includes('SECRET_URL_SHOULD_NOT_LEAK'));
+});
+await t('secret is Massive only and Twelve Data removed',async()=>{
+ const health=await request('/health'),d=await health.json();assert.equal(d.secretConfigured,true);assert.equal(d.provider,'Massive');
+ assert.ok(!src.includes('TWELVE_DATA_KEY'));assert.ok(!src.includes('api.twelvedata.com'));assert.ok(src.includes('MASSIVE_API_KEY'));assert.ok(src.includes('api.massive.com'));
 });
 console.log('TECHNICAL_FEED_WORKER_TOTAL_PASS',passed);
