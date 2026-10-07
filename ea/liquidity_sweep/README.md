@@ -1,6 +1,6 @@
-# CEBONK LIQUIDITY SWEEP MT5 v1.00
+# CEBONK LIQUIDITY SWEEP MT5 v1.01
 
-EA scanner MT5 kapisah kanggo mesin **Liquidity Sweep** sing selaras karo `assets/technical-scanners-core.js`. Modul BBMA lawas ora diowahi.
+EA MT5 auto-entry kapisah kanggo mesin **Liquidity Sweep** sing selaras karo `assets/technical-scanners-core.js`. Modul BBMA lawas ora diowahi.
 
 ## Alur sinyal
 
@@ -40,16 +40,19 @@ Kabeh nggunakake **closed candle**.
 
 Astrology tetep master direction/time kaya web. Normal gate mbutuhake arah Astrology saiki lan nalika TF3 event padha karo arah Liquidity. Astrology News bisa override jalur normal nganggo policy sing padha karo EA BBMA: USD HIGH impact, buffer release, lan window entry.
 
-## Output
+## Eksekusi
 
-EA iki versi **signal-only**:
-- Telegram JSON POST;
-- MT5 Push;
-- tombol chart `SCANNER ON/OFF`;
-- anti-duplicate nganggo Global Variable;
-- output level liquidity, structure break, TF3 retest, reference close, reference SL sweep, lan reference TP RR.
-
-Ora ana `OrderSend`, ora ana posisi otomatis, ora ana martingale/recovery/layering/BE/trailing.
+- Tombol chart `AUTOPILOT ON/OFF`.
+- Default `InpAutopilot=false` lan `InpAllowRealAccount=false`.
+- Fixed lot default `0.01`.
+- Max spread default `70 points`.
+- Maksimal 1 posisi utawa pending order per symbol, kalebu posisi manual/EA liyane.
+- Entry market yen Liquidity setup valid lan Astrology gate selaras.
+- BUY SL = ekstrem sweep low − buffer; SELL SL = ekstrem sweep high + buffer.
+- TP dihitung saka fill/quote aktual supaya RR default `1:2`.
+- SignalID di-reserve sadurunge order supaya ora double-entry; reject ora dikejar maneh.
+- Ora ana ATR, martingale, recovery, layering, BE, trailing, utawa partial close.
+- Telegram JSON POST + MT5 Push kanggo signal, order accepted/rejected, fill, lan exit.
 
 ## File
 
@@ -57,12 +60,14 @@ Ora ana `OrderSend`, ora ana posisi otomatis, ora ana martingale/recovery/layeri
 - `src/LSCore.mqh` — SSOT Liquidity Sweep.
 - `src/LSAstroNews.mqh` — Astrology + Astrology News.
 - `src/LSNotify.mqh` — Telegram/MT5 notification.
+- `src/LSTrade.mqh` — fixed-lot market execution, spread/stop/filling guards, 1 posisi/order per symbol.
 - `LIQUIDITY_SWEEP_DEFAULT.set` — preset default.
-- `dist/CEBONK_LIQUIDITY_SWEEP_v1.00.txt` — single-file TXT release.
+- `dist/CEBONK_LIQUIDITY_SWEEP_v1.01.txt` — single-file TXT release auto-entry terbaru.
+- `dist/CEBONK_LIQUIDITY_SWEEP_v1.00.txt` — arsip signal-only.
 
 ## Pasang
 
-Copy 4 file ing `src/` menyang folder sing padha ing `MQL5/Experts/CEBONK_LIQUIDITY_SWEEP/`, compile `CEBONK_LIQUIDITY_SWEEP.mq5`, banjur pasang neng chart `XAUUSDc`. TF chart bebas.
+Copy 5 file ing `src/` menyang folder sing padha ing `MQL5/Experts/CEBONK_LIQUIDITY_SWEEP/`, compile `CEBONK_LIQUIDITY_SWEEP.mq5`, banjur pasang neng chart `XAUUSDc`. TF chart bebas.
 
 Kanggo live Astrology/Telegram, Allow WebRequest:
 - `https://enggarprasetiyodaviandhoni.github.io`
