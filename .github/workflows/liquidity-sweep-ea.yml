@@ -1,0 +1,29 @@
+name: Liquidity Sweep MT5 EA
+
+on:
+  pull_request:
+    paths:
+      - 'ea/liquidity_sweep/**'
+      - 'assets/technical-scanners-core.js'
+      - '.github/workflows/liquidity-sweep-ea.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ea/liquidity_sweep/**'
+      - 'assets/technical-scanners-core.js'
+      - '.github/workflows/liquidity-sweep-ea.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static Liquidity Sweep parity tests
+        run: python3 ea/liquidity_sweep/tests/test_source.py
+      - name: Show source sizes
+        run: wc -c ea/liquidity_sweep/src/*
