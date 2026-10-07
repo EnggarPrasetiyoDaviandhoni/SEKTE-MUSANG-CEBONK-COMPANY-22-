@@ -1,23 +1,28 @@
-// CEBONK COMPANY 22 | LIQUIDITY SWEEP SIGNAL EA | v1.00
+// CEBONK COMPANY 22 | LIQUIDITY SWEEP AUTO ENTRY EA | v1.01
 // Web-aligned Liquidity: TF1 map -> TF2 sweep+displacement+break -> TF3 retest.
-// Closed candles only. Astrology is master direction/time. No OrderSend: signal + Telegram/MT5 notification only.
+// Closed candles only. Astrology is master direction/time. Fixed-lot market execution with sweep SL and RR TP.
 #property strict
-#property version "1.00"
-#property description "CEBONK LIQUIDITY SWEEP SIGNAL EA. Closed-candle scanner; Telegram/MT5 notification; no trade execution."
+#property version "1.01"
+#property description "CEBONK LIQUIDITY SWEEP AUTO ENTRY EA. Closed-candle, fixed lot, sweep SL, RR TP."
 #property tester_file "CEBONK_C2_ASTRO.csv"
 #property tester_file "CEBONK_C2_NEWS.csv"
 
 #include "LSCore.mqh"
 #include "LSAstroNews.mqh"
 #include "LSNotify.mqh"
+#include "LSTrade.mqh"
 
-input group "01 | SCANNER"
+input group "01 | EXECUTION"
 input string InpSymbol="XAUUSDc";
-input bool InpScannerOn=true;
+input ulong InpMagic=221023;
+input bool InpAutopilot=false;
+input bool InpAllowRealAccount=false;
+input double InpFixedLot=0.01;
+input int InpMaxSpreadPoints=70;
+input int InpDeviationPoints=30;
 input double InpRR=2.0;
 input double InpSLBufferPrice=0.20;
 input int InpHistoryBars=120;
-input int InpInstanceID=221023;
 
 input group "02 | ASTROLOGY WEB MASTER"
 input BW_ASTRO_SOURCE InpAstroSource=BW_ASTRO_WEB_MONTH;
@@ -50,14 +55,14 @@ input string InpTelegramChatID="";
 input bool InpMT5Push=true;
 input bool InpTelegramTestOnStart=true;
 
-bool gTester=false,gScanner=false;
+bool gTester=false,gAuto=false;
 string gButton="",gScope="",gLastStatus="",gLastSignalKey="";
 long gM1=0,gM5=0,gM15=0,gM30=0,gH1=0,gH4=0;
 
 void LSPaint(){
  if(ObjectFind(0,gButton)<0)return;
- ObjectSetString(0,gButton,OBJPROP_TEXT,gScanner?"SCANNER ON":"SCANNER OFF");
- ObjectSetInteger(0,gButton,OBJPROP_BGCOLOR,gScanner?clrDarkGreen:clrFireBrick);
+ ObjectSetString(0,gButton,OBJPROP_TEXT,gAuto?"AUTOPILOT ON":"AUTOPILOT OFF");
+ ObjectSetInteger(0,gButton,OBJPROP_BGCOLOR,gAuto?clrDarkGreen:clrFireBrick);
  ObjectSetInteger(0,gButton,OBJPROP_STATE,false);
 }
 void LSStatus(const string s){
@@ -65,8 +70,8 @@ void LSStatus(const string s){
  if(ObjectFind(0,gButton)>=0)ObjectSetString(0,gButton,OBJPROP_TOOLTIP,s);
 }
 bool LSInputsOK(){
- if(InpSymbol==""||InpRR<1.0||InpRR>10.0||InpSLBufferPrice<0||InpHistoryBars<40||InpHistoryBars>1000||InpInstanceID<=0)return false;
- if(InpHTTPTimeoutMs<500)return false;
+ if(InpSymbol==""||InpMagic==0||InpFixedLot<=0||InpRR<1.0||InpRR>10.0||InpSLBufferPrice<0||InpHistoryBars<40||InpHistoryBars>1000)return false;
+ if(InpMaxSpreadPoints<1||InpDeviationPoints<0||InpHTTPTimeoutMs<500)return false;
  if(InpNewsPreMinutes<5||InpNewsPreMinutes>120||InpNewsPostMinutes<30||InpNewsPostMinutes>360)return false;
  if(InpNewsBlockBeforeMinutes<0||InpNewsBlockBeforeMinutes>60||InpNewsBlockAfterMinutes<0||InpNewsBlockAfterMinutes>60)return false;
  if(InpNewsEntrySpanMinutes<5||InpNewsEntrySpanMinutes>60||InpNewsMinWindowMinutes<5||InpNewsMinWindowMinutes>60)return false;
@@ -101,7 +106,7 @@ void LSReserveSignal(const string key){
 }
 
 void LSEvaluate(){
- if(!gScanner){LSStatus("SCANNER_OFF");return;}
+ if(LSHasPositionOrOrder(InpSymbol)){LSStatus("SYMBOL_ALREADY_HAS_POSITION_OR_ORDER");return;}
  long nowServer=(long)TimeTradeServer();if(nowServer<=0)nowServer=(long)TimeCurrent();
  long nowUtc=BWNowUTC(gTester,InpLiveAutoServerUTC,InpServerUTCMinutes);
 
@@ -154,10 +159,16 @@ void LSEvaluate(){
   "TF3 RETEST close: "+BWWIB(eventUtc)+"\n"+gate+
   "\nReference close: "+DoubleToString(sig.referenceEntry,digits)+
   "\nReference SL sweep: "+DoubleToString(sig.structuralSL,digits)+
-  "\nReference TP RR 1:"+DoubleToString(InpRR,2)+": "+DoubleToString(refTP,digits)+
-  "\nSIGNAL ONLY - ora ngirim order.";
- LSNotice("LIQUIDITY_SIGNAL",text,InpSymbol,gTester,gScanner);
- LSStatus("SIGNAL_NOTIFIED");
+  "\nReference TP RR 1:"+DoubleToString(InpRR,2)+": "+DoubleToString(refTP,digits);
+ LSNotice("LIQUIDITY_SIGNAL",text,InpSymbol,gTester,gAuto);
+ if(!gAuto){LSStatus("AUTOPILOT_OFF_SIGNAL_ONLY");return;}
+ string why;ulong order=0;
+ if(!LSPlace(InpSymbol,InpMagic,sig,newsMode,InpFixedLot,InpMaxSpreadPoints,InpDeviationPoints,InpAllowRealAccount,InpRR,why,order)){
+  LSNotice("ORDER_REJECTED",why+" | ora retry sinyal sing padha",InpSymbol,gTester,gAuto);
+  LSStatus(why);return;
+ }
+ LSNotice("ORDER_ACCEPTED","order="+(string)order+" | "+mode+" | "+p.id+" | fixed lot "+DoubleToString(InpFixedLot,2),InpSymbol,gTester,gAuto);
+ LSStatus("ORDER_ACCEPTED");
 }
 
 bool LSPulse(){
@@ -173,11 +184,11 @@ void LSHeartbeat(){
  LSFlushNotice(gTester,InpMT5Push,InpTelegram,InpTelegramToken,InpTelegramChatID,InpHTTPTimeoutMs);
 }
 int OnInit(){
- gTester=(bool)MQLInfoInteger(MQL_TESTER);gScanner=InpScannerOn;
+ gTester=(bool)MQLInfoInteger(MQL_TESTER);gAuto=InpAutopilot;
  if(_Symbol!=InpSymbol){Print("Pasang EA neng chart ",InpSymbol,". TF chart bebas.");return INIT_PARAMETERS_INCORRECT;}
  if(!LSInputsOK())return INIT_PARAMETERS_INCORRECT;
- gScope="CEBONK.LS."+(string)AccountInfoInteger(ACCOUNT_LOGIN)+"."+InpSymbol+"."+(string)InpInstanceID+".";
- gButton="CEBONK_LS_SCAN_"+(string)ChartID();
+ gScope="CEBONK.LS."+(string)AccountInfoInteger(ACCOUNT_LOGIN)+"."+InpSymbol+"."+(string)InpMagic+".";
+ gButton="CEBONK_LS_AUTO_"+(string)ChartID();
  if(!gTester){
   ObjectCreate(0,gButton,OBJ_BUTTON,0,0,0);ObjectSetInteger(0,gButton,OBJPROP_CORNER,CORNER_RIGHT_UPPER);
   ObjectSetInteger(0,gButton,OBJPROP_XDISTANCE,12);ObjectSetInteger(0,gButton,OBJPROP_YDISTANCE,18);
@@ -186,13 +197,17 @@ int OnInit(){
  gM1=(long)iTime(InpSymbol,PERIOD_M1,0);gM5=(long)iTime(InpSymbol,PERIOD_M5,0);gM15=(long)iTime(InpSymbol,PERIOD_M15,0);
  gM30=(long)iTime(InpSymbol,PERIOD_M30,0);gH1=(long)iTime(InpSymbol,PERIOD_H1,0);gH4=(long)iTime(InpSymbol,PERIOD_H4,0);
  EventSetTimer(1);LSHeartbeat();
- LSNotice("EA_STARTED","LIQUIDITY SWEEP v1.00 | SIGNAL ONLY | closed candle | Astrology News "+(InpUseAstrologyNews?"ON":"OFF"),InpSymbol,gTester,gScanner);
- if(InpTelegramTestOnStart)LSNotice("TELEGRAM_TEST","Tes notifikasi. Ora ana order.",InpSymbol,gTester,gScanner);
+ LSNotice("EA_STARTED","LIQUIDITY SWEEP v1.01 | AUTO ENTRY | fixed lot "+DoubleToString(InpFixedLot,2)+" | RR "+DoubleToString(InpRR,2)+" | SL sweep + buffer | Astrology News "+(InpUseAstrologyNews?"ON":"OFF"),InpSymbol,gTester,gAuto);
+ if(InpTelegramTestOnStart)LSNotice("TELEGRAM_TEST","Tes notifikasi. Ora ana order.",InpSymbol,gTester,gAuto);
  return INIT_SUCCEEDED;
 }
 void OnDeinit(const int reason){EventKillTimer();if(ObjectFind(0,gButton)>=0)ObjectDelete(0,gButton);}
 void OnTimer(){LSHeartbeat();if(LSPulse())LSEvaluate();}
 void OnTick(){}
 void OnChartEvent(const int id,const long &l,const double &d,const string &s){
- if(id==CHARTEVENT_OBJECT_CLICK&&s==gButton){gScanner=!gScanner;LSPaint();LSNotice("SCANNER",gScanner?"ON":"OFF",InpSymbol,gTester,gScanner);}
+ if(id==CHARTEVENT_OBJECT_CLICK&&s==gButton){gAuto=!gAuto;LSPaint();LSNotice("AUTOPILOT",gAuto?"ON":"OFF",InpSymbol,gTester,gAuto);}
+}
+
+void OnTradeTransaction(const MqlTradeTransaction &trans,const MqlTradeRequest &request,const MqlTradeResult &result){
+ LSTradeTransaction(trans,InpSymbol,InpMagic,gTester,gAuto);
 }

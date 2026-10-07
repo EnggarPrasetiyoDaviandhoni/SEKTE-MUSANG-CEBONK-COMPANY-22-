@@ -1,9 +1,13 @@
 InpSymbol=XAUUSDc
-InpScannerOn=true
+InpMagic=221023
+InpAutopilot=false
+InpAllowRealAccount=false
+InpFixedLot=0.01
+InpMaxSpreadPoints=70
+InpDeviationPoints=30
 InpRR=2.0
 InpSLBufferPrice=0.20
 InpHistoryBars=120
-InpInstanceID=221023
 InpAstroSource=0
 InpAstroBaseURL=https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/ea/combined2/data/
 InpAstroCSV=CEBONK_C2_ASTRO.csv
