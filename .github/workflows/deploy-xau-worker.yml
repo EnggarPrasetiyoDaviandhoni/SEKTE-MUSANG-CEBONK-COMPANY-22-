@@ -27,28 +27,31 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check deployment secrets
-        id: preflight
         shell: bash
         run: |
-          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ] && [ -n "$MASSIVE_API_KEY" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "Cloudflare + Massive secrets are configured." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Deployment skipped. Required repository secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, MASSIVE_API_KEY." >> "$GITHUB_STEP_SUMMARY"
+          missing=()
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || missing+=("CLOUDFLARE_API_TOKEN")
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || missing+=("CLOUDFLARE_ACCOUNT_ID")
+          [ -n "$MASSIVE_API_KEY" ] || missing+=("MASSIVE_API_KEY")
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Missing required repository secrets: ${missing[*]}" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
+          echo "Cloudflare + Massive secrets are configured." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate Worker source
+        run: |
+          node --check cloudflare-worker.js
+          cmp cloudflare-worker.js worker/auto-sop-v3.mjs
 
       - name: Deploy Worker
-        if: steps.preflight.outputs.ready == 'true'
         run: npx --yes wrangler@4 deploy cloudflare-worker.js --name cebonk-xau-api --compatibility-date 2026-10-07
 
       - name: Install Massive API secret in Worker
-        if: steps.preflight.outputs.ready == 'true'
         shell: bash
         run: printf '%s' "$MASSIVE_API_KEY" | npx --yes wrangler@4 secret put MASSIVE_API_KEY --name cebonk-xau-api
 
       - name: Verify live Worker
-        if: steps.preflight.outputs.ready == 'true'
         run: |
           node --input-type=module <<'JS'
           const base='https://cebonk-xau-api.enggarprasetiyo330.workers.dev';
