@@ -45,7 +45,7 @@ async function feed(tf,force=false){
   const x={bars,fetched,degraded:p.degraded===true,upstreamError:p.upstreamError||'',upstreamCode:p.upstreamCode??null};
   cache.set(tf,x);persist(tf,x);
   if(last.end<expected)throw new Error('CANDLE_CLOSE_WAIT');
-  if(p.degraded===true)errors.set(tf,feedError({error:'CACHE · '+(p.upstreamError||'UPSTREAM_ERROR'),providerCode:p.upstreamCode},200));
+  if(p.degraded===true)errors.set(tf,feedError({error:p.upstreamError||'UPSTREAM_ERROR',providerCode:p.upstreamCode},200));
   else errors.delete(tf);
   return bars;
  }catch(e){
