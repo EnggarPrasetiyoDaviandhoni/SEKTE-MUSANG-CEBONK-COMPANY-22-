@@ -42,6 +42,14 @@ ok('all timeframe pulse', all(x in main for x in ['PERIOD_M1','PERIOD_M5','PERIO
 ok('anti duplicate', 'GlobalVariableCheck' in main and 'LSReserveSignal' in main)
 ok('telegram JSON', 'Content-Type: application/json' in notify and 'api.telegram.org' in notify)
 ok('autopilot button', main.count('OBJ_BUTTON')==1 and 'AUTOPILOT ON' in main and 'AUTOPILOT OFF' in main)
+ok('MQL5 arrays passed by reference', all(x in main for x in [
+    'int LSCount(const bool &a[])',
+    'string LSPackages(const bool &buy[],const bool &sell[],const int dir)',
+    'int LSChooseLatest(const BWSignal &signals[],const bool &flags[])']))
+ok('no by-value bool array params', all(x not in main for x in [
+    'int LSCount(const bool a[])',
+    'string LSPackages(const bool buy[],const bool sell[],const int dir)',
+    'int LSChooseLatest(const BWSignal &signals[],const bool flags[])']))
 ok('market auto execution', 'OrderSend(req,res)' in trade and 'TRADE_ACTION_DEAL' in trade and 'LSPlace(' in main)
 ok('fixed lot default', 'InpFixedLot=0.01' in main)
 ok('spread 70 default', 'InpMaxSpreadPoints=70' in main)

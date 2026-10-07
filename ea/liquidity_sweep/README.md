@@ -1,4 +1,4 @@
-# CEBONK LIQUIDITY SWEEP MT5 v1.01
+# CEBONK LIQUIDITY SWEEP MT5 v1.02
 
 EA MT5 auto-entry kapisah kanggo mesin **Liquidity Sweep** sing selaras karo `assets/technical-scanners-core.js`. Modul BBMA lawas ora diowahi.
 
@@ -62,7 +62,8 @@ Astrology tetep master direction/time kaya web. Normal gate mbutuhake arah Astro
 - `src/LSNotify.mqh` — Telegram/MT5 notification.
 - `src/LSTrade.mqh` — fixed-lot market execution, spread/stop/filling guards, 1 posisi/order per symbol.
 - `LIQUIDITY_SWEEP_DEFAULT.set` — preset default.
-- `dist/CEBONK_LIQUIDITY_SWEEP_v1.01.txt` — single-file TXT release auto-entry terbaru.
+- `dist/CEBONK_LIQUIDITY_SWEEP_v1.02.txt` — single-file TXT release auto-entry terbaru; fix parameter array MQL5 wajib by-reference.
+- `dist/CEBONK_LIQUIDITY_SWEEP_v1.01.txt` — arsip auto-entry sadurunge fix compile.
 - `dist/CEBONK_LIQUIDITY_SWEEP_v1.00.txt` — arsip signal-only.
 
 ## Pasang

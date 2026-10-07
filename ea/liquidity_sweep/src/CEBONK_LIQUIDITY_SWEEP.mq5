@@ -1,8 +1,8 @@
-// CEBONK COMPANY 22 | LIQUIDITY SWEEP AUTO ENTRY EA | v1.01
+// CEBONK COMPANY 22 | LIQUIDITY SWEEP AUTO ENTRY EA | v1.02
 // Web-aligned Liquidity: TF1 map -> TF2 sweep+displacement+break -> TF3 retest.
 // Closed candles only. Astrology is master direction/time. Fixed-lot market execution with sweep SL and RR TP.
 #property strict
-#property version "1.01"
+#property version "1.02"
 #property description "CEBONK LIQUIDITY SWEEP AUTO ENTRY EA. Closed-candle, fixed lot, sweep SL, RR TP."
 #property tester_file "CEBONK_C2_ASTRO.csv"
 #property tester_file "CEBONK_C2_NEWS.csv"
@@ -78,8 +78,8 @@ bool LSInputsOK(){
  if(InpNewsPollSeconds<15||InpNewsPollSeconds>120||InpNewsMaxCacheSeconds<InpNewsPollSeconds||InpNewsMaxCacheSeconds>600)return false;
  return true;
 }
-int LSCount(const bool a[]){int n=0;for(int i=0;i<BW_PACKAGE_COUNT;i++)if(a[i])n++;return n;}
-string LSPackages(const bool buy[],const bool sell[],const int dir){
+int LSCount(const bool &a[]){int n=0;for(int i=0;i<BW_PACKAGE_COUNT;i++)if(a[i])n++;return n;}
+string LSPackages(const bool &buy[],const bool &sell[],const int dir){
  string s="";
  for(int i=0;i<BW_PACKAGE_COUNT;i++){
   bool ok=dir>0?buy[i]:sell[i];if(!ok)continue;
@@ -87,7 +87,7 @@ string LSPackages(const bool buy[],const bool sell[],const int dir){
  }
  return s;
 }
-int LSChooseLatest(const BWSignal &signals[],const bool flags[]){
+int LSChooseLatest(const BWSignal &signals[],const bool &flags[]){
  int chosen=-1;
  for(int i=0;i<BW_PACKAGE_COUNT;i++){
   if(!flags[i])continue;
