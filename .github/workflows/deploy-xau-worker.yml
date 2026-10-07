@@ -1,0 +1,66 @@
+name: Deploy XAU Massive Worker
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'cloudflare-worker.js'
+      - '.github/workflows/deploy-xau-worker.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-xau-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MASSIVE_API_KEY: ${{ secrets.MASSIVE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check deployment secrets
+        id: preflight
+        shell: bash
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ] && [ -n "$MASSIVE_API_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Cloudflare + Massive secrets are configured." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Deployment skipped. Required repository secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, MASSIVE_API_KEY." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Deploy Worker
+        if: steps.preflight.outputs.ready == 'true'
+        run: npx --yes wrangler@4 deploy cloudflare-worker.js --name cebonk-xau-api --compatibility-date 2026-10-07
+
+      - name: Install Massive API secret in Worker
+        if: steps.preflight.outputs.ready == 'true'
+        shell: bash
+        run: printf '%s' "$MASSIVE_API_KEY" | npx --yes wrangler@4 secret put MASSIVE_API_KEY --name cebonk-xau-api
+
+      - name: Verify live Worker
+        if: steps.preflight.outputs.ready == 'true'
+        run: |
+          node --input-type=module <<'JS'
+          const base='https://cebonk-xau-api.enggarprasetiyo330.workers.dev';
+          const health=await fetch(base+'/health',{signal:AbortSignal.timeout(10000)});
+          const h=await health.json();
+          if(!health.ok||h.apiVersion!==4||h.provider!=='Massive'||h.providerTicker!=='C:XAUUSD'||h.secretConfigured!==true){
+            throw new Error('LIVE_HEALTH_MISMATCH '+JSON.stringify({status:health.status,apiVersion:h.apiVersion,provider:h.provider,providerTicker:h.providerTicker,secretConfigured:h.secretConfigured}));
+          }
+          const feed=await fetch(base+'/xau?interval=1min&outputsize=50',{signal:AbortSignal.timeout(12000)});
+          const f=await feed.json();
+          if(!feed.ok||f.ok!==true||f.provider!=='Massive'||f.symbol!=='XAU/USD'||!Array.isArray(f.values)||!f.values.length){
+            throw new Error('LIVE_FEED_FAILED '+JSON.stringify({status:feed.status,error:f.error,providerCode:f.providerCode}));
+          }
+          console.log(JSON.stringify({health:'OK',feed:'OK',provider:f.provider,count:f.values.length,interval:f.interval}));
+          JS
