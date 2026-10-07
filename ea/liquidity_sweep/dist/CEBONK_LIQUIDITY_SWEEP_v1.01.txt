@@ -1,0 +1,761 @@
+// ============================================================
+// SINGLE-FILE TXT RELEASE
+// Rename to CEBONK_LIQUIDITY_SWEEP_v1.01.mq5 before MetaEditor compile.
+// v1.01 AUTO ENTRY: fixed lot, spread guard, sweep SL, actual-fill RR TP.
+// Modular SSOT remains in ea/liquidity_sweep/src/.
+// ============================================================
+
+// CEBONK COMPANY 22 | LIQUIDITY SWEEP AUTO ENTRY EA | v1.01
+// Web-aligned Liquidity: TF1 map -> TF2 sweep+displacement+break -> TF3 retest.
+// Closed candles only. Astrology is master direction/time. Fixed-lot market execution with sweep SL and RR TP.
+#property strict
+#property version "1.01"
+#property description "CEBONK LIQUIDITY SWEEP AUTO ENTRY EA. Closed-candle, fixed lot, sweep SL, RR TP."
+#property tester_file "CEBONK_C2_ASTRO.csv"
+#property tester_file "CEBONK_C2_NEWS.csv"
+
+// ===== INLINE MODULE: LSCore.mqh =====
+// CEBONK LIQUIDITY SWEEP MT5 v1.00 | web scanner parity.
+// TF1 swing/equal-liquidity -> TF2 sweep+displacement+structure-break -> TF3 retest.
+// Only completed bars; times are broker-server seconds. No ATR or indicator direction.
+#ifndef CEBONK_LS_CORE
+#define CEBONK_LS_CORE
+#define BW_PACKAGE_COUNT 4
+#define BW_LIQ_LOOKBACK 80
+#define BW_PIVOT_DEPTH 2
+#define BW_SWEEP_SEARCH 18
+#define BW_DISPLACEMENT_BARS 3
+#define BW_STRUCTURE_LOOKBACK 6
+#define BW_BODY_MULT 1.20
+#define BW_EQUAL_TOL 0.12
+#define BW_MIN_HOLD_SEC 300
+
+struct BWBar {long start,end;double open,high,low,close;};
+struct BWPackageSpec {string id;ENUM_TIMEFRAMES tf1,tf2,tf3;};
+struct BWSignal {
+ bool valid;int dir,pkg;long reAt,tf2At,eventAt,validUntil;
+ string tf2Type,liquidityType;double liquidity,structure,sweepExtreme;
+ double referenceEntry,structuralSL,rr;
+};
+struct BWLevel {double price;long knownAt;string type;int index;};
+
+bool BWFin(const double x){return MathIsValidNumber(x)&&x!=EMPTY_VALUE;}
+string BWSide(const int d){return d>0?"BUY":d<0?"SELL":"WAIT";}
+void BWGetPackage(const int i,BWPackageSpec &p){
+ if(i==0){p.id="H4-H1-M15";p.tf1=PERIOD_H4;p.tf2=PERIOD_H1;p.tf3=PERIOD_M15;return;}
+ if(i==1){p.id="H1-M15-M5";p.tf1=PERIOD_H1;p.tf2=PERIOD_M15;p.tf3=PERIOD_M5;return;}
+ if(i==2){p.id="M30-M5-M1";p.tf1=PERIOD_M30;p.tf2=PERIOD_M5;p.tf3=PERIOD_M1;return;}
+ p.id="M15-M5-M1";p.tf1=PERIOD_M15;p.tf2=PERIOD_M5;p.tf3=PERIOD_M1;
+}
+bool BWLoadClosedBars(const string symbol,const ENUM_TIMEFRAMES tf,const int need,BWBar &out[]){
+ ArrayResize(out,0);MqlRates r[];ArraySetAsSeries(r,false);
+ int got=CopyRates(symbol,tf,1,need,r);if(got<25)return false;
+ int sec=PeriodSeconds(tf);if(sec<=0)return false;
+ ArrayResize(out,got);
+ for(int i=0;i<got;i++){
+  if(!BWFin(r[i].open)||!BWFin(r[i].high)||!BWFin(r[i].low)||!BWFin(r[i].close)||r[i].low<=0||r[i].high<r[i].low)return false;
+  out[i].start=(long)r[i].time;out[i].end=(long)r[i].time+sec;
+  out[i].open=r[i].open;out[i].high=r[i].high;out[i].low=r[i].low;out[i].close=r[i].close;
+ }return true;
+}
+double BWMedian(const double &data[],const int n){
+ if(n<=0)return 0;double a[];ArrayResize(a,n);for(int i=0;i<n;i++)a[i]=data[i];
+ ArraySort(a);int mid=n/2;return (n%2==0)?(a[mid-1]+a[mid])/2:a[mid];
+}
+double BWMedianRange(const BWBar &a[],const int from,const int to){
+ double data[];int k=0;ArrayResize(data,MathMax(0,to-from+1));
+ for(int i=from;i<=to;i++)data[k++]=a[i].high-a[i].low;
+ return BWMedian(data,k);
+}
+double BWMedianBody(const BWBar &a[],const int index){
+ // Web medianBody(t2,j-1) falls back to medianBody(t2,j) when zero.
+ for(int pass=0;pass<2;pass++){
+  int last=pass==0?index-1:index;if(last<0)continue;
+  int first=MathMax(0,last-19),n=last-first+1;double d[];ArrayResize(d,n);
+  for(int i=0;i<n;i++)d[i]=MathAbs(a[first+i].close-a[first+i].open);
+  double m=BWMedian(d,n);if(m!=0)return m;
+ }return 0;
+}
+void BWAddLevel(BWLevel &levels[],const double price,const long known,const string type,const int index){
+ int n=ArraySize(levels);ArrayResize(levels,n+1);
+ levels[n].price=price;levels[n].knownAt=known;levels[n].type=type;levels[n].index=index;
+}
+void BWMapLiquidity(const BWBar &a[],const int dir,BWLevel &levels[]){
+ ArrayResize(levels,0);const int total=ArraySize(a),offset=MathMax(0,total-BW_LIQ_LOOKBACK);
+ if(total-offset<15)return;
+ const int last=total-1,first=offset,pd=BW_PIVOT_DEPTH;
+ double ranges=BWMedianRange(a,MathMax(offset,total-30),last),tol=MathMax(1.0e-9,ranges*BW_EQUAL_TOL);
+ BWLevel src[];ArrayResize(src,0);
+ for(int i=first+pd;i<=last-pd;i++){
+  bool hi=true,lo=true;
+  for(int k=1;k<=pd;k++){
+   if(a[i].high<=a[i-k].high||a[i].high<a[i+k].high)hi=false;
+   if(a[i].low>=a[i-k].low||a[i].low>a[i+k].low)lo=false;
+  }
+  if((dir>0&&lo)||(dir<0&&hi)){
+   BWAddLevel(src,dir>0?a[i].low:a[i].high,a[i+pd].end,dir>0?"SWING_LOW":"SWING_HIGH",i);
+  }
+ }
+ int n=ArraySize(src),from=MathMax(0,n-12);
+ for(int i=from;i<n;i++)BWAddLevel(levels,src[i].price,src[i].knownAt,src[i].type,src[i].index);
+ for(int i=1;i<n;i++)if(MathAbs(src[i].price-src[i-1].price)<=tol){
+  BWAddLevel(levels,(src[i].price+src[i-1].price)/2,MathMax(src[i].knownAt,src[i-1].knownAt),dir>0?"EQUAL_LOW":"EQUAL_HIGH",src[i].index);
+ }
+ // Sort by newest knownAt and keep exactly 12 levels like mapLiquidity() on web.
+ for(int i=0;i<ArraySize(levels);i++)for(int j=i+1;j<ArraySize(levels);j++){
+  if(levels[j].knownAt>levels[i].knownAt){BWLevel t=levels[i];levels[i]=levels[j];levels[j]=t;}
+ }
+ if(ArraySize(levels)>12)ArrayResize(levels,12);
+}
+int BWFirstEndAtOrAfter(const BWBar &a[],const long stamp){
+ for(int i=0;i<ArraySize(a);i++)if(a[i].end>=stamp)return i;return -1;
+}
+int BWHoldSeconds(const ENUM_TIMEFRAMES tf){
+ return MathMax(PeriodSeconds(tf),BW_MIN_HOLD_SEC);
+}
+bool BWScanDirection(const string symbol,const int pkgIndex,const int dir,const long now,
+ const double rr,const double buffer,const int barsNeeded,BWSignal &out,string &why){
+ ZeroMemory(out);out.dir=dir;out.pkg=pkgIndex;out.rr=rr;why="";
+ BWPackageSpec p;BWGetPackage(pkgIndex,p);BWBar a[],b[],c[];
+ if(!BWLoadClosedBars(symbol,p.tf1,barsNeeded,a)||!BWLoadClosedBars(symbol,p.tf2,barsNeeded,b)||!BWLoadClosedBars(symbol,p.tf3,barsNeeded,c)){
+  why="DATA_KURANG";return false;
+ }
+ BWLevel levels[];BWMapLiquidity(a,dir,levels);
+ if(ArraySize(levels)==0){why="TF1_LIQUIDITY_WAIT";return false;}
+ const int bStart=MathMax(1,ArraySize(b)-BW_SWEEP_SEARCH),hold=BWHoldSeconds(p.tf3);
+ BWSignal best;ZeroMemory(best);bool found=false;long latestExpired=0;
+ for(int li=0;li<ArraySize(levels);li++){
+  BWLevel level=levels[li];
+  for(int i=bStart;i<ArraySize(b);i++){
+   BWBar s=b[i];if(s.end<level.knownAt)continue;
+   bool swept=dir>0?(s.low<level.price&&s.close>level.price):(s.high>level.price&&s.close<level.price);
+   if(!swept)continue;
+   int preStart=MathMax(0,i-BW_STRUCTURE_LOOKBACK);if(i-preStart<3)continue;
+   double structure=dir>0?b[preStart].high:b[preStart].low;
+   for(int h=preStart+1;h<i;h++)structure=dir>0?MathMax(structure,b[h].high):MathMin(structure,b[h].low);
+   int displacement=-1;
+   for(int j=i;j<=MathMin(ArraySize(b)-1,i+BW_DISPLACEMENT_BARS);j++){
+    BWBar x=b[j];double body=MathAbs(x.close-x.open),mb=BWMedianBody(b,j);
+    bool directional=dir>0?x.close>x.open:x.close<x.open;
+    bool broken=dir>0?x.close>structure:x.close<structure;
+    if(directional&&broken&&body>=mb*BW_BODY_MULT){displacement=j;break;}
+   }
+   if(displacement<0)continue;
+   long breakAt=b[displacement].end;int ci0=BWFirstEndAtOrAfter(c,breakAt);if(ci0<0)continue;
+   for(int k=ArraySize(c)-1;k>=ci0;k--){
+    BWBar x=c[k];
+    bool retest=dir>0?(x.low<=structure&&x.close>structure):(x.high>=structure&&x.close<structure);
+    if(!retest||now<x.end)continue;
+    long until=x.end+hold;
+    if(now>=until){latestExpired=MathMax(latestExpired,x.end);continue;}
+    double sl=dir>0?s.low-buffer:s.high+buffer;
+    double risk=MathAbs(x.close-sl),tp=dir>0?x.close+risk*rr:x.close-risk*rr;
+    if(!(risk>0&&BWFin(tp)))continue;
+    BWSignal cand;ZeroMemory(cand);cand.valid=true;cand.dir=dir;cand.pkg=pkgIndex;cand.rr=rr;
+    cand.reAt=s.end;cand.tf2At=breakAt;cand.eventAt=x.end;cand.validUntil=until;
+    cand.referenceEntry=x.close;cand.structuralSL=sl;cand.liquidity=level.price;cand.liquidityType=level.type;
+    cand.structure=structure;cand.sweepExtreme=dir>0?s.low:s.high;cand.tf2Type="SWEEP+DISPLACEMENT+BREAK";
+    if(!found||cand.eventAt>best.eventAt||(cand.eventAt==best.eventAt&&cand.reAt>best.reAt)){
+     best=cand;found=true;
+    }
+    break;
+   }
+  }
+ }
+ if(found){out=best;return true;}
+ why=latestExpired>0?"SIGNAL_EXPIRED":"SWEEP_BREAK_RETEST_WAIT";return false;
+}
+#endif
+
+
+// ===== INLINE MODULE: LSAstroNews.mqh =====
+// CEBONK LIQUIDITY SWEEP EA v1.00 - Astrology + Astrology News adapter.
+// Astrology direction is loaded from the same published 5-minute model schedule used by the web project.
+// Astrology News reproduces the web policy: news anchors time, inherited Astrology supplies direction.
+#ifndef CEBONK_BW_ASTRO_NEWS
+#define CEBONK_BW_ASTRO_NEWS
+
+#define BW_ASTRO_MODEL "CEBONK_C2_WEB_V1_35ce78b4"
+#define BW_STEP 300
+
+enum BW_ASTRO_SOURCE { BW_ASTRO_WEB_MONTH=0, BW_ASTRO_LOCAL_CSV=1 };
+enum BW_NEWS_SOURCE { BW_NEWS_MT5_CALENDAR=0, BW_NEWS_LOCAL_CSV=1 };
+
+struct BWAstroRow { long from,to; int dir; string id; };
+struct BWNewsItem { ulong id; long utc,known; string name; };
+struct BWNewsGate {
+ bool episode;
+ bool candidate;
+ int dir;
+ long release;
+ long windowStart;
+ long entryEnd;
+ string names;
+ string reason;
+};
+struct BWRun { int dir; long start,end; };
+
+BWAstroRow gBWAstro[];
+BWNewsItem gBWNews[];
+long gBWAstroNextPoll=0,gBWNewsNextPoll=0,gBWNewsUpdated=0,gBWNewsFrom=0,gBWNewsTo=0;
+int gBWNewsOffset=0;
+bool gBWAstroOK=false,gBWNewsOK=false;
+string gBWAstroMonth="",gBWAstroError="ASTRO_NOT_LOADED",gBWNewsError="NEWS_NOT_LOADED";
+
+bool BWDigits(const string s){
+ if(StringLen(s)<1||StringLen(s)>20)return false;
+ for(int i=0;i<StringLen(s);i++){ushort c=StringGetCharacter(s,i);if(c<48||c>57)return false;}return true;
+}
+int BWServerOffset(const bool tester,const bool autoOffset,const int fixedMinutes){
+ if(tester||!autoOffset)return fixedMinutes*60;
+ long diff=(long)TimeTradeServer()-(long)TimeGMT();
+ return (int)MathRound((double)diff/900.0)*900;
+}
+long BWNowUTC(const bool tester,const bool autoOffset,const int fixedMinutes){
+ return tester?(long)TimeCurrent()-BWServerOffset(true,autoOffset,fixedMinutes):(long)TimeGMT();
+}
+long BWServerToUTC(const long t,const bool tester,const bool autoOffset,const int fixedMinutes){
+ return t-BWServerOffset(tester,autoOffset,fixedMinutes);
+}
+string BWWIB(const long utc){ return TimeToString((datetime)(utc+7*3600),TIME_DATE|TIME_MINUTES)+" WIB"; }
+string BWMonthWIB(const long utc){
+ MqlDateTime d;TimeToStruct((datetime)(utc+7*3600),d);return StringFormat("%04d-%02d",d.year,d.mon);
+}
+
+bool BWParseAstro(const string text){
+ BWAstroRow rows[];string lines[];StringSplit(text,10,lines);bool header=false;long previous=0;
+ for(int i=0;i<ArraySize(lines);i++){
+  string row=lines[i];StringTrimLeft(row);StringTrimRight(row);
+  if(i==0&&StringLen(row)>0&&StringGetCharacter(row,0)==65279)row=StringSubstr(row,1);
+  if(row=="")continue;
+  if(!header){if(row!="start_epoch,end_epoch,direction,window_id,model")return false;header=true;continue;}
+  string v[];if(StringSplit(row,44,v)!=5||!BWDigits(v[0])||!BWDigits(v[1])||v[4]!=BW_ASTRO_MODEL)return false;
+  long from=StringToInteger(v[0]),to=StringToInteger(v[1]);
+  if(from<946684800||to<=from||from%300!=0||to%300!=0||from<previous||StringLen(v[3])<1)return false;
+  int dir=v[2]=="BUY"?1:v[2]=="SELL"?-1:0;
+  if(dir==0&&v[2]!="NEUTRAL"&&v[2]!="TRANSITION"&&v[2]!="OUTSIDE")return false;
+  int n=ArraySize(rows);if(n>=100000)return false;ArrayResize(rows,n+1);
+  rows[n].from=from;rows[n].to=to;rows[n].dir=dir;rows[n].id=v[3];previous=to;
+ }
+ if(!header||ArraySize(rows)==0)return false;
+ ArrayResize(gBWAstro,ArraySize(rows));for(int i=0;i<ArraySize(rows);i++)gBWAstro[i]=rows[i];
+ gBWAstroOK=true;gBWAstroError="";return true;
+}
+
+bool BWLoadAstroLocal(const string file,const bool common){
+ int flags=FILE_READ|FILE_TXT|FILE_ANSI|FILE_SHARE_READ;if(common)flags|=FILE_COMMON;
+ int f=FileOpen(file,flags,0,CP_UTF8);if(f==INVALID_HANDLE){gBWAstroError="ASTRO_CSV_NOT_FOUND";gBWAstroOK=false;return false;}
+ string text="";while(!FileIsEnding(f)){text+=FileReadString(f)+"\n";if(StringLen(text)>8000000){FileClose(f);gBWAstroOK=false;return false;}}
+ FileClose(f);if(!BWParseAstro(text)){gBWAstroError="ASTRO_CSV_INVALID";gBWAstroOK=false;return false;}return true;
+}
+
+bool BWLoadAstroWeb(const string baseURL,const int timeout,const string month){
+ char empty[],answer[];string headers;ResetLastError();
+ int http=WebRequest("GET",baseURL+month+".csv","Accept: text/csv\r\n",timeout,empty,answer,headers);
+ if(http!=200||ArraySize(answer)>1000000||!BWParseAstro(CharArrayToString(answer,0,WHOLE_ARRAY,CP_UTF8))){
+  ArrayResize(gBWAstro,0);gBWAstroOK=false;gBWAstroError="ASTRO_HTTP_"+(string)http;return false;
+ }
+ return true;
+}
+
+void BWAstroPoll(const bool tester,const BW_ASTRO_SOURCE source,const string baseURL,const string localFile,
+ const bool common,const int timeout,const bool autoOffset,const int fixedMinutes){
+ long now=BWNowUTC(tester,autoOffset,fixedMinutes),clock=(long)TimeLocal();
+ if(source==BW_ASTRO_LOCAL_CSV||tester){
+  if(!gBWAstroOK)BWLoadAstroLocal(localFile,common&&!tester);return;
+ }
+ string month=BWMonthWIB(now);
+ if(gBWAstroOK&&gBWAstroMonth==month&&clock<gBWAstroNextPoll)return;
+ gBWAstroMonth=month;gBWAstroNextPoll=clock+60;
+ if(BWLoadAstroWeb(baseURL,timeout,month))gBWAstroNextPoll=clock+6*3600;
+}
+
+int BWAstroIndex(const long utc){
+ int lo=0,hi=ArraySize(gBWAstro)-1;
+ while(lo<=hi){int m=(lo+hi)/2;if(utc<gBWAstro[m].from)hi=m-1;else if(utc>=gBWAstro[m].to)lo=m+1;else return m;}return -1;
+}
+int BWAstroDir(const long utc){int i=BWAstroIndex(utc);return i>=0?gBWAstro[i].dir:0;}
+bool BWAstroNormalGate(const long nowUtc,const long eventUtc,const int dir,const bool accepted,string &why){
+ if(!accepted){why="ASTRO_EXPERIMENT_NOT_ACCEPTED";return false;}
+ if(!gBWAstroOK){why=gBWAstroError;return false;}
+ int live=BWAstroDir(nowUtc),event=BWAstroDir(eventUtc);
+ if(live==0||event==0){why="OUTSIDE_ASTRO_WINDOW";return false;}
+ if(live!=dir||event!=dir){why="ASTRO_DIRECTION_MISMATCH";return false;}
+ why="ASTROLOGY "+BWSide(dir);return true;
+}
+
+void BWNewsSort(BWNewsItem &a[]){
+ for(int i=1;i<ArraySize(a);i++){BWNewsItem x=a[i];int j=i-1;while(j>=0&&(a[j].utc>x.utc||(a[j].utc==x.utc&&a[j].id>x.id))){a[j+1]=a[j];j--;}a[j+1]=x;}
+}
+bool BWParseNewsLocal(const string file,const bool common,const bool tester,const bool allowReplay,const long now){
+ if(tester&&!allowReplay){gBWNewsOK=false;gBWNewsError="TESTER_NEWS_REPLAY_OFF";return false;}
+ int flags=FILE_READ|FILE_TXT|FILE_ANSI|FILE_SHARE_READ;if(common&&!tester)flags|=FILE_COMMON;
+ int f=FileOpen(file,flags,0,CP_UTF8);if(f==INVALID_HANDLE){gBWNewsOK=false;gBWNewsError="NEWS_CSV_NOT_FOUND";return false;}
+ string head=FileReadString(f);StringTrimRight(head);if(StringLen(head)>0&&StringGetCharacter(head,0)==65279)head=StringSubstr(head,1);
+ string m[];bool ok=StringSplit(head,44,m)==5&&m[0]=="CEBONK_NEWS_V1"&&BWDigits(m[1])&&BWDigits(m[2])&&BWDigits(m[3])&&BWDigits(m[4]);
+ long from=0,to=0,exported=0;int expected=-1;
+ if(ok){from=StringToInteger(m[1]);to=StringToInteger(m[2]);exported=StringToInteger(m[3]);expected=(int)StringToInteger(m[4]);ok=from>0&&to>from&&expected>=0&&expected<=20000;}
+ string hdr=FileReadString(f);StringTrimRight(hdr);ok=ok&&hdr=="value_id,release_epoch,currency,importance,name";
+ BWNewsItem rows[];
+ while(ok&&!FileIsEnding(f)){
+  string line=FileReadString(f);StringTrimRight(line);if(line=="")continue;string v[];
+  if(StringSplit(line,44,v)!=5||!BWDigits(v[0])||!BWDigits(v[1])||v[2]!="USD"||v[3]!="HIGH"){ok=false;break;}
+  BWNewsItem x;x.id=(ulong)StringToInteger(v[0]);x.utc=StringToInteger(v[1]);x.known=tester?0:exported;x.name=StringSubstr(v[4],0,180);
+  if(x.id==0||x.utc<from||x.utc>=to||x.name==""){ok=false;break;}
+  int n=ArraySize(rows);ArrayResize(rows,n+1);rows[n]=x;
+ }
+ FileClose(f);if(!ok||ArraySize(rows)!=expected){gBWNewsOK=false;gBWNewsError="NEWS_CSV_INVALID";return false;}
+ BWNewsSort(rows);ArrayResize(gBWNews,ArraySize(rows));for(int i=0;i<ArraySize(rows);i++)gBWNews[i]=rows[i];
+ gBWNewsFrom=from;gBWNewsTo=to;gBWNewsUpdated=now;gBWNewsOK=true;gBWNewsError="";return true;
+}
+
+void BWNewsPoll(const bool tester,const BW_NEWS_SOURCE source,const string localFile,const bool common,const bool allowReplay,
+ const int pollSeconds,const int maxCache,const bool autoOffset,const int fixedMinutes){
+ long now=BWNowUTC(tester,autoOffset,fixedMinutes);
+ if(tester||source==BW_NEWS_LOCAL_CSV){
+  if(!gBWNewsOK)BWParseNewsLocal(localFile,common,tester,allowReplay,now);return;
+ }
+ if(now<gBWNewsNextPoll)return;gBWNewsNextPoll=now+pollSeconds;
+ int offset=BWServerOffset(false,autoOffset,fixedMinutes);
+ long from=now-3*3600,to=now+30*3600;MqlCalendarValue values[];ResetLastError();
+ int count=CalendarValueHistory(values,(datetime)(from+offset),(datetime)(to+offset),NULL,"USD");
+ int err=GetLastError();if(count<0||err!=0||count>4096){gBWNewsOK=false;gBWNewsError="CALENDAR_"+(string)err;return;}
+ BWNewsItem rows[];
+ for(int i=0;i<count;i++){
+  MqlCalendarEvent ev;ResetLastError();if(!CalendarEventById(values[i].event_id,ev)){gBWNewsOK=false;gBWNewsError="NEWS_METADATA_WAIT";return;}
+  if(ev.importance!=CALENDAR_IMPORTANCE_HIGH||ev.type==CALENDAR_TYPE_HOLIDAY)continue;
+  if(ev.time_mode!=CALENDAR_TIMEMODE_DATETIME||values[i].time<=0){gBWNewsOK=false;gBWNewsError="NEWS_TIME_UNKNOWN";return;}
+  BWNewsItem x;x.id=values[i].id;x.utc=(long)values[i].time-offset;x.known=now;x.name=StringSubstr(ev.name,0,180);
+  for(int k=0;k<ArraySize(gBWNews);k++)if(gBWNews[k].id==x.id&&gBWNews[k].utc==x.utc){x.known=gBWNews[k].known;break;}
+  bool dup=false;for(int k=0;k<ArraySize(rows);k++)if(rows[k].id==x.id){dup=true;break;}if(dup)continue;
+  int n=ArraySize(rows);ArrayResize(rows,n+1);rows[n]=x;
+ }
+ BWNewsSort(rows);ArrayResize(gBWNews,ArraySize(rows));for(int i=0;i<ArraySize(rows);i++)gBWNews[i]=rows[i];
+ gBWNewsFrom=from;gBWNewsTo=to;gBWNewsUpdated=now;gBWNewsOffset=offset;gBWNewsOK=true;gBWNewsError="";
+}
+
+bool BWNewsHealthy(const bool tester,const BW_NEWS_SOURCE source,const int maxCache,const bool autoOffset,const int fixedMinutes){
+ if(!gBWNewsOK)return false;if(tester||source==BW_NEWS_LOCAL_CSV)return true;
+ long now=BWNowUTC(false,autoOffset,fixedMinutes);
+ return now>=gBWNewsUpdated&&now-gBWNewsUpdated<=maxCache&&BWServerOffset(false,autoOffset,fixedMinutes)==gBWNewsOffset;
+}
+string BWNewsNames(const long release){
+ string s="";int n=0;for(int i=0;i<ArraySize(gBWNews);i++)if(gBWNews[i].utc==release){if(n<3)s+=(n?" + ":"")+gBWNews[i].name;n++;}
+ if(n>3)s+=" + "+(string)(n-3)+" liyane";return s;
+}
+long BWNewsKnown(const long release){
+ long known=0;for(int i=0;i<ArraySize(gBWNews);i++)if(gBWNews[i].utc==release)known=MathMax(known,gBWNews[i].known);return known;
+}
+bool BWSlotBlocked(const long slot,const int beforeMin,const int afterMin){
+ for(int i=0;i<ArraySize(gBWNews);i++){
+  long a=gBWNews[i].utc-beforeMin*60,b=gBWNews[i].utc+afterMin*60;
+  if(slot<b&&slot+BW_STEP>a)return true;
+ }return false;
+}
+long BWPickNewsRelease(const long now,const int preMin,const int postMin){
+ long past=0,future=0;
+ for(int i=0;i<ArraySize(gBWNews);i++){
+  long r=gBWNews[i].utc;if(now<r-preMin*60||now>=r+postMin*60)continue;
+  if(r<=now){if(r>past)past=r;}else if(future==0||r<future)future=r;
+ }
+ return past>0?past:future;
+}
+
+void BWAddRun(BWRun &runs[],const int dir,const long slot){
+ int n=ArraySize(runs);
+ if(n>0&&runs[n-1].dir==dir&&runs[n-1].end==slot){runs[n-1].end=slot+BW_STEP;return;}
+ ArrayResize(runs,n+1);runs[n].dir=dir;runs[n].start=slot;runs[n].end=slot+BW_STEP;
+}
+
+BWNewsGate BWBuildNewsGate(const long now,const int preMin,const int postMin,const int blockBefore,const int blockAfter,
+ const int entrySpan,const int minWindow,const bool accepted){
+ BWNewsGate g;ZeroMemory(g);g.reason="NO_NEWS_EPISODE";
+ long release=BWPickNewsRelease(now,preMin,postMin);if(release<=0)return g;
+ g.episode=true;g.release=release;g.names=BWNewsNames(release);
+ if(!accepted){g.reason="ASTRO_EXPERIMENT_NOT_ACCEPTED";return g;}
+ if(!gBWAstroOK){g.reason=gBWAstroError;return g;}
+ long known=BWNewsKnown(release);if(known>release){g.reason="NEWS_DISCOVERED_AFTER_RELEASE";return g;}
+ long start=((release-preMin*60)/BW_STEP)*BW_STEP;
+ long end=((release+postMin*60+BW_STEP-1)/BW_STEP)*BW_STEP;
+ BWRun runs[];
+ for(long t=start;t<end;t+=BW_STEP){
+  int dir=BWAstroDir(t);bool can=t>=release&&!BWSlotBlocked(t,blockBefore,blockAfter)&&(dir==1||dir==-1);
+  if(can)BWAddRun(runs,dir,t);
+ }
+ long buyMax=0,sellMax=0,buyTotal=0,sellTotal=0;
+ for(int i=0;i<ArraySize(runs);i++){
+  long d=runs[i].end-runs[i].start;if(d<minWindow*60)continue;
+  if(runs[i].dir>0){buyTotal+=d;buyMax=MathMax(buyMax,d);}else{sellTotal+=d;sellMax=MathMax(sellMax,d);}
+ }
+ int focus=0;
+ if(buyMax>sellMax||(buyMax==sellMax&&buyTotal>sellTotal))focus=1;
+ else if(sellMax>buyMax||(sellMax==buyMax&&sellTotal>buyTotal))focus=-1;
+ if(focus==0||MathMax(buyMax,sellMax)==0){g.reason="ASTRO_NEWS_NO_FOCUS";return g;}
+ g.dir=focus;
+ for(int i=0;i<ArraySize(runs);i++){
+  long d=runs[i].end-runs[i].start;if(runs[i].dir!=focus||d<minWindow*60)continue;
+  long entryEnd=MathMin(runs[i].end,runs[i].start+entrySpan*60);
+  if(now>=runs[i].start&&now<entryEnd){
+   g.candidate=true;g.windowStart=runs[i].start;g.entryEnd=entryEnd;g.reason="ASTROLOGY_NEWS "+BWSide(focus);return g;
+  }
+ }
+ g.reason="ASTRO_NEWS_WAIT_WINDOW";return g;
+}
+#endif
+
+
+// ===== INLINE MODULE: LSNotify.mqh =====
+// CEBONK LIQUIDITY SWEEP EA v1.01 - Telegram/MT5 notification.
+#ifndef CEBONK_LS_NOTIFY
+#define CEBONK_LS_NOTIFY
+struct LSNoticeItem { string event,text; int tries; bool pushed; };
+LSNoticeItem gLSQueue[];
+long gLSNextNotify=0;
+
+string LSQ(const string s){
+ string out="\"";
+ for(int i=0;i<StringLen(s);i++){ushort c=StringGetCharacter(s,i);
+  if(c==34)out+="\\\"";else if(c==92)out+="\\\\";else if(c==10)out+="\\n";
+  else if(c==13)out+="\\r";else if(c==9)out+="\\t";else if(c<32)out+=StringFormat("\\u%04X",(int)c);else out+=ShortToString(c);
+ }
+ return out+"\"";
+}
+void LSAudit(const string event,const string symbol,const string detail){
+ Print("{\"ea\":\"CEBONK_LIQUIDITY_SWEEP\",\"event\":"+LSQ(event)+",\"symbol\":"+LSQ(symbol)+",\"detail\":"+LSQ(detail)+"}");
+}
+void LSNotice(const string event,const string text,const string symbol,const bool tester,const bool autoOn){
+ LSAudit(event,symbol,text);if(tester)return;
+ int n=ArraySize(gLSQueue);if(n>=32)return;ArrayResize(gLSQueue,n+1);
+ gLSQueue[n].event=event;gLSQueue[n].tries=0;gLSQueue[n].pushed=false;
+ gLSQueue[n].text="SEKTE MUSANG - CEBONK COMPANY 22\nLIQUIDITY SWEEP EA | "+event+"\n"+
+  symbol+" | AUTOPILOT "+(autoOn?"ON":"OFF")+"\n--------------------\n"+StringSubstr(text,0,3000)+
+  "\n--------------------\nOJO FULLMARGIN COK";
+}
+void LSPopNotice(){
+ int n=ArraySize(gLSQueue);for(int i=1;i<n;i++)gLSQueue[i-1]=gLSQueue[i];ArrayResize(gLSQueue,n-1);
+}
+void LSFlushNotice(const bool tester,const bool push,const bool telegram,const string token,const string chat,const int timeout){
+ if(tester||ArraySize(gLSQueue)==0||(long)TimeLocal()<gLSNextNotify)return;gLSNextNotify=(long)TimeLocal()+7;
+ if(!gLSQueue[0].pushed){
+  if(push&&!SendNotification(StringSubstr(gLSQueue[0].event+" | "+gLSQueue[0].text,0,250)))Print("LS MT5 push gagal.");
+  gLSQueue[0].pushed=true;
+ }
+ if(!telegram||token==""||chat==""){LSPopNotice();return;}
+ string body="{\"chat_id\":"+LSQ(chat)+",\"text\":"+LSQ(gLSQueue[0].text)+"}";
+ char bytes[],answer[];string headers;
+ int len=StringToCharArray(body,bytes,0,WHOLE_ARRAY,CP_UTF8);if(len>0)ArrayResize(bytes,len-1);
+ ResetLastError();
+ int http=WebRequest("POST","https://api.telegram.org/bot"+token+"/sendMessage","Content-Type: application/json\r\n",timeout,bytes,answer,headers);
+ string response=CharArrayToString(answer,0,WHOLE_ARRAY,CP_UTF8);StringReplace(response," ","");
+ if(http==200&&StringFind(response,"\"ok\":true")>=0){LSPopNotice();return;}
+ gLSQueue[0].tries++;Print("LS Telegram HTTP=",http," err=",GetLastError(),"; token/response hidden.");
+ if(http==400||http==401||http==403||gLSQueue[0].tries>=3)LSPopNotice();else gLSNextNotify=(long)TimeLocal()+(http==429?120:30);
+}
+#endif
+
+
+// ===== INLINE MODULE: LSTrade.mqh =====
+// CEBONK LIQUIDITY SWEEP EA v1.01 - compact fixed-lot execution.
+#ifndef CEBONK_LS_TRADE
+#define CEBONK_LS_TRADE
+
+bool LSHasPositionOrOrder(const string symbol){
+ for(int i=PositionsTotal()-1;i>=0;i--){
+  ulong t=PositionGetTicket(i);
+  if(t>0&&PositionGetString(POSITION_SYMBOL)==symbol)return true;
+ }
+ for(int i=OrdersTotal()-1;i>=0;i--){
+  ulong t=OrderGetTicket(i);
+  if(t>0&&OrderGetString(ORDER_SYMBOL)==symbol)return true;
+ }
+ return false;
+}
+ENUM_ORDER_TYPE_FILLING LSFilling(const string symbol,bool &ok){
+ ok=true;long f=SymbolInfoInteger(symbol,SYMBOL_FILLING_MODE);
+ if((f&SYMBOL_FILLING_FOK)!=0)return ORDER_FILLING_FOK;
+ if((f&SYMBOL_FILLING_IOC)!=0)return ORDER_FILLING_IOC;
+ if(SymbolInfoInteger(symbol,SYMBOL_TRADE_EXEMODE)!=SYMBOL_TRADE_EXECUTION_MARKET)return ORDER_FILLING_RETURN;
+ ok=false;return ORDER_FILLING_FOK;
+}
+double LSRoundTick(const string symbol,const double price,const bool up){
+ double tick=SymbolInfoDouble(symbol,SYMBOL_TRADE_TICK_SIZE);
+ int digits=(int)SymbolInfoInteger(symbol,SYMBOL_DIGITS);
+ if(tick<=0)return 0;
+ double x=up?MathCeil(price/tick-1e-9):MathFloor(price/tick+1e-9);
+ return NormalizeDouble(x*tick,digits);
+}
+uint LSHash(const string s){
+ uint h=2166136261;
+ for(int i=0;i<StringLen(s);i++){h^=(uint)StringGetCharacter(s,i);h*=16777619;}
+ return h;
+}
+bool LSPlace(const string symbol,const ulong magic,const BWSignal &s,const bool newsMode,
+ const double fixedLot,const int maxSpread,const int deviation,const bool allowReal,const double rr,
+ string &why,ulong &order){
+ why="";order=0;MqlTick tick;
+ if(!SymbolInfoTick(symbol,tick)||tick.bid<=0||tick.ask<tick.bid){why="NO_QUOTE";return false;}
+ if(!allowReal&&AccountInfoInteger(ACCOUNT_TRADE_MODE)==ACCOUNT_TRADE_MODE_REAL){why="REAL_ACCOUNT_LOCKED";return false;}
+ if(!TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)||!MQLInfoInteger(MQL_TRADE_ALLOWED)||
+    !AccountInfoInteger(ACCOUNT_TRADE_ALLOWED)||!AccountInfoInteger(ACCOUNT_TRADE_EXPERT)){
+  why="ALGO_OR_ACCOUNT_DISABLED";return false;
+ }
+ if(LSHasPositionOrOrder(symbol)){why="SYMBOL_ALREADY_HAS_POSITION_OR_ORDER";return false;}
+ double point=SymbolInfoDouble(symbol,SYMBOL_POINT);
+ if(point<=0||(tick.ask-tick.bid)/point>maxSpread){why="SPREAD_LIMIT";return false;}
+ long tradeMode=SymbolInfoInteger(symbol,SYMBOL_TRADE_MODE);
+ if(tradeMode==SYMBOL_TRADE_MODE_DISABLED||tradeMode==SYMBOL_TRADE_MODE_CLOSEONLY||
+   (tradeMode==SYMBOL_TRADE_MODE_LONGONLY&&s.dir<0)||(tradeMode==SYMBOL_TRADE_MODE_SHORTONLY&&s.dir>0)){
+  why="SIDE_DISABLED";return false;
+ }
+ double minv=SymbolInfoDouble(symbol,SYMBOL_VOLUME_MIN),maxv=SymbolInfoDouble(symbol,SYMBOL_VOLUME_MAX),step=SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP);
+ if(step<=0||fixedLot<minv||fixedLot>maxv){why="FIXED_LOT_INVALID";return false;}
+ double lot=NormalizeDouble(MathFloor(fixedLot/step+1e-8)*step,8);
+ if(lot<minv||lot>maxv){why="LOT_STEP_INVALID";return false;}
+
+ double entry=s.dir>0?tick.ask:tick.bid;
+ double sl=LSRoundTick(symbol,s.structuralSL,s.dir<0);
+ double risk=s.dir>0?entry-sl:sl-entry;
+ if(sl<=0||risk<=0){why="SL_WRONG_SIDE";return false;}
+ double tp=s.dir>0?entry+risk*rr:entry-risk*rr;
+ tp=LSRoundTick(symbol,tp,s.dir>0);
+ double reward=s.dir>0?tp-entry:entry-tp;
+ if(reward<=0){why="TP_WRONG_SIDE";return false;}
+
+ double stop=(SymbolInfoInteger(symbol,SYMBOL_TRADE_STOPS_LEVEL)+1)*point;
+ if((s.dir>0&&(tick.bid-sl<stop||tp-tick.bid<stop))||
+    (s.dir<0&&(sl-tick.ask<stop||tick.ask-tp<stop))){
+  why="BROKER_MIN_STOP_DISTANCE";return false;
+ }
+
+ bool fillOK=false;ENUM_ORDER_TYPE_FILLING filling=LSFilling(symbol,fillOK);
+ if(!fillOK){why="FILLING_MODE_UNSUPPORTED";return false;}
+
+ MqlTradeRequest req={};MqlTradeCheckResult chk={};MqlTradeResult res={};
+ req.action=TRADE_ACTION_DEAL;req.magic=magic;req.symbol=symbol;req.volume=lot;
+ req.type=s.dir>0?ORDER_TYPE_BUY:ORDER_TYPE_SELL;req.price=entry;req.sl=sl;req.tp=tp;
+ req.deviation=(ulong)deviation;req.type_filling=filling;
+ req.comment="LS-"+(string)s.pkg+"-"+(newsMode?"N":"A")+"-"+StringFormat("%08X",LSHash((string)s.reAt+"."+(string)s.eventAt+"."+(string)s.pkg));
+ if(!OrderCheck(req,chk)){why="ORDERCHECK_"+(string)chk.retcode;return false;}
+ bool sent=OrderSend(req,res);order=res.order;
+ if(!sent||(res.retcode!=TRADE_RETCODE_DONE&&res.retcode!=TRADE_RETCODE_DONE_PARTIAL&&res.retcode!=TRADE_RETCODE_PLACED)){
+  why="ORDER_"+(string)res.retcode;return false;
+ }
+ return true;
+}
+void LSTradeTransaction(const MqlTradeTransaction &trans,const string symbol,const ulong magic,const bool tester,const bool autoOn){
+ if(trans.type!=TRADE_TRANSACTION_DEAL_ADD||trans.deal==0||!HistoryDealSelect(trans.deal))return;
+ if(HistoryDealGetString(trans.deal,DEAL_SYMBOL)!=symbol||(ulong)HistoryDealGetInteger(trans.deal,DEAL_MAGIC)!=magic)return;
+ long entry=HistoryDealGetInteger(trans.deal,DEAL_ENTRY);
+ double price=HistoryDealGetDouble(trans.deal,DEAL_PRICE),vol=HistoryDealGetDouble(trans.deal,DEAL_VOLUME);
+ string side=HistoryDealGetInteger(trans.deal,DEAL_TYPE)==DEAL_TYPE_BUY?"BUY":"SELL";
+ int digits=(int)SymbolInfoInteger(symbol,SYMBOL_DIGITS);
+ if(entry==DEAL_ENTRY_IN||entry==DEAL_ENTRY_INOUT)
+  LSNotice("ENTRY_FILLED",side+" "+DoubleToString(vol,2)+" lot @ "+DoubleToString(price,digits),symbol,tester,autoOn);
+ if(entry==DEAL_ENTRY_OUT||entry==DEAL_ENTRY_OUT_BY||entry==DEAL_ENTRY_INOUT){
+  double net=HistoryDealGetDouble(trans.deal,DEAL_PROFIT)+HistoryDealGetDouble(trans.deal,DEAL_COMMISSION)+
+             HistoryDealGetDouble(trans.deal,DEAL_SWAP)+HistoryDealGetDouble(trans.deal,DEAL_FEE);
+  LSNotice("POSITION_EXIT",side+" exit @ "+DoubleToString(price,digits)+" | net deal "+DoubleToString(net,2),symbol,tester,autoOn);
+ }
+}
+#endif
+
+
+input group "01 | EXECUTION"
+input string InpSymbol="XAUUSDc";
+input ulong InpMagic=221023;
+input bool InpAutopilot=false;
+input bool InpAllowRealAccount=false;
+input double InpFixedLot=0.01;
+input int InpMaxSpreadPoints=70;
+input int InpDeviationPoints=30;
+input double InpRR=2.0;
+input double InpSLBufferPrice=0.20;
+input int InpHistoryBars=120;
+
+input group "02 | ASTROLOGY WEB MASTER"
+input BW_ASTRO_SOURCE InpAstroSource=BW_ASTRO_WEB_MONTH;
+input string InpAstroBaseURL="https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/ea/combined2/data/";
+input string InpAstroCSV="CEBONK_C2_ASTRO.csv";
+input bool InpCSVCommonFolder=false;
+input bool InpAcceptExperimentalAstro=true;
+input int InpHTTPTimeoutMs=3000;
+input bool InpLiveAutoServerUTC=true;
+input int InpServerUTCMinutes=180;
+
+input group "03 | ASTROLOGY NEWS OVERRIDE"
+input bool InpUseAstrologyNews=true;
+input BW_NEWS_SOURCE InpNewsSource=BW_NEWS_MT5_CALENDAR;
+input string InpNewsCSV="CEBONK_C2_NEWS.csv";
+input bool InpAllowNewsCSVReplay=false;
+input int InpNewsPreMinutes=30;
+input int InpNewsPostMinutes=120;
+input int InpNewsBlockBeforeMinutes=5;
+input int InpNewsBlockAfterMinutes=5;
+input int InpNewsEntrySpanMinutes=10;
+input int InpNewsMinWindowMinutes=15;
+input int InpNewsPollSeconds=60;
+input int InpNewsMaxCacheSeconds=180;
+
+input group "04 | TELEGRAM / MT5"
+input bool InpTelegram=true;
+input string InpTelegramToken="";
+input string InpTelegramChatID="";
+input bool InpMT5Push=true;
+input bool InpTelegramTestOnStart=true;
+
+bool gTester=false,gAuto=false;
+string gButton="",gScope="",gLastStatus="",gLastSignalKey="";
+long gM1=0,gM5=0,gM15=0,gM30=0,gH1=0,gH4=0;
+
+void LSPaint(){
+ if(ObjectFind(0,gButton)<0)return;
+ ObjectSetString(0,gButton,OBJPROP_TEXT,gAuto?"AUTOPILOT ON":"AUTOPILOT OFF");
+ ObjectSetInteger(0,gButton,OBJPROP_BGCOLOR,gAuto?clrDarkGreen:clrFireBrick);
+ ObjectSetInteger(0,gButton,OBJPROP_STATE,false);
+}
+void LSStatus(const string s){
+ if(gLastStatus==s)return;gLastStatus=s;Print("LIQUIDITY SWEEP | ",s);
+ if(ObjectFind(0,gButton)>=0)ObjectSetString(0,gButton,OBJPROP_TOOLTIP,s);
+}
+bool LSInputsOK(){
+ if(InpSymbol==""||InpMagic==0||InpFixedLot<=0||InpRR<1.0||InpRR>10.0||InpSLBufferPrice<0||InpHistoryBars<40||InpHistoryBars>1000)return false;
+ if(InpMaxSpreadPoints<1||InpDeviationPoints<0||InpHTTPTimeoutMs<500)return false;
+ if(InpNewsPreMinutes<5||InpNewsPreMinutes>120||InpNewsPostMinutes<30||InpNewsPostMinutes>360)return false;
+ if(InpNewsBlockBeforeMinutes<0||InpNewsBlockBeforeMinutes>60||InpNewsBlockAfterMinutes<0||InpNewsBlockAfterMinutes>60)return false;
+ if(InpNewsEntrySpanMinutes<5||InpNewsEntrySpanMinutes>60||InpNewsMinWindowMinutes<5||InpNewsMinWindowMinutes>60)return false;
+ if(InpNewsPollSeconds<15||InpNewsPollSeconds>120||InpNewsMaxCacheSeconds<InpNewsPollSeconds||InpNewsMaxCacheSeconds>600)return false;
+ return true;
+}
+int LSCount(const bool a[]){int n=0;for(int i=0;i<BW_PACKAGE_COUNT;i++)if(a[i])n++;return n;}
+string LSPackages(const bool buy[],const bool sell[],const int dir){
+ string s="";
+ for(int i=0;i<BW_PACKAGE_COUNT;i++){
+  bool ok=dir>0?buy[i]:sell[i];if(!ok)continue;
+  BWPackageSpec p;BWGetPackage(i,p);if(s!="")s+=" + ";s+=p.id;
+ }
+ return s;
+}
+int LSChooseLatest(const BWSignal &signals[],const bool flags[]){
+ int chosen=-1;
+ for(int i=0;i<BW_PACKAGE_COUNT;i++){
+  if(!flags[i])continue;
+  if(chosen<0||signals[i].eventAt>signals[chosen].eventAt||
+    (signals[i].eventAt==signals[chosen].eventAt&&signals[i].reAt>signals[chosen].reAt))chosen=i;
+ }
+ return chosen;
+}
+bool LSSignalConsumed(const string key){
+ if(gLastSignalKey==key)return true;
+ return !gTester&&GlobalVariableCheck(gScope+key);
+}
+void LSReserveSignal(const string key){
+ gLastSignalKey=key;
+ if(!gTester){GlobalVariableSet(gScope+key,(double)TimeCurrent());GlobalVariablesFlush();}
+}
+
+void LSEvaluate(){
+ if(LSHasPositionOrOrder(InpSymbol)){LSStatus("SYMBOL_ALREADY_HAS_POSITION_OR_ORDER");return;}
+ long nowServer=(long)TimeTradeServer();if(nowServer<=0)nowServer=(long)TimeCurrent();
+ long nowUtc=BWNowUTC(gTester,InpLiveAutoServerUTC,InpServerUTCMinutes);
+
+ bool buy[BW_PACKAGE_COUNT],sell[BW_PACKAGE_COUNT];
+ BWSignal bs[BW_PACKAGE_COUNT],ss[BW_PACKAGE_COUNT];
+ for(int i=0;i<BW_PACKAGE_COUNT;i++){
+  buy[i]=false;sell[i]=false;string wb="",ws="";
+  buy[i]=BWScanDirection(InpSymbol,i,1,nowServer,InpRR,InpSLBufferPrice,InpHistoryBars,bs[i],wb);
+  sell[i]=BWScanDirection(InpSymbol,i,-1,nowServer,InpRR,InpSLBufferPrice,InpHistoryBars,ss[i],ws);
+ }
+ int bc=LSCount(buy),sc=LSCount(sell);
+ if(bc>0&&sc>0){LSStatus("LIQUIDITY_PACKAGE_CONFLICT_BUY_SELL");return;}
+ if(bc==0&&sc==0){LSStatus("LIQUIDITY_WAIT_NO_VALID_PACKAGE");return;}
+
+ int dir=bc>0?1:-1;bool flags[BW_PACKAGE_COUNT];BWSignal sigs[BW_PACKAGE_COUNT];
+ for(int i=0;i<BW_PACKAGE_COUNT;i++){
+  flags[i]=dir>0?buy[i]:sell[i];if(dir>0)sigs[i]=bs[i];else sigs[i]=ss[i];
+ }
+ int chosen=LSChooseLatest(sigs,flags);if(chosen<0)return;
+ BWSignal sig=sigs[chosen];long eventUtc=BWServerToUTC(sig.eventAt,gTester,InpLiveAutoServerUTC,InpServerUTCMinutes);
+
+ bool newsMode=false;string gate="";
+ if(InpUseAstrologyNews){
+  if(!BWNewsHealthy(gTester,InpNewsSource,InpNewsMaxCacheSeconds,InpLiveAutoServerUTC,InpServerUTCMinutes)){
+   LSStatus("NEWS_DATA_WAIT_FAIL_CLOSED: "+gBWNewsError);return;
+  }
+  BWNewsGate ng=BWBuildNewsGate(nowUtc,InpNewsPreMinutes,InpNewsPostMinutes,InpNewsBlockBeforeMinutes,InpNewsBlockAfterMinutes,InpNewsEntrySpanMinutes,InpNewsMinWindowMinutes,InpAcceptExperimentalAstro);
+  if(ng.episode){
+   newsMode=true;if(!ng.candidate){LSStatus(ng.reason);return;}
+   if(dir!=ng.dir){LSStatus("ASTROLOGY_NEWS_DIRECTION_MISMATCH");return;}
+   if(eventUtc<ng.windowStart||eventUtc>=ng.entryEnd){LSStatus("TECHNICAL_EVENT_OUTSIDE_ASTROLOGY_NEWS_ENTRY_WINDOW");return;}
+   gate="ASTROLOGY NEWS "+BWSide(dir)+" | "+ng.names+" | "+BWWIB(ng.windowStart)+" -> "+BWWIB(ng.entryEnd);
+  }
+ }
+ if(!newsMode&&!BWAstroNormalGate(nowUtc,eventUtc,dir,InpAcceptExperimentalAstro,gate)){LSStatus(gate);return;}
+
+ string mode=newsMode?"NEWS":"NORMAL";
+ string key="S."+(string)sig.pkg+"."+(string)dir+"."+(string)sig.reAt+"."+(string)sig.eventAt+"."+mode;
+ if(LSSignalConsumed(key)){LSStatus("SIGNAL_ALREADY_NOTIFIED");return;}
+ LSReserveSignal(key);
+
+ BWPackageSpec p;BWGetPackage(sig.pkg,p);
+ int digits=(int)SymbolInfoInteger(InpSymbol,SYMBOL_DIGITS),count=dir>0?bc:sc;
+ double risk=MathAbs(sig.referenceEntry-sig.structuralSL);
+ double refTP=dir>0?sig.referenceEntry+risk*InpRR:sig.referenceEntry-risk*InpRR;
+ string strength=count>1?"STRONG CONFLUENCE":"VALID";
+ string text=strength+" "+BWSide(dir)+" | "+mode+"\nPackages: "+LSPackages(buy,sell,dir)+"\n"+
+  "TF1 "+p.id+" "+sig.liquidityType+" @ "+DoubleToString(sig.liquidity,digits)+"\n"+
+  "TF2 SWEEP -> DISPLACEMENT -> BREAK @ "+DoubleToString(sig.structure,digits)+"\n"+
+  "TF3 RETEST close: "+BWWIB(eventUtc)+"\n"+gate+
+  "\nReference close: "+DoubleToString(sig.referenceEntry,digits)+
+  "\nReference SL sweep: "+DoubleToString(sig.structuralSL,digits)+
+  "\nReference TP RR 1:"+DoubleToString(InpRR,2)+": "+DoubleToString(refTP,digits);
+ LSNotice("LIQUIDITY_SIGNAL",text,InpSymbol,gTester,gAuto);
+ if(!gAuto){LSStatus("AUTOPILOT_OFF_SIGNAL_ONLY");return;}
+ string why;ulong order=0;
+ if(!LSPlace(InpSymbol,InpMagic,sig,newsMode,InpFixedLot,InpMaxSpreadPoints,InpDeviationPoints,InpAllowRealAccount,InpRR,why,order)){
+  LSNotice("ORDER_REJECTED",why+" | ora retry sinyal sing padha",InpSymbol,gTester,gAuto);
+  LSStatus(why);return;
+ }
+ LSNotice("ORDER_ACCEPTED","order="+(string)order+" | "+mode+" | "+p.id+" | fixed lot "+DoubleToString(InpFixedLot,2),InpSymbol,gTester,gAuto);
+ LSStatus("ORDER_ACCEPTED");
+}
+
+bool LSPulse(){
+ long m1=(long)iTime(InpSymbol,PERIOD_M1,0),m5=(long)iTime(InpSymbol,PERIOD_M5,0),m15=(long)iTime(InpSymbol,PERIOD_M15,0);
+ long m30=(long)iTime(InpSymbol,PERIOD_M30,0),h1=(long)iTime(InpSymbol,PERIOD_H1,0),h4=(long)iTime(InpSymbol,PERIOD_H4,0);
+ bool changed=(m1>0&&m1!=gM1)||(m5>0&&m5!=gM5)||(m15>0&&m15!=gM15)||
+              (m30>0&&m30!=gM30)||(h1>0&&h1!=gH1)||(h4>0&&h4!=gH4);
+ gM1=m1;gM5=m5;gM15=m15;gM30=m30;gH1=h1;gH4=h4;return changed;
+}
+void LSHeartbeat(){
+ BWAstroPoll(gTester,InpAstroSource,InpAstroBaseURL,InpAstroCSV,InpCSVCommonFolder,InpHTTPTimeoutMs,InpLiveAutoServerUTC,InpServerUTCMinutes);
+ if(InpUseAstrologyNews)BWNewsPoll(gTester,InpNewsSource,InpNewsCSV,InpCSVCommonFolder,InpAllowNewsCSVReplay,InpNewsPollSeconds,InpNewsMaxCacheSeconds,InpLiveAutoServerUTC,InpServerUTCMinutes);
+ LSFlushNotice(gTester,InpMT5Push,InpTelegram,InpTelegramToken,InpTelegramChatID,InpHTTPTimeoutMs);
+}
+int OnInit(){
+ gTester=(bool)MQLInfoInteger(MQL_TESTER);gAuto=InpAutopilot;
+ if(_Symbol!=InpSymbol){Print("Pasang EA neng chart ",InpSymbol,". TF chart bebas.");return INIT_PARAMETERS_INCORRECT;}
+ if(!LSInputsOK())return INIT_PARAMETERS_INCORRECT;
+ gScope="CEBONK.LS."+(string)AccountInfoInteger(ACCOUNT_LOGIN)+"."+InpSymbol+"."+(string)InpMagic+".";
+ gButton="CEBONK_LS_AUTO_"+(string)ChartID();
+ if(!gTester){
+  ObjectCreate(0,gButton,OBJ_BUTTON,0,0,0);ObjectSetInteger(0,gButton,OBJPROP_CORNER,CORNER_RIGHT_UPPER);
+  ObjectSetInteger(0,gButton,OBJPROP_XDISTANCE,12);ObjectSetInteger(0,gButton,OBJPROP_YDISTANCE,18);
+  ObjectSetInteger(0,gButton,OBJPROP_XSIZE,126);ObjectSetInteger(0,gButton,OBJPROP_YSIZE,30);LSPaint();
+ }
+ gM1=(long)iTime(InpSymbol,PERIOD_M1,0);gM5=(long)iTime(InpSymbol,PERIOD_M5,0);gM15=(long)iTime(InpSymbol,PERIOD_M15,0);
+ gM30=(long)iTime(InpSymbol,PERIOD_M30,0);gH1=(long)iTime(InpSymbol,PERIOD_H1,0);gH4=(long)iTime(InpSymbol,PERIOD_H4,0);
+ EventSetTimer(1);LSHeartbeat();
+ LSNotice("EA_STARTED","LIQUIDITY SWEEP v1.01 | AUTO ENTRY | fixed lot "+DoubleToString(InpFixedLot,2)+" | RR "+DoubleToString(InpRR,2)+" | SL sweep + buffer | Astrology News "+(InpUseAstrologyNews?"ON":"OFF"),InpSymbol,gTester,gAuto);
+ if(InpTelegramTestOnStart)LSNotice("TELEGRAM_TEST","Tes notifikasi. Ora ana order.",InpSymbol,gTester,gAuto);
+ return INIT_SUCCEEDED;
+}
+void OnDeinit(const int reason){EventKillTimer();if(ObjectFind(0,gButton)>=0)ObjectDelete(0,gButton);}
+void OnTimer(){LSHeartbeat();if(LSPulse())LSEvaluate();}
+void OnTick(){}
+void OnChartEvent(const int id,const long &l,const double &d,const string &s){
+ if(id==CHARTEVENT_OBJECT_CLICK&&s==gButton){gAuto=!gAuto;LSPaint();LSNotice("AUTOPILOT",gAuto?"ON":"OFF",InpSymbol,gTester,gAuto);}
+}
+
+void OnTradeTransaction(const MqlTradeTransaction &trans,const MqlTradeRequest &request,const MqlTradeResult &result){
+ LSTradeTransaction(trans,InpSymbol,InpMagic,gTester,gAuto);
+}
