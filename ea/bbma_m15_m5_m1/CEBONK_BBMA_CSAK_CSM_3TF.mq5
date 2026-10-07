@@ -1,6 +1,6 @@
 #property strict
-#property version   "1.03"
-#property description "CEBONK BBMA 3TF: M15 CSAK (Dominant Break/Engulfing/CB1 Initial Break) -> M5 CSM -> M1 CSM"
+#property version   "1.04"
+#property description "CEBONK BBMA 3TF: M15 IB+CSAK / CB1+CSAK / Dominant Break+CSAK / Engulfing+CSAK -> M5 CSM -> M1 CSM"
 #property description "Sideways skip; SL Top/Low BB M5; TP configurable RR."
 
 #include <Trade/Trade.mqh>
@@ -36,8 +36,9 @@ input int    InpM15MaxAgeBars         = 4;
 input double InpDominantMinBodyRatio  = 0.60;
 input double InpDominantBodyFactor    = 1.10;
 input double InpEngulfMinBodyRatio    = 0.50;
-input int    InpCB1LookbackBars        = 4;
-input double InpCB1MinBodyRatio        = 0.50;
+input double InpM15CSAKMinBodyRatio    = 0.50;
+input double InpM15CSAKCloseExtreme    = 0.60;
+input int    InpCB1LookbackBars        = 8;
 
 input group "=== M5 + M1 CSM ==="
 input int    InpM5MaxAgeBars          = 6;
@@ -169,91 +170,158 @@ bool BearishDominantBreak(const MqlRates &cur, const MqlRates &prev)
 }
 
 
-bool PreviousSwingRangeM15(const int currentShift,
-                           const int lookback,
-                           double &swingHigh,
-                           double &swingLow)
+
+bool IsInsideBar(const MqlRates &ib, const MqlRates &mother)
 {
-   if(lookback < 2)
-      return false;
-
-   MqlRates firstBar;
-   if(!GetBar(PERIOD_M15, currentShift + 1, firstBar))
-      return false;
-
-   swingHigh = firstBar.high;
-   swingLow  = firstBar.low;
-
-   for(int i = 2; i <= lookback; ++i)
-   {
-      MqlRates bar;
-      if(!GetBar(PERIOD_M15, currentShift + i, bar))
-         return false;
-
-      if(bar.high > swingHigh)
-         swingHigh = bar.high;
-      if(bar.low < swingLow)
-         swingLow = bar.low;
-   }
-
-   return (swingHigh > swingLow);
+   return (ib.high <= mother.high &&
+           ib.low  >= mother.low &&
+           (ib.high < mother.high || ib.low > mother.low));
 }
 
-// CB1 / Initial Break proxy:
-// first structural break candle closes beyond the recent M15 swing range.
-// It is intentionally stricter than a 1-candle break, but lighter than
-// Dominant Break because it does not require a body-size multiple.
-bool BullishCB1InitialBreak(const MqlRates &cur, const int shift)
-{
-   if(cur.close <= cur.open || BodyRatio(cur) < InpCB1MinBodyRatio)
-      return false;
-
-   double swingHigh, swingLow;
-   if(!PreviousSwingRangeM15(shift, InpCB1LookbackBars, swingHigh, swingLow))
-      return false;
-
-   return (cur.close > swingHigh);
-}
-
-bool BearishCB1InitialBreak(const MqlRates &cur, const int shift)
-{
-   if(cur.close >= cur.open || BodyRatio(cur) < InpCB1MinBodyRatio)
-      return false;
-
-   double swingHigh, swingLow;
-   if(!PreviousSwingRangeM15(shift, InpCB1LookbackBars, swingHigh, swingLow))
-      return false;
-
-   return (cur.close < swingLow);
-}
-
-// M15 CSAK is valid only when the candle is on the correct side of MidBB
-// AND it is Dominant Break OR Engulfing OR CB1/Initial Break.
-int M15CSAKDirection(const int shift)
+int M15CSAKCoreDirection(const int shift)
 {
    MqlRates cur, prev;
    double mid, upper, lower;
+   double midPrev, upperPrev, lowerPrev;
 
    if(!GetBar(PERIOD_M15, shift, cur) ||
       !GetBar(PERIOD_M15, shift + 1, prev) ||
-      !GetBB(hBB_M15, shift, mid, upper, lower))
+      !GetBB(hBB_M15, shift, mid, upper, lower) ||
+      !GetBB(hBB_M15, shift + 1, midPrev, upperPrev, lowerPrev))
       return 0;
 
-   const bool buyPattern  =
-      BullishDominantBreak(cur, prev) ||
-      BullishEngulfing(cur, prev) ||
-      BullishCB1InitialBreak(cur, shift);
+   const double range = cur.high - cur.low;
+   if(range <= 0.0 || BodyRatio(cur) < InpM15CSAKMinBodyRatio)
+      return 0;
 
-   const bool sellPattern =
-      BearishDominantBreak(cur, prev) ||
-      BearishEngulfing(cur, prev) ||
-      BearishCB1InitialBreak(cur, shift);
+   const double closePos = (cur.close - cur.low) / range;
+   const bool crossUp = ((prev.close <= midPrev) || (cur.open <= mid)) && cur.close > mid;
+   const bool crossDn = ((prev.close >= midPrev) || (cur.open >= mid)) && cur.close < mid;
 
-   if(buyPattern && cur.close > mid)
+   if(cur.close > cur.open &&
+      crossUp &&
+      closePos >= InpM15CSAKCloseExtreme)
       return 1;
 
-   if(sellPattern && cur.close < mid)
+   if(cur.close < cur.open &&
+      crossDn &&
+      closePos <= (1.0 - InpM15CSAKCloseExtreme))
       return -1;
+
+   return 0;
+}
+
+bool FindLatestM15PivotLevel(const bool wantHigh,
+                             const int currentShift,
+                             const int lookback,
+                             double &level)
+{
+   if(lookback < 3)
+      return false;
+
+   // Use only candles older than the current CSAK candle.
+   // Pivot uses one closed candle on each side.
+   for(int s = currentShift + 2; s <= currentShift + lookback; ++s)
+   {
+      MqlRates left, pivot, right;
+      if(!GetBar(PERIOD_M15, s + 1, left) ||
+         !GetBar(PERIOD_M15, s,     pivot) ||
+         !GetBar(PERIOD_M15, s - 1, right))
+         continue;
+
+      if(wantHigh)
+      {
+         if(pivot.high > left.high && pivot.high >= right.high)
+         {
+            level = pivot.high;
+            return true;
+         }
+      }
+      else
+      {
+         if(pivot.low < left.low && pivot.low <= right.low)
+         {
+            level = pivot.low;
+            return true;
+         }
+      }
+   }
+
+   return false;
+}
+
+bool IBPlusCSAK(const int dir, const int shift)
+{
+   MqlRates cur, ib, mother;
+   if(!GetBar(PERIOD_M15, shift, cur) ||
+      !GetBar(PERIOD_M15, shift + 1, ib) ||
+      !GetBar(PERIOD_M15, shift + 2, mother))
+      return false;
+
+   if(!IsInsideBar(ib, mother))
+      return false;
+
+   if(dir > 0)
+      return (cur.close > ib.high);
+
+   return (cur.close < ib.low);
+}
+
+bool CB1PlusCSAK(const int dir, const int shift)
+{
+   MqlRates cur;
+   if(!GetBar(PERIOD_M15, shift, cur))
+      return false;
+
+   double level = 0.0;
+   if(!FindLatestM15PivotLevel(dir > 0, shift, InpCB1LookbackBars, level))
+      return false;
+
+   return (dir > 0 ? cur.close > level : cur.close < level);
+}
+
+// Four explicit M15 setup routes.
+// CSAK is the mandatory momentum/cross condition; the paired pattern determines setup type.
+int M15SetupDirection(const int shift, string &setupName)
+{
+   setupName = "";
+
+   const int dir = M15CSAKCoreDirection(shift);
+   if(dir == 0)
+      return 0;
+
+   MqlRates cur, prev;
+   if(!GetBar(PERIOD_M15, shift, cur) ||
+      !GetBar(PERIOD_M15, shift + 1, prev))
+      return 0;
+
+   if(IBPlusCSAK(dir, shift))
+   {
+      setupName = "IB + CSAK";
+      return dir;
+   }
+
+   if(CB1PlusCSAK(dir, shift))
+   {
+      setupName = "CB1 + CSAK";
+      return dir;
+   }
+
+   const bool dominant = (dir > 0 ? BullishDominantBreak(cur, prev)
+                                  : BearishDominantBreak(cur, prev));
+   if(dominant)
+   {
+      setupName = "DOMINANT BREAK + CSAK";
+      return dir;
+   }
+
+   const bool engulfing = (dir > 0 ? BullishEngulfing(cur, prev)
+                                   : BearishEngulfing(cur, prev));
+   if(engulfing)
+   {
+      setupName = "ENGULFING + CSAK";
+      return dir;
+   }
 
    return 0;
 }
@@ -295,11 +363,12 @@ int CSMDirection(const ENUM_TIMEFRAMES tf, const int bbHandle, const int shift)
    return 0;
 }
 
-bool FindLatestM15Signal(int &dir, datetime &signalTime)
+bool FindLatestM15Signal(int &dir, datetime &signalTime, string &setupName)
 {
    for(int shift = 1; shift <= InpM15MaxAgeBars; ++shift)
    {
-      const int d = M15CSAKDirection(shift);
+      string name = "";
+      const int d = M15SetupDirection(shift, name);
       if(d == 0)
          continue;
 
@@ -308,12 +377,14 @@ bool FindLatestM15Signal(int &dir, datetime &signalTime)
          continue;
 
       dir = d;
-      signalTime = bar.time + PeriodSeconds(PERIOD_M15); // confirmed only after M15 close
+      signalTime = bar.time + PeriodSeconds(PERIOD_M15);
+      setupName = name;
       return true;
    }
 
    dir = 0;
    signalTime = 0;
+   setupName = "";
    return false;
 }
 
@@ -501,6 +572,7 @@ bool SendTelegram(const string message)
 }
 
 void NotifyTelegramEntry(const string side,
+                         const string m15Setup,
                          const double entry,
                          const double sl,
                          const double tp)
@@ -510,6 +582,7 @@ void NotifyTelegramEntry(const string side,
    const string msg =
       "BBMA " + side + " | " + _Symbol + "\n" +
       "TF: M15 > M5 > M1\n" +
+      "M15: " + m15Setup + "\n" +
       "Entry: " + DoubleToString(entry, digits) + "\n" +
       "SL: " + DoubleToString(sl, digits) + "\n" +
       "TP: " + DoubleToString(tp, digits) + "\n" +
@@ -577,7 +650,7 @@ bool StopsAreValid(const int dir, const double entry, const double sl, const dou
    return true;
 }
 
-bool ExecuteTrade(const int dir, const datetime m1SignalTime)
+bool ExecuteTrade(const int dir, const datetime m1SignalTime, const string m15Setup)
 {
    if(InpMaxOpenPositions > 0 && CountOpenPositionsByMagic() >= InpMaxOpenPositions)
    {
@@ -652,7 +725,7 @@ bool ExecuteTrade(const int dir, const datetime m1SignalTime)
                (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS), nTP,
                InpRiskReward);
 
-   NotifyTelegramEntry(side, filledEntry, nSL, nTP);
+   NotifyTelegramEntry(side, m15Setup, filledEntry, nSL, nTP);
 
    return true;
 }
@@ -713,7 +786,8 @@ void EvaluateNewM1Bar()
 
    int dirM15 = 0;
    datetime tM15 = 0;
-   if(!FindLatestM15Signal(dirM15, tM15))
+   string m15Setup = "";
+   if(!FindLatestM15Signal(dirM15, tM15, m15Setup))
       return;
 
    int dirM5 = 0;
@@ -737,7 +811,7 @@ void EvaluateNewM1Bar()
    if(gLastExecutedM1Signal == m1.time)
       return;
 
-   ExecuteTrade(dirM1, m1.time);
+   ExecuteTrade(dirM1, m1.time, m15Setup);
 }
 
 //============================== EVENTS ==================================
@@ -749,8 +823,9 @@ int OnInit()
       InpMidSlopeLookback < 1 ||
       InpM15MaxAgeBars < 1 ||
       InpM5MaxAgeBars < 1 ||
-      InpCB1LookbackBars < 2 ||
-      InpCB1MinBodyRatio <= 0.0 || InpCB1MinBodyRatio > 1.0 ||
+      InpCB1LookbackBars < 3 ||
+      InpM15CSAKMinBodyRatio <= 0.0 || InpM15CSAKMinBodyRatio > 1.0 ||
+      InpM15CSAKCloseExtreme < 0.50 || InpM15CSAKCloseExtreme > 1.0 ||
       InpSessionStartHour < 0 || InpSessionStartHour > 23 ||
       InpSessionEndHour < 0   || InpSessionEndHour > 24 ||
       InpTelegramTimeoutMs < 1000)
@@ -775,7 +850,7 @@ int OnInit()
 
    CreateButton();
 
-   PrintFormat("CEBONK BBMA CSAK-CSM 3TF READY | M15 DB/ENG/CB1 -> M5 CSM -> M1 CSM | RR 1:%.2f | session %02d:00-%s broker time | broker GMT offset auto: GMT%+.1f",
+   PrintFormat("CEBONK BBMA CSAK-CSM 3TF READY | M15 IB/CB1/DB/ENG + CSAK -> M5 CSM -> M1 CSM | RR 1:%.2f | session %02d:00-%s broker time | broker GMT offset auto: GMT%+.1f",
                InpRiskReward,
                InpSessionStartHour,
                (InpSessionEndHour == 24 ? "00:00" : IntegerToString(InpSessionEndHour) + ":00"),
