@@ -25,5 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Static Liquidity Sweep parity tests
         run: python3 ea/liquidity_sweep/tests/test_source.py
+      - name: Adaptive BBMA-LS PnL safety tests
+        run: python3 ea/liquidity_sweep/tests/test_adaptive.py
       - name: Show source sizes
         run: wc -c ea/liquidity_sweep/src/*
