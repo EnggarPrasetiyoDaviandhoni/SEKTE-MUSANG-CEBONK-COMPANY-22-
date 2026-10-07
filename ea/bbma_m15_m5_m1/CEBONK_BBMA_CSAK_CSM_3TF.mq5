@@ -1,5 +1,5 @@
 #property strict
-#property version   "1.00"
+#property version   "1.01"
 #property description "CEBONK BBMA 3TF: M15 CSAK (Dominant Break/Engulfing) -> M5 CSM -> M1 CSM"
 #property description "Sideways skip; SL Top/Low BB M5; TP fixed RR."
 
@@ -16,6 +16,10 @@ input int    InpMaxSpreadPoints       = 70;
 input int    InpDeviationPoints       = 20;
 input int    InpMaxOpenPositions      = 0;      // 0 = unlimited; anti-duplicate remains active
 input bool   InpAutoPilotOnStart      = true;
+
+input group "=== BROKER SESSION AUTO GMT ==="
+input int    InpSessionStartHour       = 7;      // 07:00 broker/server time
+input int    InpSessionEndHour         = 24;     // 24 = 00:00 next day
 
 input group "=== BBMA / BOLLINGER ==="
 input int    InpBBPeriod              = 20;
@@ -332,6 +336,43 @@ bool SpreadAllowed()
    return (spreadPts <= InpMaxSpreadPoints);
 }
 
+double BrokerGMTOffsetHours()
+{
+   const datetime server = TimeTradeServer();
+   const datetime gmt    = TimeGMT();
+
+   if(server <= 0 || gmt <= 0)
+      return 0.0;
+
+   return (double)(server - gmt) / 3600.0;
+}
+
+bool IsBrokerSessionOpen()
+{
+   datetime serverNow = TimeTradeServer();
+   if(serverNow <= 0)
+      serverNow = TimeCurrent();
+
+   MqlDateTime dt;
+   TimeToStruct(serverNow, dt);
+
+   const int nowMin   = dt.hour * 60 + dt.min;
+   const int startMin = InpSessionStartHour * 60;
+   const int endMin   = InpSessionEndHour * 60;
+
+   // Default 07:00 <= server time < 24:00.
+   if(endMin > startMin)
+      return (nowMin >= startMin && nowMin < endMin);
+
+   // Supports a session crossing midnight if inputs are changed later.
+   if(endMin < startMin)
+      return (nowMin >= startMin || nowMin < endMin);
+
+   // Same start/end means 24h session.
+   return true;
+}
+
+
 bool StopsAreValid(const int dir, const double entry, const double sl, const double tp)
 {
    const double minStop = (double)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL) * _Point;
@@ -463,6 +504,12 @@ void EvaluateNewM1Bar()
    if(!gAutoPilot)
       return;
 
+   if(!IsBrokerSessionOpen())
+   {
+      Print("SKIP: outside broker session 07:00-00:00.");
+      return;
+   }
+
    if(!SpreadAllowed())
    {
       Print("SKIP: spread > MaxSpreadPoints.");
@@ -512,7 +559,9 @@ int OnInit()
       InpATRPeriod < 2 ||
       InpMidSlopeLookback < 1 ||
       InpM15MaxAgeBars < 1 ||
-      InpM5MaxAgeBars < 1)
+      InpM5MaxAgeBars < 1 ||
+      InpSessionStartHour < 0 || InpSessionStartHour > 23 ||
+      InpSessionEndHour < 0   || InpSessionEndHour > 24)
       return INIT_PARAMETERS_INCORRECT;
 
    hBB_M15 = iBands(_Symbol, PERIOD_M15, InpBBPeriod, 0, InpBBDeviation, PRICE_CLOSE);
@@ -534,7 +583,10 @@ int OnInit()
 
    CreateButton();
 
-   Print("CEBONK BBMA CSAK-CSM 3TF READY | M15->M5->M1 | RR fixed.");
+   PrintFormat("CEBONK BBMA CSAK-CSM 3TF READY | M15->M5->M1 | session %02d:00-%s broker time | broker GMT offset auto: GMT%+.1f",
+               InpSessionStartHour,
+               (InpSessionEndHour == 24 ? "00:00" : IntegerToString(InpSessionEndHour) + ":00"),
+               BrokerGMTOffsetHours());
    return INIT_SUCCEEDED;
 }
 
