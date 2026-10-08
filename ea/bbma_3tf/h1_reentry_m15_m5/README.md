@@ -1,4 +1,13 @@
-# CEBONK BBMA H1–M15–M5 v1.03
+# CURRENT REQUIRED BUILD: v1.04 NO-LAYER
+
+Use CEBONK_H1_M15_M5_v1.04_NO_LAYER.mq5 only. Older v1.03 remains for audit and may still open overlapping positions from different setups.
+
+v1.04 enforces ONE open position plus zero pending orders for Symbol+Magic under a shared terminal lock, independently of EnableRiskGuard. MaxConcurrentPositions defaults to 1 and any other value prevents initialization. New H1-M15 setups must wait for prior positions to close, and a fresh M5 trigger is required. No automatic position closure.
+
+UPGRADE: remove old v1.03 / META AI EA from ALL charts; compile v1.04 in MetaEditor using F7; check Experts log for CEBONK v1.04 NO-LAYER STARTED; reset old .set inputs (MaxConcurrentPositions=1) and use demo testing. GitHub upload does not update any installed .ex5 file. Other Magic numbers and independent MT5 terminals are outside this gate.
+
+---
+# CEBONK BBMA H1–M15–M5 historical v1.03
 
 Status: **experimental / demo / unverified**. This revision has not been compiled with MetaEditor or backtested in MT5.
 
@@ -7,11 +16,13 @@ Status: **experimental / demo / unverified**. This revision has not been compile
 - M5: CSAK execution trigger.
 - RR: fixed 1:2, no breakeven, trailing, or partial close.
 - MaxSpreadPoints: 70 (NOZAX XAUUSDc reference).
-- Limits: 0.5% projected risk/trade, 2% aggregate projected open risk, 8 concurrent positions, 5% daily drawdown entry pause (initial defaults, not validated).
+- Limits: 0.5% projected risk/trade, 2% aggregate projected open risk, 1 concurrent position (v1.04 NO-LAYER), 5% daily drawdown entry pause (initial defaults, not validated).
 - Telegram: configured through EA inputs; tokens should never be committed to GitHub.
 
 Files:
-- `CEBONK_H1_M15_M5_v1.03.mq5`: editable EA source.
+- CEBONK_H1_M15_M5_v1.04_NO_LAYER.mq5: CURRENT EA source (strict no-layer).
+- CEBONK_H1_M15_M5_v1.04_NO_LAYER.txt: identical mobile source.
+- CEBONK_H1_M15_M5_v1.03.mq5: legacy reference only, may stack from new setups.
 - `CEBONK_H1_M15_M5_v1.03.txt`: identical source for mobile use.
 - `PRD_CODEX_CEBONK_H1_M15_M5_v1.03.txt`: specification and acceptance criteria.
 - `INSTALL_DAN_UJI_v1.03.txt`: installation and testing guide.
@@ -26,7 +37,7 @@ Files:
 
 ## Anti-layer H1-M15 SetupID (patch to v1.03)
 
-Each execution setup is identified by **(H1 Re-entry candle time, M15 confirmation candle time, BUY/SELL direction)**; the triggering M5 CSAK candle time is **not** part of SetupID. H1 OFF means H1 time=0, so M15 confirmation time and direction identify the setup. One setup can attempt **at most one order**, even after additional M5 CSAKs or an MT5 restart. A newly detected H1 or M15 event constitutes a new setup and may open a position while an older position is still active **if it passes the existing combined risk and position limits**.
+Each execution setup is identified by **(H1 Re-entry candle time, M15 confirmation candle time, BUY/SELL direction)**; the triggering M5 CSAK candle time is **not** part of SetupID. H1 OFF means H1 time=0, so M15 confirmation time and direction identify the setup. One setup can attempt **at most one order**, even after additional M5 CSAKs or an MT5 restart. A newly detected H1 or M15 event is a new setup, but v1.04 allows entry ONLY after previous EA positions and pending orders for the same Symbol+Magic are fully closed/settled.
 
 Implementation: under the shared account/server/symbol/Magic lock, the EA atomically claims the M5 bar and the SetupID using persistent terminal global variables before submitting the broker order. The short order comment embeds the same SetupID for history-based recovery if local state expires. Existing per-position Telegram/MT5 notification dedup stays unchanged. Rejected/ambiguous broker submissions retain the setup claim by design to prevent an unintended second order; the next genuinely new setup remains eligible.
 
@@ -48,3 +59,18 @@ Manual scenarios (NOT YET EXECUTED in MetaEditor/MT5):
 | Partial fill / MT5 push / Telegram | One notification per position ID, subject to delivery availability |
 
 **Validation status:** 16 static consistency checks passed while preparing the GitHub patch; no MetaEditor compile, historical tester run or demo forward execution has been performed for this patch.
+
+## v1.04 NO-LAYER validation (NOT RUN in MetaEditor or MT5)
+
+- F7 compile the v1.04_NO_LAYER MQ5 and review all diagnostics.
+- Existing EA position plus new H1/M15 SetupID => log WHY_SKIP=WAIT_POSITION_CLOSE; 0 new entries.
+- Matching pending EA order => WHY_SKIP=WAIT_PENDING_ORDER; 0 new entries.
+- Disable EnableRiskGuard => hard one-position cap must remain effective.
+- Load old .set with MaxConcurrentPositions=8 => initialization must reject invalid config.
+- After old position closes, a genuinely new setup with new closed M5 trigger may enter.
+- Restart/two charts => same Symbol+Magic must never have two EA positions at once.
+- Check M15 BB SL and fixed RR 1:2 unchanged; one notification per filled position.
+- Verify startup marker (v1.04 NO-LAYER), old v1.03 EA instances removed.
+- Backtest realistic NOZAX XAUUSDc 2024–2026 and demo forward test.
+
+Other EAs with different Magic, independent terminals, or altered broker comments are outside global protection. Do not live-trade before validation.
