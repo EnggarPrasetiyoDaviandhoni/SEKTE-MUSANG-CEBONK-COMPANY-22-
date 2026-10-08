@@ -1,3 +1,12 @@
+# NEW EXPERIMENTAL VARIANT v1.06 — M5 CB1 DIRECT ENTRY
+
+Source: `CEBONK_H1_M15_M5_v1.06_CB1_NO_LAYER.mq5` (and identical `.txt`).
+The former v1.05 M5-**CSAK** version remains unchanged for A/B backtest. v1.06 uses **M5 CB1 close-break entry** instead, preserving H1 Re-entry → M15 CSA/CSAK/CSM filters, NO-LAYER one position, BB stop-TF selector, RR 1:2, risk controls and 1 position=1 fill notification.
+
+See [README_CB1_v1.06.md](README_CB1_v1.06.md) for exact closed-swing CB1 algorithm, limitations and validation matrix. **This version has NOT been compiled in MetaEditor or backtested in MT5; use only in demo research until verified.** Remove old EA instances from all charts and check the startup banner before testing.
+
+---
+
 # CURRENT REQUIRED BUILD: v1.05 NO-LAYER + SELECTABLE BB SL TF
 
 Use `CEBONK_H1_M15_M5_v1.05_NO_LAYER_TF_SL.mq5` (matching `.txt` for mobile). v1.03 and v1.04 are legacy references; do not compile them for the new selectable-SL behavior.
