@@ -300,3 +300,33 @@ T45 RR 1:2, M15 BB SL and per-position notifications unchanged.
 T46 startup Journal marker must say CEBONK v1.04 NO-LAYER STARTED.
 T47 2024–2026 MT5 backtest including monthly DD, WR BUY and SELL.
 STATUS: code updated in PR; compile/backtest/forward tests NOT RUN.
+
+ADDENDUM 2026-10-09 — v1.05 SELECTABLE SL BOLLINGER TF
+----------------------------------------------------
+User requests BB SL timeframe selectable via EA Inputs.
+Input ENUM_TIMEFRAMES TF_StopLoss default PERIOD_M15, not PERIOD_CURRENT.
+Choose any valid fixed MT5 timeframe (e.g., M5, M15, M30, H1, H4).
+Must use the LAST CLOSED candle (shift=1) from the selected SL TF.
+BUY = lower BB TF_StopLoss minus SLBufferPoints; SELL = upper BB
+TF_StopLoss plus SLBufferPoints. BBPeriod=20 and BBDeviation=2 default.
+TP calculated from actual entry to SL at fixed RR=1:2.
+Do not change H1 Re-entry/M15 CSA-CSAK-CSM/M5 CSAK logic,
+or hard no-layer one position plus pending-order guard.
+Indicator BB StopLoss handle shall be created at OnInit and released
+at OnDeinit. Handle/candle not ready => skip, NEVER fall back to M15.
+Validate price direction, broker min stops, tick rounding, risk guard,
+margin and 70-point MaxSpread guard as in earlier versions.
+Notification shows selected BB timeframe, not hardcoded BB M15.
+Stop TF selection changes only FUTURE orders, not open position SL.
+
+T48: TF_StopLoss=M15 reproduces old closed M15 BB level exactly.
+T49: TF_StopLoss=M5 BUY uses last closed M5 Lower BB.
+T50: TF_StopLoss=H1 SELL uses last closed H1 Upper BB.
+T51: PERIOD_CURRENT/invalid -> reject init fail closed.
+T52: Missing SL timeframe history/indicator -> SKIP SL_TF_BB_DATA.
+T53: Ineligible SL price/too tight stops -> SKIP, never submit unprotected.
+T54: TP 2 times risk, no BE/trailing/partial.
+T55: One active EA position / pending order cap maintained.
+T56: Telegram / MT5 notification prints correct SL TF.
+T57: Run actual F7 compile and 2024-2026 tests with M5/M15/H1 stop TF.
+STATUS: implemented in GitHub v1.05; actual MT5 compile/backtest NOT RUN.
