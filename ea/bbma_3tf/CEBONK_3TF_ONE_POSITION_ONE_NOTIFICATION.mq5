@@ -1,10 +1,10 @@
 //+------------------------------------------------------------------+
-//| CEBONK BBMA 3TF SSOT v1.11 BALANCED + SIDEWAYS + SESSION                    |
+//| CEBONK BBMA 3TF SSOT v1.12 BALANCED + SIDEWAYS + SESSION                    |
 //| SEKTE MUSANG TEORY - CEBONK COMPANY 22                          |
 //| Standalone EA: custom modules embedded; no CEBONK include folder required    |
 //+------------------------------------------------------------------+
 #property strict
-#property version   "1.11"
+#property version   "1.12"
 #property description "BBMA 3TF Balanced | MA50 Cross/Align | CB1 Scan | Adaptive Retest | Sideways | WIB GMT+3"
 
 #include <Trade/Trade.mqh>
@@ -803,8 +803,21 @@ private:
 
    bool TelegramSend(const string msg)
    {
-      if(!m_telegram || m_token=="" || m_chat_id=="" || MQLInfoInteger(MQL_TESTER))
+      if(!m_telegram)
+      {
+         Print("TELEGRAM SKIPPED: InpTelegram=false");
          return false;
+      }
+      if(m_token=="" || m_chat_id=="")
+      {
+         Print("TELEGRAM SKIPPED: configure InpTelegramToken + InpTelegramChatID");
+         return false;
+      }
+      if(MQLInfoInteger(MQL_TESTER))
+      {
+         Print("TELEGRAM SKIPPED: unavailable in Strategy Tester");
+         return false;
+      }
 
       string url="https://api.telegram.org/bot"+m_token+"/sendMessage";
       string body="chat_id="+UrlEncode(m_chat_id)+"&text="+UrlEncode(msg)+
@@ -820,7 +833,7 @@ private:
       string reply=CharArrayToString(response,0,-1,CP_UTF8);
       if(code!=200 || StringFind(reply,"\"ok\":true")<0)
       {
-         Print("Telegram entry gagal: HTTP=",code," MT5 err=",GetLastError(),
+         Print("Telegram send gagal: HTTP=",code," MT5 err=",GetLastError(),
                " | cek Token/ChatID dan WebRequest https://api.telegram.org");
          return false;
       }
@@ -835,7 +848,40 @@ public:
       m_chat_id=chatId; m_timeout=timeout; m_push=push;
    }
 
-   // ONLY notification path: confirmed opening deal, once per POSITION_IDENTIFIER.
+   // One status alert per real button click (not per tick, not on EA startup).
+   // Status alerts are independent of the one-alert-per-position entry rule.
+   void AutopilotStatus(const bool enabled,const ENUM_TIMEFRAMES tf1,
+                        const ENUM_TIMEFRAMES tf2,const ENUM_TIMEFRAMES tf3)
+   {
+      string a=EnumToString(tf1),b=EnumToString(tf2),c=EnumToString(tf3);
+      StringReplace(a,"PERIOD_","");
+      StringReplace(b,"PERIOD_","");
+      StringReplace(c,"PERIOD_","");
+      string state=(enabled ? "ON" : "OFF");
+      string msg="🐭 SEKTE MUSANG TEORY\n"
+                 "CEBONK COMPANY 22\n"
+                 "━━━━━━━━━━━━\n"
+                 +(enabled ? "🟢 AUTOPILOT ON\n" : "🔴 AUTOPILOT OFF\n")
+                 +"📌 "+m_symbol+"\n"
+                 +"⏱ TF: "+a+" / "+b+" / "+c+"\n"
+                 +(enabled ? "✅ Scanner aktif, menunggu setup valid."
+                           : "⏸ Scanner entry nonaktif.");
+
+      bool telegram_ok=TelegramSend(msg);
+      bool push_ok=false;
+      if(m_push && !MQLInfoInteger(MQL_TESTER))
+      {
+         ResetLastError();
+         push_ok=SendNotification("CEBONK AUTOPILOT "+state+" | "+m_symbol);
+         if(!push_ok)
+            Print("MT5 Push status gagal | Error=",GetLastError());
+      }
+      Print("CEBONK AUTOPILOT ",state," | Telegram=",
+            (telegram_ok ? "OK" : "SKIP/FAIL"),
+            " | Push=",(push_ok ? "OK" : "SKIP/FAIL"));
+   }
+
+   // Entry alert: confirmed opening deal, once per POSITION_IDENTIFIER.
    void Executed(const int dir,const long position_id,
                  const string tf1,const string tf2,const string tf3,
                  const string tf2_signal,const string ma_cross,
@@ -1242,7 +1288,7 @@ void OnChartEvent(const int id,const long &lparam,const double &dparam,const str
    {
       g_autopilot=!g_autopilot;
       UpdateButton();
-      Print("CEBONK AUTOPILOT ",(g_autopilot ? "ON" : "OFF")," | no Telegram notification");
+      g_notify.AutopilotStatus(g_autopilot,InpTF1,InpTF2,InpTF3);
    }
 }
 
