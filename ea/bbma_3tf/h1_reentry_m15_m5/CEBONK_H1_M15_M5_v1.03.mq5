@@ -42,7 +42,8 @@ input bool NotifyOnFilledEntry=true;
 
 const double RR=2.0;                         // Fixed RR, deliberately not an input
 const string BRAND="SEKTE MUSANG TEORY CEBONK COMPANY 22";
-const int FRAME_COUNT=3, QUEUE_LIMIT=32;
+#define FRAME_COUNT 3
+#define QUEUE_LIMIT 32
 struct Frame { int bb,h5,h10,l5,l10; };
 struct Snapshot { MqlRates bar; double mid,top,low,h5,h10,l5,l10; };
 Frame frames[FRAME_COUNT];
