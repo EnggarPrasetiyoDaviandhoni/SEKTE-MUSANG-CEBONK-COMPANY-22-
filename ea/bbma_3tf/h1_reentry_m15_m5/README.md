@@ -1,6 +1,34 @@
-# CURRENT REQUIRED BUILD: v1.04 NO-LAYER
+# CURRENT REQUIRED BUILD: v1.05 NO-LAYER + SELECTABLE BB SL TF
 
-Use CEBONK_H1_M15_M5_v1.04_NO_LAYER.mq5 only. Older v1.03 remains for audit and may still open overlapping positions from different setups.
+Use `CEBONK_H1_M15_M5_v1.05_NO_LAYER_TF_SL.mq5` (matching `.txt` for mobile). v1.03 and v1.04 are legacy references; do not compile them for the new selectable-SL behavior.
+
+## New input
+
+`input ENUM_TIMEFRAMES TF_StopLoss=PERIOD_M15;`
+
+- Default `PERIOD_M15`: old SL behavior preserved.
+- Change to M5, M30, H1, H4, or another valid fixed MT5 timeframe in EA Inputs; PERIOD_CURRENT is rejected to avoid chart-dependent changes.
+- BUY SL = lower Bollinger Band (BBPeriod=20, deviation=2) at last CLOSED bar of selected SL timeframe (shift=1), minus optional SLBufferPoints.
+- SELL SL = upper Bollinger Band at the last CLOSED bar (shift=1), plus optional SLBufferPoints.
+- TP = 2x entry-to-SL distance (fixed RR 1:2) with existing tick rounding and broker StopsOK checks; no BE/trailing/partial.
+- H1 Re-entry, M15 CSA/CSAK/CSM, M5 CSAK remain the only filter/confirmation/entry sequence. Selecting TF_StopLoss does NOT move these signal timeframes.
+- NO-LAYER remains a hard 1 position + zero pending order rule per Symbol+Magic, even when EnableRiskGuard=false; old positions are never auto-closed.
+- Telegram/MT5 position entry notification includes the chosen SL timeframe (e.g. `SL BB H1`).
+
+## Safe deployment
+
+1. Remove old versions from ALL charts first, including META AI.ex5, then compile **v1.05** using F7 in MetaEditor.
+2. In Experts confirm startup log `CEBONK v1.05 NO-LAYER STARTED`, including `stop=BB <TF> CLOSED`.
+3. Set TF_StopLoss=M15 (baseline) or the preferred MT5 timeframe, and MaxConcurrentPositions=1. Do not load old `.set` values without reviewing them.
+4. On NOZAX demo test M5/M15/H1 selected stop TF individually: inspect the last closed indicator band's price vs each filled position's SL; check RR 1:2, skip invalid stops, and no duplicate entries.
+5. Backtest the FULL 2024–2026 period per BUY/SELL and monthly before live use. Changing SL timeframe changes stop distance, trade risk, exit distribution, and probably win rate / DD. Different TFs are NOT validated.
+
+WARNING: Compile and MT5 Strategy Tester have NOT been run for v1.05. Uploading to GitHub does not update an installed `.ex5`.
+
+---
+# PRIOR BUILD (ARCHIVE): v1.04 NO-LAYER
+
+Prior build: CEBONK_H1_M15_M5_v1.04_NO_LAYER.mq5. Older v1.03 remains for audit and may still open overlapping positions from different setups.
 
 v1.04 enforces ONE open position plus zero pending orders for Symbol+Magic under a shared terminal lock, independently of EnableRiskGuard. MaxConcurrentPositions defaults to 1 and any other value prevents initialization. New H1-M15 setups must wait for prior positions to close, and a fresh M5 trigger is required. No automatic position closure.
 
