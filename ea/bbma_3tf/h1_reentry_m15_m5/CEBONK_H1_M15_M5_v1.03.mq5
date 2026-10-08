@@ -61,6 +61,21 @@ bool Good(double x) { return MathIsValidNumber(x) && x!=EMPTY_VALUE && x>0; }
 void Skip(string why) { Print("WHY_SKIP=",why); }
 string TicketTag(datetime t) { return StringFormat("C3:%I64d",(long)t); }
 string BarTime(datetime t) { return TimeToString(t,TIME_DATE|TIME_MINUTES); }
+// SetupID = H1 Re-entry bar + M15 confirmation bar + trading direction.
+// The M5 trigger bar NEVER becomes a new SetupID.
+// H1 filter OFF => h1Time is zero and only the M15 event identifies the setup.
+string SetupPrefix(datetime h1Time,datetime m15Time,int dir) {
+ return StringFormat("C3:%I64d:%I64d:%s",(long)h1Time,(long)m15Time,dir>0?"B":"S");
+}
+string SetupStateKey(datetime h1Time,datetime m15Time,int dir) {
+ return StringFormat("%s.S%I64d.%I64d.%s",rootKey,(long)h1Time,(long)m15Time,dir>0?"B":"S");
+}
+string SignalCode(string name) { return name=="CSM"?"M":(name=="CSAK"?"K":"A"); }
+bool CommentIsSetup(string comment,string prefix) {
+ int n=StringLen(prefix);
+ return StringFind(comment,prefix)==0 && (StringLen(comment)==n || StringSubstr(comment,n,1)==":");
+}
+
 
 bool BuildKeys() {
  string server=AccountInfoString(ACCOUNT_SERVER);
@@ -368,6 +383,59 @@ bool Claim(datetime bar) {
  GlobalVariablesFlush();return true;
 }
 
+
+// Fail closed when the terminal's persistent claim state is lost or expired.
+// The order comment embeds the H1-M15 setup identity to recover from history.
+bool HasExecutedSetup(string prefix,datetime earliest) {
+ if(earliest<=0 || !HistorySelect(earliest,TimeCurrent())) {
+  Skip("SETUP_HISTORY_UNAVAILABLE");return true;
+ }
+ for(int i=HistoryDealsTotal()-1;i>=0;i--) {
+  ulong t=HistoryDealGetTicket(i);if(t==0)continue;
+  if(HistoryDealGetString(t,DEAL_SYMBOL)!=_Symbol ||
+     (ulong)HistoryDealGetInteger(t,DEAL_MAGIC)!=Magic)continue;
+  ulong order=(ulong)HistoryDealGetInteger(t,DEAL_ORDER);
+  if(CommentIsSetup(HistoryDealGetString(t,DEAL_COMMENT),prefix) ||
+     (order>0 && CommentIsSetup(HistoryOrderGetString(order,ORDER_COMMENT),prefix)))return true;
+ }
+ for(int i=HistoryOrdersTotal()-1;i>=0;i--) {
+  ulong t=HistoryOrderGetTicket(i);if(t==0)continue;
+  if(HistoryOrderGetString(t,ORDER_SYMBOL)==_Symbol &&
+     (ulong)HistoryOrderGetInteger(t,ORDER_MAGIC)==Magic &&
+     CommentIsSetup(HistoryOrderGetString(t,ORDER_COMMENT),prefix))return true;
+ }
+ for(int i=OrdersTotal()-1;i>=0;i--) {
+  ulong t=OrderGetTicket(i);if(t==0)continue;
+  if(OrderGetString(ORDER_SYMBOL)==_Symbol &&
+     (ulong)OrderGetInteger(ORDER_MAGIC)==Magic &&
+     CommentIsSetup(OrderGetString(ORDER_COMMENT),prefix))return true;
+ }
+ for(int i=PositionsTotal()-1;i>=0;i--) {
+  ulong t=PositionGetTicket(i);if(t==0)continue;
+  if(PositionGetString(POSITION_SYMBOL)==_Symbol &&
+     (ulong)PositionGetInteger(POSITION_MAGIC)==Magic &&
+     CommentIsSetup(PositionGetString(POSITION_COMMENT),prefix))return true;
+ }
+ return false;
+}
+// Called ONLY under AcquireLock. Persistent CAS reserves one submission attempt
+// per SetupID across charts and MT5 restarts. Never release on ambiguous fills.
+bool ClaimSetup(datetime h1Time,datetime m15Time,int dir,string prefix) {
+ if(m15Time<=0 || (H1FilterEnabled && h1Time<=0) || (dir!=1 && dir!=-1)) {
+  Skip("SETUP_ID_INVALID");return false;
+ }
+ string k=SetupStateKey(h1Time,m15Time,dir);
+ if(StringLen(k)>63 || !EnsureVariable(k,0)) {Skip("SETUP_STATE_UNAVAILABLE");return false;}
+ double used=0;
+ if(!GlobalVariableGet(k,used)) {Skip("SETUP_STATE_READ");return false;}
+ if(used!=0) {Skip("SETUP_ALREADY_USED");return false;}
+ datetime from=(h1Time>0 && h1Time<m15Time?h1Time:m15Time);
+ if(HasExecutedSetup(prefix,from)) {Skip("SETUP_HISTORY_DUPLICATE");return false;}
+ if(!GlobalVariableSetOnCondition(k,1,0)) {Skip("SETUP_CLAIM_RACE");return false;}
+ GlobalVariablesFlush();
+ return true;
+}
+
 void Execute(int dir,datetime bar,string signalName,datetime h1Time,datetime m15Time) {
  MqlTick t;if(!LatestTick(t)) {Skip("QUOTE");return;}
  datetime closed=bar+PeriodSeconds(TF_Entry);
@@ -388,10 +456,8 @@ void Execute(int dir,datetime bar,string signalName,datetime h1Time,datetime m15
  if(!OrderCalcMargin(dir==1?ORDER_TYPE_BUY:ORDER_TYPE_SELL,_Symbol,FixedLot,entry,margin)
     ||margin>AccountInfoDouble(ACCOUNT_MARGIN_FREE)) {Skip("MARGIN");return;}
  if(!AcquireLock(t.time)) {Skip("EXPOSURE_LOCK");return;}
- // Re-evaluate all dynamic account/state checks within the shared critical section.
- bool permitted=DailyRiskOK(t.time) && RiskOK(dir,entry,sl) && Claim(bar);
- if(!permitted) {ReleaseLock();return;}
- // Quote/spread may change while waiting for the lock: reject stale calculations.
+ // Dynamic risk and daily limits are rechecked under the shared trade lock.
+ if(!DailyRiskOK(t.time) || !RiskOK(dir,entry,sl)) {ReleaseLock();return;}
  MqlTick fresh;
  if(!LatestTick(fresh) || fresh.time!=t.time ||
     MathAbs(fresh.ask-t.ask)>SymbolInfoDouble(_Symbol,SYMBOL_TRADE_TICK_SIZE)*0.5 ||
@@ -400,14 +466,22 @@ void Execute(int dir,datetime bar,string signalName,datetime h1Time,datetime m15
   ReleaseLock();Skip("QUOTE_CHANGED_IN_LOCK");return;
  }
  if(!trade.SetTypeFillingBySymbol(_Symbol)) {ReleaseLock();Skip("FILLING_MODE");return;}
- string tag=TicketTag(bar)+":"+signalName;
+ // The stable H1-M15 SetupID fits the broker's usual 31-character comment limit.
+ string prefix=SetupPrefix(h1Time,m15Time,dir);
+ string tag=prefix+":"+SignalCode(signalName);
+ if(StringLen(tag)>31 || StringLen(SetupStateKey(h1Time,m15Time,dir))>63) {
+  ReleaseLock();Skip("SETUP_TAG_TOO_LONG");return;
+ }
+ // Claim M5 and H1-M15 atomically before order submission. Other M5 signals
+ // for this pair get SETUP_ALREADY_USED; a new H1/M15 pair gets a new key.
+ if(!Claim(bar) || !ClaimSetup(h1Time,m15Time,dir,prefix)) {ReleaseLock();return;}
  bool submitted=(dir==1?trade.Buy(FixedLot,_Symbol,entry,sl,tp,tag):trade.Sell(FixedLot,_Symbol,entry,sl,tp,tag));
  uint rc=trade.ResultRetcode();ReleaseLock();
  if(!submitted || (rc!=TRADE_RETCODE_DONE && rc!=TRADE_RETCODE_DONE_PARTIAL && rc!=TRADE_RETCODE_PLACED)) {
   Print("ORDER_FAILED RETCODE=",rc," ; claim retained to prevent replay");return;
  }
  Print("ORDER_ACCEPTED ",(dir==1?"BUY":"SELL")," M15=",signalName,
-       " H1=",BarTime(h1Time)," M15_SIGNAL=",BarTime(m15Time)," SL_M15_REF=",BarTime(m15.bar.time),
+       " SetupID=",prefix," H1=",BarTime(h1Time)," M15_SIGNAL=",BarTime(m15Time)," SL_M15_REF=",BarTime(m15.bar.time),
        " SL=",DoubleToString(sl,_Digits)," TP_PRE_FILL=",DoubleToString(tp,_Digits));
 }
 
@@ -451,10 +525,12 @@ string FilledMessage(ulong deal,ulong positionTicket) {
  }
  string signal="CSA/CSAK/CSM";
  string comment=HistoryDealGetString(deal,DEAL_COMMENT);
- int colon=StringFind(comment,":",3);
- if(colon>=0) {
-  string fromComment=StringSubstr(comment,colon+1);
-  if(fromComment=="CSA"||fromComment=="CSAK"||fromComment=="CSM")signal=fromComment;
+ // Code suffix: A=CSA, K=CSAK, M=CSM. Works with legacy comments too.
+ if(StringLen(comment)>0) {
+  string suffix=StringSubstr(comment,StringLen(comment)-1);
+  if(suffix=="A")signal="CSA";
+  else if(suffix=="K")signal="CSAK";
+  else if(suffix=="M")signal="CSM";
  }
  return BRAND+"\n"+(dir==1?"BUY":"SELL")+" "+_Symbol+
         "\nH1 RE-ENTRY > M15 "+signal+" > M5 CSAK"+
