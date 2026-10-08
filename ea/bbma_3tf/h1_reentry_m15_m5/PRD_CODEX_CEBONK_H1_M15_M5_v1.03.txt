@@ -230,3 +230,44 @@ kompilasi/backtest jika tersedia. JANGAN mengganti SL ke BB M5,
 JANGAN menggunakan future data, JANGAN memasang BE/trailing/partial.
 
 END — CEBONK COMPANY 22
+
+ADDENDUM 2026-10-08 — ANTI-LAYER PER SETUPID H1-M15 (P0)
+-------------------------------------------------------
+Mengganti ekspektasi "max satu entry per candle M5" menjadi aturan
+yang lebih ketat: maksimal SATU order attempt untuk setiap SetupID,
+tanpa menutup peluang entry dari SetupID lain yang baru.
+
+SetupID = waktu open candle Re-entry H1 + waktu open candle konfirmasi
+M15 + arah transaksi BUY/SELL. Candle trigger M5 tidak boleh menjadi
+bagian dari SetupID. Bila filter H1 OFF, waktu H1=0 dan identitas
+menggunakan waktu M15 + arah. SetupID baru (perubahan event H1 atau
+konfirmasi M15) berhak entry lagi setelah seluruh guard terpenuhi.
+
+SSOT/keselamatan:
+- Klaim SetupID harus atomik, persisten, dan tersinkron dalam lock
+  account/server/symbol/Magic untuk beberapa chart dalam satu terminal.
+- Simpan identitas SetupID pada komentar order (panjang <=31 karakter)
+  untuk pengecekan ulang lewat broker history setelah restart/state hilang.
+- Setiap tambahan CSAK M5 pada setup yang sama wajib SKIP, beri log
+  WHY_SKIP=SETUP_ALREADY_USED atau SETUP_HISTORY_DUPLICATE.
+- Klaim yang sudah dibuat tidak dilepas pada respons order ambigu/gagal
+  agar tidak terjadi pengiriman order kedua untuk setup yang sama.
+- Batas posisi total, exposure gabungan, daily drawdown, spread,
+  dan validasi broker tetap berjalan. BUKAN batas satu posisi total.
+- Perubahan ini tidak mengubah sinyal H1/M15/M5, SL Top/Low BB M15,
+  TP fixed RR 1:2, maupun aturan 1 ENTRY notification per position.
+- Posisi legacy dari versi M5-only sebelum pembaruan tidak mempunyai
+  SetupID H1-M15 untuk pemetaan sempurna; wajib rencanakan migrasi.
+- Terminal yang berbeda tidak berbagi Terminal GlobalVariables;
+  klaim lintas terminal tidak dijamin tanpa koordinasi eksternal.
+
+Tambahan skenario acceptance:
+T31: M5 CSAK 07:05 lalu 07:10 dalam event H1-M15 sama => 1 order.
+T32: M15 event baru, H1 sama => entry baru boleh jika risk guard lolos.
+T33: H1 Re-entry event baru => SetupID baru.
+T34: Restart/multi-chart dalam satu terminal => anti-layer tetap aktif.
+T35: H1 filter OFF => dedup berdasarkan event M15 + arah.
+T36: Rejected/ambiguous order => tidak ada replay setup lama.
+T37: Periksa history deal/order, komentar broker, dan key<=63 karakter.
+T38: SL BB M15, TP RR 1:2, Telegram 1 posisi 1 notifikasi tak berubah.
+Status T31-T38: NOT TESTED pada MT5; perlu uji nyata, termasuk F7.
