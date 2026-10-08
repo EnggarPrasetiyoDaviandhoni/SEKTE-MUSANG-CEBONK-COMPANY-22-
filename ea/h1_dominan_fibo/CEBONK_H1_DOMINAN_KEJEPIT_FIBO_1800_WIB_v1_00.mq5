@@ -34,8 +34,10 @@ input bool               InpAutoDetectBrokerUTC    = true;     // live only; tes
 input int                InpEntryGraceMinutes      = 10;       // entry <= 10 min after H1 closes
 
 input group "03 | Setup on closed H1 candles"
-input bool               InpDominanBreakON         = true;
+input bool               InpDominanBreakON         = false;      // optional DIRECT dominant entry (OFF by default)
 input bool               InpCandleKejepitON        = true;
+input bool               InpRequirePriorDominan    = true;       // screenshot sequence: dominan -> kejepit -> break
+input int                InpDominanLookbackBars    = 8;
 input int                InpBreakPreviousBars      = 3;        // break high/low of 2-3 candles
 input int                InpKejepitBars            = 2;
 input double             InpDominanMinBodyRatio    = 0.60;
@@ -104,7 +106,8 @@ void UpdateButton()
 void SaveDone(const datetime barTime)
   {
    g_doneH1=barTime;
-   GlobalVariableSet(g_key+".BAR",(double)barTime);
+   if(!MQLInfoInteger(MQL_TESTER))
+      GlobalVariableSet(g_key+".BAR",(double)barTime);
   }
 
 bool HasAnySymbolPosition()
@@ -187,39 +190,66 @@ void SendTradeNotice(const string message)
 int IdentifySignal(MqlRates &r[],const double atr,string &setup)
   {
    int n=InpBreakPreviousBars;
-   double highPrev=-DBL_MAX,lowPrev=DBL_MAX;
-   for(int i=2;i<n+2;i++)
+   double hi=-DBL_MAX,lo=DBL_MAX;
+   for(int j=2;j<n+2;j++)
      {
-      highPrev=MathMax(highPrev,r[i].high);
-      lowPrev=MathMin(lowPrev,r[i].low);
+      hi=MathMax(hi,r[j].high);
+      lo=MathMin(lo,r[j].low);
      }
    double body=MathAbs(r[1].close-r[1].open);
    double range=r[1].high-r[1].low;
    if(range<=0 || body<InpMinBreakBodyATR*atr) return 0;
    double ratio=body/range;
    double point=SymbolInfoDouble(g_symbol,SYMBOL_POINT);
-
-   bool buyBreak=(r[1].close>r[1].open && r[1].close>highPrev+point);
-   bool sellBreak=(r[1].close<r[1].open && r[1].close<lowPrev-point);
+   bool buyBreak=(r[1].close>r[1].open && r[1].close>hi+point);
+   bool sellBreak=(r[1].close<r[1].open && r[1].close<lo-point);
    if(!buyBreak && !sellBreak) return 0;
 
-   bool dominant=(InpDominanBreakON && ratio>=InpDominanMinBodyRatio);
-   bool squeezed=false;
+   // Pattern A = large candle closes beyond previous 2-3 candles.
+   bool directDominan=(InpDominanBreakON && ratio>=InpDominanMinBodyRatio);
+
+   // Pattern B = opposite-colored, small/range-bound candle(s), broken
+   // by a CLOSED trend-direction H1 candle (entry next H1 open).
+   bool kejepit=false;
    if(InpCandleKejepitON)
      {
       double boxHi=-DBL_MAX,boxLo=DBL_MAX;
-      for(int i=2;i<InpKejepitBars+2;i++)
+      for(int j=2;j<InpKejepitBars+2;j++)
         {
-         boxHi=MathMax(boxHi,r[i].high);
-         boxLo=MathMin(boxLo,r[i].low);
+         boxHi=MathMax(boxHi,r[j].high);
+         boxLo=MathMin(boxLo,r[j].low);
         }
-      // Opposite-colored compressed candle, then closed break in trade direction.
       bool opposite=(buyBreak && r[2].close<r[2].open) ||
                     (sellBreak && r[2].close>r[2].open);
-      squeezed=(opposite && boxHi-boxLo<=InpKejepitMaxBoxATR*atr);
+      kejepit=(opposite && boxHi-boxLo<=InpKejepitMaxBoxATR*atr);
      }
-   if(!dominant && !squeezed) return 0;
-   setup=dominant?"DOMINAN BREAK":"CANDLE KEJEPIT BREAK";
+   if(kejepit && InpRequirePriorDominan)
+     {
+      bool prior=false;
+      // Scan earlier candles for direction-aligned dominant break.
+      // i>=3 excludes the squeezed candle at r[2].
+      for(int i=3;i<InpDominanLookbackBars+3;i++)
+        {
+         double pastHi=-DBL_MAX,pastLo=DBL_MAX;
+         for(int j=i+1;j<i+n+1;j++)
+           {
+            pastHi=MathMax(pastHi,r[j].high);
+            pastLo=MathMin(pastLo,r[j].low);
+           }
+         double dRange=r[i].high-r[i].low;
+         double dBody=MathAbs(r[i].close-r[i].open);
+         if(dRange<=0 || dBody<InpMinBreakBodyATR*atr ||
+            dBody/dRange<InpDominanMinBodyRatio) continue;
+         if(buyBreak && r[i].close>r[i].open && r[i].close>pastHi+point)
+           { prior=true; break; }
+         if(sellBreak && r[i].close<r[i].open && r[i].close<pastLo-point)
+           { prior=true; break; }
+        }
+      kejepit=kejepit && prior;
+     }
+
+   if(!kejepit && !directDominan) return 0;
+   setup=kejepit?"DOMINAN -> KEJEPIT -> BREAK":"DIRECT DOMINAN BREAK";
    if(buyBreak && InpAllowBUY) return 1;
    if(sellBreak && InpAllowSELL) return -1;
    return 0;
@@ -277,7 +307,7 @@ void ProcessH1(const datetime now)
 
    MqlRates r[];
    ArraySetAsSeries(r,true);
-   int need=MathMax(InpBreakPreviousBars,InpKejepitBars)+3;
+   int need=MathMax(InpDominanLookbackBars+InpBreakPreviousBars+4,InpKejepitBars+3);
    if(CopyRates(g_symbol,PERIOD_H1,0,need,r)!=need) return;
    datetime startOfCurrentH1=r[0].time;
    if(startOfCurrentH1<=g_doneH1) return;
@@ -349,7 +379,7 @@ void ProcessH1(const datetime now)
                  g_symbol+" | WIB "+TimeToString(ToWIB(now),TIME_DATE|TIME_MINUTES)+"\n"+
                  "Lot: "+DoubleToString(lot,2)+" | Entry: "+DoubleToString(executed,digits)+"\n"+
                  "SL: "+DoubleToString(sl,digits)+" | TP: "+DoubleToString(tp,digits)+"\n"+
-                 "Fibo TP 1.618: "+DoubleToString(fiboTarget,digits)+
+                 "Fibo TP "+DoubleToString(InpFiboTPLevel,3)+": "+DoubleToString(fiboTarget,digits)+
                  " | Deal: "+(string)trade.ResultDeal();
       SendTradeNotice(msg);
      }
@@ -371,6 +401,9 @@ int OnInit()
       InpBreakPreviousBars<2 || InpBreakPreviousBars>3 ||
       InpKejepitBars<1 || InpKejepitBars>3 ||
       InpATRPeriod<2 || InpFiboTPLevel<=1.0 ||
+      InpDominanLookbackBars<1 || InpDominanLookbackBars>48 ||
+      InpDominanMinBodyRatio<=0 || InpDominanMinBodyRatio>1 ||
+      InpMinBreakBodyATR<=0 || InpKejepitMaxBoxATR<=0 ||
       InpFiboSLMinusExtension<=0 || InpFixedRR<=0 ||
       InpFixedLot<=0 || InpRiskPercent<=0 ||
       InpMaxSpreadPoints<0 || InpDeviationPoints<0)
@@ -380,10 +413,10 @@ int OnInit()
    if(g_atrHandle==INVALID_HANDLE) return INIT_FAILED;
    g_key="CBH1."+IntegerToString((long)AccountInfoInteger(ACCOUNT_LOGIN))+
          "."+g_symbol+"."+IntegerToString(InpMagic);
-   if(GlobalVariableCheck(g_key+".BAR"))
+   if(!MQLInfoInteger(MQL_TESTER) && GlobalVariableCheck(g_key+".BAR"))
       g_doneH1=(datetime)(long)GlobalVariableGet(g_key+".BAR");
    g_auto=InpAutopilotInitiallyON;
-   if(GlobalVariableCheck(g_key+".AUTO"))
+   if(!MQLInfoInteger(MQL_TESTER) && GlobalVariableCheck(g_key+".AUTO"))
       g_auto=(GlobalVariableGet(g_key+".AUTO")>0.5);
 
    ObjectCreate(0,g_button,OBJ_BUTTON,0,0,0);
@@ -412,7 +445,8 @@ void OnChartEvent(const int id,const long &lparam,
    if(id==CHARTEVENT_OBJECT_CLICK && sparam==g_button)
      {
       g_auto=!g_auto;
-      GlobalVariableSet(g_key+".AUTO",g_auto?1.0:0.0);
+      if(!MQLInfoInteger(MQL_TESTER))
+         GlobalVariableSet(g_key+".AUTO",g_auto?1.0:0.0);
       ObjectSetInteger(0,g_button,OBJPROP_STATE,false);
       UpdateButton();
       Print("CEBONK H1 autopilot: ",g_auto?"ON":"OFF");
