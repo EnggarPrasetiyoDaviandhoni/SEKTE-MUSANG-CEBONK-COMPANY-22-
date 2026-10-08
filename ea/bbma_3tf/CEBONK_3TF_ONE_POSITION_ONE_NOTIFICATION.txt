@@ -1,10 +1,10 @@
 //+------------------------------------------------------------------+
-//| CEBONK BBMA 3TF SSOT v1.12 BALANCED + SIDEWAYS + SESSION                    |
+//| CEBONK BBMA 3TF SSOT v1.13 BALANCED + SIDEWAYS + SESSION                    |
 //| SEKTE MUSANG TEORY - CEBONK COMPANY 22                          |
 //| Standalone EA: custom modules embedded; no CEBONK include folder required    |
 //+------------------------------------------------------------------+
 #property strict
-#property version   "1.12"
+#property version   "1.13"
 #property description "BBMA 3TF Balanced | MA50 Cross/Align | CB1 Scan | Adaptive Retest | Sideways | WIB GMT+3"
 
 #include <Trade/Trade.mqh>
@@ -848,7 +848,7 @@ public:
       m_chat_id=chatId; m_timeout=timeout; m_push=push;
    }
 
-   // One status alert per real button click (not per tick, not on EA startup).
+   // Status alert only on ON/OFF change: chart button or Inputs setting.
    // Status alerts are independent of the one-alert-per-position entry rule.
    void AutopilotStatus(const bool enabled,const ENUM_TIMEFRAMES tf1,
                         const ENUM_TIMEFRAMES tf2,const ENUM_TIMEFRAMES tf3)
@@ -1220,6 +1220,34 @@ void TryEntry(const C3Events &ev)
    C3ResetState(g_setup);
 }
 
+// Track AUTOPILOT state across EA reinitialization (Inputs > InpAutopilot).
+// No alert on initial attach, no repeated alerts on ordinary reinit/ticks.
+string AutopilotStateKey()
+{
+   return "CB22:AP:"+IntegerToString((long)AccountInfoInteger(ACCOUNT_LOGIN))+
+          ":"+IntegerToString((long)InpMagic)+":"+IntegerToString((long)ChartID());
+}
+
+void RememberAutopilotState()
+{
+   string key=AutopilotStateKey();
+   ResetLastError();
+   if(GlobalVariableSet(key,(g_autopilot ? 1.0 : 0.0))==0)
+      Print("AUTOPILOT state persistence failed | error=",GetLastError());
+   else
+      GlobalVariablesFlush();
+}
+
+void SyncAutopilotOnInit()
+{
+   string key=AutopilotStateKey();
+   bool existed=GlobalVariableCheck(key);
+   bool changed=(existed && ((GlobalVariableGet(key)>0.5)!=g_autopilot));
+   RememberAutopilotState();
+   if(changed)
+      g_notify.AutopilotStatus(g_autopilot,InpTF1,InpTF2,InpTF3);
+}
+
 void UpdateButton()
 {
    if(ObjectFind(0,BTN)<0)
@@ -1267,6 +1295,7 @@ int OnInit()
    g_exit_bar3=g_bar3;
    g_autopilot=InpAutopilot;
    UpdateButton();
+   SyncAutopilotOnInit();
 
    if(InpUseTradingSession)
    {
@@ -1288,6 +1317,7 @@ void OnChartEvent(const int id,const long &lparam,const double &dparam,const str
    {
       g_autopilot=!g_autopilot;
       UpdateButton();
+      RememberAutopilotState();
       g_notify.AutopilotStatus(g_autopilot,InpTF1,InpTF2,InpTF3);
    }
 }
