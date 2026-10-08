@@ -1,0 +1,25 @@
+name: Harmonic H1 CB1 M5 EA — static checks
+
+on:
+  pull_request:
+    paths:
+      - 'ea/harmonic_cb1/**'
+      - '.github/workflows/harmonic-cb1-ea.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ea/harmonic_cb1/**'
+      - '.github/workflows/harmonic-cb1-ea.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 ea/harmonic_cb1/test_static.py
+      - run: wc -c ea/harmonic_cb1/CEBONK_HARMONIC_CB1_H1_M5_v1.00.*
