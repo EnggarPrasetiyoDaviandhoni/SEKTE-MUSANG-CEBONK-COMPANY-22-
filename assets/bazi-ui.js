@@ -128,6 +128,12 @@ function mount(){
  '#baziView .bz-status{font-size:12px;color:var(--muted);margin:7px 0}',
  '#baziView .bz-error{color:#ffb5b5;font-size:12px;padding:10px;border:1px solid #733a48;border-radius:8px;margin-bottom:12px}',
  '#baziView .bz-legend{font-size:11px;color:var(--muted);margin-top:9px}',
+ '#baziView .bz-jumps{border:1px solid #49738c;background:#16263a;border-radius:12px;padding:12px;margin-bottom:16px}',
+ '#baziView .bz-jumps strong{display:block;font-size:13px;margin-bottom:10px}',
+ '#baziView .bz-jump-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}',
+ '#baziView .bz-jump-list button{border:1px solid #537b96;background:#1d364c;color:#eef7fc;border-radius:9px;padding:11px 7px;font-size:12px;font-weight:750;cursor:pointer}',
+ '#baziView .bz-jump-list button:hover{background:#275472}',
+ '@media(max-width:500px){#baziView .bz-jump-list{grid-template-columns:1fr}#baziView .bz-jump-list button{padding:12px}}',
  '@media(max-width:760px){.viewtabs{grid-template-columns:repeat(2,minmax(0,1fr))}.viewtab{font-size:12px;padding:9px 4px}#baziView .bz-controls{grid-template-columns:1fr 1fr}#baziView .bz-controls .bz-sect{grid-column:1/-1}#baziView .bz-controls button{width:100%}#baziView .bz-pillars{grid-template-columns:1fr 1fr}#baziView .bz-two{grid-template-columns:1fr}#baziView .bz-yeargrid{grid-template-columns:1fr 1fr}#baziView .bz-hero{padding:15px}}',
  '@media(max-width:420px){#baziView .bz-yeargrid{grid-template-columns:1fr 1fr}#baziView .bz-year{font-size:9px}}'
  ].join('');
@@ -136,6 +142,7 @@ function mount(){
  const view=document.createElement('section');view.id='baziView';view.hidden=true;
  view.innerHTML=[
  '<div class="bz-hero"><small>SEKTE MUSANG · CEBONK COMPANY 22</small><h2>BAZI ASTROLOGY</h2><p>Empat Pilar · Shio · Lima Elemen · Jadwal WIB · Riset XAUUSD / XAGUSD</p></div>',
+ '<div class="bz-jumps"><strong>MENU ANALISIS HARGA · XAUUSD / XAGUSD</strong><div class="bz-jump-list"><button type="button" data-bz-target="m12Panel">GRAFIK RIWAYAT 12M</button><button type="button" data-bz-target="ayPanel">DOMINASI BAZI TAHUNAN</button><button type="button" data-bz-target="mhPanel">TREN BULANAN</button></div><span id="bzJumpStatus" style="font-size:11px;color:#a8cbdc" role="status"></span></div>',
  '<div class="bz-note"><strong>Ini kalender astrologi, bukan sinyal trading.</strong> Kombinasi elemen, Clash, dan jam BaZi belum membuktikan arah atau probabilitas harga XAUUSD maupun XAGUSD. Modul ini tidak mengubah mesin Astrology lama.</div>',
  '<div class="bz-panel"><div class="bz-head">Hitung BaZi · Zona Asia/Jakarta (WIB)</div><div class="bz-body"><div class="bz-controls">',
  '<label>Tanggal WIB<input type="date" id="bzDate" min="1900-01-01" max="2099-12-31"></label>',
@@ -152,6 +159,7 @@ function mount(){
  '<p class="bz-legend">Legenda: <span style="color:'+hues.Kayu+'">Kayu</span> · <span style="color:'+hues.Api+'">Api</span> · <span style="color:'+hues.Tanah+'">Tanah</span> · <span style="color:'+hues.Logam+'">Logam</span> · <span style="color:'+hues.Air+'">Air</span>. Sumber kalkulasi: lunar-javascript 1.7.7 (MIT).</p></div></div>'
  ].join('');
  wrap.insertBefore(view,wrap.querySelector('footer'));
+ view.addEventListener('click',e=>{const button=e.target.closest('button[data-bz-target]');if(!button)return;const name=button.dataset.bzTarget;const allowed=['m12Panel','ayPanel','mhPanel'];if(!allowed.includes(name))return;const panel=$(name);if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});else{const msg=$('bzJumpStatus');if(msg)msg.textContent='Modul masih dimuat. Tunggu sebentar lalu coba lagi.';}});
  $('bzZodiac').innerHTML=yearTiles();
  const n=B.todayWIB();$('bzDate').value=n.date;$('bzHour').value=n.time;
  $('bzRun').addEventListener('click',run);
