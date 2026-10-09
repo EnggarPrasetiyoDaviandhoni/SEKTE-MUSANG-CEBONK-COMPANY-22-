@@ -66,7 +66,7 @@ function csvQuote(x){return '"'+String(x).replace(/"/g,'""')+'"';}
 function exportCSV(){
  if(!calculated)return;
  const header=['Tanggal_WIB','Rentang_WIB','Pilar_Tahun','Pilar_Bulan','Pilar_Hari','Pilar_Jam','Elemen_Jam','Shio_Jam','Metode','Arah_harga'];
- const rows=calculated.periods.map(p=>[p.date,p.range,[p.pillars.year,p.pillars.month,p.pillars.day,p.pillars.hour].map(a=>a.yinYang+' '+a.element+' '+a.animal).join('|'),p.pillars.hour.element,p.pillars.hour.animal,'BaZi_JieQi_WIB','TIDAK_DIHITUNG']);
+ const rows=calculated.periods.map(p=>[p.date,p.range,...[p.pillars.year,p.pillars.month,p.pillars.day,p.pillars.hour].map(a=>a.yinYang+' '+a.element+' '+a.animal),p.pillars.hour.element,p.pillars.hour.animal,'BaZi_JieQi_WIB','TIDAK_DIHITUNG']);
  const blob=new Blob(['\uFEFF'+[header,...rows].map(row=>row.map(csvQuote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
  const href=URL.createObjectURL(blob),a=document.createElement('a');a.href=href;a.download='CEBONK_BAZI_WIB_'+calculated.data.date+'.csv';a.click();
  setTimeout(()=>URL.revokeObjectURL(href),1500);
