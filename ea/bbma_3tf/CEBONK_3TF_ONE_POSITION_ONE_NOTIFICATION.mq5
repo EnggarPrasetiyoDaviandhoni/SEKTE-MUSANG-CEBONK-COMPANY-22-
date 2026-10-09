@@ -918,32 +918,13 @@ public:
       TelegramSend(msg);
    }
 
-   // SL/TP notification is separate from the one ENTRY alert per position.
-   void TPSL(const bool tp,const int dir,const long position_id,const double price,
-             const double closed_lot,const double net_profit)
+   // One short notification for a closed position: no price, lot, or P/L.
+   void TPSL(const bool tp,const long position_id)
    {
-      string side=(dir>0 ? "BUY" : "SELL");
-      string status=(tp ? "🏁 TAKE PROFIT HIT" : "🛑 STOP LOSS HIT");
-      string msg="🐭 SEKTE MUSANG TEORY\n"+
-                 "CEBONK COMPANY 22\n"+
-                 "━━━━━━━━━━━━\n"+
-                 status+"\n"+
-                 "📌 "+m_symbol+"\n"+
-                 "🆔 Position: "+IntegerToString(position_id)+"\n"+
-                 "🧭 Arah: "+side+"\n"+
-                 "💰 Lot ditutup: "+DoubleToString(closed_lot,2)+"\n"+
-                 "📍 Harga close: "+PriceText(price)+"\n"+
-                 "💵 Net P/L: "+DoubleToString(net_profit,2)+" "+
-                 AccountInfoString(ACCOUNT_CURRENCY)+"\n\n"+
-                 (tp ? "Target rampung. Gas sing tertib maneh, rek." :
-                       "SL kena. Enteni setup anyar, ojo mbales market.")+"\n"+
-                 "⚠️ OJO FULLMARGIN COK!";
-      Print("CEBONK ",(tp?"TP HIT":"SL HIT")," | ",side,
-            " | PositionID=",position_id," | P/L=",DoubleToString(net_profit,2));
+      string msg=(tp ? "TAKE PROFIT" : "STOP LOSE");
+      Print("CEBONK ",msg," | PositionID=",position_id);
       if(m_push && !MQLInfoInteger(MQL_TESTER))
-         SendNotification("CEBONK "+string(tp?"TP HIT":"SL HIT")+
-                          " | "+side+" "+m_symbol+
-                          " | P/L "+DoubleToString(net_profit,2));
+         SendNotification(msg);
       if(!TelegramSend(msg))
          Print("TP/SL Telegram gagal utawa nonaktif | PositionID=",position_id);
    }
@@ -1417,7 +1398,6 @@ void C3NotifyClosedTPSL(const ulong exit_deal)
    if(type!=DEAL_TYPE_BUY && type!=DEAL_TYPE_SELL) return;
    long position_id=HistoryDealGetInteger(exit_deal,DEAL_POSITION_ID);
    if(position_id<=0) return;
-   double close_price=HistoryDealGetDouble(exit_deal,DEAL_PRICE);
 
    // A partial fill must not generate a premature/duplicate closed-position alert.
    for(int i=PositionsTotal()-1;i>=0;i--)
@@ -1429,7 +1409,6 @@ void C3NotifyClosedTPSL(const ulong exit_deal)
    if(!HistorySelectByPosition((ulong)position_id)) return;
 
    bool owned=false;
-   double net_profit=0.0,closed_lot=0.0;
    for(int i=0;i<HistoryDealsTotal();i++)
    {
       ulong deal=HistoryDealGetTicket(i);
@@ -1437,15 +1416,12 @@ void C3NotifyClosedTPSL(const ulong exit_deal)
       ENUM_DEAL_ENTRY action=(ENUM_DEAL_ENTRY)HistoryDealGetInteger(deal,DEAL_ENTRY);
       if((action==DEAL_ENTRY_IN || action==DEAL_ENTRY_INOUT) &&
          (ulong)HistoryDealGetInteger(deal,DEAL_MAGIC)==InpMagic)
+      {
          owned=true;
-      net_profit+=HistoryDealGetDouble(deal,DEAL_PROFIT)
-                 +HistoryDealGetDouble(deal,DEAL_SWAP)
-                 +HistoryDealGetDouble(deal,DEAL_COMMISSION)
-                 +HistoryDealGetDouble(deal,DEAL_FEE);
-      if(action==DEAL_ENTRY_OUT || action==DEAL_ENTRY_OUT_BY)
-         closed_lot+=HistoryDealGetDouble(deal,DEAL_VOLUME);
+         break;
+      }
    }
-   if(!owned || closed_lot<=0.0) return;
+   if(!owned) return;
 
    string key=C3ClosedNotificationKey(position_id);
    if(GlobalVariableCheck(key)) return;
@@ -1457,9 +1433,7 @@ void C3NotifyClosedTPSL(const ulong exit_deal)
       return;
    }
    GlobalVariablesFlush();
-   int closed_dir=(type==DEAL_TYPE_SELL ? 1 : -1);
-   g_notify.TPSL(reason==DEAL_REASON_TP,closed_dir,position_id,
-                 close_price,closed_lot,net_profit);
+   g_notify.TPSL(reason==DEAL_REASON_TP,position_id);
    C3ResetState(g_setup);
 }
 
