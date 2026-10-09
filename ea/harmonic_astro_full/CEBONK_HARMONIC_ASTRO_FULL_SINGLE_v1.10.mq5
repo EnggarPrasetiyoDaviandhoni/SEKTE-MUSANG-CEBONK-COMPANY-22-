@@ -214,9 +214,9 @@ bool HPFind(const ENUM_TIMEFRAMES tf,const int depth,const int lookback,const in
     // A strict gate applies to classic XABCD; extension geometries may exceed A.
     if(dir>0 ? !(D<B.price):!(D>B.price))continue;
   }
-  int pat=HPClassify(sw,ci,D,fibTol);
-  if(pat==HP_NONE)pat=HPClassifySix(sw,ci,D,fibTol);
+  int pat=HPClassifySix(sw,ci,D,fibTol);
   if(pat==HP_NONE)pat=HPClassifyContext(sw,ci,D,fibTol);
+  if(pat==HP_NONE)pat=HPClassify(sw,ci,D,fibTol);
   if(pat==HP_NONE)continue;
   // A->D Fibonacci targets in trade direction; TP 0.382 / 0.618 as candidates.
   double distance=MathAbs(A.price-D);
