@@ -1,0 +1,62 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs');
+require('../assets/bazi-core.js');
+require('../assets/market-trend-core.js');
+const Core=require('../assets/metal-12m-core.js');
+const archive=JSON.parse(fs.readFileSync('data/market-history.json','utf8'));
+assert.equal(archive.frequency,'monthly_average','12M must use monthly means, not invented OHLC');
+for(const symbol of ['XAUUSD','XAGUSD']){
+ const data=archive.data[symbol],annual=Core.build(data);
+ assert.ok(annual.length>=65,'Long-term historical coverage');
+ assert.equal(annual[0].year,1960);
+ assert.equal(annual.at(-1).year,2026);
+ assert.equal(annual[0].months,12);
+ assert.equal(annual[0].complete,true);
+ assert.equal(annual.at(-1).months,9);
+ assert.equal(annual.at(-1).complete,false);
+ assert.equal(annual.at(-1).direction,'BELUM LENGKAP');
+ assert.equal(annual.at(-1).comparisonType,'BULAN SEPADAN TAHUN SEBELUMNYA');
+ assert.equal(annual.find(x=>x.year===1966).shio,'Kuda');
+ assert.equal(annual.find(x=>x.year===1966).element,'Api');
+ assert.equal(annual.find(x=>x.year===2026).shio,'Kuda');
+ assert.equal(annual.find(x=>x.year===2026).element,'Api');
+ assert.equal(annual.find(x=>x.year===1980).months,12);
+ const report=Core.analyze(data,2026);
+ assert.equal(report.ok,true);
+ assert.equal(report.analogue.year,1966);
+ assert.ok(report.history.n>=60);
+ assert.equal(report.year.average,annual.at(-1).average);
+ assert.equal(report.year.first,'2026-01');
+ assert.equal(report.year.last,'2026-09');
+ assert.equal(Core.analyze(data,1900).ok,false);
+ assert.ok(!Object.hasOwn(report.year,'open'));
+ assert.ok(!Object.hasOwn(report.year,'high'));
+ assert.ok(!Object.hasOwn(report.year,'low'));
+ assert.ok(!Object.hasOwn(report.year,'close'));
+}
+const demo=Array.from({length:36},(_,i)=>[
+  (2020+Math.floor(i/12))+'-'+String(i%12+1).padStart(2,'0'),
+  i<12?10:i<24?15:20
+]);
+const v=Core.build(demo);
+assert.equal(v.length,3);
+assert.equal(v[0].comparison,null);
+assert.equal(v[0].direction,'DATA TAHUN AWAL');
+assert.equal(v[1].direction,'NAIK');
+assert.equal(v[2].direction,'NAIK');
+assert.equal(v[1].comparison,50);
+const missing=demo.filter(x=>x[0]!=='2021-03');
+const mm=Core.build(missing);
+assert.equal(mm[1].complete,false);
+assert.equal(mm[1].direction,'BELUM LENGKAP');
+assert.equal(mm[2].comparisonType,null);
+const h=fs.readFileSync('index.html','utf8');
+assert.ok(h.indexOf('metal-12m-core.js')<h.indexOf('metal-12m-ui.js'));
+for(const p of ['assets/metal-12m-core.js','assets/metal-12m-ui.js'])assert.ok(h.includes(p));
+for(const p of ['technical-scanners-core.js','technical-scanners-ui.js','tabBBMA','tabLiquidity'])assert.ok(!h.includes(p));
+const ui=fs.readFileSync('assets/metal-12m-ui.js','utf8');
+assert.ok(!/[\u3400-\u9fff]/.test(ui),'Indonesian UI must not display Hanzi');
+assert.ok(ui.includes('bazi')||ui.includes('BaZi'));
+assert.ok(ui.includes('BELUM LENGKAP')&&ui.includes('XAGUSD'));
+assert.ok(ui.includes('bukan candle OHLC'));
+console.log('PASS: 12M history: both metals, incomplete year, matching-month comparison, 60-year element, no synthetic OHLC, and Indonesian UI.');
