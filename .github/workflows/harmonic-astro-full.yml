@@ -1,0 +1,27 @@
+name: Harmonic Astro Full EA static verification
+
+on:
+  pull_request:
+    paths:
+      - 'ea/harmonic_astro_full/**'
+      - '.github/workflows/harmonic-astro-full.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ea/harmonic_astro_full/**'
+      - '.github/workflows/harmonic-astro-full.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Full-pattern source contracts and bundle parity
+        run: python3 ea/harmonic_astro_full/test_static.py
+      - name: Source footprint
+        run: wc -c ea/harmonic_astro_full/*mq5 ea/harmonic_astro_full/*mqh ea/harmonic_astro_full/*txt
