@@ -43,3 +43,16 @@ node tests/market-trend.test.cjs
 Uji BaZi yang lama tetap digunakan: `tests/bazi-core.test.cjs` dengan `lunar-javascript@1.7.7`.
 
 Scanner BBMA serta Liquidity Sweep untuk website tetap dihapus. Modul Astrology, Astrology News, Astro Candles, Daily Brief dan source EA tidak diubah.
+
+## Dominasi Bullish/Bearish 1 Tahun menurut pengelompokan BaZi
+
+Modul `assets/bazi-annual-core.js` dan `assets/bazi-annual-ui.js` membuat ringkasan tahunan untuk **dua instrumen sekaligus**. Pilihan tahun 2026–2036. Semua label memakai Bahasa Indonesia, tanpa aksara Cina pada antarmuka.
+
+- Outcome satu tahun dihitung sebagai perubahan benchmark rata-rata **Februari tahun BaZi ke Februari tahun berikutnya**, 12 selisih bulanan. Ini hanya proksi kasar batas Li Chun karena harga sumber tidak harian.
+- Sampel dari 1960 sampai setahun sebelum tahun yang dipilih. Tahun parsial atau data yang kehilangan salah satu bulan tidak dihitung sebagai return satu tahun. Sampel tahun target tidak pernah masuk basis pembandingan (anti-leakage).
+- **Elemen sama** (minimal 8 observasi) dan **shio sama** (minimal 4) dihitung masing-masing. Bila setidaknya 65% tahun sebelumnya naik, label kelompok BULLISH; bila setidaknya 65% turun, label BEARISH; selain itu CAMPURAN.
+- **Gabungan dominan tahunan** baru ditampilkan jika kedua kelompok sepakat pada arah yang sama **dan** kombinasi elemen+shio yang persis memiliki minimal 3 siklus lengkap. Jika syarat tidak dipenuhi, status **TIDAK KONKLUSIF**. Threshold ini sekadar aturan riset eksploratif, belum tervalidasi secara out-of-sample untuk prediksi harga.
+- Siklus Kuda Api 2026 mempunyai satu tahun analog lengkap di arsip, yaitu 1966. Jadi tidak ada dasar menghitung probabilitas harga pasti tahun 2026 dari siklus persisnya. Pergerakan riil Februari–bulan terbaru ditampilkan terpisah sebagai hasil sementara.
+- Tidak menghasilkan order, saran entry, jaminan tren, atau proyeksi angka harga masa depan.
+
+Pengujian: `node tests/bazi-annual.test.cjs`. Workflow `.github/workflows/metal-history.yml` menjalankan regresi ini pada perubahan source terkait.
