@@ -921,7 +921,7 @@ public:
    // One short notification for a closed position: no price, lot, or P/L.
    void TPSL(const bool tp,const long position_id)
    {
-      string msg=(tp ? "TAKE PROFIT" : "STOP LOSE");
+      string msg=(tp ? "😅 TAKE PROFIT" : "🥲 STOP LOSE");
       Print("CEBONK ",msg," | PositionID=",position_id);
       if(m_push && !MQLInfoInteger(MQL_TESTER))
          SendNotification(msg);
