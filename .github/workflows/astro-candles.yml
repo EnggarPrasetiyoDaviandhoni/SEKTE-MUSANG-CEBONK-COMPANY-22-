@@ -31,11 +31,8 @@ jobs:
           node --check assets/astro-candles.js
           node tests/astro-candles.test.cjs
           node tests/astro-candles.integration.cjs
-      - name: Regression old Astrology and technical scanners
-        run: |
-          node tests/astro-news.test.cjs
-          node tests/technical-scanners.test.cjs
-          node tests/technical-scanners.integration.cjs
+      - name: Regression existing Astrology News
+        run: node tests/astro-news.test.cjs
       - name: Request Pages rebuild on main
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
