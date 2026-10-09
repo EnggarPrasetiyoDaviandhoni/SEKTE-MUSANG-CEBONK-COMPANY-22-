@@ -42,9 +42,9 @@ function paint(){
  $('ayDataNote').textContent='Data: '+(sources.XAUUSD||'tidak tersedia')+'. Harga perak dapat berasal dari sumber berbeda jika CSV diimpor. Periode penuh: rata-rata Februari ke Februari berikutnya.';
 }
 function mount(){
- const parent=$('mhPanel');if(!parent||$('ayPanel'))return;
+ const anchor=$('mhPanel'),parent=anchor?.parentElement;if(!parent||$('ayPanel'))return;
  const css=document.createElement('style');css.textContent=
- '#ayPanel{margin:20px 0;border-top:1px solid #34445e;padding-top:20px}#ayPanel h3{margin:0 0 8px;font-size:18px}.ay-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.ay-card{padding:15px;border:1px solid #34445e;background:#101d30;border-radius:10px}.ay-card h4{margin:0 0 10px}.ay-card p{font-size:12px}.ay-muted{font-size:11px;color:#a8b8c9}.ay-result{background:#1b2c3f;padding:10px;border-radius:8px;font-size:12px}.ay-result b{display:block;font-size:16px;margin-top:4px}.ay-cohort{display:flex;gap:3px;flex-direction:column;margin:12px 0;padding:9px;border-left:2px solid #6d839d;background:#142237}.ay-cohort small,.ay-cohort span{font-size:11px;color:#c5d1df}.ay-cohort b{font-size:14px}#ayPanel select{min-width:160px;margin-left:10px}#ayPanel .ay-warning{background:#292519;border:1px solid #5f4e2f;border-radius:8px;padding:12px;font-size:12px;color:#f1dcae}@media(max-width:760px){.ay-cards{grid-template-columns:1fr}#ayPanel select{margin:8px 0;display:block;width:100%}}';
+ '#ayPanel{margin:18px 0;padding:16px;border:1px solid #52718a;border-radius:12px;background:#101d30}#ayPanel h3{margin:0 0 8px;font-size:18px}.ay-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.ay-card{padding:15px;border:1px solid #34445e;background:#101d30;border-radius:10px}.ay-card h4{margin:0 0 10px}.ay-card p{font-size:12px}.ay-muted{font-size:11px;color:#a8b8c9}.ay-result{background:#1b2c3f;padding:10px;border-radius:8px;font-size:12px}.ay-result b{display:block;font-size:16px;margin-top:4px}.ay-cohort{display:flex;gap:3px;flex-direction:column;margin:12px 0;padding:9px;border-left:2px solid #6d839d;background:#142237}.ay-cohort small,.ay-cohort span{font-size:11px;color:#c5d1df}.ay-cohort b{font-size:14px}#ayPanel select{min-width:160px;margin-left:10px}#ayPanel .ay-warning{background:#292519;border:1px solid #5f4e2f;border-radius:8px;padding:12px;font-size:12px;color:#f1dcae}@media(max-width:760px){.ay-cards{grid-template-columns:1fr}#ayPanel select{margin:8px 0;display:block;width:100%}}';
  document.head.appendChild(css);
  const box=document.createElement('section');box.id='ayPanel';
  const choices=Array.from({length:11},(_,i)=>2026+i).map(y=>'<option value="'+y+'">'+y+'</option>').join('');
@@ -54,7 +54,7 @@ function mount(){
  '<div id="ayCards" class="ay-cards"><p>Menunggu arsip harga…</p></div>'+
  '<p id="ayDataNote" class="ay-muted"></p>'+
  '<p class="ay-warning"><b>Penting:</b> Ini pengelompokan statistik atas riwayat, bukan pembuktian bahwa BaZi menggerakkan harga. Tahun BaZi dimulai sekitar awal Februari; karena sumber hanya bulanan, perubahan rata-rata Februari ke Februari berikutnya adalah pendekatan, bukan kalender harian yang presisi. Frekuensi historis bukan probabilitas masa depan atau sinyal transaksi. Hasil tahun berjalan adalah sementara.</p>';
- parent.querySelector('.mh-body')?.appendChild(box);
+ parent.insertBefore(box,anchor);
  $('ayYear').addEventListener('change',paint);
  paint();
 }
