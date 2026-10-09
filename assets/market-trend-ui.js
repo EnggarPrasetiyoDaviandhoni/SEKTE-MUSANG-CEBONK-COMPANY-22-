@@ -18,6 +18,7 @@ function show(){
  const t=M.trend(d),info=$('mhInfo'),cards=$('mhMetrics'),history=$('mhHorse'),chart=$('mhGraph');
  $('mhSymbol').value=s;
  info.textContent=(s==='XAUUSD'?'Emas':'Perak')+' · '+src+(d.length?' · '+d.length+' bulan tersimpan · terakhir '+d.at(-1)[0]:' · tidak tersedia');
+ root.dispatchEvent(new CustomEvent('cebonk:market-history',{detail:{data:state.data,sources:state.sources,symbol:s}}));
  if(!t.ok){
   cards.innerHTML='<p class="mh-muted">'+esc(t.message||'Belum ada data. Masukkan CSV untuk memulai.')+'</p>';
   chart.innerHTML='';history.innerHTML='';return;
