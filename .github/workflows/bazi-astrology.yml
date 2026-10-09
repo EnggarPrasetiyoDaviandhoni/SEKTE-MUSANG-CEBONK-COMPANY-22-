@@ -1,0 +1,36 @@
+name: BaZi Astrology regression
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'assets/bazi-core.js'
+      - 'assets/bazi-ui.js'
+      - 'tests/bazi-core.test.cjs'
+      - '.github/workflows/bazi-astrology.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'assets/bazi-core.js'
+      - 'assets/bazi-ui.js'
+      - 'tests/bazi-core.test.cjs'
+      - '.github/workflows/bazi-astrology.yml'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check assets/bazi-core.js
+          node --check assets/bazi-ui.js
+      - name: Install pinned Chinese calendar
+        run: npm install --prefix /tmp/cebonk-bazi --no-save --package-lock=false --ignore-scripts lunar-javascript@1.7.7
+      - name: BaZi calendar, timezone, and UI regression
+        env:
+          NODE_PATH: /tmp/cebonk-bazi/node_modules
+        run: node tests/bazi-core.test.cjs
