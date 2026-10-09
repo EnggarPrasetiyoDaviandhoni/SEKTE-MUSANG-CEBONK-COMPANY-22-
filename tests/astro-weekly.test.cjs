@@ -8,7 +8,7 @@ const days=W.weekDates('2026-10-09');
 assert.deepEqual(days.map(d=>d.date),['2026-10-05','2026-10-06','2026-10-07','2026-10-08','2026-10-09']);
 assert.throws(()=>W.weekDates('2020-01-01'),/rentang/);
 assert.throws(()=>W.monday('2026-02-30'),/kalender/);
-assert.throws(()=>W.monday('2026-10-xx'),/tanggal/);
+assert.throws(()=>W.monday('2026-10-xx'),/Tanggal/);
 function daily(d,kind='BUY',buyN=144){
  const start=Date.parse(d.date+'T00:00:00Z')-60*minute;
  return {...d,samples:Array.from({length:216},(_,i)=>{
