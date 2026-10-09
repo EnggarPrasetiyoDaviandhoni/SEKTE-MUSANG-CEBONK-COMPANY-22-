@@ -1,48 +1,40 @@
-# CEBONK HARMONIC + ASTRODOX WEB + CB1 M5 — v1.10 (EXPERIMENTAL)
+# CEBONK HARMONIC + ASTRODOX WEEKLY + CB1 — v1.21 (EXPERIMENTAL)
 
-**Standalone new EA; never overwrite v1.00 or BBMA/Combined.**
+**New policy (replacing v1.20): scanner timeframes INDEPENDENT; ASTRODOX WEEKLY direction only.**
+v1.10 and v1.20 remain in this directory as frozen historical candidates. Earlier BBMA/Combined EAs are not changed.
 
-## Contract
+## Entry SOP — weekly direction only
 
-- Independent **H4, H1, M30** closed-bar scanners. Either TF is enough, but conflicting active directions skip by default; H4 > H1 > M30 priority when signals agree.
-- 16 distinct pattern/variant switches: Gartley, Bat, Alternate Bat, Butterfly, Crab, Deep Crab, Cypher, Shark, 5-0, Three Drives, AB=CD, Alternate AB=CD, Impulsive AB=CD, Corrective AB=CD, Nested AB=CD and Back-to-back AB=CD.
-- Screeners use explicitly documented approximate Fibonacci/range geometry; 5-0 and Three Drives use six-point context, Nested and Back-to-back require previous swings. **Not a certified full reproduction of discretionary illustrations**; test each pattern independently.
-- **M5 CB1** uses two descending confirmed pivot lows (BUY), or ascending confirmed highs (SELL), and the intervening CB1 level. Require M5 candle body close across that level; entry at **first tick of next M5 bar**. **No retest, no M15**.
-- H4/H1/M30 EMA50-slope + close defines FOLLOW vs REVERSAL. Mode BOTH, FOLLOW_ONLY, REVERSAL_ONLY. Neutral trend = SKIP.
-- SL beyond D extrema plus buffer. TP is the closest usable structural Fibonacci target **0.382 AD** or **0.618 AD**; if both offer < **RR 1:2 at requested fill**, SKIP. **No forced RR target beyond Fibonacci level.** Slippage and tick rounding can change realized RR.
-- Risk gates: fixed lot 0.01 (must match symbol min/max/step), spread <=70 points, max SL 6000 points, max chase 700 points, 1% loss-per-order max, 5% daily equity stop, max 1 concurrent EA position, session 07:00–23:00 on broker clock. No BE, trailing, partial, martingale, or recovery. One terminal-global signal claim per H4/H1/M30 D per account/symbol/magic, consumed before submitting to avoid unknown duplicate fills.
-- AUTOPILOT OFF and REAL ACCOUNT LOCKED by default. Attach to XAUUSDc chart; symbol is `_Symbol` so broker variations follow the chart. Requires **hedging MT5 account**.
-- Optional Telegram and MT5 Push on actual fill, one per order; optional minimal closing alerts on broker TP/SL. Never embed tokens in GitHub.
+1. Publish/read the user's existing **ASTRODOX weekly** V1 schedule, with **Monday–Friday 06:00–24:00 WIB** samples (5-minute grid; 1,080 slots). Weekly BUY or SELL must own **at least 55% of directional minutes**; NEUTRAL/TRANSITION do not count in the denominator. If data is missing, invalid, mixed or absent: **SKIP**.
+2. **No daily ASTRODOX veto, no “start/end WIB” intraday window, and no broker-hour entry session.** A BULLISH week may enter BUY on Monday even when Monday's daily ASTRODOX is BEARISH; never SELL in a BULLISH week. A BEARISH week is the symmetric case. Weekend entries are blocked.
+3. **D1 / H4 / H1 / M30 fully independent.** One valid harmonic matching the weekly bias is sufficient; opposite harmonic patterns on other timeframes **must never block it**. Each scanner has its own enable input. When multiple candidates qualify simultaneously, try D1 > H4 > H1 > M30; if one fails pre-order RR/SL/margin checks, try the next candidate.
+4. Harmonic detector: 16 separately selectable pattern/variant implementations in `HarmonicScanner.mqh`; Fibonacci shapes are explicit quantitative approximations that require testing and are **not guaranteed faithful to every illustrated discretionary variant**. Strategy mode BOTH, FOLLOW_ONLY or REVERSAL_ONLY remains independently selectable using scanner-TF EMA50 trend. If trend is neutral, candidate is skipped.
+5. Entry trigger: latest **CLOSED M5 candle breaks CB1** with valid body, trade **BUY/SELL MARKET at first available tick of next M5 bar**; never BuyStop/SellStop, and **no retest**.
+6. SL beyond the pattern's D extreme + buffer. Select nearer usable TP among Fibonacci **0.382 or 0.618 of AD**, but only if RR >= 1:2 at requested entry; otherwise SKIP. One TP, no partial, BE or trailing.
 
-## ASTRODOX exact source & version caveat
+## Data provenance & restrictions
 
-Web domain: https://enggarprasetiyodaviandhoni.github.io
-
-Published CSV URL pattern:
+Published CSV from the user's GitHub Pages:
 `https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/ea/combined2/data/YYYY-MM.csv`
 
-Published model: **`CEBONK_C2_WEB_V1_35ce78b4`**, generated from pinned web core commit 35ce78b4; available published coverage **2026-01-01 to 2027-12-31, 06:00–24:00 WIB**. The website's current browser UI uses Astrology **v2.0**, which is **not the same model version**. This version consumes the published V1 CSV, **not** live V2 UI signals. Do not claim exact parity with the current screen. Aligning to V2 requires separately publishing and validating a V2-compatible feed.
+The weekly panel uses the inherited **EXPERIMENTAL V1** direction model. CSV tag must exactly equal `CEBONK_C2_WEB_V1_35ce78b4`; it is **not identical to the browser UI's V2 daily display**, and there is no established link from astrology to financial prices. Published coverage is **2026–2027** only. Live WebRequest requires allowlisting `https://enggarprasetiyodaviandhoni.github.io`. Strategy Tester cannot WebRequest, so it reads the bundled/local `CEBONK_C2_ASTRO.csv`, with configured historical GMT offset (nominal broker GMT+3). The EA checks complete weekly data, including month crossover. It fails closed if model, coverage, date conversion or cache is invalid. `AcceptExperimentalAstro=false` by default until the user opts in; `UseWeeklyDominance=true` by default. Disable weekly filtering only for explicitly labeled technical-only comparison tests, never to claim the same strategy.
 
-- Live: `ASTRO_WEB_CSV`, poll from GitHub Pages `YYYY-MM.csv` (must allow WebRequest URL in MT5 terminal settings). Parser requires exact CSV header, model tag, ascending disjoint UTC 5-minute-aligned windows. Only valid BUY/SELL allowed at **both signal close and live execution**; NEUTRAL, TRANSITION, OUTSIDE, stale month, failed fetch, malformed file = **no entry**.
-- Strategy Tester: **WebRequest is unavailable**. Automatically read local `CEBONK_C2_ASTRO.csv` in `MQL5/Files` / `Tester/Files` or tester inclusion via `#property tester_file`, even if input says WEB. Configure `AstroFixedServerUTCMinutes` to historical broker offset (NOZAX nominal GMT+3 = 180). If server daylight time shifts, split tests accordingly; do not pretend offset accuracy.
-- Safety: `AcceptExperimentalAstro=false` by default, so filter remains closed until explicit acknowledgment. `ASTRO_OFF` permits technical-only A/B testing and bypasses astrology.
-- Before 2026 or after 2027 the published CSV has no coverage; history without data **fails closed**. To test 2024–25 you need a same-model, verified publication for those years.
-- Astrology direction has no established causal validity for XAUUSD. Backtest technical-only vs astrology-gated and track sample size, separated BUY/SELL WR, PF, monthly net, drawdown and slippage.
+## Safety
 
-## Installation
+- Chart symbol (`XAUUSDc` when attached there), fixed lot 0.01 validated against min/max/step, spread <=70 **points**.
+- Risk <=1% account equity per planned order, daily equity stop 5%, max one open EA position by default; SL buffer 100 points, max SL 6000 points and max CB1 chase 700 points.
+- Duplicate signal lock by account/symbol/magic/scanner-TF/pattern-D timestamp, claim before sending any order. Broker refusals after claim are not retried; no martingale/recovery/layering.
+- **AUTOPILOT OFF and REAL-ACCOUNT LOCK ON by default.** Demo hedging account required for initial tests. Optional Telegram/push are off by default and tokens must never be committed. Only button on chart.
+- No guarantee of a daily trade, any win rate, or positive monthly P&L.
 
-Simplest: `CEBONK_HARMONIC_ASTRO_FULL_SINGLE_v1.10.mq5` in `MQL5/Experts`; all modules are in one file.
-Alternative modular: copy the main `.mq5` and **both** `.mqh` files to the same `MQL5/Experts` directory. The `.txt` is an identical standalone copy to download on Android, rename to `.mq5` on PC.
+## Files & install
 
-1. Compile in **MetaEditor 5** (0 errors required). No MetaEditor/MT5 compilation was performed in this environment.
-2. Add `https://enggarprasetiyodaviandhoni.github.io` and optional `https://api.telegram.org` under Tools > Options > Expert Advisors > WebRequest allowlist. Test HTTP + actual signal availability in Journal.
-3. Check time conversion and volume rules, choose strategy and enabled patterns, and turn AUTOPILOT ON on a demo hedging account.
-4. Backtest real ticks/walk-forward 2026–2027 with matching published data; extend historic feed for 2024–2025 separately. Verify trade log, invalid stop, order rejection, duplicate fill, restart, partial fills, Fibonacci targets, forced skip on contradictory TFs and no connection.
-5. Only consider live deployment after independent audits. There is **no guarantee** of daily entries, WR >=45% or positive P&L every month.
+The easiest install: `CEBONK_HARMONIC_ASTRO_FULL_SINGLE_v1.21.mq5` is **standalone**; copy to MT5 `MQL5/Experts` and compile. `.txt` is an identical mirror for mobile; rename it to `.mq5` on desktop. Modular alternative: `CEBONK_HARMONIC_ASTRO_FULL_v1.21.mq5` + `HarmonicScanner.mqh` + `AstroWeeklyDirection.mqh` side by side.
 
-## Mandatory status
+### Validation
 
-- [x] Source created, fallback disallowed, modular & standalone forms.
-- [ ] MetaEditor compile: **not run**.
-- [ ] MT5 broker-tick backtest and forward demo: **not run**.
-- [ ] Profit targets verified: **not run**.
+- Static source, mirror parity and synthetic dominance contracts are checked by GitHub Actions.
+- **MetaEditor compilation not completed. MT5 real-tick backtest not completed.** No profitability figures are claimed.
+- Required before live: compile 0 errors, broker XAUUSDc real tick tester, explicit Monday-daily-opposite-vs-weekly test, buy/sell WR and PF separately, monthly net, max equity DD, no duplicated fills, bad-feed fail-closed, order retcodes and Telegram delivery.
+
+Versions v1.10/v1.20 are retained for audit, but **v1.21 is the new candidate**, not merged live.
