@@ -56,3 +56,15 @@ Modul `assets/bazi-annual-core.js` dan `assets/bazi-annual-ui.js` membuat ringka
 - Tidak menghasilkan order, saran entry, jaminan tren, atau proyeksi angka harga masa depan.
 
 Pengujian: `node tests/bazi-annual.test.cjs`. Workflow `.github/workflows/metal-history.yml` menjalankan regresi ini pada perubahan source terkait.
+
+## Grafik riwayat 12M berdasarkan referensi TradingView
+
+Screenshot TradingView pengguna dipakai sebagai **referensi bentuk analisis tahunan**, bukan sumber harga numerik, bukan data feed, dan bukan aset yang disalin ke dalam repo. Timeframe 12M pada TradingView lazimnya merepresentasikan satu **candle OHLC 12 bulan**, sedangkan World Bank Pink Sheet hanya menyediakan **rata-rata harga setiap bulan**. Tidak boleh mengubah angka rata-rata bulanan menjadi OHLC tahunan palsu.
+
+- Modul terpisah `assets/metal-12m-core.js` dan `assets/metal-12m-ui.js` mengelompokkan 12 rata-rata bulanan berdasarkan **tahun kalender**. Tiap batang menunjukkan **rata-rata harga bulanan dalam tahun itu**, bukan candle atau penutupan akhir tahun.
+- Harga perak dan emas dapat dipilih, grafik mulai 1960/1980/2000/2010/2020, pilihan linear/logaritmik (harga positif), tahun pemeriksaan, rentang bulan teramati, dan penjelasan shio/elemen **sebagai label tahun kalender**, bukan pergantian harian BaZi.
+- Untuk 12 bulan lengkap, klasifikasi NAIK/TURUN membandingkan **rata-rata harga tahun berjalan** dengan rata-rata 12 bulan tahun sebelumnya. Untuk tahun belum lengkap, arah diberi label **BELUM LENGKAP**; perbandingan sementara hanya memakai bulan-bulan kalender yang sama pada tahun sebelumnya.
+- Grafik tidak mengisi bulan hilang dan tidak mengeluarkan HIGH/LOW yang direkayasa. Analisis perbedaan 60 tahun contoh 1966/2026 ditampilkan jika tersedia, tanpa probabilitas/prediksi.
+- Update otomatis tetap menggunakan `.github/workflows/metal-history.yml` dari sumber World Bank setiap Rabu; situs memuat data ketika halaman dibuka, bukan harga live. Uji `node tests/metal-12m.test.cjs` dijalankan bersama regresi sumber pasar.
+- Screenshot 12M dapat menunjukkan periode lonjakan/penurunan secara visual, tetapi tidak boleh digunakan untuk merekonstruksi angka candle atau menarik kesimpulan bahwa kalender BaZi menyebabkan perubahan harga.
+
