@@ -22,6 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Full-pattern source contracts and bundle parity
-        run: python3 ea/harmonic_astro_full/test_static.py
+        run: |
+          python3 ea/harmonic_astro_full/test_static.py
+          python3 ea/harmonic_astro_full/test_independent_v121.py
       - name: Source footprint
         run: wc -c ea/harmonic_astro_full/*mq5 ea/harmonic_astro_full/*mqh ea/harmonic_astro_full/*txt
