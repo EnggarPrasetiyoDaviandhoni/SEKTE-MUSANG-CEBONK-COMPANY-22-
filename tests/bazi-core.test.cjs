@@ -38,7 +38,7 @@ assert.throws(()=>B.parse('2026-02-30','12:00'),/tidak valid/);
 assert.throws(()=>B.parse('2026-10-09','24:00'),/00:00/);
 assert.equal(B.todayWIB(Date.UTC(2026,9,9,0,0)).time,'07:00');
 assert(src.includes('assets/bazi-core.js?v=1.0.0'));
-assert(src.includes('assets/bazi-ui.js?v=1.0.0'));
+assert(src.includes('assets/bazi-ui.js?v=1.1.0'));
 assert(src.indexOf('assets/bazi-core.js')<src.indexOf('assets/bazi-ui.js'));
 for(const legacy of ['assets/astro-news-v1.js','assets/astro-candles.js','assets/astro-daily-brief.js'])assert(src.includes(legacy));
 for(const removed of ['tabBBMA','tabLiquidity','assets/technical-scanners-core.js','assets/technical-scanners-ui.js'])assert(!src.includes(removed));
