@@ -42,9 +42,21 @@ function show(){
 async function load(){
  $('mhStatus').textContent='Memeriksa arsip harga bulanan…';
  try{
-  const res=await fetch('data/market-history.json?v=1.0.0',{cache:'no-store'});
-  if(!res.ok)throw Error('Arsip belum tersedia (HTTP '+res.status+').');
-  const doc=await res.json();if(!doc||!doc.data)throw Error('Struktur arsip salah.');
+  const urls=[
+   'https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/data/market-history.json',
+   'data/market-history.json?v=1.0.0'
+  ];
+  let doc=null,issue='Sumber harga tidak merespons.';
+  for(const url of urls){
+   try{
+    const res=await fetch(url,{cache:'no-store'});
+    if(!res.ok)throw Error('HTTP '+res.status);
+    const loaded=await res.json();
+    if(loaded?.frequency!=='monthly_average'||!loaded?.data)throw Error('Format sumber tidak sesuai.');
+    doc=loaded;break;
+   }catch(e){issue=e.message||String(e);}
+  }
+  if(!doc)throw Error(issue);
   for(const sym of ['XAUUSD','XAGUSD']){
    state.data[sym]=M.rows(doc.data[sym]||[]);
    state.sources[sym]=(doc.source||'Data historis bulanan')+' · diperbarui '+(doc.retrieved||'tanggal tidak diketahui');
