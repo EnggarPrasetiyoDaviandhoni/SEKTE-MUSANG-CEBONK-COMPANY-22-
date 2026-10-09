@@ -35,11 +35,11 @@ async function getSolar(){
 function yearTiles(){
  const grouped=B.SHIO.map((name,i)=>({name,icon:icons[i],years:B.years(1912,2055).filter(y=>y.animal===name)}));
  return grouped.map(x=>'<article class="bz-zodiac"><h3>'+x.icon+' '+x.name+'</h3><div class="bz-years">'+
-  x.years.map(y=>'<span class="bz-year'+(y.year===2026?' bz-current':'')+'" title="'+esc(y.text)+' · '+esc(y.element)+' · mulai Li Chun" style="--zy:'+hues[y.element]+'">'+y.year+'</span>').join('')+
+  x.years.map(y=>'<span class="bz-year'+(y.year===2026?' bz-current':'')+'" title="'+esc(y.element)+' · '+esc(y.animal)+' · mulai awal tahun BaZi" style="--zy:'+hues[y.element]+'">'+y.year+'</span>').join('')+
   '</div></article>').join('');
 }
 function pillarCard(name,p){
- return '<article class="bz-pillar"><small>'+name+'</small><strong>'+esc(p.text)+'</strong><span>'+esc(p.yinYang)+' '+esc(p.element)+'</span><span>'+esc(p.animal)+' · '+esc(p.branchElement)+'</span></article>';
+ return '<article class="bz-pillar"><small>'+name+'</small><strong>'+esc(p.yinYang+' '+p.element)+'</strong><span>'+esc(p.animal)+'</span><span>'+esc('Elemen shio: '+p.branchElement)+'</span></article>';
 }
 function render(){
  if(!calculated)return;
@@ -55,9 +55,9 @@ function render(){
   '<div class="bz-element"><span>'+name+'</span><div class="bz-track"><i style="width:'+x.elements[name]*12.5+'%;background:'+hues[name]+'"></i></div><b>'+x.elements[name]+'/8</b></div>'
  ).join('');
  $('bzRelations').innerHTML=x.relationships.length?x.relationships.map(r=>
-  '<span class="bz-relation">'+(r.kind==='CLASH'?'Clash / 冲':'Kombinasi / 六合')+' · '+esc(r.pair)+' ('+r.from+'–'+r.to+')</span>'
- ).join(''):'<span class="bz-dim">Tidak ada pasangan Clash / Liu He di empat cabang.</span>';
- const map=periods.map(p=>'<tr><td class="bz-mono">'+p.range+'</td><td>'+esc(p.pillars.year.text)+'</td><td>'+esc(p.pillars.month.text)+'</td><td>'+esc(p.pillars.day.text)+'</td><td><strong>'+esc(p.pillars.hour.text)+'</strong></td><td>'+esc(p.pillars.hour.animal)+'</td></tr>').join('');
+  '<span class="bz-relation">'+(r.kind==='CLASH'?'Benturan shio':'Kombinasi shio')+' · '+esc([...r.pair].map(z=>B.SHIO[B.ZHI.indexOf(z)]).join(' — '))+' ('+r.from+'–'+r.to+')</span>'
+ ).join(''):'<span class="bz-dim">Tidak ada pasangan benturan atau kombinasi dalam empat pilar.</span>';
+ const map=periods.map(p=>'<tr><td class="bz-mono">'+p.range+'</td><td>'+esc(p.pillars.year.yinYang+' '+p.pillars.year.element+' '+p.pillars.year.animal)+'</td><td>'+esc(p.pillars.month.yinYang+' '+p.pillars.month.element+' '+p.pillars.month.animal)+'</td><td>'+esc(p.pillars.day.yinYang+' '+p.pillars.day.element+' '+p.pillars.day.animal)+'</td><td><strong>'+esc(p.pillars.hour.yinYang+' '+p.pillars.hour.element+' '+p.pillars.hour.animal)+'</strong></td><td>'+esc(p.pillars.hour.animal)+'</td></tr>').join('');
  $('bzSchedule').innerHTML=map;
  $('bzStatus').textContent='13 segmen waktu WIB selesai · '+x.date+' · BaZi v'+B.VERSION;
  $('bzDownload').disabled=false;
@@ -66,7 +66,7 @@ function csvQuote(x){return '"'+String(x).replace(/"/g,'""')+'"';}
 function exportCSV(){
  if(!calculated)return;
  const header=['Tanggal_WIB','Rentang_WIB','Pilar_Tahun','Pilar_Bulan','Pilar_Hari','Pilar_Jam','Elemen_Jam','Shio_Jam','Metode','Arah_harga'];
- const rows=calculated.periods.map(p=>[p.date,p.range,p.pillars.year.text,p.pillars.month.text,p.pillars.day.text,p.pillars.hour.text,p.pillars.hour.element,p.pillars.hour.animal,'BaZi_JieQi_WIB','TIDAK_DIHITUNG']);
+ const rows=calculated.periods.map(p=>[p.date,p.range,[p.pillars.year,p.pillars.month,p.pillars.day,p.pillars.hour].map(a=>a.yinYang+' '+a.element+' '+a.animal).join('|'),p.pillars.hour.element,p.pillars.hour.animal,'BaZi_JieQi_WIB','TIDAK_DIHITUNG']);
  const blob=new Blob(['\uFEFF'+[header,...rows].map(row=>row.map(csvQuote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
  const href=URL.createObjectURL(blob),a=document.createElement('a');a.href=href;a.download='CEBONK_BAZI_WIB_'+calculated.data.date+'.csv';a.click();
  setTimeout(()=>URL.revokeObjectURL(href),1500);
@@ -135,18 +135,18 @@ function mount(){
  const tab=document.createElement('button');tab.id='tabBazi';tab.className='viewtab';tab.type='button';tab.textContent='BAZI ASTROLOGY';nav.appendChild(tab);
  const view=document.createElement('section');view.id='baziView';view.hidden=true;
  view.innerHTML=[
- '<div class="bz-hero"><small>SEKTE MUSANG · CEBONK COMPANY 22</small><h2>BAZI ASTROLOGY 八字</h2><p>Kalender Four Pillars · Shio · Five Elements · Jadwal WIB · Riset XAUUSD / XAGUSD</p></div>',
+ '<div class="bz-hero"><small>SEKTE MUSANG · CEBONK COMPANY 22</small><h2>BAZI ASTROLOGY</h2><p>Empat Pilar · Shio · Lima Elemen · Jadwal WIB · Riset XAUUSD / XAGUSD</p></div>',
  '<div class="bz-note"><strong>Ini kalender astrologi, bukan sinyal trading.</strong> Kombinasi elemen, Clash, dan jam BaZi belum membuktikan arah atau probabilitas harga XAUUSD maupun XAGUSD. Modul ini tidak mengubah mesin Astrology lama.</div>',
  '<div class="bz-panel"><div class="bz-head">Hitung BaZi · Zona Asia/Jakarta (WIB)</div><div class="bz-body"><div class="bz-controls">',
  '<label>Tanggal WIB<input type="date" id="bzDate" min="1900-01-01" max="2099-12-31"></label>',
  '<label>Jam WIB<input type="time" id="bzHour" step="60"></label>',
- '<label class="bz-sect">Batas hari Zi (23:00)<select id="bzSect"><option value="2">Sekte 2 · hari lama sampai 23:59</option><option value="1">Sekte 1 · hari baru mulai 23:00</option></select></label>',
+ '<label class="bz-sect">Batas pergantian hari (23:00)<select id="bzSect"><option value="2">Aturan 2 · hari lama sampai 23:59</option><option value="1">Aturan 1 · hari baru mulai 23:00</option></select></label>',
  '<button type="button" id="bzToday">Hari ini</button><button type="button" class="primary" id="bzRun">Hitung BaZi</button>',
  '</div><p class="bz-status" id="bzStatus">Pilih tanggal dan jam untuk menghitung.</p><div class="bz-error" id="bzError" hidden role="alert"></div></div></div>',
- '<div class="bz-panel"><div class="bz-head">Four Pillars / 八字 · <span id="bzTime" style="font-weight:400;font-size:11px"></span></div><div class="bz-body"><div class="bz-pillars" id="bzPillars"></div><p class="bz-legend">Tahun dan bulan mengikuti solar term Jie Qi / Li Chun (waktu Beijing untuk satu UTC yang sama). Hari dan jam mengikuti WIB. Belum dikoreksi waktu matahari sejati menurut bujur lokasi.</p></div></div>',
- '<div class="bz-two"><div class="bz-panel"><div class="bz-head">5 Elemen · 8 karakter terlihat</div><div class="bz-body"><div id="bzElements"></div><p class="bz-legend">Jumlah elemen batang & cabang (8 karakter) saja, bukan kekuatan elemen atau saran transaksi.</p></div></div>',
- '<div class="bz-panel"><div class="bz-head">Clash / 冲 & Liu He / 六合</div><div class="bz-body"><div id="bzRelations"></div><p class="bz-legend">Relasi tradisional antar cabang empat pilar, tanpa bobot prediksi harga.</p></div></div></div>',
- '<div class="bz-panel"><div class="bz-head">Jadwal 2 jam WIB · 1 hari penuh</div><div class="bz-body"><p class="bz-dim">Tabel memuat 00:00–00:59 dan 23:00–23:59 sebagai dua bagian Zi. Batas 23:00 dapat mengubah pilar hari sesuai pilihan sekte.</p><button type="button" id="bzDownload" disabled>Unduh CSV</button></div>',
+ '<div class="bz-panel"><div class="bz-head">Empat Pilar · <span id="bzTime" style="font-weight:400;font-size:11px"></span></div><div class="bz-body"><div class="bz-pillars" id="bzPillars"></div><p class="bz-legend">Tahun dan bulan mengikuti pergantian musim kalender surya Cina (zona UTC+8 untuk waktu yang sama). Hari dan jam mengikuti WIB. Belum dikoreksi waktu matahari sejati menurut bujur lokasi.</p></div></div>',
+ '<div class="bz-two"><div class="bz-panel"><div class="bz-head">Lima Elemen · 8 karakter</div><div class="bz-body"><div id="bzElements"></div><p class="bz-legend">Jumlah elemen batang & cabang (8 karakter) saja, bukan kekuatan elemen atau saran transaksi.</p></div></div>',
+ '<div class="bz-panel"><div class="bz-head">Benturan dan Kombinasi Shio</div><div class="bz-body"><div id="bzRelations"></div><p class="bz-legend">Relasi tradisional antar cabang empat pilar, tanpa bobot prediksi harga.</p></div></div></div>',
+ '<div class="bz-panel"><div class="bz-head">Jadwal 2 jam WIB · 1 hari penuh</div><div class="bz-body"><p class="bz-dim">Tabel memuat 00:00–00:59 dan 23:00–23:59 sebagai dua bagian jam pergantian hari. Batas 23:00 dapat mengubah pilar hari sesuai pilihan sekte.</p><button type="button" id="bzDownload" disabled>Unduh CSV</button></div>',
  '<div class="bz-scroller"><table><thead><tr><th>WIB</th><th>Tahun</th><th>Bulan</th><th>Hari</th><th>Jam</th><th>Shio Jam</th></tr></thead><tbody id="bzSchedule"></tbody></table></div></div>',
  '<div class="bz-panel"><div class="bz-head">12 Shio · Siklus 60 Tahun (1912–2055)</div><div class="bz-body"><p class="bz-dim">Warna tiap tahun menunjukkan elemen batang langit. Contoh Kuda Api: 1906, 1966, 2026. Tahun pada tabel dihitung mulai Li Chun, bukan otomatis sejak 1 Januari atau Tahun Baru Imlek.</p><div class="bz-yeargrid" id="bzZodiac"></div>',
  '<p class="bz-legend">Legenda: <span style="color:'+hues.Kayu+'">Kayu</span> · <span style="color:'+hues.Api+'">Api</span> · <span style="color:'+hues.Tanah+'">Tanah</span> · <span style="color:'+hues.Logam+'">Logam</span> · <span style="color:'+hues.Air+'">Air</span>. Sumber kalkulasi: lunar-javascript 1.7.7 (MIT).</p></div></div>'
