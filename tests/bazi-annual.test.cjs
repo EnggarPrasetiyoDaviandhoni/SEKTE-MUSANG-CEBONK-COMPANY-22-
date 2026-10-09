@@ -43,6 +43,6 @@ for(const path of ['assets/bazi-annual-core.js','assets/bazi-annual-ui.js'])asse
 const annualUI=fs.readFileSync('assets/bazi-annual-ui.js','utf8');
 assert.ok(!/[\u3400-\u9fff]/u.test(annualUI),'No Chinese characters in displayed UI');
 assert.ok(annualUI.includes('XAUUSD')&&annualUI.includes('XAGUSD'));
-assert.ok(annualUI.includes('2026')&&annualUI.includes('2036'));
+assert.ok(annualUI.includes('length:11')&&annualUI.includes('2026+i'),'The year selector must span 2026–2036');
 assert.ok(fs.readFileSync('assets/market-trend-ui.js','utf8').includes('cebonk:market-history'));
 console.log('PASS: annual BaZi-year proxies 1960–2025, 2026 partial, cohort counts, no leakage, insufficient-sample guard and Indonesian UI.');
