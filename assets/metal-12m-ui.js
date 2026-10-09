@@ -66,9 +66,9 @@ function refresh(){
  $('m12Note').textContent=symbol+' · '+(sources[symbol]||'Sumber belum teridentifikasi')+' · tahun paling akhir '+series.at(-1).year+'.';
 }
 function mount(){
- const host=$('mhPanel')?.querySelector('.mh-body');if(!host||$('m12Panel'))return;
+ const anchor=$('ayPanel')||$('mhPanel'),host=anchor?.parentElement;if(!host||$('m12Panel'))return;
  const css=document.createElement('style');css.textContent=
- '#m12Panel{border-top:1px solid #435771;padding-top:19px;margin-top:19px}#m12Panel h3{font-size:18px;margin:0 0 8px}#m12Panel p{font-size:12px;color:#b9c9db}#m12Panel .m12-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0}#m12Panel label{font-size:11px;color:#bac8d9}#m12Panel select{display:block;width:100%;margin-top:5px}#m12Panel .m12-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0}#m12Panel .m12-grid>div{padding:10px;background:#19293c;border:1px solid #37516b;border-radius:8px}#m12Panel .m12-grid small{display:block;font-size:10px;color:#aebfd1;margin-bottom:4px}#m12Panel .m12-grid strong{display:block;font-size:13px;overflow-wrap:anywhere}#m12Panel .m12-scroll{overflow-x:auto;border:1px solid #34455a;background:#0c1828;border-radius:9px;padding:9px;max-width:100%}#m12Panel .m12-scroll svg{display:block;max-width:none}#m12Panel .m12-legend{font-size:11px;color:#bdcee0;margin:8px 0}#m12Panel .m12-warning{font-size:12px;background:#30281b;border-left:3px solid #ddab51;padding:10px;color:#f4dcac;border-radius:5px}@media(max-width:760px){#m12Panel .m12-actions{grid-template-columns:1fr 1fr}#m12Panel .m12-grid{grid-template-columns:1fr 1fr}}';
+ '#m12Panel{border:1px solid #56768f;border-radius:12px;background:#101d30;padding:16px;margin:18px 0}#m12Panel h3{font-size:18px;margin:0 0 8px}#m12Panel p{font-size:12px;color:#b9c9db}#m12Panel .m12-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0}#m12Panel label{font-size:11px;color:#bac8d9}#m12Panel select{display:block;width:100%;margin-top:5px}#m12Panel .m12-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0}#m12Panel .m12-grid>div{padding:10px;background:#19293c;border:1px solid #37516b;border-radius:8px}#m12Panel .m12-grid small{display:block;font-size:10px;color:#aebfd1;margin-bottom:4px}#m12Panel .m12-grid strong{display:block;font-size:13px;overflow-wrap:anywhere}#m12Panel .m12-scroll{overflow-x:auto;border:1px solid #34455a;background:#0c1828;border-radius:9px;padding:9px;max-width:100%}#m12Panel .m12-scroll svg{display:block;max-width:none}#m12Panel .m12-legend{font-size:11px;color:#bdcee0;margin:8px 0}#m12Panel .m12-warning{font-size:12px;background:#30281b;border-left:3px solid #ddab51;padding:10px;color:#f4dcac;border-radius:5px}@media(max-width:760px){#m12Panel .m12-actions{grid-template-columns:1fr 1fr}#m12Panel .m12-grid{grid-template-columns:1fr 1fr}}';
  document.head.appendChild(css);
  const section=document.createElement('section');section.id='m12Panel';
  section.innerHTML='<h3>GRAFIK RIWAYAT 12 BULAN · 1960–SEKARANG</h3>'+
@@ -81,7 +81,7 @@ function mount(){
  '<div class="m12-scroll" id="m12Graph" aria-live="polite"></div><div id="m12Details"></div>'+
  '<p id="m12Note" aria-live="polite">Menunggu data…</p>'+
  '<div class="m12-warning"><b>Batasan data:</b> 12M pada screenshot TradingView adalah candle 12 bulan. Arsip World Bank hanya memberikan rata-rata bulanan. Maka grafik ini tidak mengklaim memiliki open/high/low/close asli. Tahun terakhir yang belum selesai ditandai jelas dan dibandingkan hanya dengan bulan sepadan pada tahun sebelumnya. Shio/elemen berdasarkan nama tahun; batas awal tahun BaZi berbeda dari 1 Januari. Riwayat tidak membuktikan kemampuan BaZi memprediksi harga.</div>';
- const anchor=$('ayPanel');if(anchor)host.insertBefore(section,anchor);else host.appendChild(section);
+ host.insertBefore(section,anchor);
  for(const id of ['m12Symbol','m12Year','m12Scale','m12From'])$(id).addEventListener('change',()=>{
   if(id==='m12Symbol')symbol=safeSymbol($('m12Symbol').value);
   if(id==='m12Symbol')$('m12Year').innerHTML='';
