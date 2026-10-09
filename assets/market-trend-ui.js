@@ -27,6 +27,7 @@ function show(){
   ['Tren historis','<span class="'+trendClass+'">'+t.direction+'</span>'],
   ['Rata-rata '+t.month,'$'+money(t.price)],
   ['Perubahan 3 bulan',signed(t.change[3])],
+  ['Perubahan 6 bulan',signed(t.change[6])],
   ['Perubahan 12 bulan',signed(t.change[12])],
   ['Rata-rata 3 bulan','$'+money(t.ma3)],
   ['Rata-rata 12 bulan','$'+money(t.ma12)],
