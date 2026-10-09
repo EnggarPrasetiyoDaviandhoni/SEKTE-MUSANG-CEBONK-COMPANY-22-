@@ -42,7 +42,8 @@ function summarize(days,step=5,minWindow=30){
   for(const x of candidates)items.push({date:day.date,weekday:NAMES[i],direction:x.state,start:x.start,core:x.best.ms,end:x.end,minutes:(x.end-x.start)/MIN,score:x.best.score});
   buys+=b;sells+=s;neutral+=n;
   const dDir=b>s?'BUY':s>b?'SELL':'CAMPURAN';
-  totals.push({date:day.date,weekday:NAMES[i],buyMinutes:b*step,sellMinutes:s*step,otherMinutes:n*step,dominant:dDir,qualified:candidates.length});
+  const dailyBest=candidates.filter(x=>x.state===dDir).sort((a,b)=>b.slots-a.slots||Math.abs(b.best.score||0)-Math.abs(a.best.score||0)||a.start-b.start)[0];
+  totals.push({date:day.date,weekday:NAMES[i],buyMinutes:b*step,sellMinutes:s*step,otherMinutes:n*step,dominant:dDir,qualified:candidates.length,best:dailyBest?{direction:dailyBest.state,start:dailyBest.start,core:dailyBest.best.ms,end:dailyBest.end,minutes:dailyBest.slots*step}:null});
   week.push({date:day.date,count:day.samples.length});
  }
  const directional=buys+sells,buyShare=directional?buys/directional:0,sellShare=directional?sells/directional:0;
