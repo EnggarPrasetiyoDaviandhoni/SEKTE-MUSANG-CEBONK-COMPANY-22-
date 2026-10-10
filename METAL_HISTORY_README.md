@@ -68,3 +68,16 @@ Screenshot TradingView pengguna dipakai sebagai **referensi bentuk analisis tahu
 - Update otomatis tetap menggunakan `.github/workflows/metal-history.yml` dari sumber World Bank setiap Rabu; situs memuat data ketika halaman dibuka, bukan harga live. Uji `node tests/metal-12m.test.cjs` dijalankan bersama regresi sumber pasar.
 - Screenshot 12M dapat menunjukkan periode lonjakan/penurunan secara visual, tetapi tidak boleh digunakan untuk merekonstruksi angka candle atau menarik kesimpulan bahwa kalender BaZi menyebabkan perubahan harga.
 
+
+## Fundamental emas dan perak dalam pembandingan siklus BaZi 60 tahun
+
+Tab BaZi kini memiliki tombol **FUNDAMENTAL 60 TAHUN** di bagian atas. Panel mandiri berada setelah grafik 12M dan sebelum dominasi tahunan. Pilih XAUUSD/XAGUSD dan tahun 1960–2050. Tahun 2026 diperbandingkan dengan 1966; bila perbandingan 60 tahun jatuh sebelum data 1960, UI menampilkan tidak tersedia.
+
+- **Harga yang berubah otomatis:** arsip World Bank Pink Sheet `data/market-history.json`; rerata bulan pada tahun yang dipilih dibanding rata-rata bulan yang sama tahun sebelumnya. Untuk 12 bulan penuh muncul "TAHUN PENUH"; periode parsial bertanda "BELUM LENGKAP" dan memakai pembandingan *bulan sepadan* agar tidak menyesatkan.
+- **Kronologi fundamental dengan sumber dokumenter:** `assets/fundamental-60y-core.js`. Peristiwa tahun terkait dan satu tahun sebelum/sesudah ditampilkan untuk menghindari tertukarnya periode tahun kalender, awal tahun BaZi (sekitar Februari), dan waktu kejadian aktual.
+- **Faktor yang bisa dijelaskan:** patokan harga emas/perak pemerintah 1966, pelepasan kebijakan perak 1967, penutupan konvertibilitas emas 1971, pengetatan Volcker dan spekulasi/pembatasan kontrak perak 1979–1982, krisis likuiditas 2008, krisis utang 2011, imbal hasil 2013, pandemi 2020, pertentangan dolar/imbal hasil dan bank sentral 2022, tekanan bunga/dolar dan prospek pasokan industri 2026.
+- **Sumber riset/primer:** U.S. Mint (usmint.gov), Federal Reserve History (federalreservehistory.org), CFTC (cftc.gov), World Gold Council (gold.org), Silver Institute (silverinstitute.org). Setiap peristiwa punya tautan resmi yang dapat dibuka langsung.
+- **Pembaruan:** Harga otomatis diperbarui sesuai data World Bank; kronologi fundamental **merupakan katalog terkurasi, bukan feed berita live atau kalendar ekonomi otomatis**. Tambahan peristiwa memerlukan verifikasi sumber dan revisi kode/dataset. Jangan menampilkan klaim fundamental real-time bila belum ada sumber yang melaporkan.
+- **Interpretasi:** pengelompokan 60 tahun dan shio/elemen bukan hubungan sebab-akibat, tidak menghasilkan entry BUY/SELL dan tidak memberikan bobot kontribusi makro yang belum dihitung. Tidak ada OHLC rekaan, tidak mengaitkan satu peristiwa dengan seluruh perubahan harga tahunan tanpa pengujian.
+- **Pemeriksaan:** `node tests/fundamental-60y.test.cjs`. Workflow `.github/workflows/metal-history.yml` juga menjalankan validasi sintaks dan data historis sebelum memperbarui arsip.
+
