@@ -9,13 +9,15 @@ for(const symbol of ['XAUUSD','XAGUSD']){
  const data=archive.data[symbol],annual=Core.build(data);
  assert.ok(annual.length>=65,'Long-term historical coverage');
  assert.equal(annual[0].year,1960);
- assert.equal(annual.at(-1).year,2026);
+ assert.equal(annual.at(-1).year,Number(data.at(-1)[0].slice(0,4)));
  assert.equal(annual[0].months,12);
  assert.equal(annual[0].complete,true);
- assert.equal(annual.at(-1).months,9);
- assert.equal(annual.at(-1).complete,false);
- assert.equal(annual.at(-1).direction,'BELUM LENGKAP');
- assert.equal(annual.at(-1).comparisonType,'BULAN SEPADAN TAHUN SEBELUMNYA');
+ assert.equal(annual.at(-1).months,Number(data.at(-1)[0].slice(5)));
+ assert.equal(annual.at(-1).complete,annual.at(-1).months===12);
+ if(!annual.at(-1).complete){
+  assert.equal(annual.at(-1).direction,'BELUM LENGKAP');
+  assert.equal(annual.at(-1).comparisonType,'BULAN SEPADAN TAHUN SEBELUMNYA');
+ }
  assert.equal(annual.find(x=>x.year===1966).shio,'Kuda');
  assert.equal(annual.find(x=>x.year===1966).element,'Api');
  assert.equal(annual.find(x=>x.year===2026).shio,'Kuda');
@@ -25,9 +27,9 @@ for(const symbol of ['XAUUSD','XAGUSD']){
  assert.equal(report.ok,true);
  assert.equal(report.analogue.year,1966);
  assert.ok(report.history.n>=60);
- assert.equal(report.year.average,annual.at(-1).average);
+ assert.equal(report.year.average,annual.find(x=>x.year===2026).average);
  assert.equal(report.year.first,'2026-01');
- assert.equal(report.year.last,'2026-09');
+ assert.equal(report.year.last,data.filter(x=>x[0].startsWith('2026-')).at(-1)[0]);
  assert.equal(Core.analyze(data,1900).ok,false);
  assert.ok(!Object.hasOwn(report.year,'open'));
  assert.ok(!Object.hasOwn(report.year,'high'));
