@@ -1,4 +1,4 @@
-# CEBONK BBMA + FMCBR 2TF + Fibo Musang Elite AUTO LOT v1.01
+# CEBONK BBMA + FMCBR 2TF + Fibo Musang Elite AUTO LOT v1.02
 
 Independent, EXPERIMENTAL MT5 EA. Old BBMA 3TF and existing website are not overwritten.
 
@@ -67,3 +67,16 @@ NOT METAEDITOR-COMPILED OR REAL-TICK BACKTESTED by this GitHub delivery. Review 
 - CEBONK_BBMA_FMCBR_2TF_AUTOLOT_v1.01_DEFAULT.set: matching inputs preset.
 - For D1/W1/MN1 TF2, a retest candle commonly closes outside 07:00–23:00 broker session. If InpDeferHighTFSession=true, a valid closed retest may be held up to InpHighTFWaitHours=24 until the next allowed session; CANCEL if BBMA direction/sideways changes, price crosses stop-side zone, or entry deviates by more than the zone width from retest close. This allows higher-timeframe setups to be tested without trading outside the requested session. It is NOT a guarantee of an entry or ideal price.
 - IMPORTANT: The screenshot title 'xtc on XAUUSDc,H1' shows the tester Expert as 'xtc'. Ensure the selected Expert is actually the newly compiled v1.01 source, not an older EA named xtc.
+
+## v1.02 — compulsory TF1 MA50 full-candle filter
+
+- New release candidate: CEBONK_BBMA_FMCBR_2TF_AUTOLOT_v1.02.mq5, matching v1.02.txt, and v1.02_DEFAULT.set.
+- TF1 is still BBMA CSA / CSAK / CSM; TF2 still FMCBR EL2 / EL3A. EMA50 is an ADDITIONAL mandatory TF1 gate.
+- BUY direction allowed only when EMA50 is STRICTLY BELOW the LOW of the latest CLOSED TF1 candle. Therefore both body and lower wick are fully above MA50.
+- SELL direction allowed only when EMA50 is STRICTLY ABOVE the HIGH of the latest CLOSED TF1 candle. Therefore both body and upper wick are fully below MA50.
+- If a candle touches/crosses EMA50 or MA50 buffer is unavailable, peta arah = NEUTRAL, NO ENTRY. Pending FMCBR setups are invalidated when TF1 bias is invalidated by MA50.
+- Inputs: InpMA50Period=50 and InpMA50Method=MODE_EMA (numeric .set ENUM value 1), PRICE_CLOSE, zero shift. MA50 is calculated only on TF1 and acts on CLOSED TF1 bars; never the unfinished candle.
+- EMA is chosen to match the default MA50 method of the old CEBONK BBMA 3TF source in this repository. The method input remains adjustable in MT5.
+- History warmup requests and verifies MA50, requiring at least MA50Period+10 TF1 bars. Short historical tests and W1/MN1 may need earlier downloaded history.
+- Nothing changes in structural SL (zero buffer), RR 1:2, risk-based Auto Lot, sideways veto, 21 TF selection, broker spread guard, session, or notification settings.
+- Validation status: source created / static reviewed; actual MetaEditor compile and historical Strategy Tester outcomes have NOT been verified.
