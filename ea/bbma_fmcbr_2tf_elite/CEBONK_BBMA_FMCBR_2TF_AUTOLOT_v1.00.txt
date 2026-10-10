@@ -2,7 +2,7 @@
 // BBMA peta arah TF1 -> FMCBR Musang Elite EL2/EL3A TF2.
 // Eksperimental. Uji MetaEditor + Strategy Tester sebelum live.
 #property strict
-#property version "1.00"
+#property version "1.01"
 #property description "CEBONK BBMA 2TF FMCBR MUSANG ELITE AUTO LOT"
 #include <Trade/Trade.mqh>
 
@@ -57,6 +57,7 @@ int hMA5High=INVALID_HANDLE,hMA10High=INVALID_HANDLE;
 datetime processedBar=0;
 bool historyPrimed=false;
 datetime lastHistoryLogBar=0;
+bool historyWaitLogged=false;
 bool autopilot=true;
 string buttonName="CEBONK_2TF_ELITE_AUTOPILOT",claimKey="";
 double eliteLevels[18]={0.0,0.12,0.236,0.382,0.5,0.786,0.88,
@@ -118,15 +119,38 @@ bool NativeTimeframe(ENUM_TIMEFRAMES tf)
       default: return false;
    }
 }
-// History warm-up is per SELECTED pair; missing a higher timeframe
-// never disables another test run/combination.
+// Proactively request buffers. In tester indicators are lazy-calculated on demand;
+// checking BarsCalculated alone before any CopyBuffer may starve warmup indefinitely.
+bool PrimeIndicator(int h)
+{
+   double v[1];
+   if(CopyBuffer(h,0,1,1,v)!=1)return false;
+   return MathIsValidNumber(v[0]) && v[0]!=EMPTY_VALUE;
+}
+// Selected-pair warmup. Other unavailable pairs NEVER affect this tester pass.
+// No silent permanent startup: print a diagnostic when waiting for missing bars.
 bool HistoryReady()
 {
-   int need1=(int)MathMax(30,MathMax(InpATRPeriod+InpMidSlopeBars+5,InpTF1SignalAgeBars+11));
+   if(historyPrimed)return true;
+   int need1=(int)MathMax(30,MathMax(InpATRPeriod+InpMidSlopeBars+5,
+                       InpTF1SignalAgeBars+11));
    int need2=(int)MathMax(InpCBLookback+6,
                           MathMax(InpZoneLookback+5,InpATRPeriod+InpMidSlopeBars+5));
+   MqlRates warm1[2],warm2[2];
+   // Request both TF series before inspecting Bars/indicator status.
+   int r1=CopyRates(_Symbol,InpTF1,1,2,warm1);
+   int r2=CopyRates(_Symbol,InpTF2,1,2,warm2);
+   bool p1=PrimeIndicator(hBB);
+   bool p2=PrimeIndicator(hATR);
+   bool p3=PrimeIndicator(hMA5Low);
+   bool p4=PrimeIndicator(hMA10Low);
+   bool p5=PrimeIndicator(hMA5High);
+   bool p6=PrimeIndicator(hMA10High);
+   bool p7=PrimeIndicator(hBB2);
+   bool p8=PrimeIndicator(hATR2);
    int b1=Bars(_Symbol,InpTF1),b2=Bars(_Symbol,InpTF2);
-   bool ready=(b1>=need1 && b2>=need2 &&
+   bool ready=(r1==2 && r2==2 && b1>=need1 && b2>=need2 &&
+       p1 && p2 && p3 && p4 && p5 && p6 && p7 && p8 &&
        BarsCalculated(hBB)>=need1 &&
        BarsCalculated(hATR)>=need1 &&
        BarsCalculated(hMA5Low)>=need1 &&
@@ -138,11 +162,14 @@ bool HistoryReady()
    if(!ready)
    {
       datetime mark=iTime(_Symbol,InpTF2,0);
-      if(mark!=lastHistoryLogBar)
+      if(mark!=lastHistoryLogBar || !historyWaitLogged)
       {
-         lastHistoryLogBar=mark;
-         PrintFormat("WAIT_HISTORY: TF1=%s bars=%d/%d; TF2=%s bars=%d/%d. Load earlier broker history.",
-                 EnumToString(InpTF1),b1,need1,EnumToString(InpTF2),b2,need2);
+         lastHistoryLogBar=mark;historyWaitLogged=true;
+         PrintFormat("WAIT_HISTORY: TF1=%s %d/%d; TF2=%s %d/%d; buffers=%d%d%d%d%d%d%d%d. Use Every tick / Real ticks, not Open prices only on a higher tester TF.",
+                     EnumToString(InpTF1),b1,need1,
+                     EnumToString(InpTF2),b2,need2,
+                     (int)p1,(int)p2,(int)p3,(int)p4,
+                     (int)p5,(int)p6,(int)p7,(int)p8);
       }
    }
    return ready;
@@ -387,15 +414,22 @@ string DayKey()
    return StringFormat("C2D.%I64d.%I64u.%04d%02d%02d",
           AccountInfoInteger(ACCOUNT_LOGIN),InpMagic,t.year,t.mon,t.day);
 }
+// No zero-equity permanent lock: in some tester/initialization phases
+// account equity is not yet populated. Defer baseline capture until valid.
 double DayStartEquity()
 {
+   double equity=AccountInfoDouble(ACCOUNT_EQUITY);
+   if(!MathIsValidNumber(equity) || equity<=0)return 0;
    string key=DayKey();
-   if(!GlobalVariableCheck(key))
+   double stored=(GlobalVariableCheck(key)?GlobalVariableGet(key):0.0);
+   if(stored<=0)
    {
-      if(GlobalVariableSet(key,AccountInfoDouble(ACCOUNT_EQUITY))==0)return 0;
+      datetime result=GlobalVariableSet(key,equity);
+      if(result==0)return 0;
       GlobalVariablesFlush();
+      stored=equity;
    }
-   return GlobalVariableGet(key);
+   return stored;
 }
 // Portfolio cap checks all OPEN positions with the same EA magic, across symbols.
 // Missing/malformed SL fails closed instead of assuming zero exposure.
@@ -692,10 +726,15 @@ int OnInit()
    {
       GlobalVariableSet(claimKey,0);
       // Fresh risk-day baseline for each independent tester run.
-      GlobalVariableSet(DayKey(),AccountInfoDouble(ACCOUNT_EQUITY));
+      // May legitimately be zero until tester deposit is initialized.
+      // DayStartEquity() will capture the first valid value on a later tick.
+      double initialEquity=AccountInfoDouble(ACCOUNT_EQUITY);
+      if(initialEquity>0)GlobalVariableSet(DayKey(),initialEquity);
    }
    else if(!GlobalVariableCheck(claimKey))GlobalVariableSet(claimKey,0);
-   if(DayStartEquity()<=0)return INIT_FAILED;
+   // Do NOT fail OnInit just because visual tester has not populated Balance/Equity.
+   // SubmitTrade() remains blocked until a positive, persistent baseline exists.
+   if(DayStartEquity()<=0)Print("WAIT_EQUITY: tester/account not initialized; retry on ticks");
    if(!trade.SetTypeFillingBySymbol(_Symbol))return INIT_FAILED;
    trade.SetExpertMagicNumber(InpMagic);
    trade.SetDeviationInPoints(InpDeviationPoints);
@@ -704,10 +743,17 @@ int OnInit()
    autopilot=InpAutopilotOnStart;
    processedBar=0;
    historyPrimed=false;  // wait for BOTH TFs, then skip stale bar on start/restart
+   historyWaitLogged=false;lastHistoryLogBar=0;
    DrawButton();
    Print("CEBONK BBMA 2TF FMCBR ELITE READY ",EnumToString(InpTF1),
          " -> ",EnumToString(InpTF2)," ",ModeLabel(),
          " AUTO RISK | chart TF independent | 21 MT5 periods");
+   if(MQLInfoInteger(MQL_TESTER))
+   {
+      PrintFormat("BACKTEST SETTINGS: visualization TF=%s, strategy TF1=%s, TF2=%s. Select Every tick based on real ticks; Open prices only cannot access lower / incompatible timeframes.",
+                  EnumToString((ENUM_TIMEFRAMES)_Period),EnumToString(InpTF1),
+                  EnumToString(InpTF2));
+   }
    return INIT_SUCCEEDED;
 }
 void OnDeinit(const int reason)
