@@ -1,4 +1,4 @@
-# CEBONK BBMA + FMCBR 2TF + Fibo Musang Elite AUTO LOT v1.00
+# CEBONK BBMA + FMCBR 2TF + Fibo Musang Elite AUTO LOT v1.01
 
 Independent, EXPERIMENTAL MT5 EA. Old BBMA 3TF and existing website are not overwritten.
 
@@ -47,3 +47,15 @@ Only AUTOPILOT ON/OFF button on chart. Telegram and optional MT5 Push use confir
 Download MQ5 source, identical TXT mirror and default SET preset. Compile in MetaEditor, then attach to DEMO / Strategy Tester before any real trade. Test Every tick based on real ticks for NOZAX XAUUSDc 2024-2026 with spread, commission, swap, stop levels and slippage. Compare EL2 vs EL3 A, and test M15-M5 plus H1-M5 and H4-M15. Track BUY/SELL winrates separately (target each >=45%), monthly PnL (target every month net positive), maximum drawdown, profit factor and entry frequency. These are goals, NOT promises. Cross-check visual IB, CB1/CB2, retest zone and Elite anchors against the screenshot PDF.
 
 NOT METAEDITOR-COMPILED OR REAL-TICK BACKTESTED by this GitHub delivery. Review as draft PR; do not use with real capital until independently compiled and validated.
+
+## Backtest ALL 21 MT5 timeframes: v1.01 correction
+
+- TF1 is the BBMA CSA/CSAK/CSM direction and must be larger than TF2 FMCBR. Both are selected in EA Inputs, independently of the Strategy Tester chart timeframe.
+- Use Every tick based on real ticks for cross-timeframe tests. In Open prices only modeling, tester H1 cannot access lower EA timeframes M15/M5: an official MT5 limitation.
+- For quick coarse Open prices only trials, use tester period TF2 and a compatible, multiple higher TF1; final PnL tests require real tick modeling.
+- v1.01 proactively requests CopyRates on BOTH selected TFs and CopyBuffer on all indicator handles before checking BarsCalculated, to start on-demand indicator computation.
+- Zero account Equity during visual tester initialization no longer causes an immediate EA initialization failure. Trading remains disabled until Equity is positive.
+- Tester Journal messages: BACKTEST SETTINGS (chart TF, EA TF1/TF2), WAIT_HISTORY (bars and buffers), WAIT_EQUITY (zero equity), HISTORY_READY (series primed).
+- The Waiting for Update screenshot and Balance/Equity zero cannot prove a specific root cause. Check Tester Journal, downloaded broker tick/minute data, and tester visual template.
+- All 21 TFs are selectable, not guaranteed to have adequate history or valid trade signals. W1/MN1 need substantial pre-start history.
+- Validation: draft source only; MetaEditor compile and real-tick XAUUSDc historical tests are not verified.
