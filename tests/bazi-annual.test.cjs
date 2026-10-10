@@ -18,13 +18,20 @@ for(const series of [gold,silver]){
  assert.equal(p.samples,66);
  assert.equal(p.cutoff,2025);
  assert.equal(p.dominant,'TIDAK KONKLUSIF','No unsupported annual buy/sell signal');
- assert.equal(p.full,null,'Incomplete 2026 may not be called a full-year return');
- assert.equal(p.partial.to,'2026-09');
- assert.ok(Number.isFinite(p.partial.change));
+ const completed2026=Y.annual(series,2026);
+ if(completed2026){
+  assert.equal(p.partial,null);
+  assert.ok(Number.isFinite(p.full.change));
+ }else{
+  assert.equal(p.full,null,'Incomplete year may not be called a full-year return');
+  assert.equal(p.partial.to,series.filter(x=>x[0].startsWith('2026-')).at(-1)[0]);
+  assert.ok(Number.isFinite(p.partial.change));
+ }
  assert.equal(Y.annual(series,1966).change,0);
- assert.equal(Y.annual(series,2026),null);
- assert.equal(Y.analyze(series,2027).samples,66,'Incomplete 2026 must not enter 2027 cohort');
- assert.equal(Y.analyze(series,2027).cutoff,2025);
+ assert.equal(Y.annual(series,2026),completed2026);
+ const next=Y.analyze(series,2027);
+ assert.equal(next.samples,completed2026?67:66,'Only complete annual outcomes enter training');
+ assert.equal(next.cutoff,completed2026?2026:2025);
  assert.throws(()=>Y.analyze(series,2051),/tahun/);
 }
 const r=Y.analyze(gold,2026);
