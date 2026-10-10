@@ -42,6 +42,8 @@ input int InpDeviationPoints=20;
 input int InpSessionStartHour=7;
 input int InpSessionEndHour=23;
 input bool InpAutopilotOnStart=true;
+input bool InpDeferHighTFSession=true;  // D1/W1/MN1 confirmed retest after midnight
+input int InpHighTFWaitHours=24;
 
 input group "=== TELEGRAM / PUSH ==="
 input bool InpTelegramEnabled=true;
@@ -75,6 +77,9 @@ struct SSetup
    bool hasCB2;
    double fibBase,fibAnchor;
    string bbmaSignal;  // TF1 event frozen at IB confirmation
+   bool waitingSession;
+   datetime waitStarted;
+   double waitReferencePrice;
 };
 SSetup setup;
 double noticeF1=0,noticeF2=0,noticeCycle=0,noticeSL=0,noticeTP=0;
@@ -86,6 +91,7 @@ void ResetSetup()
    setup.initialBar=0;setup.zoneLow=0;setup.zoneHigh=0;
    setup.cb1=0;setup.cb2=0;setup.hasCB2=false;
    setup.fibBase=0;setup.fibAnchor=0;setup.bbmaSignal="";
+   setup.waitingSession=false;setup.waitStarted=0;setup.waitReferencePrice=0;
 }
 string ModeLabel(){return (InpEntryMode==FMCBR_EL2?"EL2":"EL3A");}
 // Every native MT5 timeframe is selectable: 21 periods, 210 descending pairs.
@@ -574,6 +580,37 @@ void SubmitTrade()
    PrintFormat("ORDER ACCEPTED %s lots=%.4f risk=%.2f SL=%.5f TP=%.5f",
                 ModeLabel(),lots,plannedRisk,sl,tp);
 }
+// Closed D1/W1/MN1 retest is usually detected around server midnight.
+// Respect the 07:00-23:00 session by deferring AT MOST 24h until open.
+// Cancel when trend/sideways changes, price leaves safe entry range,
+// or there are insufficient live quotes. Never extend structural SL.
+void CheckDeferredHighTFEntry()
+{
+   if(!setup.active || !setup.waitingSession)return;
+   if(!autopilot || TimeCurrent()-setup.waitStarted>
+      (long)InpHighTFWaitHours*3600)
+   {
+      Print("SKIP_DEFERRED_EXPIRED_OR_OFF");ResetSetup();return;
+   }
+   int bias=BBMABias();
+   if(EntryTFSideways() || bias!=setup.direction)
+   {
+      Print("SKIP_DEFERRED_BIAS_OR_SIDEWAYS");ResetSetup();return;
+   }
+   MqlTick quote;
+   if(!SymbolInfoTick(_Symbol,quote) || quote.bid<=0 || quote.ask<=quote.bid)
+      return;
+   double dealPrice=(setup.direction>0?quote.ask:quote.bid);
+   double range=setup.zoneHigh-setup.zoneLow;
+   if(range<=0 || MathAbs(dealPrice-setup.waitReferencePrice)>range ||
+      (setup.direction>0?quote.bid<setup.zoneLow:quote.ask>setup.zoneHigh))
+   {
+      Print("SKIP_DEFERRED_PRICE_LEFT_ZONE");ResetSetup();return;
+   }
+   if(!SessionAllowed())return;
+   Print("DEFERRED_ENTRY_SESSION_OPEN ",EnumToString(InpTF2));
+   SubmitTrade();ResetSetup();
+}
 void Progress(const MqlRates &bar,int bias)
 {
    if(!setup.active)return;
@@ -595,8 +632,18 @@ void Progress(const MqlRates &bar,int bias)
    {setup.phase=PHASE_RETEST;return;}
    if(setup.phase==PHASE_RETEST && ZoneRetest(bar))
    {
+      if(!SessionAllowed() && InpDeferHighTFSession &&
+         PeriodSeconds(InpTF2)>=PeriodSeconds(PERIOD_D1) && autopilot)
+      {
+         setup.waitingSession=true;
+         setup.waitStarted=TimeCurrent();
+         setup.waitReferencePrice=bar.close;
+         PrintFormat("WAIT_SESSION_HIGH_TF: %s retest close %.5f; wait for %02d:00 broker",
+                     EnumToString(InpTF2),bar.close,InpSessionStartHour);
+         return;
+      }
       SubmitTrade();
-      ResetSetup(); // a retest is consumed even when preflight rejects it
+      ResetSetup(); // valid retest consumed regardless of broker preflight
    }
 }
 string UrlEncode(string str)
@@ -702,7 +749,7 @@ int OnInit()
       InpMaxDailyDDPercent<=0 || InpMaxDailyDDPercent>=100 ||
       InpRiskReward<=0 || InpMaxSpreadRiskRatio<=0 ||
       InpMaxSpreadRiskRatio>1 || InpMaxSpreadPoints<0 ||
-      InpDeviationPoints<0 ||
+      InpDeviationPoints<0 || InpHighTFWaitHours<1 || InpHighTFWaitHours>72 ||
       InpSessionStartHour<0 || InpSessionStartHour>23 ||
       InpSessionEndHour<0 || InpSessionEndHour>24)
       return INIT_PARAMETERS_INCORRECT;
@@ -782,8 +829,13 @@ void OnTick()
                   Bars(_Symbol,InpTF1),Bars(_Symbol,InpTF2));
       return; // never retroactively enter old closed bar on attach/restart
    }
-   if(stamp==processedBar)return;
    if(DayStartEquity()<=0)return;
+   if(setup.active && setup.waitingSession)
+   {
+      CheckDeferredHighTFEntry();
+      return;
+   }
+   if(stamp==processedBar)return;
    processedBar=stamp;
    int bias=BBMABias();
    if(EntryTFSideways())bias=0;
