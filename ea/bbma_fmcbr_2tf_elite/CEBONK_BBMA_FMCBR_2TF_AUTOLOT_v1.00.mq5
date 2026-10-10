@@ -54,6 +54,8 @@ int hBB2=INVALID_HANDLE,hATR2=INVALID_HANDLE;
 int hMA5Low=INVALID_HANDLE,hMA10Low=INVALID_HANDLE;
 int hMA5High=INVALID_HANDLE,hMA10High=INVALID_HANDLE;
 datetime processedBar=0;
+bool historyPrimed=false;
+datetime lastHistoryLogBar=0;
 bool autopilot=true;
 string buttonName="CEBONK_2TF_ELITE_AUTOPILOT",claimKey="";
 double eliteLevels[18]={0.0,0.12,0.236,0.382,0.5,0.786,0.88,
@@ -83,6 +85,66 @@ void ResetSetup()
    setup.fibBase=0;setup.fibAnchor=0;
 }
 string ModeLabel(){return (InpEntryMode==FMCBR_EL2?"EL2":"EL3A");}
+// Every native MT5 timeframe is selectable: 21 periods, 210 descending pairs.
+// TF1 must be strictly larger than TF2; chart/tester period can be ANY value.
+bool NativeTimeframe(ENUM_TIMEFRAMES tf)
+{
+   switch(tf)
+   {
+      case PERIOD_M1:
+      case PERIOD_M2:
+      case PERIOD_M3:
+      case PERIOD_M4:
+      case PERIOD_M5:
+      case PERIOD_M6:
+      case PERIOD_M10:
+      case PERIOD_M12:
+      case PERIOD_M15:
+      case PERIOD_M20:
+      case PERIOD_M30:
+      case PERIOD_H1:
+      case PERIOD_H2:
+      case PERIOD_H3:
+      case PERIOD_H4:
+      case PERIOD_H6:
+      case PERIOD_H8:
+      case PERIOD_H12:
+      case PERIOD_D1:
+      case PERIOD_W1:
+      case PERIOD_MN1:
+         return true;
+      default: return false;
+   }
+}
+// History warm-up is per SELECTED pair; missing a higher timeframe
+// never disables another test run/combination.
+bool HistoryReady()
+{
+   int need1=(int)MathMax(30,InpATRPeriod+InpMidSlopeBars+5);
+   int need2=(int)MathMax(InpCBLookback+6,
+                          MathMax(InpZoneLookback+5,InpATRPeriod+InpMidSlopeBars+5));
+   int b1=Bars(_Symbol,InpTF1),b2=Bars(_Symbol,InpTF2);
+   bool ready=(b1>=need1 && b2>=need2 &&
+       BarsCalculated(hBB)>=need1 &&
+       BarsCalculated(hATR)>=need1 &&
+       BarsCalculated(hMA5Low)>=need1 &&
+       BarsCalculated(hMA10Low)>=need1 &&
+       BarsCalculated(hMA5High)>=need1 &&
+       BarsCalculated(hMA10High)>=need1 &&
+       BarsCalculated(hBB2)>=need2 &&
+       BarsCalculated(hATR2)>=need2);
+   if(!ready)
+   {
+      datetime mark=iTime(_Symbol,InpTF2,0);
+      if(mark!=lastHistoryLogBar)
+      {
+         lastHistoryLogBar=mark;
+         PrintFormat("WAIT_HISTORY: TF1=%s bars=%d/%d; TF2=%s bars=%d/%d. Load earlier broker history.",
+                 EnumToString(InpTF1),b1,need1,EnumToString(InpTF2),b2,need2);
+      }
+   }
+   return ready;
+}
 bool Bar(ENUM_TIMEFRAMES tf,int shift,MqlRates &b)
 {
    MqlRates one[1];
@@ -547,7 +609,7 @@ void DrawButton()
 }
 int OnInit()
 {
-   if(InpTF1==PERIOD_CURRENT || InpTF2==PERIOD_CURRENT ||
+   if(!NativeTimeframe(InpTF1) || !NativeTimeframe(InpTF2) ||
       PeriodSeconds(InpTF1)<=PeriodSeconds(InpTF2) ||
       InpZoneLookback<2 || InpCBLookback<5 || InpSetupExpiryBars<3 ||
       InpIBMinBodyRatio<=0 || InpIBMinBodyRatio>1 ||
@@ -592,10 +654,12 @@ int OnInit()
    trade.SetAsyncMode(false);
    ResetSetup();
    autopilot=InpAutopilotOnStart;
-   processedBar=iTime(_Symbol,InpTF2,1); // restart never retro-enters old setups
+   processedBar=0;
+   historyPrimed=false;  // wait for BOTH TFs, then skip stale bar on start/restart
    DrawButton();
    Print("CEBONK BBMA 2TF FMCBR ELITE READY ",EnumToString(InpTF1),
-         " -> ",EnumToString(InpTF2)," ",ModeLabel()," AUTO RISK");
+         " -> ",EnumToString(InpTF2)," ",ModeLabel(),
+         " AUTO RISK | chart TF independent | 21 MT5 periods");
    return INIT_SUCCEEDED;
 }
 void OnDeinit(const int reason)
@@ -611,11 +675,22 @@ void OnChartEvent(const int id,const long &lp,const double &dp,const string &sp)
 }
 void OnTick()
 {
+   // No chart timeframe dependency. Wait for both SELECTED series and indicators.
+   if(!HistoryReady())return;
    MqlRates b;
    datetime stamp=iTime(_Symbol,InpTF2,1);
-   if(stamp<=0||stamp==processedBar || !Bar(InpTF2,1,b))return;
-   processedBar=stamp;
+   if(stamp<=0||!Bar(InpTF2,1,b))return;
+   if(!historyPrimed)
+   {
+      historyPrimed=true;processedBar=stamp;
+      PrintFormat("HISTORY_READY: %s -> %s; bars=%d/%d; next TF2 candle will be evaluated.",
+                  EnumToString(InpTF1),EnumToString(InpTF2),
+                  Bars(_Symbol,InpTF1),Bars(_Symbol,InpTF2));
+      return; // never retroactively enter old closed bar on attach/restart
+   }
+   if(stamp==processedBar)return;
    if(DayStartEquity()<=0)return;
+   processedBar=stamp;
    int bias=BBMABias();
    if(EntryTFSideways())bias=0;
    if(setup.active){Progress(b,bias);return;}
