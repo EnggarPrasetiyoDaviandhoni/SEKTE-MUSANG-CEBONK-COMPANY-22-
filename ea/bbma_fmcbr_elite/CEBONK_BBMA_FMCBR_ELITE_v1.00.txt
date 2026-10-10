@@ -110,7 +110,8 @@ double BodyRatio(const MqlRates &b)
 }
 datetime ClosedAt(ENUM_TIMEFRAMES tf,const MqlRates &b)
 {
-   return b.time+PeriodSeconds(tf);
+   int shift=iBarShift(_Symbol,tf,b.time,true);
+   return(shift>0?iTime(_Symbol,tf,shift-1):0);
 }
 void SelectPackage()
 {
@@ -384,6 +385,9 @@ void Advance(const MqlRates &bar)
       gS.fibAnchor=bar.close;
       gS.phase=(InpEntryMode==ENTRY_EL2?3:
                 (InpEntryMode==ENTRY_EL3_A?2:4));
+      // EL3A accepts one closed candle clearing BOTH structural levels.
+      if(InpEntryMode==ENTRY_EL3_A && gS.hasCB2 && ClosedBreak(bar,gS.cb2,gS.dir))
+         gS.phase=3;
       return;  // Never count breakout candle itself as a retest.
    }
    if(gS.phase==2 && gS.hasCB2 && ClosedBreak(bar,gS.cb2,gS.dir))
@@ -452,8 +456,10 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
          if(PositionGetTicket(i)==0)continue;
          if(PositionGetInteger(POSITION_IDENTIFIER)==id)
          {
-            sl=PositionGetDouble(POSITION_SL);
-            tp=PositionGetDouble(POSITION_TP);
+            double actualSL=PositionGetDouble(POSITION_SL);
+            double actualTP=PositionGetDouble(POSITION_TP);
+            if(actualSL>0)sl=actualSL;
+            if(actualTP>0)tp=actualTP;
             break;
          }
       }
