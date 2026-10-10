@@ -344,7 +344,8 @@ void ExecuteSetup()
    if(!gTrade.SetTypeFillingBySymbol(_Symbol))
    {Print("SKIP_FILLING_MODE");return;}
    // Global-variable CAS keeps duplicate charts/instances from placing same IB.
-   if(!GlobalVariableCheck(gClaimKey))GlobalVariableSet(gClaimKey,0);
+   if(MQLInfoInteger(MQL_TESTER))GlobalVariableSet(gClaimKey,0);
+   else if(!GlobalVariableCheck(gClaimKey))GlobalVariableSet(gClaimKey,0);
    double previous=GlobalVariableGet(gClaimKey);
    if(previous>=(double)gS.ibTime)return;
    if(!GlobalVariableSetOnCondition(gClaimKey,(double)gS.ibTime,previous))return;
@@ -439,6 +440,12 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
    if(HistoryDealGetString(trans.deal,DEAL_SYMBOL)!=_Symbol ||
       (ulong)HistoryDealGetInteger(trans.deal,DEAL_MAGIC)!=InpMagic)return;
    ENUM_DEAL_ENTRY side=(ENUM_DEAL_ENTRY)HistoryDealGetInteger(trans.deal,DEAL_ENTRY);
+   if(side!=DEAL_ENTRY_IN && side!=DEAL_ENTRY_OUT)return;
+   // Manual/other partial OUT is not a TP/SL notification and cannot
+   // consume the single exit alert reserved for the later TP/SL deal.
+   ENUM_DEAL_REASON closeReason=(ENUM_DEAL_REASON)HistoryDealGetInteger(trans.deal,DEAL_REASON);
+   if(side==DEAL_ENTRY_OUT &&
+      closeReason!=DEAL_REASON_TP && closeReason!=DEAL_REASON_SL)return;
    long id=HistoryDealGetInteger(trans.deal,DEAL_POSITION_ID);
    string uniq=StringFormat("FME.%I64d.%I64u.%I64d.%d",
              AccountInfoInteger(ACCOUNT_LOGIN),InpMagic,id,(int)side);
@@ -474,9 +481,8 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
    }
    else if(side==DEAL_ENTRY_OUT)
    {
-      ENUM_DEAL_REASON reason=(ENUM_DEAL_REASON)HistoryDealGetInteger(trans.deal,DEAL_REASON);
-      if(reason==DEAL_REASON_TP)Notify("TAKE PROFIT 😅");
-      if(reason==DEAL_REASON_SL)Notify("STOP LOSS 🥲");
+      if(closeReason==DEAL_REASON_TP)Notify("TAKE PROFIT 😅");
+      if(closeReason==DEAL_REASON_SL)Notify("STOP LOSS 🥲");
    }
 }
 int OnInit()
