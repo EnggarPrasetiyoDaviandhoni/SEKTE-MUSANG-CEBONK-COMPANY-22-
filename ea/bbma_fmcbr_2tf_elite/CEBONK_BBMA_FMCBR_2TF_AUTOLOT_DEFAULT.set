@@ -5,6 +5,7 @@ InpZoneLookback=8
 InpCBLookback=22
 InpSetupExpiryBars=24
 InpIBMinBodyRatio=0.50
+InpTF1SignalAgeBars=8
 InpSkipSideways=true
 InpATRPeriod=14
 InpBBWidthATR=1.50
