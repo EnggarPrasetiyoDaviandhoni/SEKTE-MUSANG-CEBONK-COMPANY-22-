@@ -4,8 +4,10 @@ Independent, EXPERIMENTAL MT5 EA. Old BBMA 3TF and existing website are not over
 
 ## Trading rules
 
-- TF1 default M15: BBMA PETA ARAH. Closed-candle BUY: close > MidBB, LWMA5/10 Low > MidBB, MidBB rising. SELL mirrors with High and declining MidBB. BB 20/2/0.
-- TF2 default M5: FMCBR EL2 (or optional EL3 A). Both input timeframes individually adjustable in MT5. TF1 must be greater than TF2; chart timeframe has no influence.
+- TF1 default M15: **BBMA PETA ARAH from CSA, CSAK, CSM**, not a generic MA trend classifier. Closed-candle **CSA** = directional close beyond LWMA5/10 High (BUY) / Low (SELL), on the near side of MidBB; **CSAK** = close beyond LWMA5/10 and MidBB inside BB; **CSM** = momentum close outside upper BB (BUY) / lower BB (SELL). Latest valid CSA/CSAK/CSM from up to `InpTF1SignalAgeBars=8` closed TF1 candles defines the bias; slope of MidBB and MA defense of newest TF1 candle must agree. Opposite/expired signal, sideways or absent history = NEUTRAL / NO ENTRY. All signals based on BB20/2 and LWMA5/10 High/Low.
+- TF2 default M5: FMCBR EL2 (or optional EL3 A). Both timeframes individually adjustable from **21 native MT5 timeframes**, with **210 valid higher-to-lower pairs**; chart/tester displayed TF is independent. TF1 must be larger than TF2. M1 can be the entry TF2 but cannot be the higher mapping TF1 without a shorter TF2; MN1 can be TF1 but not lower TF2. Each pair requires its own available historical bars; a WAIT_HISTORY for an unsupported/empty pair does not disable other pairs.
+- Supported native periods: M1, M2, M3, M4, M5, M6, M10, M12, M15, M20, M30, H1, H2, H3, H4, H6, H8, H12, D1, W1, MN1.
+- During tester start or terminal restart, indicators/history must be warm; EA logs `WAIT_HISTORY` until both selected TFs are ready and prints `HISTORY_READY`. The first already-closed bar after warm-up is not retro-traded; evaluation begins on the next TF2 close.
 - SIDEWAYS = NO ENTRY. Sideways rejection runs on BOTH TFs: (BB upper-lower <= 1.5 x ATR14) AND (absolute MidBB move of 3 closed bars <= 0.25 x ATR14); reject also if TF1 BBMA bias is unclear. Sideways mid-setup cancels it. ATR is for sideways only, never SL.
 - FMCBR IB = **Initial Break**, not Inside Bar. Latest closed TF2 candle must have >=50% body/range and close beyond previous bar high (BUY) or low (SELL). Frozen initial zone = wick-to-body region of last opposing candle within 8 bars that the IB close defeats. This is a **mechanical interpretation** of visual PDF examples, not a verbatim rule supplied in the teaching material.
 - CB1 = nearest old confirmed pivot; CB2 = next older, farther pivot. Do not use any unclosed bars or future swing information.
@@ -38,7 +40,7 @@ Daily DD 5% is an entry guard, NOT a guarantee that losses cannot exceed 5% due 
 
 ## Notifications / chart
 
-Only AUTOPILOT ON/OFF button on chart. Telegram and optional MT5 Push use confirmed broker deals, with direction, TF1/TF2, lot, SL, TP and Elite target references. Exit notice exactly "TAKE PROFIT 😅" / "STOP LOSS 🥲". Supply Telegram Token and Chat ID in MT5 inputs, never in GitHub; add https://api.telegram.org to MT5 Allowed WebRequest list. WebRequest unavailable in Strategy Tester. Telegram outages can cause missed notifications.
+Only AUTOPILOT ON/OFF button on chart. Telegram and optional MT5 Push use confirmed broker deals, with direction, TF1/TF2, **TF1 detected CSA/CSAK/CSM**, lot, SL, TP and Elite target references. Exit notice exactly "TAKE PROFIT 😅" / "STOP LOSS 🥲". Supply Telegram Token and Chat ID in MT5 inputs, never in GitHub; add https://api.telegram.org to MT5 Allowed WebRequest list. WebRequest unavailable in Strategy Tester. Telegram outages can cause missed notifications.
 
 ## Installation and validation
 
