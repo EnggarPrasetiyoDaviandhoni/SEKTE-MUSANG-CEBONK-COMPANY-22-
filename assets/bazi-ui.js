@@ -142,7 +142,7 @@ function mount(){
  const view=document.createElement('section');view.id='baziView';view.hidden=true;
  view.innerHTML=[
  '<div class="bz-hero"><small>SEKTE MUSANG · CEBONK COMPANY 22</small><h2>BAZI ASTROLOGY</h2><p>Empat Pilar · Shio · Lima Elemen · Jadwal WIB · Riset XAUUSD / XAGUSD</p></div>',
- '<div class="bz-jumps"><strong>MENU ANALISIS HARGA · XAUUSD / XAGUSD</strong><div class="bz-jump-list"><button type="button" data-bz-target="m12Panel">GRAFIK RIWAYAT 12M</button><button type="button" data-bz-target="ayPanel">DOMINASI BAZI TAHUNAN</button><button type="button" data-bz-target="mhPanel">TREN BULANAN</button></div><span id="bzJumpStatus" style="font-size:11px;color:#a8cbdc" role="status"></span></div>',
+ '<div class="bz-jumps"><strong>MENU ANALISIS HARGA · XAUUSD / XAGUSD</strong><div class="bz-jump-list"><button type="button" data-bz-target="m12Panel">GRAFIK RIWAYAT 12M</button><button type="button" data-bz-target="ayPanel">DOMINASI BAZI TAHUNAN</button><button type="button" data-bz-target="f60Panel">FUNDAMENTAL 60 TAHUN</button><button type="button" data-bz-target="mhPanel">TREN BULANAN</button></div><span id="bzJumpStatus" style="font-size:11px;color:#a8cbdc" role="status"></span></div>',
  '<div class="bz-note"><strong>Ini kalender astrologi, bukan sinyal trading.</strong> Kombinasi elemen, Clash, dan jam BaZi belum membuktikan arah atau probabilitas harga XAUUSD maupun XAGUSD. Modul ini tidak mengubah mesin Astrology lama.</div>',
  '<div class="bz-panel"><div class="bz-head">Hitung BaZi · Zona Asia/Jakarta (WIB)</div><div class="bz-body"><div class="bz-controls">',
  '<label>Tanggal WIB<input type="date" id="bzDate" min="1900-01-01" max="2099-12-31"></label>',
@@ -159,7 +159,7 @@ function mount(){
  '<p class="bz-legend">Legenda: <span style="color:'+hues.Kayu+'">Kayu</span> · <span style="color:'+hues.Api+'">Api</span> · <span style="color:'+hues.Tanah+'">Tanah</span> · <span style="color:'+hues.Logam+'">Logam</span> · <span style="color:'+hues.Air+'">Air</span>. Sumber kalkulasi: lunar-javascript 1.7.7 (MIT).</p></div></div>'
  ].join('');
  wrap.insertBefore(view,wrap.querySelector('footer'));
- view.addEventListener('click',e=>{const button=e.target.closest('button[data-bz-target]');if(!button)return;const name=button.dataset.bzTarget;const allowed=['m12Panel','ayPanel','mhPanel'];if(!allowed.includes(name))return;const panel=$(name);if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});else{const msg=$('bzJumpStatus');if(msg)msg.textContent='Modul masih dimuat. Tunggu sebentar lalu coba lagi.';}});
+ view.addEventListener('click',e=>{const button=e.target.closest('button[data-bz-target]');if(!button)return;const name=button.dataset.bzTarget;const allowed=['m12Panel','ayPanel','mhPanel','f60Panel'];if(!allowed.includes(name))return;const panel=$(name);if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});else{const msg=$('bzJumpStatus');if(msg)msg.textContent='Modul masih dimuat. Tunggu sebentar lalu coba lagi.';}});
  $('bzZodiac').innerHTML=yearTiles();
  const n=B.todayWIB();$('bzDate').value=n.date;$('bzHour').value=n.time;
  $('bzRun').addEventListener('click',run);
