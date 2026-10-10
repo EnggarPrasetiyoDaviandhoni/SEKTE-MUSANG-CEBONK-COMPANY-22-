@@ -5,6 +5,8 @@ on:
     paths:
       - 'assets/market-trend-*.js'
       - 'assets/metal-12m-*.js'
+      - 'assets/fundamental-60y-*.js'
+      - 'tests/fundamental-60y.test.cjs'
       - 'tests/metal-12m.test.cjs'
       - 'assets/bazi-ui.js'
       - 'assets/bazi-annual-*.js'
@@ -46,7 +48,10 @@ jobs:
           node --check assets/metal-12m-ui.js
           node tests/market-trend.test.cjs
           node tests/bazi-annual.test.cjs
+          node --check assets/fundamental-60y-core.js
+          node --check assets/fundamental-60y-ui.js
           node tests/metal-12m.test.cjs
+          node tests/fundamental-60y.test.cjs
       - name: Install World Bank workbook reader
         run: python -m pip install 'openpyxl==3.1.5'
       - name: Refresh World Bank monthly metals history
