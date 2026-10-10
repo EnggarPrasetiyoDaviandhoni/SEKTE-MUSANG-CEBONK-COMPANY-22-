@@ -59,3 +59,11 @@ NOT METAEDITOR-COMPILED OR REAL-TICK BACKTESTED by this GitHub delivery. Review 
 - The Waiting for Update screenshot and Balance/Equity zero cannot prove a specific root cause. Check Tester Journal, downloaded broker tick/minute data, and tester visual template.
 - All 21 TFs are selectable, not guaranteed to have adequate history or valid trade signals. W1/MN1 need substantial pre-start history.
 - Validation: draft source only; MetaEditor compile and real-tick XAUUSDc historical tests are not verified.
+
+## Current version / files — v1.01
+
+- CEBONK_BBMA_FMCBR_2TF_AUTOLOT_v1.01.mq5: current source to compile in MetaEditor.
+- CEBONK_BBMA_FMCBR_2TF_AUTOLOT_v1.01.txt: byte-for-byte identical latest MQL5 source, for mobile transfer.
+- CEBONK_BBMA_FMCBR_2TF_AUTOLOT_v1.01_DEFAULT.set: matching inputs preset.
+- For D1/W1/MN1 TF2, a retest candle commonly closes outside 07:00–23:00 broker session. If InpDeferHighTFSession=true, a valid closed retest may be held up to InpHighTFWaitHours=24 until the next allowed session; CANCEL if BBMA direction/sideways changes, price crosses stop-side zone, or entry deviates by more than the zone width from retest close. This allows higher-timeframe setups to be tested without trading outside the requested session. It is NOT a guarantee of an entry or ideal price.
+- IMPORTANT: The screenshot title 'xtc on XAUUSDc,H1' shows the tester Expert as 'xtc'. Ensure the selected Expert is actually the newly compiled v1.01 source, not an older EA named xtc.
