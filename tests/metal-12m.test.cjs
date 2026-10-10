@@ -65,6 +65,6 @@ for(const target of ['m12Panel','ayPanel','mhPanel'])assert.ok(baziUI.includes('
 assert.ok(baziUI.includes("view.addEventListener('click'"),'BaZi shortcut navigation functional');
 assert.ok(annualUI.includes('parent.insertBefore(box,anchor)'),'Annual BaZi analysis must appear before monthly section');
 assert.ok(ui.includes('host.insertBefore(section,anchor)'),'12M history must appear before annual BaZi and monthly sections');
-assert.ok(h.includes('assets/bazi-ui.js?v=1.2.0'),'Mobile cache must load newest BaZi navigation');
+assert.ok(h.includes('assets/bazi-ui.js?v=1.3.0'),'Mobile cache must load newest BaZi navigation');
 assert.ok(h.includes('assets/metal-12m-ui.js?v=1.1.0'),'Mobile cache must load newest 12M section');
 console.log('PASS: 12M history: both metals, incomplete year, matching-month comparison, 60-year element, no synthetic OHLC, and Indonesian UI.');
