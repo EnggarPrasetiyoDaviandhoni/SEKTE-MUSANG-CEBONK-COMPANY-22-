@@ -19,10 +19,15 @@ for(const symbol of ['XAUUSD','XAGUSD']){
  assert.equal(result.previous.year,1966);
  assert.equal(result.previous.complete,true);
  assert.equal(result.selected.year,2026);
- assert.equal(result.selected.complete,false);
- assert.equal(result.selected.label,'BELUM LENGKAP');
- assert.equal(result.selected.comparison,'BULAN SEPADAN (SEMENTARA)');
- assert.equal(result.selected.months,9);
+ const availableMonths=prices.filter(x=>x[0].startsWith('2026-')).length;
+ assert.equal(result.selected.months,availableMonths);
+ assert.equal(result.selected.complete,availableMonths===12);
+ if(availableMonths<12){
+  assert.equal(result.selected.label,'BELUM LENGKAP');
+  assert.equal(result.selected.comparison,'BULAN SEPADAN (SEMENTARA)');
+ }else{
+  assert.equal(result.selected.comparison,'TAHUN PENUH');
+ }
  assert.ok(result.events.length>=1);
  assert.ok(result.previousEvents.length>=1);
  assert.ok(result.events.every(e=>e.metals.includes(symbol)));
