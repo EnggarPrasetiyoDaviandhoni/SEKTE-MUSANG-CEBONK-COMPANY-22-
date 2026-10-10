@@ -50,6 +50,7 @@ input bool InpPushEnabled=false;
 
 CTrade trade;
 int hBB=INVALID_HANDLE,hATR=INVALID_HANDLE;
+int hBB2=INVALID_HANDLE,hATR2=INVALID_HANDLE;
 int hMA5Low=INVALID_HANDLE,hMA10Low=INVALID_HANDLE;
 int hMA5High=INVALID_HANDLE,hMA10High=INVALID_HANDLE;
 datetime processedBar=0;
@@ -122,6 +123,19 @@ int BBMABias()
    bool sell=(b.close<mid && ma5H<mid && ma10H<mid && slope<0);
    if(buy==sell)return 0;
    return buy?1:-1;
+}
+// Sideways veto on the entry timeframe also uses only CLOSED candles.
+bool EntryTFSideways()
+{
+   if(!InpSkipSideways)return false;
+   double mid,upper,lower,oldMid,atr;
+   // Missing data fails closed: no speculative entry on incomplete history.
+   if(!Buffer(hBB2,0,1,mid)||!Buffer(hBB2,1,1,upper)||
+      !Buffer(hBB2,2,1,lower)||
+      !Buffer(hBB2,0,1+InpMidSlopeBars,oldMid)||
+      !Buffer(hATR2,0,1,atr))return true;
+   return ((upper-lower)<=InpBBWidthATR*atr &&
+           MathAbs(mid-oldMid)<=InpMidSlopeATR*atr);
 }
 bool Pivot(int shift,int direction,double &level)
 {
@@ -550,19 +564,28 @@ int OnInit()
       return INIT_PARAMETERS_INCORRECT;
    hBB=iBands(_Symbol,InpTF1,20,0,2.0,PRICE_CLOSE);
    hATR=iATR(_Symbol,InpTF1,InpATRPeriod);
+   hBB2=iBands(_Symbol,InpTF2,20,0,2.0,PRICE_CLOSE);
+   hATR2=iATR(_Symbol,InpTF2,InpATRPeriod);
    hMA5Low=iMA(_Symbol,InpTF1,5,0,MODE_LWMA,PRICE_LOW);
    hMA10Low=iMA(_Symbol,InpTF1,10,0,MODE_LWMA,PRICE_LOW);
    hMA5High=iMA(_Symbol,InpTF1,5,0,MODE_LWMA,PRICE_HIGH);
    hMA10High=iMA(_Symbol,InpTF1,10,0,MODE_LWMA,PRICE_HIGH);
    if(hBB==INVALID_HANDLE||hATR==INVALID_HANDLE||
+      hBB2==INVALID_HANDLE||hATR2==INVALID_HANDLE||
       hMA5Low==INVALID_HANDLE||hMA10Low==INVALID_HANDLE||
       hMA5High==INVALID_HANDLE||hMA10High==INVALID_HANDLE)
    {Print("INIT ERROR: indicator");return INIT_FAILED;}
    claimKey=StringFormat("C2C.%I64d.%s.%I64u.%d.%d",
       AccountInfoInteger(ACCOUNT_LOGIN),_Symbol,InpMagic,(int)InpTF2,(int)InpEntryMode);
    if(StringLen(claimKey)>63)return INIT_PARAMETERS_INCORRECT;
-   if(MQLInfoInteger(MQL_TESTER))GlobalVariableSet(claimKey,0);
+   if(MQLInfoInteger(MQL_TESTER))
+   {
+      GlobalVariableSet(claimKey,0);
+      // Fresh risk-day baseline for each independent tester run.
+      GlobalVariableSet(DayKey(),AccountInfoDouble(ACCOUNT_EQUITY));
+   }
    else if(!GlobalVariableCheck(claimKey))GlobalVariableSet(claimKey,0);
+   if(DayStartEquity()<=0)return INIT_FAILED;
    if(!trade.SetTypeFillingBySymbol(_Symbol))return INIT_FAILED;
    trade.SetExpertMagicNumber(InpMagic);
    trade.SetDeviationInPoints(InpDeviationPoints);
@@ -577,8 +600,8 @@ int OnInit()
 }
 void OnDeinit(const int reason)
 {
-   int handles[6]={hBB,hATR,hMA5Low,hMA10Low,hMA5High,hMA10High};
-   for(int i=0;i<6;i++)if(handles[i]!=INVALID_HANDLE)IndicatorRelease(handles[i]);
+   int handles[8]={hBB,hATR,hBB2,hATR2,hMA5Low,hMA10Low,hMA5High,hMA10High};
+   for(int i=0;i<8;i++)if(handles[i]!=INVALID_HANDLE)IndicatorRelease(handles[i]);
    ObjectDelete(0,buttonName);
 }
 void OnChartEvent(const int id,const long &lp,const double &dp,const string &sp)
@@ -592,7 +615,9 @@ void OnTick()
    datetime stamp=iTime(_Symbol,InpTF2,1);
    if(stamp<=0||stamp==processedBar || !Bar(InpTF2,1,b))return;
    processedBar=stamp;
+   if(DayStartEquity()<=0)return;
    int bias=BBMABias();
+   if(EntryTFSideways())bias=0;
    if(setup.active){Progress(b,bias);return;}
    if(!autopilot || bias==0)return;
    Arm(bias);
