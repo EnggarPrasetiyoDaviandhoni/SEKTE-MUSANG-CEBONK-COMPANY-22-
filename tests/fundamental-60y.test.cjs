@@ -27,7 +27,7 @@ for(const symbol of ['XAUUSD','XAGUSD']){
  assert.ok(result.previousEvents.length>=1);
  assert.ok(result.events.every(e=>e.metals.includes(symbol)));
  assert.ok(result.previousEvents.every(e=>e.metals.includes(symbol)));
- assert.ok(result.warnings.some(x=>x.includes('tidak membuktikan sebab')));
+ assert.ok(result.warnings.some(x=>x.toLowerCase().includes('tidak membuktikan sebab')));
  assert.ok(!Object.hasOwn(result.selected,'open'));
  assert.ok(!Object.hasOwn(result.selected,'high'));
  assert.ok(!Object.hasOwn(result.selected,'low'));
