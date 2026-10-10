@@ -17,6 +17,7 @@ input int InpZoneLookback=8;
 input int InpCBLookback=22;
 input int InpSetupExpiryBars=24;
 input double InpIBMinBodyRatio=0.50;
+input int InpTF1SignalAgeBars=8;      // fresh CSA, CSAK or CSM in closed TF1 candles
 
 input group "=== FILTER SIDEWAYS ==="
 input bool InpSkipSideways=true;
@@ -72,17 +73,18 @@ struct SSetup
    double zoneLow,zoneHigh,cb1,cb2;
    bool hasCB2;
    double fibBase,fibAnchor;
+   string bbmaSignal;  // TF1 event frozen at IB confirmation
 };
 SSetup setup;
 double noticeF1=0,noticeF2=0,noticeCycle=0,noticeSL=0,noticeTP=0;
-string noticeMode="";
+string noticeMode="",noticeBBMA="",lastBBMASignal="";
 
 void ResetSetup()
 {
    setup.active=false;setup.direction=0;setup.phase=PHASE_IDLE;
    setup.initialBar=0;setup.zoneLow=0;setup.zoneHigh=0;
    setup.cb1=0;setup.cb2=0;setup.hasCB2=false;
-   setup.fibBase=0;setup.fibAnchor=0;
+   setup.fibBase=0;setup.fibAnchor=0;setup.bbmaSignal="";
 }
 string ModeLabel(){return (InpEntryMode==FMCBR_EL2?"EL2":"EL3A");}
 // Every native MT5 timeframe is selectable: 21 periods, 210 descending pairs.
@@ -120,7 +122,7 @@ bool NativeTimeframe(ENUM_TIMEFRAMES tf)
 // never disables another test run/combination.
 bool HistoryReady()
 {
-   int need1=(int)MathMax(30,InpATRPeriod+InpMidSlopeBars+5);
+   int need1=(int)MathMax(30,MathMax(InpATRPeriod+InpMidSlopeBars+5,InpTF1SignalAgeBars+11));
    int need2=(int)MathMax(InpCBLookback+6,
                           MathMax(InpZoneLookback+5,InpATRPeriod+InpMidSlopeBars+5));
    int b1=Bars(_Symbol,InpTF1),b2=Bars(_Symbol,InpTF2);
@@ -164,27 +166,70 @@ double CandleBodyRatio(const MqlRates &b)
    double span=b.high-b.low;
    return (span>0?MathAbs(b.close-b.open)/span:0);
 }
-// Causal BBMA bias. Closed TF1 candle only; bullish MA5/10 LOW over MidBB
-// or bearish MA5/10 HIGH under MidBB. ATR used ONLY for sideways detection.
+// TF1 map is NOT generic MA alignment. Direction must originate from
+// the latest closed-candle CSA, CSAK, or CSM according to CEBONK BBMA.
+// CSA  = close beyond MA5/10 High for BUY (Low for SELL), near side of MidBB.
+// CSAK = close beyond MA5/10 plus MidBB, still inside BB.
+// CSM  = momentum candle closing beyond outer BB.
+int TF1DirectionalSignal(int shift,string &signal)
+{
+   signal="";
+   MqlRates b;
+   double mid,upper,lower,high5,high10,low5,low10;
+   if(!Bar(InpTF1,shift,b) || !Buffer(hBB,0,shift,mid) ||
+      !Buffer(hBB,1,shift,upper) || !Buffer(hBB,2,shift,lower) ||
+      !Buffer(hMA5High,0,shift,high5) || !Buffer(hMA10High,0,shift,high10) ||
+      !Buffer(hMA5Low,0,shift,low5) || !Buffer(hMA10Low,0,shift,low10))
+      return 0;
+   if(b.close>b.open)
+   {
+      if(b.close>upper){signal="CSM";return 1;}
+      if(b.close>MathMax(high5,high10) && b.close>mid && b.close<=upper)
+      {signal="CSAK";return 1;}
+      if(b.close>MathMax(high5,high10) && b.close<=mid)
+      {signal="CSA";return 1;}
+   }
+   if(b.close<b.open)
+   {
+      if(b.close<lower){signal="CSM";return -1;}
+      if(b.close<MathMin(low5,low10) && b.close<mid && b.close>=lower)
+      {signal="CSAK";return -1;}
+      if(b.close<MathMin(low5,low10) && b.close>=mid)
+      {signal="CSA";return -1;}
+   }
+   return 0;
+}
+// TF1 holds latest directional CSA/CSAK/CSM for at most SignalAgeBars.
+// The trend slope must agree, and price cannot violate its defending MA band.
+// If the latest signal contradicts the slope/MA, return NEUTRAL, never fall
+// back to an older signal. Sideways condition vetoes all directions.
 int BBMABias()
 {
-   MqlRates b;
-   double mid,hi,lo,previousMid,ma5L,ma10L,ma5H,ma10H,atr;
-   if(!Bar(InpTF1,1,b) || !Buffer(hBB,0,1,mid) ||
-      !Buffer(hBB,1,1,hi) || !Buffer(hBB,2,1,lo) ||
-      !Buffer(hBB,0,1+InpMidSlopeBars,previousMid) ||
+   lastBBMASignal="";
+   MqlRates latest;
+   double mid,upper,lower,midOld,l5,l10,h5,h10,atr;
+   if(!Bar(InpTF1,1,latest) || !Buffer(hBB,0,1,mid) ||
+      !Buffer(hBB,1,1,upper) || !Buffer(hBB,2,1,lower) ||
+      !Buffer(hBB,0,1+InpMidSlopeBars,midOld) ||
       !Buffer(hATR,0,1,atr) ||
-      !Buffer(hMA5Low,0,1,ma5L) || !Buffer(hMA10Low,0,1,ma10L) ||
-      !Buffer(hMA5High,0,1,ma5H) || !Buffer(hMA10High,0,1,ma10H))
+      !Buffer(hMA5Low,0,1,l5) || !Buffer(hMA10Low,0,1,l10) ||
+      !Buffer(hMA5High,0,1,h5) || !Buffer(hMA10High,0,1,h10))
       return 0;
-   double slope=mid-previousMid;
-   bool compression=((hi-lo)<=InpBBWidthATR*atr);
+   double slope=mid-midOld;
+   bool compression=(upper-lower<=InpBBWidthATR*atr);
    bool flat=(MathAbs(slope)<=InpMidSlopeATR*atr);
    if(InpSkipSideways && compression && flat)return 0;
-   bool buy=(b.close>mid && ma5L>mid && ma10L>mid && slope>0);
-   bool sell=(b.close<mid && ma5H<mid && ma10H<mid && slope<0);
-   if(buy==sell)return 0;
-   return buy?1:-1;
+   for(int shift=1;shift<=InpTF1SignalAgeBars;shift++)
+   {
+      string signal;
+      int d=TF1DirectionalSignal(shift,signal);
+      if(d==0)continue;
+      if(d>0 && (slope<=0 || latest.close<=MathMin(l5,l10)))return 0;
+      if(d<0 && (slope>=0 || latest.close>=MathMax(h5,h10)))return 0;
+      lastBBMASignal=signal;
+      return d;
+   }
+   return 0;
 }
 // Sideways veto on the entry timeframe also uses only CLOSED candles.
 bool EntryTFSideways()
@@ -291,6 +336,7 @@ void Arm(int direction)
    setup.zoneLow=low;setup.zoneHigh=high;
    setup.cb1=cb1;setup.cb2=cb2;setup.hasCB2=hasCB2;
    setup.fibBase=(direction>0?low:high);
+   setup.bbmaSignal=lastBBMASignal;
    // IB breakout can break CB1 (and CB2) on the same CLOSED candle.
    if(Breaks(current,cb1,direction))
    {
@@ -478,6 +524,7 @@ void SubmitTrade()
    noticeF2=Elite(eliteLevels[12]);
    noticeCycle=Elite(eliteLevels[15]);
    noticeSL=sl;noticeTP=tp;noticeMode=ModeLabel();
+   noticeBBMA=setup.bbmaSignal;
    string tag=StringFormat("C2E%s:%I64d",ModeLabel(),(long)setup.initialBar);
    bool sent=(setup.direction>0?
               trade.Buy(lots,_Symbol,entry,sl,tp,tag):
@@ -583,9 +630,9 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
       break;
    }
    int direction=(HistoryDealGetInteger(trans.deal,DEAL_TYPE)==DEAL_TYPE_BUY?1:-1);
-   string msg=StringFormat("SEKTE MUSANG CEBONK COMPANY 22\n%s %s | %s\nTF: %s > %s\nLot: %.4f\nEntry: %s\nSL: %s\nTP: %s\nElite 1.618: %s\nElite 2.618: %s\nCycle 4.23: %s",
+   string msg=StringFormat("SEKTE MUSANG CEBONK COMPANY 22\n%s %s | %s\nTF: %s > %s\nPeta: %s\nLot: %.4f\nEntry: %s\nSL: %s\nTP: %s\nElite 1.618: %s\nElite 2.618: %s\nCycle 4.23: %s",
        direction>0?"BUY":"SELL",_Symbol,noticeMode,
-       EnumToString(InpTF1),EnumToString(InpTF2),volume,
+       EnumToString(InpTF1),EnumToString(InpTF2),noticeBBMA,volume,
        DoubleToString(fill,_Digits),DoubleToString(sl,_Digits),
        DoubleToString(tp,_Digits),DoubleToString(noticeF1,_Digits),
        DoubleToString(noticeF2,_Digits),DoubleToString(noticeCycle,_Digits));
@@ -612,6 +659,7 @@ int OnInit()
    if(!NativeTimeframe(InpTF1) || !NativeTimeframe(InpTF2) ||
       PeriodSeconds(InpTF1)<=PeriodSeconds(InpTF2) ||
       InpZoneLookback<2 || InpCBLookback<5 || InpSetupExpiryBars<3 ||
+      InpTF1SignalAgeBars<1 || InpTF1SignalAgeBars>300 ||
       InpIBMinBodyRatio<=0 || InpIBMinBodyRatio>1 ||
       InpATRPeriod<2 || InpMidSlopeBars<1 ||
       InpBBWidthATR<=0 || InpMidSlopeATR<0 ||
