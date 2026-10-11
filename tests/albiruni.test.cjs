@@ -98,6 +98,42 @@ async function run(){
  assert.equal(C.AUTO_THRESHOLD,0.18);
  const autoDay=C.autoTimeline(pseudo,bullish,start);
  assert.equal(autoDay.resolutionMinutes,15);
+ const reportDay=C.autoPeriodSummary(pseudo,bullish);
+ assert.equal(reportDay.mode,'day');
+ assert.equal(reportDay.resolutionMinutes,15);
+ assert.equal(reportDay.direction,'BUY');
+ assert.equal(reportDay.days.length,1);
+ assert.equal(reportDay.days[0].date,'2026-10-05');
+ assert.ok(reportDay.startWindow<=reportDay.core&&reportDay.core<reportDay.endWindow);
+ assert.equal(reportDay.validated,false);
+ assert.equal(reportDay.buyMinutes,120);
+ const emptyWeek=windowResult([]);
+ emptyWeek.range=C.period('2026-10-11','week');
+ const reportWeek=C.autoPeriodSummary(pseudo,emptyWeek);
+ assert.equal(reportWeek.mode,'week');
+ assert.equal(reportWeek.resolutionMinutes,30);
+ assert.equal(reportWeek.days.length,5);
+ assert.equal(reportWeek.direction,'NETRAL');
+ assert.equal(reportWeek.startWindow,null);
+ assert.ok(reportWeek.days.every(x=>!x.marketClosed));
+ const monthRange=C.period('2026-10-11','month');
+ const saturday=Date.parse('2026-10-10T10:00:00+07:00');
+ const saturdayEvent={...mk(['Moon','Jupiter'],60,'saturday-only'),
+  start:saturday,end:saturday+2*HOUR,closest:saturday+HOUR,exactTimes:[saturday+HOUR],
+  startClipped:false,endClipped:false};
+ const monthOnlyWeekend={version:'1.3.0',range:monthRange,orb:2,focus:'all',stepMinutes:15,events:[saturdayEvent]};
+ const reportMonth=C.autoPeriodSummary(pseudo,monthOnlyWeekend);
+ assert.equal(reportMonth.mode,'month');
+ assert.equal(reportMonth.resolutionMinutes,60);
+ assert.equal(reportMonth.days.length,31);
+ assert.equal(reportMonth.direction,'NETRAL','weekend-only aspects cannot determine XAUUSD monthly focus');
+ assert.equal(reportMonth.buyMinutes,0);
+ assert.ok(reportMonth.days.find(x=>x.date==='2026-10-10').marketClosed);
+ assert.equal(reportMonth.days.find(x=>x.date==='2026-10-10').direction,'BUY');
+ assert.ok(!reportMonth.days.find(x=>x.date==='2026-10-12').allWindows
+   .some(x=>x.start===saturday),'never move weekend aspects to Monday');
+ assert.throws(()=>C.autoPeriodSummary(pseudo,bullish,{stepMinutes:7}),/Resolusi/);
+
  assert.ok(autoDay.windows.some(x=>x.direction==='BUY'&&x.start===start+10*HOUR&&x.end===start+12*HOUR));
  assert.ok(autoDay.windows.every(x=>x.peak>=x.start&&x.peak<x.end));
  assert.throws(()=>C.autoTimeline(pseudo,bullish,start-86400000),/Hari tidak ada/);
@@ -105,7 +141,7 @@ async function run(){
  assert.throws(()=>C.inspect(linear,r,r.range.end));
  const csv=C.toCSV(r,{0:'BUY'});assert.match(csv,/manual_bias_UNVALIDATED/);assert.match(csv,/'?2026-10-05 12:00/);assert.match(csv,/"BUY"/);
  // Reproducible event-study rows contain NO fabricated price returns or win rates.
- assert.equal(r.version,'1.2.0');
+ assert.equal(r.version,'1.3.0');
  const obs=C.studyObservations(r,{0:'BUY'});
  const selected=obs.filter(x=>x.pair==='Sun/Moon'&&x.angle===0);
  assert.equal(selected.length,1);
@@ -153,6 +189,15 @@ async function run(){
  assert.equal(C.daily(week).reduce((n,d)=>n+d.exactCount,0),week.events.reduce((n,e)=>n+e.exactTimes.length,0));
  const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
  assert.equal((html.match(/id="albiruniPanel"/g)||[]).length,1);
+ const astroStart=html.indexOf('<div id="astroView">');
+ const astroEnd=html.indexOf('</div>\n<section id="albiruniPanel"');
+ assert.ok(astroStart>=0&&astroEnd>astroStart,'Al-Biruni must be separate sibling view');
+ assert.ok(html.indexOf('id="tabAlBiruni"')>=0,'Al-Biruni dedicated top navigation tab');
+ assert.ok(/<section id="albiruniPanel"[^>]* hidden><\/section>/.test(html),'dedicated Al-Biruni panel starts hidden');
+ const baziNav=fs.readFileSync(path.join(ROOT,'assets/bazi-ui.js'),'utf8');
+ assert.match(baziNav,/tabAlBiruni/);
+ assert.match(baziNav,/al-biruni/);
+
  for(const f of ['albiruni-core.js','albiruni-ui.js','albiruni.css'])assert.ok(html.includes(f));
  for(const f of ['albiruni-core.js','albiruni-ui.js'])assert.doesNotMatch(fs.readFileSync(path.join(ROOT,'assets',f),'utf8'),/CebonkCore|CEBONK_ASTRO_STATE|cebonk-astro-update|legacyImpact|classify\(/,'no dependency on legacy direction engine');
  console.log('Al-Biruni calculations: calendar, roots, orb edges, stations, retrograde, manual conflict, CSV and independent lunar phase check passed.');

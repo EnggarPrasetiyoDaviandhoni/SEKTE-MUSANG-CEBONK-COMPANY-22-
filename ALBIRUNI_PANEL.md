@@ -36,6 +36,16 @@ confidence atau probabilitas keuntungan. Panel tidak mengirim data ke EA.
 CSV menyimpan UTC, WIB, kontak berulang, orb, penanda batas periode dan label
 `manual_bias_UNVALIDATED`. Setelan memakai localStorage `cebonk.albiruni.v1`.
 
+## Pembaruan v1.3 — Al-Biruni jadi tab terpisah + ringkasan 3 periode
+
+- Di website GitHub Pages, **ASTROLOGY AL-BIRUNI** sekarang tombol **tab tersendiri**, sederajat dengan ASTROLOGY, ASTROLOGY NEWS, dan BAZI ASTROLOGY. Panel `#albiruniPanel` adalah sibling `#astroView`, bukan anaknya. Klik tab ASTROLOGY tidak lagi memunculkan Al-Biruni di atas jam Luxor. Alamat langsung: `#al-biruni`.
+- Tombol mode **HARIAN**, **MINGGUAN**, **BULANAN** mengubah pilihan hitungan (yang masih tersedia di selector) dan langsung menghitung ulang memakai sumber ephemeris/al-Biruni yang sama. Mode harian 24 jam, mingguan Senin–Jumat, bulanan semua tanggal termasuk Sabtu–Minggu sebagai **data astronomi**.
+- Ringkasan AUTO sekarang memuat **dominasi arah eksperimen** berdasarkan total durasi grid BUY vs SELL selama sesi Senin–Jumat (seri yang imbang tetap **NETRAL**), window searah terbesar dengan **MULAI / INTI / AKHIR** sebagai *perkiraan grid*, serta kartu setiap tanggal untuk meninjau rinciannya. Sampling: **15 menit harian, 30 menit mingguan, 60 menit bulanan**. Pemilihan grid sengaja dipaparkan; ini bukan timestamp exact planet atau bukti waktu tren emas.
+- Ringkasan bulanan mengecualikan Sabtu/Minggu dari penghitungan dominasi XAUUSD; aspek yang muncul akhir pekan tetap terlihat pada kalender dan kartu sebagai **MARKET TUTUP**, tidak digeser ke Jumat atau Senin. Mode harian Sabtu/Minggu tetap menampilkan aspek untuk keperluan riset, tetapi tidak memberi dominasi sesi market.
+- Mode **MANUAL** tetap tersedia dan tidak menggunakan ringkasan AUTO; menu setelan manual, CSV, serta tabel aspek lama tidak hilang.
+- Semua halaman lain/EA MT5/mesin `CebonkCore` tidak diubah. Navigasi memakai handler utama `bazi-ui.js` dan handler panel untuk menyembunyikan Al-Biruni ketika pindah ke tab lain. DOM tests memeriksa mode, tab, bulan tahun kabisat, pembatalan, dan pemisahan tampilan.
+- BUY/SELL tetap **HIPOTESIS MODERN**, bukan rumus asli prediksi emas dari al-Biruni, tidak di-backtest dengan harga XAUUSD. Tidak ada perubahan trading EA, feed WebRequest, atau notifikasi Telegram.
+
 ## Mode AUTO EKSPERIMEN v1.2 (default)
 
 **AUTO** otomatis menghitung hipotesis BUY/SELL/KONFLIK/NETRAL dari aspek planet saat jam WIB dipilih, terpisah dari **MANUAL** v1.1 yang tidak berubah. Pengaturan mode disimpan pada localStorage `cebonk.albiruni.v1`. Hasil bukan prediksi harga yang teruji, tidak terhubung ke EA/Telegram, dan **BUKAN rumus trading dari Al-Biruni**. Dasar Al-Biruni yang disitasi hanya timing aspek, bukan bobot pasar.

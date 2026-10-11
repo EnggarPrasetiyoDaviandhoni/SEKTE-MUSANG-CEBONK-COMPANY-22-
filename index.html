@@ -28,7 +28,7 @@
 @media(prefers-reduced-motion:no-preference){button{transition:background .15s,opacity .15s}}
 </style>
 <link rel="stylesheet" href="assets/wallpaper.css?v=1.1.0">
-<link rel="stylesheet" href="assets/albiruni.css?v=1.2.0">
+<link rel="stylesheet" href="assets/albiruni.css?v=1.3.0">
 </head>
 <body>
 <main class="wrap">
@@ -38,9 +38,9 @@
 </header>
 <nav class="viewtabs" aria-label="Mode analisis">
  <button class="viewtab active" id="tabAstro" type="button">ASTROLOGY</button>
+ <button class="viewtab" id="tabAlBiruni" type="button" aria-controls="albiruniPanel" aria-selected="false">ASTROLOGY AL-BIRUNI</button>
 </nav>
 <div id="astroView">
-<section id="albiruniPanel" aria-labelledby="abTitle"></section>
 <section class="clocks" aria-label="Jam sekarang, bukan tanggal hasil scan">
  <div class="clock"><label>Jam Luxor sekarang <span id="liveLuxorOffset"></span></label><strong id="clockLuxor">—</strong><small id="clockLuxorDate">—</small></div>
  <div class="bridge"><b>→</b><span id="clockDifference">—</span></div>
@@ -94,6 +94,7 @@
 <details><summary>Sumber perhitungan & informasi teknis</summary><p><a href="https://github.com/cosinekitty/astronomy/tree/v2.1.19/source/js" target="_blank" rel="noopener noreferrer">Astronomy Engine 2.1.19 — dokumentasi & lisensi MIT</a>. Konversi geocentric EQJ → ECT, true obliquity dan sidereal time digunakan konsisten untuk ASC/MC.</p><p><a href="https://data.iana.org/time-zones/tzdb/africa" target="_blank" rel="noopener noreferrer">IANA tzdb — aturan Africa/Cairo</a>. Koordinat konfigurasi mengikuti titik acuan Luxor dari <a href="https://kusnuzon.github.io/fx-project/tools/fx-tools/AstroCycleFX.html" target="_blank" rel="noopener noreferrer">web contoh</a>; aplikasi ini bukan salinan atau implementasi resmi Astrodox.</p><p>SSOT: satu CFG. Modul terpisah: waktu, geometri ASC/MC, ephemeris, aspek, model eksperimen, dan tampilan. Tidak ada fallback posisi planet rekaan bila library gagal.</p></details>
 
 </div>
+<section id="albiruniPanel" aria-labelledby="abTitle" hidden></section>
 <section id="combinedView" hidden></section>
 <section id="combined2View" hidden></section>
 <footer><span>CEBONK XAUUSD · ASTROLOGY + FIBO MUSANG + COMBINED</span><span>Riset, bukan jaminan hasil trading.</span></footer>
@@ -504,7 +505,7 @@ $('dateInput').value=T.today();clock();setInterval(clock,1000);run();
 <script src="assets/triple-cycle-ui.js?v=2.2.0"></script>
 <script src="assets/chinese-solar-core.js?v=1.0.0"></script>
 <script src="assets/chinese-solar-ui.js?v=1.0.0"></script>
-<script src="assets/albiruni-core.js?v=1.2.0"></script>
-<script src="assets/albiruni-ui.js?v=1.2.0"></script>
+<script src="assets/albiruni-core.js?v=1.3.0"></script>
+<script src="assets/albiruni-ui.js?v=1.3.0"></script>
 </body>
 </html>
