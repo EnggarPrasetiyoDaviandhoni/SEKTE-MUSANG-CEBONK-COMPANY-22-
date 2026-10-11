@@ -1,0 +1,364 @@
+// CEBONK COMPANY 22 | ASTROLOGY NEWS MT5 EXPERT ADVISOR v1.00
+// SAME NEWS POLICY AS WEB: news anchors time, Astrology determines one direction.
+// Source CebonkNews.calculate + CebonkCore.analyse; no liquidity sweep / MA trend.
+// CAUTION: website calendar is Oct-2026 snapshot, NOT a continuous live news feed.
+#property strict
+#property version "1.00"
+#property description "Astrology NEWS website windows: fixed lot, ATR 3 SL, RR4 TP, Friday close"
+#property tester_file "CEBONK_ASTRO_NEWS_WINDOWS.csv"
+#include "NewsNotify.mqh"
+
+input group "01 | TRADE / SAFETY"
+input string InpSymbol="XAUUSDc";
+input ulong InpMagic=221025;
+input bool InpAutopilot=false;
+input bool InpAllowRealAccount=false;
+input double InpFixedLot=0.01;
+input int InpMaxSpreadPoints=70;
+input int InpDeviationPoints=30;
+input bool InpRequireHighUSDCalendar=true; // Confirm release on live MT5 calendar, fail closed.
+
+input group "02 | NEWS ASTROLOGY WEB"
+input string InpNewsURL="https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/astro_news/data/news_windows.csv";
+input int InpRefreshSeconds=300;
+input int InpHTTPTimeoutMs=3000;
+input bool InpAcceptExperimentalAstro=true;
+input string InpTesterCSV="CEBONK_ASTRO_NEWS_WINDOWS.csv";
+input int InpBrokerUTCMinutes=180;
+input bool InpLiveAutoBrokerUTC=true;
+
+input group "03 | FIXED ATR STOPS"
+input int InpATRPeriod=14;
+input double InpSL_ATR=3.0;
+input double InpRR=4.0;
+
+input group "04 | FRIDAY EXIT"
+input bool InpFridayAutoClose=true;
+input int InpFridayBufferMinutes=5;
+input int InpFallbackFridayCloseHour=23;
+input int InpFallbackFridayCloseMinute=55;
+
+input group "05 | TELEGRAM / MT5 PUSH"
+input bool InpTelegram=true;
+input string InpTelegramToken="";
+input string InpTelegramChatID="";
+input bool InpMT5Push=true;
+
+#define AN_MODEL "CEBONK_ASTRO_NEWS_V1"
+struct ANWindow {string id,name,aspect;long release,start,entryEnd,end,peak;int dir;};
+ANWindow gWindows[];
+bool gTester=false,gAuto=false,gFeedOK=false;
+string gScope="",gButton="",gStatus="",gFeedError="NEWS_FEED_NOT_LOADED";
+int gATR=INVALID_HANDLE;
+long gLastPoll=0,gLastCloseTry=0;
+string ANSide(const int d){return d>0?"BUY":d<0?"SELL":"WAIT";}
+bool ANDigits(const string s){
+ if(StringLen(s)<1||StringLen(s)>18)return false;
+ for(int i=0;i<StringLen(s);i++){ushort x=StringGetCharacter(s,i);if(x<48||x>57)return false;}
+ return true;
+}
+bool ANDate(const string s){
+ if(StringLen(s)!=10)return false;
+ for(int i=0;i<10;i++){ushort x=StringGetCharacter(s,i);
+  if(i==4||i==7){if(x!=45)return false;}else if(x<48||x>57)return false;
+ }
+ return true;
+}
+void ANStatus(const string s){
+ if(gStatus==s)return;
+ gStatus=s;Print("ASTRO NEWS EA | ",s);
+ if(ObjectFind(0,gButton)>=0)ObjectSetString(0,gButton,OBJPROP_TOOLTIP,s);
+}
+long ANServerNow(){
+ long s=(long)TimeTradeServer();
+ return (gTester||s<=0)?(long)TimeCurrent():s;
+}
+int ANOffset(){
+ if(gTester||!InpLiveAutoBrokerUTC)return InpBrokerUTCMinutes*60;
+ return (int)MathRound((double)(ANServerNow()-(long)TimeGMT())/900.0)*900;
+}
+long ANNowUTC(){return gTester?ANServerNow()-ANOffset():(long)TimeGMT();}
+string ANWIB(const long utc){
+ return TimeToString((datetime)(utc+7*3600),TIME_DATE|TIME_MINUTES)+" WIB";
+}
+bool ANParse(const string payload){
+ gFeedOK=false;ArrayResize(gWindows,0);gFeedError="ASTRO_NEWS_FEED_INVALID";
+ if(StringLen(payload)<20||StringLen(payload)>100000)return false;
+ string lines[];int n=StringSplit(payload,10,lines);if(n<=0)return false;
+ string head=lines[0];StringTrimLeft(head);StringTrimRight(head);
+ if(StringLen(head)>0&&StringGetCharacter(head,0)==65279)head=StringSubstr(head,1);
+ if(head!="event_id,event_name,release_epoch,calendar_checked,direction,start_epoch,entry_end_epoch,end_epoch,peak_epoch,aspects,model")return false;
+ ANWindow rows[];ArrayResize(rows,0);
+ for(int i=1;i<n;i++){
+  string line=lines[i];StringTrimLeft(line);StringTrimRight(line);if(line=="")continue;
+  string p[];
+  if(StringSplit(line,44,p)!=11||!ANDigits(p[2])||!ANDigits(p[5])||!ANDigits(p[6])||
+     !ANDigits(p[7])||!ANDigits(p[8])||!ANDate(p[3])||p[10]!=AN_MODEL||
+     (p[4]!="BUY"&&p[4]!="SELL")||StringLen(p[0])<3||StringLen(p[0])>70||
+     StringLen(p[1])<3||StringLen(p[1])>150||StringLen(p[9])<3||StringLen(p[9])>380){
+    gFeedError="ASTRO_NEWS_SCHEMA_INVALID";return false;
+  }
+  ANWindow w;w.id=p[0];w.name=p[1];w.aspect=p[9];
+  w.release=StringToInteger(p[2]);w.start=StringToInteger(p[5]);
+  w.entryEnd=StringToInteger(p[6]);w.end=StringToInteger(p[7]);w.peak=StringToInteger(p[8]);
+  w.dir=p[4]=="BUY"?1:-1;
+  if(w.release<946684800||w.release%300!=0||w.start%300!=0||w.entryEnd%300!=0||
+     w.end%300!=0||w.peak%300!=0||
+     w.start<w.release+300||w.entryEnd<=w.start||w.entryEnd-w.start>600||
+     w.end<w.entryEnd||w.end>w.release+7500||w.peak<w.start||w.peak>=w.entryEnd){
+    gFeedError="ASTRO_NEWS_WINDOW_INVALID";return false;
+  }
+  // Per-event fixed direction and release. At most 1 trade per event ID, even if multiple windows.
+  for(int j=0;j<ArraySize(rows);j++)if(rows[j].id==w.id){
+   if(rows[j].release!=w.release||rows[j].dir!=w.dir||rows[j].name!=w.name){
+    gFeedError="ASTRO_NEWS_EVENT_CONFLICT";return false;
+   }
+   if(w.start<rows[j].end&&rows[j].start<w.end){gFeedError="ASTRO_NEWS_OVERLAP";return false;}
+  }
+  if(ArraySize(rows)>=100){gFeedError="ASTRO_NEWS_TOO_MANY_WINDOWS";return false;}
+  int k=ArraySize(rows);ArrayResize(rows,k+1);rows[k]=w;
+ }
+ if(ArraySize(rows)==0){gFeedError="ASTRO_NEWS_NO_VALID_CANDIDATE";return false;}
+ ArrayResize(gWindows,ArraySize(rows));for(int i=0;i<ArraySize(rows);i++)gWindows[i]=rows[i];
+ gFeedOK=true;gFeedError="";return true;
+}
+bool ANReadLocal(){
+ int f=FileOpen(InpTesterCSV,FILE_READ|FILE_TXT|FILE_ANSI|FILE_SHARE_READ,0,CP_UTF8);
+ if(f==INVALID_HANDLE){gFeedOK=false;ArrayResize(gWindows,0);gFeedError="NEWS_TEST_CSV_MISSING";return false;}
+ string t="";
+ while(!FileIsEnding(f)){t+=FileReadString(f)+"\n";if(StringLen(t)>100000)break;}
+ FileClose(f);return ANParse(t);
+}
+bool ANReadWeb(){
+ if(gTester)return ANReadLocal();  // WebRequest prohibited in Strategy Tester.
+ char req[],answer[];string headers="";
+ ResetLastError();
+ int code=WebRequest("GET",InpNewsURL,"Accept: text/csv\r\nCache-Control: no-cache\r\n",
+   InpHTTPTimeoutMs,req,answer,headers);
+ if(code!=200||ArraySize(answer)<20||ArraySize(answer)>100000){
+  gFeedOK=false;ArrayResize(gWindows,0);
+  gFeedError="NEWS_WEB_HTTP_"+(string)code+"_ERR_"+(string)GetLastError();return false;
+ }
+ return ANParse(CharArrayToString(answer,0,WHOLE_ARRAY,CP_UTF8));
+}
+bool ANCalendarConfirms(const long releaseUtc){
+ // Economic Calendar uses trade-server time; match a HIGH USD release at the published minute.
+ // Fail CLOSED when calendar is unavailable or time differs. Never rely on this for direction.
+ if(gTester||!InpRequireHighUSDCalendar)return true;
+ MqlCalendarValue values[];ResetLastError();
+ const int shift=ANOffset();
+ int count=CalendarValueHistory(values,(datetime)(releaseUtc+shift-120),
+      (datetime)(releaseUtc+shift+120),NULL,"USD");
+ if(count<1||count>500)return false;
+ for(int i=0;i<count;i++){
+  if(MathAbs((long)values[i].time-(releaseUtc+shift))>60)continue;
+  MqlCalendarEvent event;
+  if(CalendarEventById(values[i].event_id,event)&&
+     event.importance==CALENDAR_IMPORTANCE_HIGH&&
+     event.time_mode==CALENDAR_TIMEMODE_DATETIME)return true;
+ }
+ return false;
+}
+bool ANTradePermission(){
+ if(!gAuto)return false;
+ if(!InpAllowRealAccount&&AccountInfoInteger(ACCOUNT_TRADE_MODE)==ACCOUNT_TRADE_MODE_REAL)return false;
+ return TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)&&MQLInfoInteger(MQL_TRADE_ALLOWED)&&
+        AccountInfoInteger(ACCOUNT_TRADE_ALLOWED)&&AccountInfoInteger(ACCOUNT_TRADE_EXPERT);
+}
+ENUM_ORDER_TYPE_FILLING ANFilling(bool &ok){
+ ok=true;long f=SymbolInfoInteger(InpSymbol,SYMBOL_FILLING_MODE);
+ if((f&SYMBOL_FILLING_IOC)!=0)return ORDER_FILLING_IOC;
+ if((f&SYMBOL_FILLING_FOK)!=0)return ORDER_FILLING_FOK;
+ if(SymbolInfoInteger(InpSymbol,SYMBOL_TRADE_EXEMODE)!=SYMBOL_TRADE_EXECUTION_MARKET)
+  return ORDER_FILLING_RETURN;
+ ok=false;return ORDER_FILLING_FOK;
+}
+double ANTickRound(const double p,const bool up){
+ double step=SymbolInfoDouble(InpSymbol,SYMBOL_TRADE_TICK_SIZE);
+ if(step<=0)return 0;
+ double n=up?MathCeil(p/step-1e-9):MathFloor(p/step+1e-9);
+ return NormalizeDouble(n*step,(int)SymbolInfoInteger(InpSymbol,SYMBOL_DIGITS));
+}
+bool ANHasAnyExposure(){
+ // No interference with other EAs/manual trades (particularly on NETTING accounts).
+ for(int i=PositionsTotal()-1;i>=0;i--){
+  ulong ticket=PositionGetTicket(i);
+  if(ticket>0&&PositionGetString(POSITION_SYMBOL)==InpSymbol)return true;
+ }
+ for(int i=OrdersTotal()-1;i>=0;i--){
+  ulong ticket=OrderGetTicket(i);
+  if(ticket>0&&OrderGetString(ORDER_SYMBOL)==InpSymbol)return true;
+ }
+ return false;
+}
+int ANFridayLastSecond(){
+ datetime from=0,to=0;int last=-1;
+ for(uint i=0;i<24;i++){
+  if(!SymbolInfoSessionTrade(InpSymbol,FRIDAY,i,from,to))break;
+  int a=(int)((long)from%86400),b=(int)((long)to%86400);
+  if(b==0)b=86400;
+  if(b<=a)b+=86400;
+  if(b>last)last=b;
+ }
+ return last>0?last:InpFallbackFridayCloseHour*3600+InpFallbackFridayCloseMinute*60;
+}
+bool ANFridayCutoff(){
+ if(!InpFridayAutoClose)return false;
+ long now=ANServerNow();MqlDateTime d;TimeToStruct((datetime)now,d);
+ if(d.day_of_week!=FRIDAY)return false;
+ int current=d.hour*3600+d.min*60+d.sec;
+ return current>=MathMax(0,ANFridayLastSecond()-InpFridayBufferMinutes*60);
+}
+void ANFridayClose(){
+ // Always manage own positions even if autopilot OFF, website offline, or feed has expired.
+ if(!ANFridayCutoff()||ANServerNow()-gLastCloseTry<10)return;
+ gLastCloseTry=ANServerNow();
+ bool fOK=false;ENUM_ORDER_TYPE_FILLING fill=ANFilling(fOK);if(!fOK)return;
+ for(int i=PositionsTotal()-1;i>=0;i--){
+  ulong ticket=PositionGetTicket(i);
+  if(ticket==0||PositionGetString(POSITION_SYMBOL)!=InpSymbol||
+    (ulong)PositionGetInteger(POSITION_MAGIC)!=InpMagic)continue;
+  MqlTick tick;if(!SymbolInfoTick(InpSymbol,tick)||tick.bid<=0||tick.ask<=0)continue;
+  long type=PositionGetInteger(POSITION_TYPE);
+  MqlTradeRequest q={};MqlTradeResult r={};
+  q.action=TRADE_ACTION_DEAL;q.symbol=InpSymbol;q.position=ticket;q.magic=InpMagic;
+  q.volume=PositionGetDouble(POSITION_VOLUME);
+  q.type=type==POSITION_TYPE_BUY?ORDER_TYPE_SELL:ORDER_TYPE_BUY;
+  q.price=type==POSITION_TYPE_BUY?tick.bid:tick.ask;
+  q.type_filling=fill;q.deviation=(ulong)InpDeviationPoints;
+  q.comment="ASTRO NEWS FRIDAY EXIT";
+  bool sent=OrderSend(q,r);
+  if(!sent||(r.retcode!=TRADE_RETCODE_DONE&&r.retcode!=TRADE_RETCODE_DONE_PARTIAL))
+   ANStatus("FRIDAY_CLOSE_FAILED_"+(string)r.retcode);
+  else LSNotice("FRIDAY_CLOSE","🌙 News EA close tiket "+(string)ticket+" sadurunge market tutup.",InpSymbol,gTester,gAuto);
+ }
+}
+void ANEvaluate(){
+ if(!gFeedOK||!InpAcceptExperimentalAstro){ANStatus(gFeedError);return;}
+ if(!ANTradePermission()||ANFridayCutoff())return;
+ const long now=ANNowUTC();
+ MqlDateTime day;TimeToStruct((datetime)(now+7*3600),day);
+ if(day.day_of_week<1||day.day_of_week>5)return;
+ int chosen=-1;
+ for(int i=0;i<ArraySize(gWindows);i++){
+  ANWindow w=gWindows[i];
+  if(now<w.start||now>=w.entryEnd)continue;
+  if(chosen>=0){
+   // Overlapping competing news windows => NO trade; one direction must be unambiguous.
+   if(gWindows[chosen].release!=w.release||gWindows[chosen].dir!=w.dir){ANStatus("NEWS_WINDOWS_CONFLICT");return;}
+  }else chosen=i;
+ }
+ if(chosen<0)return;
+ ANWindow w=gWindows[chosen];
+ string key=gScope+"EV."+w.id;
+ if(GlobalVariableCheck(key)){ANStatus("NEWS_EVENT_ALREADY_TRADED");return;}
+ if(ANHasAnyExposure()){ANStatus("SYMBOL_HAS_POSITION_OR_ORDER");return;}
+ if(!ANCalendarConfirms(w.release)){ANStatus("LIVE_HIGH_USD_CALENDAR_NOT_CONFIRMED");return;}
+ MqlTick tick;if(!SymbolInfoTick(InpSymbol,tick)||tick.ask<=tick.bid||tick.bid<=0)return;
+ double point=SymbolInfoDouble(InpSymbol,SYMBOL_POINT);
+ if(point<=0||(tick.ask-tick.bid)/point>InpMaxSpreadPoints){ANStatus("SPREAD_GUARD");return;}
+ long mode=SymbolInfoInteger(InpSymbol,SYMBOL_TRADE_MODE);
+ if(mode==SYMBOL_TRADE_MODE_DISABLED||mode==SYMBOL_TRADE_MODE_CLOSEONLY||
+   (w.dir>0&&mode==SYMBOL_TRADE_MODE_SHORTONLY)||(w.dir<0&&mode==SYMBOL_TRADE_MODE_LONGONLY))return;
+ double a[];ArraySetAsSeries(a,true);
+ if(CopyBuffer(gATR,0,1,1,a)!=1||a[0]<=0||!MathIsValidNumber(a[0]))return;
+ double step=SymbolInfoDouble(InpSymbol,SYMBOL_VOLUME_STEP),minlot=SymbolInfoDouble(InpSymbol,SYMBOL_VOLUME_MIN),
+        maxlot=SymbolInfoDouble(InpSymbol,SYMBOL_VOLUME_MAX);
+ if(step<=0||InpFixedLot<minlot||InpFixedLot>maxlot||
+   MathAbs(MathRound(InpFixedLot/step)*step-InpFixedLot)>1e-8){ANStatus("FIX_LOT_INVALID");return;}
+ double entry=w.dir>0?tick.ask:tick.bid;
+ double sl=ANTickRound(entry+(w.dir>0?-1:1)*a[0]*InpSL_ATR,w.dir<0);
+ double risk=w.dir>0?entry-sl:sl-entry;
+ if(sl<=0||risk<=0)return;
+ double tp=ANTickRound(entry+(w.dir>0?1:-1)*risk*InpRR,w.dir>0);
+ double minstop=(SymbolInfoInteger(InpSymbol,SYMBOL_TRADE_STOPS_LEVEL)+1)*point;
+ if(tp<=0||(w.dir>0&&(tick.bid-sl<minstop||tp-tick.bid<minstop))||
+              (w.dir<0&&(sl-tick.ask<minstop||tick.ask-tp<minstop))){
+  ANStatus("BROKER_MIN_STOPS");return;
+ }
+ bool fillingOK=false;ENUM_ORDER_TYPE_FILLING fill=ANFilling(fillingOK);if(!fillingOK)return;
+ MqlTradeRequest req={};MqlTradeCheckResult check={};MqlTradeResult res={};
+ req.action=TRADE_ACTION_DEAL;req.symbol=InpSymbol;req.magic=InpMagic;
+ req.type=w.dir>0?ORDER_TYPE_BUY:ORDER_TYPE_SELL;
+ req.volume=InpFixedLot;req.price=entry;req.sl=sl;req.tp=tp;
+ req.type_filling=fill;req.deviation=(ulong)InpDeviationPoints;
+ req.comment="ASTRONEWS "+w.id;
+ if(!OrderCheck(req,check)){ANStatus("ORDER_CHECK_"+(string)check.retcode);return;}
+ if(!OrderSend(req,res)||(res.retcode!=TRADE_RETCODE_DONE&&res.retcode!=TRADE_RETCODE_DONE_PARTIAL)){
+  ANStatus("NEWS_ORDER_REJECTED_"+(string)res.retcode);return;
+ }
+ if(!gTester){GlobalVariableSet(key,(double)ANServerNow());GlobalVariablesFlush();}
+ int digits=(int)SymbolInfoInteger(InpSymbol,SYMBOL_DIGITS);
+ LSNotice("ENTRY_FILLED",
+  (w.dir>0?"🟢 BUY":"🔴 SELL")+" | XAUUSDc | ASTROLOGY NEWS\n"+
+  "📰 "+w.name+" | "+ANWIB(w.release)+"\n"+
+  "🔮 Entry Awal "+ANWIB(w.start)+" → "+ANWIB(w.entryEnd)+"\n"+
+  "🌙 Aspek INTI: "+w.aspect+"\n"+
+  "🎯 ENTRY "+DoubleToString(entry,digits)+"\n"+
+  "🛑 SL "+DoubleToString(sl,digits)+" (3×ATR)\n"+
+  "💰 TP "+DoubleToString(tp,digits)+" (RR 1:4)",
+  InpSymbol,gTester,gAuto);
+ ANStatus("NEWS_ENTRY_SENT_"+w.id);
+}
+void ANPaint(){
+ if(ObjectFind(0,gButton)<0)return;
+ ObjectSetString(0,gButton,OBJPROP_TEXT,gAuto?"AUTOPILOT ON":"AUTOPILOT OFF");
+ ObjectSetInteger(0,gButton,OBJPROP_BGCOLOR,gAuto?clrDarkGreen:clrFireBrick);
+ ObjectSetInteger(0,gButton,OBJPROP_STATE,false);
+}
+bool ANInputsOK(){
+ return InpSymbol!=""&&InpMagic>0&&InpFixedLot>0&&InpMaxSpreadPoints>0&&
+  InpDeviationPoints>=0&&InpNewsURL!=""&&InpRefreshSeconds>=60&&InpRefreshSeconds<=3600&&
+  InpHTTPTimeoutMs>=500&&InpTesterCSV!=""&&InpBrokerUTCMinutes>=-720&&InpBrokerUTCMinutes<=840&&
+  InpATRPeriod>=2&&InpATRPeriod<=100&&InpSL_ATR>0&&InpSL_ATR<=20&&InpRR>=1&&InpRR<=10&&
+  InpFridayBufferMinutes>=1&&InpFridayBufferMinutes<=120&&
+  InpFallbackFridayCloseHour>=0&&InpFallbackFridayCloseHour<=23&&
+  InpFallbackFridayCloseMinute>=0&&InpFallbackFridayCloseMinute<=59;
+}
+int OnInit(){
+ gTester=(bool)MQLInfoInteger(MQL_TESTER);gAuto=InpAutopilot;
+ if(!ANInputsOK()||_Symbol!=InpSymbol)return INIT_PARAMETERS_INCORRECT;
+ gScope="CEBONK.ANEWS."+(string)AccountInfoInteger(ACCOUNT_LOGIN)+"."+InpSymbol+"."+(string)InpMagic+".";
+ gButton="CEBONK_ASTRONEWS_"+(string)ChartID();
+ gATR=iATR(InpSymbol,PERIOD_M5,InpATRPeriod);
+ if(gATR==INVALID_HANDLE)return INIT_FAILED;
+ if(!gTester){
+  ObjectCreate(0,gButton,OBJ_BUTTON,0,0,0);ObjectSetInteger(0,gButton,OBJPROP_CORNER,CORNER_RIGHT_UPPER);
+  ObjectSetInteger(0,gButton,OBJPROP_XDISTANCE,12);ObjectSetInteger(0,gButton,OBJPROP_YDISTANCE,18);
+  ObjectSetInteger(0,gButton,OBJPROP_XSIZE,126);ObjectSetInteger(0,gButton,OBJPROP_YSIZE,30);ANPaint();
+ }
+ ANReadWeb();
+ EventSetTimer(5);
+ LSNotice("EA_STARTED","📰 ASTROLOGY NEWS EA v1.00 | ARAH MURNI ASTROLOGY\n"+
+   "SL 3×ATR | TP RR 1:4 | "+(gFeedOK?"📡 WEB TERHUBUNG":"📡 DATA NEWS TIDAK SIAP"),
+   InpSymbol,gTester,gAuto);
+ return INIT_SUCCEEDED;
+}
+void OnDeinit(const int reason){
+ EventKillTimer();if(gATR!=INVALID_HANDLE)IndicatorRelease(gATR);
+ if(ObjectFind(0,gButton)>=0)ObjectDelete(0,gButton);
+}
+void ANPulse(){
+ ANFridayClose();
+ long t=(long)TimeLocal();if(gTester)t=ANServerNow();
+ if(gLastPoll==0||t-gLastPoll>=InpRefreshSeconds){gLastPoll=t;ANReadWeb();}
+ LSFlushNotice(gTester,InpMT5Push,InpTelegram,InpTelegramToken,InpTelegramChatID,InpHTTPTimeoutMs);
+ ANEvaluate();
+}
+void OnTick(){ANEvaluate();}
+void OnTimer(){ANPulse();}
+void OnChartEvent(const int id,const long &l,const double &d,const string &s){
+ if(id==CHARTEVENT_OBJECT_CLICK&&s==gButton){
+  gAuto=!gAuto;ANPaint();LSNotice("AUTOPILOT",gAuto?"ON":"OFF",InpSymbol,gTester,gAuto);
+ }
+}
+void OnTradeTransaction(const MqlTradeTransaction &trans,const MqlTradeRequest &request,const MqlTradeResult &result){
+ if(trans.type!=TRADE_TRANSACTION_DEAL_ADD||trans.deal==0||!HistoryDealSelect(trans.deal))return;
+ if(HistoryDealGetString(trans.deal,DEAL_SYMBOL)!=InpSymbol||
+   (ulong)HistoryDealGetInteger(trans.deal,DEAL_MAGIC)!=InpMagic)return;
+ long entry=HistoryDealGetInteger(trans.deal,DEAL_ENTRY);
+ if(entry!=DEAL_ENTRY_OUT&&entry!=DEAL_ENTRY_OUT_BY&&entry!=DEAL_ENTRY_INOUT)return;
+ long reason=HistoryDealGetInteger(trans.deal,DEAL_REASON);
+ if(reason==DEAL_REASON_TP)LSNotice("TAKE PROFIT","😅 TAKE PROFIT",InpSymbol,gTester,gAuto);
+ else if(reason==DEAL_REASON_SL)LSNotice("STOP LOSS","🥲 STOP LOSS",InpSymbol,gTester,gAuto);
+}
