@@ -59,8 +59,8 @@ assert row['direction'] in ('BUY','SELL','WAIT')
 for field in ['start_epoch','entry_epoch','core_epoch','end_epoch','valid_until_epoch','published_epoch']:
  assert row[field].isdigit(),field
  assert int(row[field])==manifest[field],field
-start,entry,core,end,expires,published=(
- int(row[k]) for k in ['start_epoch','entry_epoch','core_epoch','end_epoch','valid_until_epoch','published_epoch'])
+start,entry,core,end,expires,published=tuple(
+ int(row[k]) for k in ['start_epoch','entry_epoch','core_epoch','end_epoch','valid_until_epoch','published_epoch']
 )
 assert published>=1600000000
 local=datetime.fromtimestamp(entry if entry else published,timezone.utc)+timedelta(hours=7)
