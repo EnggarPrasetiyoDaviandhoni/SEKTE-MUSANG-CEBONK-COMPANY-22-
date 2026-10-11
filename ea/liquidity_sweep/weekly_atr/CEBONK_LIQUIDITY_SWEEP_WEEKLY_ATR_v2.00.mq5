@@ -141,6 +141,18 @@ void LSPaint(){
  ObjectSetInteger(0,gButton,OBJPROP_BGCOLOR,gAuto?clrDarkGreen:clrFireBrick);
  ObjectSetInteger(0,gButton,OBJPROP_STATE,false);
 }
+bool LSNettingAccount(){
+ long margin=AccountInfoInteger(ACCOUNT_MARGIN_MODE);
+ return margin!=ACCOUNT_MARGIN_MODE_RETAIL_HEDGING;
+}
+bool LSForeignPosition(){
+ for(int i=PositionsTotal()-1;i>=0;i--){
+  ulong ticket=PositionGetTicket(i);
+  if(ticket>0&&PositionGetString(POSITION_SYMBOL)==InpSymbol&&
+     (ulong)PositionGetInteger(POSITION_MAGIC)!=InpMagic)return true;
+ }
+ return false;
+}
 int LSOwnPositions(){
  int count=0;
  for(int i=PositionsTotal()-1;i>=0;i--){
@@ -244,7 +256,10 @@ bool LSPlace(const int dir,const double atr,const long sweepTime,const int wi,st
  }
  if(!LSTradeAllowed()){reason="ALGO_TRADE_DISABLED";return false;}
  if(LSFridayCutoff()){reason="FRIDAY_CUTOFF";return false;}
- if(LSOwnPositions()>=InpMaxPositions){reason="MAX_OWN_POSITIONS";return false;}
+ if(LSNettingAccount()&&LSForeignPosition()){reason="NETTING_SYMBOL_OCCUPIED";return false;}
+ if(LSOwnPositions()>=(LSNettingAccount()?1:InpMaxPositions)){
+  reason="MAX_OWN_POSITIONS";return false;
+ }
  MqlTick q; if(!SymbolInfoTick(InpSymbol,q)||q.ask<=q.bid||q.bid<=0){
   reason="INVALID_QUOTES";return false;
  }
@@ -290,7 +305,8 @@ bool LSPlace(const int dir,const double atr,const long sweepTime,const int wi,st
  if(!OrderSend(req,res)||(res.retcode!=TRADE_RETCODE_DONE&&res.retcode!=TRADE_RETCODE_DONE_PARTIAL)){
   reason="ORDER_SEND_"+(string)res.retcode;return false;
  }
- gLastAcceptedSweep=sweepTime;GlobalVariableSet(gScope+"LAST_SWEEP",(double)sweepTime);
+ gLastAcceptedSweep=sweepTime;
+ if(!gTester)GlobalVariableSet(gScope+"LAST_SWEEP",(double)sweepTime);
  int digits=(int)SymbolInfoInteger(InpSymbol,SYMBOL_DIGITS);
  LSNotice("ENTRY_FILLED",LSDirection(dir)+" | LS M5 + ASTRO WEEKLY\n"+
   "MULAI "+TimeToString((datetime)(gWindows[wi].from+7*3600),TIME_MINUTES)+" WIB"+
@@ -340,7 +356,7 @@ int OnInit(){
  if(gAtr==INVALID_HANDLE)return INIT_FAILED;
  gScope="CEBONK.WEEKLY.LS."+(string)AccountInfoInteger(ACCOUNT_LOGIN)+"."+
    InpSymbol+"."+(string)InpMagic+".";
- if(GlobalVariableCheck(gScope+"LAST_SWEEP"))
+ if(!gTester&&GlobalVariableCheck(gScope+"LAST_SWEEP"))
   gLastAcceptedSweep=(long)GlobalVariableGet(gScope+"LAST_SWEEP");
  gButton="CEBONK_WEEKLY_LS_AUTO_"+(string)ChartID();
  if(!gTester){
