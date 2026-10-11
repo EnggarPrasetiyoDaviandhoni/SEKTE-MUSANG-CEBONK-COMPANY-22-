@@ -13,7 +13,7 @@ function label(d){return d==='BUY'?'BULLISH':d==='SELL'?'BEARISH':d==='TIDAK ADA
 function style(d){return d==='BUY'?'buy':d==='SELL'?'sell':'transition';}
 function status(s){$('awStatus').textContent=s;}
 function buttons(busy){running=busy;$('awRun').disabled=busy;$('awDate').disabled=busy;$('awNext').disabled=busy;$('awPrev').disabled=busy;$('awCancel').disabled=!busy;}
-function invalidate(){activeResult=null;$('awSummary').hidden=true;$('awDays').innerHTML='';status('Tanggal atau pengaturan berubah. Klik Hitung Mingguan untuk memperbarui hasil.');}
+function invalidate(){activeResult=null;$('awExport').disabled=true;$('awSummary').hidden=true;$('awDays').innerHTML='';status('Tanggal atau pengaturan berubah. Klik Hitung Mingguan untuk memperbarui hasil.');}
 function dateShift(date,delta){return new Date(Date.parse(date+'T00:00:00Z')+delta*86400000).toISOString().slice(0,10);}
 function dateToWeek(date){return Week.monday(date);}
 function formatBest(g){
@@ -42,7 +42,7 @@ function render(result,mode,monday){
  }
  $('awDays').innerHTML=result.days.map(x=>'<tr><td>'+x.weekday+'<small>'+x.date+'</small></td><td class="'+style(x.dominant)+'">'+esc(label(x.dominant))+'</td><td>'+x.buyMinutes+' / '+x.sellMinutes+' menit</td><td>'+formatBest(x.best)+'</td></tr>').join('');
  $('awTop').innerHTML=result.candidates.map((g,i)=>'<tr><td>'+(i+1)+'</td><td>'+g.weekday+', '+g.date+'</td><td class="'+style(g.direction)+'">'+label(g.direction)+'</td><td>'+esc(clock(g.start))+'</td><td>'+esc(clock(g.core))+'</td><td>'+esc(clock(g.end))+'</td><td>'+g.minutes+' menit</td></tr>').join('')||'<tr><td colspan="7">Tidak ada kandidat searah dominasi mingguan yang memenuhi syarat.</td></tr>';
- $('awCopy').disabled=false;
+ $('awCopy').disabled=false;$('awExport').disabled=result.candidates.length===0;
 }
 let loading=null;
 async function library(){
@@ -73,7 +73,7 @@ async function run(){
  const monday=$('awDate').value,mode=$('tzMode')?.value||'AUTO';
  let days;
  try{days=Week.weekDates(monday,Core.CFG.yearMin,Core.CFG.yearMax);}catch(e){status('Kesalahan tanggal: '+e.message);return;}
- const token=++seq;buttons(true);$('awSummary').hidden=true;$('awCopy').disabled=true;
+ const token=++seq;buttons(true);$('awSummary').hidden=true;$('awCopy').disabled=true;$('awExport').disabled=true;
  $('awDays').innerHTML='';$('awTop').innerHTML='';$('awProgress').hidden=false;$('awProgress').value=0;status('Memuat Astronomy Engine…');
  try{
   const A=await library();
@@ -99,6 +99,18 @@ function copy(){
  if(navigator.clipboard?.writeText){navigator.clipboard.writeText(out).then(()=>status('Ringkasan mingguan tersalin.')).catch(()=>{root.prompt('Salin ringkasan mingguan:',out);});}
  else root.prompt('Salin ringkasan mingguan:',out);
 }
+function exportEA(){
+ if(!activeResult||activeResult.candidates.length===0)return;
+ let csv;
+ try{csv=Week.toEACsv(activeResult,$('awDate').value);}
+ catch(e){status('CSV EA gagal: '+e.message);return;}
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download='CEBONK_ASTRO_WEEKLY.csv';
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+ status('CSV EA siap. Salin CEBONK_ASTRO_WEEKLY.csv ke MQL5/Files.');
+}
 function mount(){
  const parent=$('astroView');if(!parent||$('awPanel'))return;
  const css=document.createElement('style');css.id='awStyles';
@@ -112,7 +124,7 @@ function mount(){
  '<progress id="awProgress" max="100" value="0" hidden></progress><p id="awStatus" role="status" aria-live="polite">Pilih minggu dan tekan Hitung Mingguan.</p>'+
  '<div id="awSummary" class="aw-summary" hidden><div class="aw-dim" id="awRange"></div><p>Dominasi astrologi minggu ini:</p><strong id="awDominant"></strong><p id="awNumbers"></p>'+
  '<div id="awCandidate"><p class="aw-strong">KANDIDAT ENTRY UTAMA (EKSPERIMEN)</p><div class="aw-out"><div><small>Tanggal</small><b id="awDateOut"></b></div><div><small>Mulai WIB</small><b id="awStart"></b></div><div><small>Inti WIB</small><b id="awCore"></b></div><div><small>Akhir WIB</small><b id="awEnd"></b></div></div><p class="aw-dim" id="awLuxor"></p></div>'+
- '<p id="awNone" hidden></p><button id="awCopy" type="button" disabled>Salin Ringkasan</button></div>'+
+ '<p id="awNone" hidden></p><button id="awCopy" type="button" disabled>Salin Ringkasan</button> <button id="awExport" type="button" disabled>Unduh CSV EA MT5</button></div>'+
  '<h3 style="font-size:14px;margin:14px 0 8px">RINGKASAN HARIAN</h3><div class="aw-scroll"><table><thead><tr><th>Hari, tanggal WIB</th><th>Dominasi</th><th>BUY / SELL</th><th>Window terpanjang harian</th></tr></thead><tbody id="awDays"></tbody></table></div>'+
  '<h3 style="font-size:14px;margin:14px 0 8px">MAKSIMAL 5 WINDOW SEARAH DOMINASI MINGGUAN</h3><div class="aw-scroll"><table><thead><tr><th>No</th><th>Hari</th><th>Arah</th><th>Mulai WIB</th><th>Inti WIB</th><th>Akhir WIB</th><th>Durasi</th></tr></thead><tbody id="awTop"></tbody></table></div>'+
  '<p class="aw-dim">Scan setiap hari 06.00–24.00 WIB; grid 5 menit. Dominasi jika ≥55% waktu berkategori BUY atau SELL. Kandidat harus ≥30 menit. Seluruh jam mengikuti WIB; periode di luar scan tidak dihitung. Skor bukan win rate atau kepastian arah harga.</p></div>';
@@ -126,6 +138,7 @@ function mount(){
  $('tzMode')?.addEventListener('change',invalidate);
  $('awCancel').addEventListener('click',()=>{seq++;buttons(false);$('awProgress').hidden=true;status('Perhitungan dibatalkan. Tidak ada kandidat yang diterbitkan.');});
  $('awCopy').addEventListener('click',copy);
+ $('awExport').addEventListener('click',exportEA);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })(typeof window!=='undefined'?window:globalThis);
