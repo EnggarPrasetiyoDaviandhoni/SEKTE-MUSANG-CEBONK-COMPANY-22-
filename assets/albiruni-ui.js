@@ -136,14 +136,37 @@ function inspect(){
  }
 }
 function renderDay(){
- if(!result)return;
+ if(!result||!engine)return;
  const day=C.daily(result).find(d=>d.date===selectedDate);if(!day)return;
  panel.querySelectorAll('[data-ab-date]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.abDate===selectedDate)));
  $('abDayTitle').textContent=weekdays[day.weekday]+', '+selectedDate+' · '+day.exactCount+' exact / '+day.events.length+' window aktif';
+ $('abBiasTableHeader').textContent=biasMode==='AUTO'?'Asumsi bobot awal':'Bias uji manual';
+ if(biasMode==='AUTO'){
+  // Estimated bias windows sampled at 15-minute spacing; exact orbital times are in event rows.
+  const timeline=C.autoTimeline(engine,result,day.start,{stepMinutes:15});
+  const windows=timeline.windows;
+  $('abAutoWindows').hidden=false;
+  $('abAutoWindows').innerHTML='<h4>Window hipotesis AUTO · '+windows.length+' kandidat · grid 15 menit</h4>'+
+   (windows.map(w=>'<div class="ab-auto-win">'+chip(w.direction)+
+    ' <span>MULAI ~'+esc(shortTime(w.start))+
+    ' · INTI grid ~'+esc(shortTime(w.peak))+
+    ' · AKHIR ~'+esc(shortTime(w.end))+' WIB</span>'+
+    ' <button type="button" data-ab-autopick="'+w.peak+'">Lihat INTI</button></div>').join('')||
+    '<p>Belum ada window BUY/SELL kuat pada tanggal ini. NETRAL/KONFLIK boleh terjadi.</p>')+
+   '<small>Sampling 15 menit, bukan bukti waktu pergerakan emas. Lihat INTI menampilkan alasan planet saat itu.</small>';
+ }else{$('abAutoWindows').hidden=true;$('abAutoWindows').replaceChildren();}
  $('abEvents').innerHTML=day.events.map(e=>{
-  const exact=e.exactTimes.length?e.exactTimes.map(ms=>esc(shortTime(ms))).join('<br>'):`${esc(shortTime(e.closest))}<small>Terdekat ${e.closestOrb.toFixed(4)}° · belum exact dalam periode</small>`;
-  return `<tr><td><b>${esc(pairLabel(e))}</b><small>${esc(e.name)} ${e.angle}°</small></td><td>${eventTime(e.start,e.startClipped)}</td><td>${exact}</td><td>${eventTime(e.end,e.endClipped)}</td><td>${chip(rules[e.angle])}${rules[e.angle]!=='NETRAL'?'<small>Hipotesis manual · belum divalidasi</small>':''}</td></tr>`;
- }).join('')||'<tr><td colspan="5" class="ab-empty">Tidak ada window aspek pada hari ini untuk pasangan dan orb yang dipilih.</td></tr>';
+  const exact=e.exactTimes.length?e.exactTimes.map(ms=>esc(shortTime(ms))).join('<br>'):
+   esc(shortTime(e.closest))+'<small>Terdekat '+e.closestOrb.toFixed(4)+'° · bukan exact</small>';
+  const base=((C.AUTO_NATURE[e.pair[0]]+C.AUTO_NATURE[e.pair[1]])/2)*C.AUTO_ASPECT[e.angle];
+  const hypothesis=biasMode==='AUTO'?
+   '<small>Bobot awal '+base.toFixed(3)+'; fase dan orb dinilai pada jam dipilih.</small>':
+   chip(rules[e.angle])+(rules[e.angle]!=='NETRAL'?
+   '<small>Hipotesis manual · belum divalidasi</small>':'');
+  return '<tr><td><b>'+esc(pairLabel(e))+'</b><small>'+esc(e.name)+' '+e.angle+
+   '°</small></td><td>'+eventTime(e.start,e.startClipped)+'</td><td>'+exact+
+   '</td><td>'+eventTime(e.end,e.endClipped)+'</td><td>'+hypothesis+'</td></tr>';
+ }).join('')||'<tr><td colspan="5" class="ab-empty">Tidak ada window aspek pada hari ini.</td></tr>';
  inspect();
 }
 function render(){
