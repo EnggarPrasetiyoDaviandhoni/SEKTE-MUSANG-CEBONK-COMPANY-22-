@@ -7,6 +7,7 @@ on:
       - 'assets/astro-weekly-core.js'
       - 'assets/astro-weekly-ui.js'
       - 'tests/astro-weekly.test.cjs'
+      - 'ea/liquidity_sweep_weekly/**'
       - '.github/workflows/astro-weekly.yml'
   pull_request:
     paths:
@@ -14,6 +15,7 @@ on:
       - 'assets/astro-weekly-core.js'
       - 'assets/astro-weekly-ui.js'
       - 'tests/astro-weekly.test.cjs'
+      - 'ea/liquidity_sweep_weekly/**'
       - '.github/workflows/astro-weekly.yml'
   workflow_dispatch:
 permissions:
@@ -32,3 +34,5 @@ jobs:
           node --check assets/astro-weekly-ui.js
       - name: Weekday aggregation and WIB timing regression
         run: node tests/astro-weekly.test.cjs
+      - name: MT5 weekly EA source invariants (not MetaEditor compile)
+        run: python3 ea/liquidity_sweep_weekly/tests/test_source.py
