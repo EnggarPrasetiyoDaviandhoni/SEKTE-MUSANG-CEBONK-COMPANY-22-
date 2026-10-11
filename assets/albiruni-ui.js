@@ -257,11 +257,11 @@ $('abCSV').addEventListener('click',()=>{
 });
 $('abStudyCSV').addEventListener('click',()=>{
  if(!result||busy)return;
- const csv=C.toStudyCSV(result,rules);
+ const csv=biasMode==='AUTO'?C.toAutoStudyCSV(engine,result,rules):C.toStudyCSV(result,rules);
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
- const a=document.createElement('a');a.href=url;a.download='ALBIRUNI_RISET_XAUUSD_'+C.iso(result.range.start)+'_'+result.range.mode+'.csv';
+ const a=document.createElement('a');a.href=url;a.download='ALBIRUNI_RISET_XAUUSD_'+biasMode+'_'+C.iso(result.range.start)+'_'+result.range.mode+'.csv';
  panel.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
- status('CSV riset diekspor: semua kontak exact/terdekat; harga XAUUSD kosong, belum ada backtest.');
+ status('CSV riset '+biasMode+' diekspor: waktu exact/terdekat dan label hipotesis; harga XAUUSD tetap kosong.');
 });
 run();
 })(window);
