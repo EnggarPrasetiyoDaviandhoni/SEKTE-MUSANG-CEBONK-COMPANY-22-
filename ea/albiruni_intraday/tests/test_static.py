@@ -13,6 +13,11 @@ txt=(root/'dist/CEBONK_ALBIRUNI_INTRADAY_v1.00.txt').read_text('utf8')
 generator=(repo/'scripts/generate-albiruni-intraday.mjs').read_text('utf8')
 workflow=(repo/'.github/workflows/albiruni-intraday-ea.yml').read_text('utf8')
 assert ea==txt,'Standalone TXT must equal exact MQ5 content'
+assert 'if((s.published<1600000000)||(p[3]!="WAIT"&&s.dir==0)){' in ea, 'Explicit operator precedence for feed direction'
+assert 'if((parsed[i].day==s.day)||(parsed[i].id==s.id&&s.dir!=0)){' in ea, 'Explicit operator precedence for duplicate signal ID'
+assert 'if(s.published<1600000000||p[3]!="WAIT"&&s.dir==0){' not in ea
+assert 'if(parsed[i].day==s.day||parsed[i].id==s.id&&s.dir!=0){' not in ea
+
 required={
  'exact input model': 'ALBIRUNI_INTRADAY_V1' in ea and 'ALBIRUNI_INTRADAY_V1' in generator,
  'raw GitHub URL': 'https://raw.githubusercontent.com/' in ea,
