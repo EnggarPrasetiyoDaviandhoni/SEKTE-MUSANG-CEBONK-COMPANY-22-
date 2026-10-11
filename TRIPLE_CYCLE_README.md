@@ -1,27 +1,28 @@
-# CEBONK TRIPLE CYCLE ASTROLOGY — MODUL WEB
+# CEBONK — 4 MOMEN ASTROLOGY BULANAN (v2.0.0)
 
-Modul berbasis browser untuk menggabungkan *perhitungan* dari tiga jenis kalender/siklus, tanpa mengubah mesin trading:
+Pengganti modul lama “Triple Cycle”. Fitur ini adalah **kalender fase Bulan astronomis murni** dan kini berada pada tab navigasi utama **4 MOMEN ASTROLOGY**.
 
-- **Astrology Barat:** ephemeris posisi planet dari Astronomy Engine 2.1.19; tiga cuplikan model eksperimental per tanggal **06.00, 12.00, 18.00 WIB**. BUY/SELL hanyalah klasifikasi skor bawaan model v2.0 yang **belum tervalidasi**; dua dari tiga cuplikan harus searah untuk klasifikasi hari. Hari lain NETRAL atau TRANSISI. Segmentasi awal–inti–akhir berbasis tanggal, bukan waktu perubahan harga yang sebenarnya. Rincian tanggal memperlihatkan aspek planet dekat dan planet yang tampak retrograde.
-- **BaZi:** Pilar Tahun dan Pilar Bulan memakai `lunar-javascript@1.7.7` melalui `assets/bazi-core.js`, dengan tanggal/jam lokal Beijing untuk pergantian musim surya dan pelaporan WIB. Pergantian Pilar Bulan dicari ke menit berdasarkan pustaka itu; bukan tanggal 1 otomatis. Elemen dan shio dalam UI ditampilkan dalam bahasa Indonesia, tanpa Hanzi.
-- **Ilmu Falak / Hisab Bulan:** 8 sudut fase Bulan dari `Astronomy.SearchMoonPhase` pada 0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°. Umur Bulan dihitung sejak ijtimak terbaru; sudut fase dihitung geosentris. **Tidak** menghitung tinggi hilal di ufuk atau probabilitas terlihatnya hilal; sehingga tidak dapat dipakai untuk penetapan awal Ramadan/Syawal.
-- **Tanggal Hijriah referensi:** API kalender browser `Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura')`; ditandai sebagai **Umm al-Qura**, bukan kalender resmi Indonesia/rukyat pemerintah. Bila dukungan browser tidak ada, tampilkan “Tidak didukung browser”, tidak mengarang tanggal.
-- **Zona waktu:** tampilan waktu WIB UTC+07:00. Rentang tahun 2020–2040 mengikuti dukungan model utama Astrology.
-- **Interaksi:** buka tab **BAZI ASTROLOGY**, pilih pintasan **TRIPLE CYCLE BULANAN**, pilih bulan dan tekan **Hitung Bulanan**. Klik suatu tanggal untuk membaca rincian; unduh CSV bila diperlukan. Tombol sebelumnya dan berikutnya tersedia.
+Empat *jenis* momen:
+1. **Bulan Baru / Ijtimak** (sudut geosentris 0°)
+2. **Kuartal Pertama** (90°)
+3. **Bulan Purnama / Badar** (180°)
+4. **Kuartal Terakhir** (270°)
 
-## Batasan ilmiah dan trading
+Tanggal dan jam kejadian dihitung langsung memakai Astronomy Engine 2.1.19 melalui `SearchMoonPhase` lalu ditampilkan sebagai **WIB (UTC+7)**. Pengguna dapat memilih bulan **2020–2040**, maju/mundur bulan, dan mengunduh CSV. Pada satu bulan kalender Gregorian bisa ada **3–5 kejadian**, walaupun jenis momennya tetap empat. Tidak ada tanggal buatan bila ephemeris gagal.
 
-Ketepatan ephemeris dan kalender **tidak membuktikan** bahwa BaZi, fase Bulan, Hijriah atau posisi planet memprediksi harga XAUUSD/XAGUSD. Tidak ada voting arah antara Falak/BaZi dan Astrology, tidak ada model probabilitas transaksi yang teruji, tidak ada order MT5/API. Klasifikasi warna adalah hasil model eksperimental dan hanya diperuntukkan riset. Tidak ada data harga buatan.
+## Perubahan dari Triple Cycle
 
-## Struktur berkas
+- Dipisahkan menjadi panel tersendiri `#astroMonthlyView` dan tab **4 MOMEN ASTROLOGY**.
+- **Tidak** menampilkan BaZi, kalender Hijriah, shio, elemen, algoritme BUY/SELL, momen harian berbasis skor, ataupun sinyal EA.
+- BaZi tahunan, Fibo, Astrology News, website teknikal, dan mesin EA lama tetap **utuh dan independen**.
+- Deep link baru `#momen-astrology`; `#triple-cycle` lama diarahkan ke modul baru untuk kompatibilitas.
 
-- `assets/triple-cycle-core.js` perhitungan dan validasi (tanpa DOM).
-- `assets/triple-cycle-ui.js` kalender mobile-first dan CSV.
-- `tests/triple-cycle.test.cjs` uji referensi astronomis dan kalender serta integrasi DOM.
-- `.github/workflows/bazi-astrology.yml` menjalankan seluruh uji dengan pustaka asli, bukan mock.
+## Ketelitian dan batasan
 
-## Sumber
+Ijtimak tidak sama dengan hilal yang dapat dilihat. Data fase Bulan saja tidak mengukur tinggi hilal atau menetapkan awal bulan resmi. Fase astronomis bukan bukti arah harga XAUUSD/XAGUSD. Pusat perhitungan berada di `assets/triple-cycle-core.js` (nama file lama dipertahankan untuk kompatibilitas), UI di `assets/triple-cycle-ui.js`.
 
-- [Astronomy Engine](https://github.com/cosinekitty/astronomy) — algoritma ephemeris dan fase Bulan, lisensi MIT.
-- [lunar-javascript](https://github.com/6tail/lunar-javascript) — penanggalan surya dan BaZi, lisensi MIT.
-- [Intl.DateTimeFormat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat) — kalender Umm al-Qura dari implementasi ICU/browser; bukan penetapan tanggal resmi di Indonesia.
+## Tests
+
+`tests/triple-cycle.test.cjs` menguji **empat sudut fase**, waktu WIB, kalender pendek (Februari), dan integrasi tab. GitHub Actions `.github/workflows/bazi-astrology.yml` menjalankan tes bersama regresi BaZi lama agar penghapusan panel gabungan tidak mengubah modul kalender aslinya.
+
+Sumber: [Astronomy Engine 2.1.19 (MIT)](https://github.com/cosinekitty/astronomy).
