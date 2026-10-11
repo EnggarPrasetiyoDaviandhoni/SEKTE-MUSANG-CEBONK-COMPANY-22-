@@ -139,11 +139,11 @@ function mount(){
  ].join('');
  document.head.appendChild(style);
  const tab=document.createElement('button');tab.id='tabBazi';tab.className='viewtab';tab.type='button';tab.textContent='BAZI ASTROLOGY';nav.appendChild(tab);
-  const tabTriple=document.createElement('button');tabTriple.id='tabTriple';tabTriple.className='viewtab';tabTriple.type='button';tabTriple.textContent='TRIPLE CYCLE';nav.appendChild(tabTriple);
+  const tabTriple=document.createElement('button');tabTriple.id='tabTriple';tabTriple.className='viewtab';tabTriple.type='button';tabTriple.textContent='4 MOMEN ASTROLOGY';nav.appendChild(tabTriple);
  const view=document.createElement('section');view.id='baziView';view.hidden=true;
  view.innerHTML=[
  '<div class="bz-hero"><small>SEKTE MUSANG · CEBONK COMPANY 22</small><h2>BAZI ASTROLOGY</h2><p>Empat Pilar · Shio · Lima Elemen · Jadwal WIB · Riset XAUUSD / XAGUSD</p></div>',
- '<div class="bz-jumps"><strong>MENU ANALISIS HARGA · XAUUSD / XAGUSD</strong><div class="bz-jump-list"><button type="button" data-bz-target="m12Panel">GRAFIK RIWAYAT 12M</button><button type="button" data-bz-target="ayPanel">DOMINASI BAZI TAHUNAN</button><button type="button" data-bz-target="f60Panel">FUNDAMENTAL 60 TAHUN</button><button type="button" data-bz-target="tcPanel">TRIPLE CYCLE BULANAN</button><button type="button" data-bz-target="mhPanel">TREN BULANAN</button></div><span id="bzJumpStatus" style="font-size:11px;color:#a8cbdc" role="status"></span></div>',
+ '<div class="bz-jumps"><strong>MENU ANALISIS HARGA · XAUUSD / XAGUSD</strong><div class="bz-jump-list"><button type="button" data-bz-target="m12Panel">GRAFIK RIWAYAT 12M</button><button type="button" data-bz-target="ayPanel">DOMINASI BAZI TAHUNAN</button><button type="button" data-bz-target="f60Panel">FUNDAMENTAL 60 TAHUN</button><button type="button" data-bz-target="tcPanel">4 MOMEN ASTROLOGY</button><button type="button" data-bz-target="mhPanel">TREN BULANAN</button></div><span id="bzJumpStatus" style="font-size:11px;color:#a8cbdc" role="status"></span></div>',
  '<div class="bz-note"><strong>Ini kalender astrologi, bukan sinyal trading.</strong> Kombinasi elemen, Clash, dan jam BaZi belum membuktikan arah atau probabilitas harga XAUUSD maupun XAGUSD. Modul ini tidak mengubah mesin Astrology lama.</div>',
  '<div class="bz-panel"><div class="bz-head">Hitung BaZi · Zona Asia/Jakarta (WIB)</div><div class="bz-body"><div class="bz-controls">',
  '<label>Tanggal WIB<input type="date" id="bzDate" min="1900-01-01" max="2099-12-31"></label>',
@@ -160,7 +160,7 @@ function mount(){
  '<p class="bz-legend">Legenda: <span style="color:'+hues.Kayu+'">Kayu</span> · <span style="color:'+hues.Api+'">Api</span> · <span style="color:'+hues.Tanah+'">Tanah</span> · <span style="color:'+hues.Logam+'">Logam</span> · <span style="color:'+hues.Air+'">Air</span>. Sumber kalkulasi: lunar-javascript 1.7.7 (MIT).</p></div></div>'
  ].join('');
  wrap.insertBefore(view,wrap.querySelector('footer'));
- view.addEventListener('click',e=>{const button=e.target.closest('button[data-bz-target]');if(!button)return;const name=button.dataset.bzTarget;const allowed=['m12Panel','ayPanel','mhPanel','f60Panel','tcPanel'];if(!allowed.includes(name))return;if(name==='tcPanel'){activate('baziView','triple-cycle','tabTriple');return;}const panel=$(name);if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});else{const msg=$('bzJumpStatus');if(msg)msg.textContent='Modul masih dimuat. Tunggu sebentar lalu coba lagi.';}});
+ view.addEventListener('click',e=>{const button=e.target.closest('button[data-bz-target]');if(!button)return;const name=button.dataset.bzTarget;const allowed=['m12Panel','ayPanel','mhPanel','f60Panel','tcPanel'];if(!allowed.includes(name))return;if(name==='tcPanel'){activate('astroMonthlyView','momen-astrology','tabTriple');return;}const panel=$(name);if(panel)panel.scrollIntoView({behavior:'smooth',block:'start'});else{const msg=$('bzJumpStatus');if(msg)msg.textContent='Modul masih dimuat. Tunggu sebentar lalu coba lagi.';}});
  $('bzZodiac').innerHTML=yearTiles();
  const n=B.todayWIB();$('bzDate').value=n.date;$('bzHour').value=n.time;
  $('bzRun').addEventListener('click',run);
@@ -168,23 +168,23 @@ function mount(){
  $('bzDownload').addEventListener('click',exportCSV);
  ['bzDate','bzHour','bzSect'].forEach(id=>$(id).addEventListener('change',()=>{$('bzStatus').textContent='Parameter berubah; klik Hitung BaZi.';$('bzDownload').disabled=true;calculated=null;}));
  function activate(which,hash,chosen){
-  for(const id of ['astroView','astroNewsView','baziView','bbmaScannerView','liquidityScannerView','technicalView','combinedView','combined2View']){
+  for(const id of ['astroView','astroNewsView','baziView','astroMonthlyView','bbmaScannerView','liquidityScannerView','technicalView','combinedView','combined2View']){
    const el=$(id);if(el)el.hidden=id!==which;
   }
   for(const b of nav.querySelectorAll('.viewtab'))b.classList.toggle('active',b.id===(chosen||(which==='baziView'?'tabBazi':which==='astroNewsView'?'tabAstroNews':'tabAstro')));
   if(hash)try{history.replaceState(null,'','#'+hash);}catch(e){}
   if(which==='baziView'&&!calculated)run();
-   if(which==='baziView'&&hash==='triple-cycle')requestAnimationFrame(()=>{const panel=$('tcPanel');if(panel){panel.scrollIntoView({behavior:'auto',block:'start'});root.dispatchEvent(new Event('cebonk:triple-open'));}else{const status=$('bzJumpStatus');if(status)status.textContent='Panel belum termuat; periksa jaringan lalu muat ulang.';}});
+   if(which==='astroMonthlyView')root.dispatchEvent(new Event('cebonk:moon-monthly-open'));
  }
  nav.addEventListener('click',e=>{
   const t=e.target.closest('.viewtab');if(!t)return;
   if(t.id==='tabBazi')activate('baziView','bazi-astrology');
-   if(t.id==='tabTriple')activate('baziView','triple-cycle','tabTriple');
+   if(t.id==='tabTriple')activate('astroMonthlyView','momen-astrology','tabTriple');
   if(t.id==='tabAstro')activate('astroView','astrology');
   if(t.id==='tabAstroNews')activate('astroNewsView','astrology-news');
  });
  if(location.hash==='#bazi-astrology')activate('baziView','bazi-astrology');
- if(location.hash==='#triple-cycle')activate('baziView','triple-cycle','tabTriple');
+ if(location.hash==='#momen-astrology'||location.hash==='#triple-cycle')activate('astroMonthlyView','momen-astrology','tabTriple');
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })(typeof window!=='undefined'?window:globalThis);
