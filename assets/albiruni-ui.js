@@ -7,7 +7,7 @@ const $=id=>panel.querySelector('#'+id),KEY='cebonk.albiruni.v1';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names={Sun:'Matahari',Moon:'Bulan',Mercury:'Merkurius',Venus:'Venus',Mars:'Mars',Jupiter:'Jupiter',Saturn:'Saturnus'};
 const weekdays=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-let result=null,engine=null,selectedDate='',busy=false,token=0,loading=null,periodSummary=null;
+let result=null,engine=null,selectedDate='',busy=false,token=0,loading=null,periodSummary=null,threePlans=null,threeKey='';
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){saved={};}
 let rules=C.normalizeRules(saved.rules);
 let biasMode=saved.biasMode==='MANUAL'?'MANUAL':'AUTO';
@@ -29,9 +29,14 @@ panel.innerHTML=`
    <div><label for="abOrb">Orb window (°)</label><input id="abOrb" type="number" min="0.25" max="5" step="0.25" value="2" required></div>
   </div>
   <div class="ab-auto-config"><label for="abBiasMode">Mesin interpretasi arah XAUUSD</label><select id="abBiasMode"><option value="AUTO">AUTO EKSPERIMEN · penilaian planet & aspek</option><option value="MANUAL">MANUAL · aturan uji sendiri</option></select><span class="ab-auto-warning">AUTO merupakan hipotesis modern BELUM tervalidasi, bukan rumus harga dari kitab Al-Biruni atau order EA.</span></div>
-  <div class="ab-actions"><button id="abRun" class="ab-primary" type="button">Hitung peta aspek</button><button id="abToday" type="button">Hari ini</button><button id="abCancel" type="button" disabled>Batalkan</button><button id="abPrev" class="ab-next" type="button" aria-label="Periode sebelumnya">← Sebelumnya</button><button id="abNext" type="button" aria-label="Periode berikutnya">Berikutnya →</button><button id="abCSV" type="button" disabled>Unduh CSV aspek</button><button id="abStudyCSV" type="button" disabled>CSV riset XAUUSD</button></div>
+  <div class="ab-actions"><button id="abRunThree" class="ab-primary" type="button">Hitung 3 Dominasi + Jam Entry</button><button id="abRun" class="ab-primary" type="button">Hitung peta aspek</button><button id="abToday" type="button">Hari ini</button><button id="abCancel" type="button" disabled>Batalkan</button><button id="abPrev" class="ab-next" type="button" aria-label="Periode sebelumnya">← Sebelumnya</button><button id="abNext" type="button" aria-label="Periode berikutnya">Berikutnya →</button><button id="abCSV" type="button" disabled>Unduh CSV aspek</button><button id="abStudyCSV" type="button" disabled>CSV riset XAUUSD</button></div>
   <div id="abStatusBox" class="ab-status" role="status" aria-live="polite"><progress id="abProgress" max="100" value="0" hidden></progress><span id="abStatus">Siap menghitung panel baru.</span></div>
-  <div id="abResults" class="ab-results" hidden>
+  <div id="abThreeResult" class="ab-three-result" hidden>
+  <h3>DOMINASI AL-BIRUNI · 3 JANGKA WAKTU</h3>
+  <p class="ab-three-intro">Harian/Intraday · Mingguan/Swing · Bulanan/Position Trade. Saben periode dihitung mandiri. Entry yaiku kandidat waktu INTI bobot model, ora order EA.</p>
+  <div id="abThreeCards" class="ab-three-cards"></div>
+ </div>
+ <div id="abResults" class="ab-results" hidden>
    <div id="abPeriodSummary" class="ab-period-summary" hidden></div>
    <div id="abPeriodDays" class="ab-period-days" hidden></div>
    <div class="ab-metrics">
@@ -61,11 +66,94 @@ function save(){
 }
 function setBusy(value){
  busy=value;
- for(const id of ['abDate','abMode','abFocus','abOrb','abRun','abToday','abPrev','abNext'])$(id).disabled=value;
+ for(const id of ['abDate','abMode','abFocus','abOrb','abRun','abRunThree','abToday','abPrev','abNext'])$(id).disabled=value;
  $('abCancel').disabled=!value;$('abCSV').disabled=value||!result;$('abStudyCSV').disabled=value||!result;$('abProgress').hidden=!value;
 }
+const THREE_MODES=Object.freeze([
+ {mode:'day',title:'HARIAN',style:'INTRADAY'},
+ {mode:'week',title:'MINGGUAN',style:'SWING'},
+ {mode:'month',title:'BULANAN',style:'POSITION TRADE'}
+]);
+function threeInputsKey(){return JSON.stringify([$('abDate').value,$('abFocus').value,$('abOrb').value]);}
+function clearThree(){
+ threePlans=null;threeKey='';
+ $('abThreeResult').hidden=true;$('abThreeCards').replaceChildren();
+}
+function renderThree(){
+ if(!threePlans||threeKey!==threeInputsKey()){clearThree();return;}
+ const phases={APPLYING:'MENDEKAT',EXACT:'TEPAT',SEPARATING:'MENJAUH',STATION:'STASIONER'};
+ $('abThreeResult').hidden=false;
+ $('abThreeCards').innerHTML=THREE_MODES.map(m=>{
+  const p=threePlans[m.mode];if(!p)throw Error('Hasil tiga periode tidak lengkap.');
+  const entry=p.entryUTC!==null,direction=entry?p.direction:'WAIT';
+  const reason=entry?'Puncak bobot hipotesis window dominan':
+   p.reason==='NO_SINGLE_DIRECTION'?'Tidak ada satu arah dominan':
+   p.reason==='MARKET_CLOSED'?'Market tutup':'Tidak ada window valid searah dominasi';
+  const a=p.aspect;
+  const aspect=a?
+   '<p class="ab-three-aspect"><strong>Dasar aspek:</strong> '+
+    esc(a.pair.map(x=>names[x]||x).join(' ↔ '))+' · '+esc(a.name)+' '+a.angle+
+    '° · '+esc(phases[a.phase]||a.phase)+' · orb '+a.orb.toFixed(3)+'°</p>':
+   '<p class="ab-three-aspect">Ora ana aspek pendukung valid ing waktu kandidat.</p>';
+  return '<article class="ab-three-card" data-ab-horizon="'+m.mode+'">'+
+   '<header><div><h4>'+m.title+'</h4><small>'+m.style+'</small></div>'+
+   '<strong class="ab-three-direction">'+chip(direction)+'</strong></header>'+
+   '<p class="ab-three-range">'+esc(C.iso(p.periodStart))+' s.d. '+
+    esc(C.iso(p.periodEnd-1))+' WIB · grid '+p.resolutionMinutes+' menit</p>'+
+   (entry?
+    '<div class="ab-three-entry"><small>TANGGAL & JAM KANDIDAT ENTRY (WIB)</small>'+
+    '<strong>'+esc(p.entryWIB)+'</strong>'+
+    '<span>'+(p.entryUTC<Date.now()?'WAKTU TELAH LEWAT · ':'')+
+    'Kandidat INTI eksperimen, bukan sinyal order MT5</span></div>'+
+    '<div class="ab-three-times">'+
+    '<div><small>MULAI</small><b>'+esc(p.startWIB)+'</b></div>'+
+    '<div><small>INTI</small><b>'+esc(p.coreWIB)+'</b></div>'+
+    '<div><small>AKHIR</small><b>'+esc(p.endWIB)+'</b></div></div>'+
+    aspect:
+    '<div class="ab-three-entry"><small>TANGGAL & JAM KANDIDAT ENTRY (WIB)</small>'+
+    '<strong>WAIT — TIDAK ADA ENTRY</strong><span>'+esc(reason)+'</span></div>')+
+   '<p class="ab-three-muted">'+esc(reason)+
+   ' · BUY '+p.summary.buyMinutes+' menit / SELL '+p.summary.sellMinutes+
+   ' menit (skor durasi, bukan tingkat keberhasilan).</p>'+
+   '</article>';
+ }).join('');
+}
+async function runThree(){
+ if(busy)return;
+ if(biasMode!=='AUTO'){status('Aktifkan AUTO EKSPERIMEN kanggo hitung 3 dominasi.',true);return;}
+ const date=$('abDate').value,focus=$('abFocus').value,orb=Number($('abOrb').value);
+ clearThree();
+ try{
+  for(const m of THREE_MODES)C.period(date,m.mode);
+  if(!Number.isFinite(orb)||orb<0.25||orb>5)throw Error('Orb harus 0.25°–5°.');
+ }catch(e){status(e.message,true);return;}
+ const request=++token,finished={};
+ setBusy(true);$('abProgress').value=0;
+ status('Memuat ephemeris untuk tiga perhitungan terpisah…');save();
+ try{
+  const A=await library();if(request!==token)return;
+  for(let i=0;i<THREE_MODES.length;i++){
+   const m=THREE_MODES[i],localEngine=C.createEngine(A);
+   const calculated=await C.scan(localEngine,date,{
+    mode:m.mode,focus,orb,cancelled:()=>request!==token,
+    onProgress:p=>{if(request===token){
+     const pct=Math.round((i+p/100)/THREE_MODES.length*100);
+     $('abProgress').value=pct;status('Menghitung '+m.title+' mandiri · '+pct+'%');
+    }}
+   });
+   if(request!==token)return;
+   finished[m.mode]=C.periodEntryReport(localEngine,calculated);
+  }
+  if(request!==token)return;
+  threePlans=finished;threeKey=threeInputsKey();
+  renderThree();
+  status('Selesai: 3 arah independen, tanggal/jam WIB, MULAI–INTI–AKHIR. Hanya hipotesis eksperimen.');
+ }catch(e){
+  if(request===token){clearThree();status('Hitung 3 periode gagal: '+(e.message||String(e)),true);}
+ }finally{if(request===token)setBusy(false);}
+}
 function invalidate(){
- token++;result=null;engine=null;periodSummary=null;selectedDate='';$('abResults').hidden=true;$('abCalendar').replaceChildren();$('abEvents').replaceChildren();$('abActive').replaceChildren();$('abCSV').disabled=true;$('abStudyCSV').disabled=true;
+ clearThree();token++;result=null;engine=null;periodSummary=null;selectedDate='';$('abResults').hidden=true;$('abCalendar').replaceChildren();$('abEvents').replaceChildren();$('abActive').replaceChildren();$('abCSV').disabled=true;$('abStudyCSV').disabled=true;
  status('Pengaturan berubah. Klik Hitung peta aspek untuk memperbarui hasil.');save();
 }
 function shortTime(ms){return C.stamp(ms).replace(' WIB','');}
@@ -312,12 +400,14 @@ $('abPeriodDays').addEventListener('click',e=>{
 });
 $('abBiasMode').addEventListener('change',()=>{
  biasMode=$('abBiasMode').value==='MANUAL'?'MANUAL':'AUTO';save();
+ if(biasMode!=='AUTO')clearThree();
  if(result){updateRuleSummary();renderPeriodOverview();renderDay();}
 });
 $('abRun').addEventListener('click',run);
+$('abRunThree').addEventListener('click',runThree);
 $('abToday').addEventListener('click',()=>{$('abDate').value=C.iso(Date.now());run();});
 $('abPrev').addEventListener('click',()=>move(-1));$('abNext').addEventListener('click',()=>move(1));
-$('abCancel').addEventListener('click',()=>{token++;result=null;engine=null;periodSummary=null;$('abResults').hidden=true;setBusy(false);status('Dibatalkan. Klik Hitung peta aspek untuk memulai lagi.');});
+$('abCancel').addEventListener('click',()=>{token++;result=null;engine=null;periodSummary=null;clearThree();$('abResults').hidden=true;setBusy(false);status('Dibatalkan. Klik Hitung peta aspek untuk memulai lagi.');});
 $('abAutoWindows').addEventListener('click',event=>{
  const b=event.target.closest('[data-ab-autopick]');if(!b||!result)return;
  const timeMs=Number(b.dataset.abAutopick);
