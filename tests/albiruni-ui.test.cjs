@@ -7,7 +7,7 @@ const A=require('astronomy-engine');
 const ROOT=path.join(__dirname,'..');
 async function until(fn,label){for(let i=0;i<500;i++){if(fn())return;await new Promise(r=>setTimeout(r,10));}throw Error('Timeout: '+label);}
 async function run(){
- const dom=new JSDOM('<main><input id="dateInput" value="2026-10-11"><section id="albiruniPanel"></section><div id="statusText">old status</div></main>',{url:'https://example.test/',runScripts:'outside-only'});
+ const dom=new JSDOM('<main><nav class="viewtabs"><button class="viewtab" id="tabAstro">ASTROLOGY</button><button class="viewtab" id="tabAlBiruni">ASTROLOGY AL-BIRUNI</button></nav><div id="astroView"><input id="dateInput" value="2026-10-11"></div><section id="albiruniPanel" hidden></section><div id="statusText">old status</div></main>',{url:'https://example.test/',runScripts:'outside-only'});
  const w=dom.window;
  w.eval(fs.readFileSync(path.join(path.dirname(require.resolve('astronomy-engine')),'astronomy.browser.min.js'),'utf8'));
  const browserAstronomy=w.Astronomy;
@@ -22,6 +22,20 @@ async function run(){
  await until(()=>$('abRun').disabled===false&&!$('abResults').hidden,'initial calculation');
  assert.equal($('abCalendar').querySelectorAll('button').length,5);
  assert.equal($('abBiasMode').value,'AUTO','AUTO must be default for existing users');
+ assert.equal($('albiruniPanel').hidden,true,'dedicated view starts hidden');
+ $('tabAlBiruni').click();assert.equal($('albiruniPanel').hidden,false);
+ assert.equal($('abPeriodSummary').hidden,false);
+ assert.match($('abPeriodSummary').textContent,/RINGKASAN MINGGUAN/);
+ assert.match($('abPeriodSummary').textContent,/MULAI/);
+ assert.match($('abPeriodSummary').textContent,/INTI/);
+ assert.match($('abPeriodSummary').textContent,/AKHIR/);
+ assert.equal($('abPeriodDays').hidden,false);
+ assert.equal($('abPeriodDays').querySelectorAll('[data-ab-period-date]').length,5);
+ assert.equal($('abPeriodDays').querySelectorAll('.ab-period-day').length,5);
+ assert.equal($('abPeriodSummary').textContent.includes('probabilitas'),true);
+ $('tabAstro').click();assert.equal($('albiruniPanel').hidden,true);
+ $('tabAlBiruni').click();assert.equal($('albiruniPanel').hidden,false);
+
  assert.equal($('abAutoStatus').hidden,false,'AUTO summary available');
  assert.equal($('abAutoWindows').hidden,false,'AUTO timeline available');
  assert.match($('abRuleState').textContent,/AUTO/);
@@ -67,6 +81,13 @@ async function run(){
  $('abDate').value='2024-02-11';$('abRun').click();
  await until(()=>$('abRun').disabled===false&&!$('abResults').hidden,'monthly calculation');
  assert.equal($('abCalendar').querySelectorAll('button').length,29);
+ assert.equal($('abPeriodSummary').hidden,false);
+ assert.match($('abPeriodSummary').textContent,/RINGKASAN BULANAN/);
+ assert.equal($('abPeriodDays').querySelectorAll('.ab-period-day').length,29);
+ const saturday=$('abPeriodDays').querySelector('[data-ab-period-date="2024-02-10"]');
+ assert.ok(saturday&&saturday.textContent.includes('MARKET TUTUP'));
+ assert.equal($('abPeriodDays').querySelectorAll('.ab-period-day').length,29);
+
  $('abNext').click();await until(()=>$('abRun').disabled===false&&!$('abResults').hidden,'next month');
  assert.equal($('abDate').value,'2024-03-01');assert.equal($('abCalendar').querySelectorAll('button').length,31);
  $('abMode').value='day';$('abMode').dispatchEvent(new w.Event('change'));$('abOrb').value='0';$('abRun').click();
@@ -79,6 +100,7 @@ async function run(){
  $('abRun').click();await until(()=>$('abRun').disabled===false,'ephemeris failure');
  assert.equal($('abResults').hidden,true);assert.equal($('abCSV').disabled,true);assert.match($('abStatus').textContent,/simulated failure/);
  assert.equal(w.CebonkCore,oldCore);assert.equal(w.CEBONK_ASTRO_STATE,oldState);
+ assert.equal($('astroView').hidden,false);
  assert.equal($('dateInput').value,'2026-10-11');assert.equal($('statusText').textContent,'old status');assert.equal(errors.length,0);
  dom.window.close();
  console.log('Al-Biruni UI: week/month navigation, leap year, rules, CSV, stale state, cancel/failure and legacy isolation passed.');
