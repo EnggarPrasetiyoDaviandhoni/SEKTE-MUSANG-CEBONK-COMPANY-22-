@@ -64,6 +64,7 @@ function showDay(index){
  row('Umur Bulan sejak ijtimak',day.moonAgeHours.toFixed(1)+' jam')+
  row('Sudut fase Bulan',day.elongation.toFixed(1)+'°')+
  row('Cuplikan inti model',clock(day.peak))+
+ row('Planet tampak retrograde',day.snapshots[1]&&Object.entries(day.snapshots[1].speeds||{}).filter(x=>C.CFG.planets.some(p=>p.id===x[0])&&x[1]<-0.0001).map(x=>x[0]).join(', ')||'Tidak terdeteksi pada cuplikan siang')+
  '<p class="tc-muted">Aspek planet pada cuplikan dengan skor model paling kuat: '+(T.highlights(day).map(esc).join('; ')||'Tidak ada aspek dekat yang lolos ambang tampilan.')+'</p>';
  for(const btn of $('tcCalendar').querySelectorAll('button[data-day]')){
   btn.setAttribute('aria-pressed',String(Number(btn.dataset.day)===index));
