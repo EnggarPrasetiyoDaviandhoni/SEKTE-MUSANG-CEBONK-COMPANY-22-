@@ -28,6 +28,19 @@ assert.equal(report.best.weekday,'Kamis');
 assert.equal(new Date(report.best.start).toISOString(),'2026-10-07T23:00:00.000Z'); // Kamis 06:00 WIB
 assert.equal(report.best.minutes,750);
 assert.equal(report.days[3].best.minutes,750);
+// CSV exporter preserves exactly the scanner's BUY/SELL windows and UTC epochs.
+const exported=W.toEACsv(report,'2026-10-09').trim().split('\n');
+assert.equal(exported[0],'week_monday_wib,week_direction,date_wib,start_epoch,core_epoch,end_epoch,window_direction,model');
+assert.equal(exported.length,report.candidates.length+1);
+for(let i=0;i<report.candidates.length;i++){
+ const row=exported[i+1].split(','),g=report.candidates[i];
+ assert.deepEqual(row,[
+  '2026-10-05','BUY',g.date,String(g.start/1000),String(g.core/1000),String(g.end/1000),
+  'BUY','CEBONK_ASTRO_WEEKLY_V1'
+ ]);
+ assert.ok(Number(row[3])<=Number(row[4])&&Number(row[4])<Number(row[5]));
+}
+assert.throws(()=>W.toEACsv({...report,candidates:[{...report.best,direction:'SELL'}]},'2026-10-09'),/searah/);
 const bear=W.summarize(normal.map(d=>({...d,samples:d.samples.map(x=>({...x,state:x.state==='BUY'?'SELL':'BUY'}))})));
 assert.equal(bear.direction,'SELL');
 assert.equal(bear.best.direction,'SELL');
@@ -37,6 +50,8 @@ assert.equal(empty.best,null);
 const mixed=W.summarize(days.map(d=>daily(d,'BUY',108)));
 assert.equal(mixed.direction,'CAMPURAN');
 assert.equal(mixed.best,null);
+assert.equal(W.toEACsv(mixed,'2026-10-09').trim().split('\n').length,1);
+assert.equal(W.toEACsv(empty,'2026-10-09').trim().split('\n').length,1);
 assert.throws(()=>W.summarize(normal.slice(0,4)),/lima hari/);
 assert.throws(()=>W.summarize(normal.map((d,i)=>i===2?{...d,samples:d.samples.slice(0,-1)}:d)),/belum lengkap/);
 assert.throws(()=>W.summarize(normal.map((d,i)=>i===2?{...d,samples:d.samples.map((s,j)=>j===10?{...s,ms:s.ms+minute}:s)}:d)),/tidak berurutan/);
