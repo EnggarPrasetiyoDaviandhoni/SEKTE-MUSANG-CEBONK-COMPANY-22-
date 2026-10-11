@@ -1,0 +1,59 @@
+name: Astrology News EA — Website Plan Feed
+on:
+  schedule:
+    - cron: '27 0 * * *'   # daily 07:27 WIB; calendar remains website October snapshot
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'assets/astro-news-v1.js'
+      - 'scripts/generate-astro-news.mjs'
+      - 'scripts/test-astro-news-feed.mjs'
+      - 'ea/astro_news/**'
+      - '.github/workflows/astro-news-ea.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'assets/astro-news-v1.js'
+      - 'scripts/generate-astro-news.mjs'
+      - 'scripts/test-astro-news-feed.mjs'
+      - 'ea/astro_news/**'
+      - '.github/workflows/astro-news-ea.yml'
+permissions:
+  contents: write
+concurrency:
+  group: astro-news-publisher
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install website ephemeris version
+        run: npm install --no-save --no-package-lock --ignore-scripts astronomy-engine@2.1.19
+      - name: Parse original website news planner and publish windows
+        run: node scripts/generate-astro-news.mjs
+      - name: Feed and EA regression checks
+        run: |
+          node --check scripts/generate-astro-news.mjs
+          node scripts/test-astro-news-feed.mjs
+          python3 ea/astro_news/tests/test_source.py
+      - name: Commit public release (only on main and scheduled/manual)
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ea/astro_news/data/news_windows.csv ea/astro_news/data/news_windows.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: publish website Astrology News snapshot plans [skip ci]"
+            git push origin HEAD:main
+          else
+            echo "Astrology News unchanged"
+          fi
