@@ -22,3 +22,5 @@ jobs:
         run: node --check assets/astro-weekly-ui.js
       - name: Audit v2 source invariants
         run: python3 ea/liquidity_sweep/weekly_atr/tests/test_weekly_atr.py
+      - name: Audit v2.11 emoji Telegram and TXT parity
+        run: python3 ea/liquidity_sweep/weekly_atr/tests/test_emoji_notifier.py
