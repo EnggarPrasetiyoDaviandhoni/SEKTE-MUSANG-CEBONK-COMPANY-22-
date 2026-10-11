@@ -27,6 +27,11 @@ async function run(){
  assert.match($('abRuleState').textContent,/AUTO/);
  assert.match($('abAutoStatus').textContent,/AUTO EKSPERIMEN/);
  assert.match($('abAutoWindows').textContent,/Window hipotesis AUTO/);
+ $('abStudyCSV').click();
+ assert.ok(blob&&blob.size>1000);
+ assert.match($('abStatus').textContent,/CSV riset AUTO/);
+ assert.match($('abAutoStatus').textContent,/bukan persentase kemungkinan profit/);
+
  const firstWindow=$('abAutoWindows').querySelector('[data-ab-autopick]');
  if(firstWindow){
   firstWindow.click();
