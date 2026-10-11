@@ -1,4 +1,4 @@
-# CEBONK — 4 MOMEN ASTROLOGY BULANAN (v2.0.0)
+# CEBONK — 4 MOMEN ASTROLOGY BULANAN (v2.1.0)
 
 Pengganti modul lama “Triple Cycle”. Fitur ini adalah **kalender fase Bulan astronomis murni** dan kini berada pada tab navigasi utama **4 MOMEN ASTROLOGY**.
 
@@ -9,6 +9,18 @@ Empat *jenis* momen:
 4. **Kuartal Terakhir** (270°)
 
 Tanggal dan jam kejadian dihitung langsung memakai Astronomy Engine 2.1.19 melalui `SearchMoonPhase` lalu ditampilkan sebagai **WIB (UTC+7)**. Pengguna dapat memilih bulan **2020–2040**, maju/mundur bulan, dan mengunduh CSV. Pada satu bulan kalender Gregorian bisa ada **3–5 kejadian**, walaupun jenis momennya tetap empat. Tidak ada tanggal buatan bila ephemeris gagal.
+
+## Aturan jembatan akhir pekan (WIB)
+
+Ketika waktu tepat fase Bulan terjadi pada **Sabtu atau Minggu menurut kalender WIB**, pertahankan tanggal/jam astronomi aslinya dan tampilkan:
+- **Jumat sebelumnya: PRA-MOMEN** (tanggal pengamatan sebelum kejadian).
+- **Senin sesudahnya: PASCA-MOMEN** (tanggal pengamatan sesudah kejadian, bila pasar buka).
+- Satu fase tetap **satu kejadian astronomis**, bukan dua. Kejadian di hari kerja tidak diberi jembatan.
+- Jika Sabtu/Minggu berada di batas bulan, tanggal Jumat/Senin boleh berada di bulan kalender berbeda.
+- Tanggal WIB merupakan penanda pengamatan, bukan klaim jam pembukaan/penutupan broker. Hari libur bursa/broker memerlukan pemeriksaan jadwal perdagangan tersendiri.
+- CSV menyertakan flag `jembatan_akhir_pekan`, `pra_momen_jumat_wib`, dan `pasca_momen_senin_wib`, tanpa mengubah timestamp UTC dan WIB asli.
+
+Jendela Jumat dan Senin dapat dipakai sebagai pasangan perbandingan statistik *pra/pasca* untuk model bullish/bearish yang terpisah. Pencatatan tanggal jembatan sendiri **tidak otomatis memberi arah BUY atau SELL** dan belum mengaktifkan model arah pada modul ini.
 
 ## Perubahan dari Triple Cycle
 
