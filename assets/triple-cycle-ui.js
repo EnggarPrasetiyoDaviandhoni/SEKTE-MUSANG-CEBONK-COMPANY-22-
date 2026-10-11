@@ -1,5 +1,5 @@
-/* CEBONK 4 MOMEN ASTROLOGY BULANAN v2.1.0
-   Independent Moon-phase calendar view. No BaZi, Hijri, market signal or trade API. */
+/* CEBONK 4 MOMEN ASTROLOGY BULANAN v2.2.0
+   Moon-phase calendar with experimental Astrology V1 context. No BaZi, Hijri or trade API. */
 (function(root){
 'use strict';
 const M=root.CebonkFourMoments;
@@ -45,13 +45,21 @@ async function astronomy(){
  return loading;
 }
 function status(s){$('amStatus').textContent=s;}
-function bridgeHtml(bridge){
+function biasHtml(bias){
+ const B=root.CebonkMomentBias;
+ if(!B||!bias)return '<span class="am-bias unavailable">MODEL ASTROLOGY TIDAK TERSEDIA</span>';
+ const state=bias.state||'UNAVAILABLE';
+ const cls=state==='BUY'?'buy':state==='SELL'?'sell':'neutral';
+ const score=Number.isFinite(bias.score)?' · Skor '+bias.score.toFixed(2):'';
+ return '<span class="am-bias '+cls+'">'+esc(B.label(state)+score)+'</span>';
+}
+function bridgeHtml(bridge,bias){
  if(!bridge)return '';
  return '<section class="am-bridge" aria-label="Jembatan akhir pekan">'+
   '<b>JEMBATAN AKHIR PEKAN</b>'+
-  '<div class="am-bridge-days"><span><small>JUMAT · PRA-MOMEN</small><strong>'+esc(bridge.friday)+'</strong></span>'+
-  '<span><small>SENIN · PASCA-MOMEN</small><strong>'+esc(bridge.monday)+'</strong></span></div>'+
-  '<p>Jumat = pengamatan sebelum momen. Senin = pengamatan setelah momen saat pasar kembali aktif. Tanggal dan jam momen astronomi tidak digeser.</p>'+
+  '<div class="am-bridge-days"><span><small>JUMAT · PRA-MOMEN</small><strong>'+esc(bridge.friday)+'</strong>'+biasHtml(bias?.friday)+'</span>'+
+  '<span><small>SENIN · PASCA-MOMEN</small><strong>'+esc(bridge.monday)+'</strong>'+biasHtml(bias?.monday)+'</span></div>'+
+  '<p>Jumat 18, 20, 22 WIB = pra-momen; Senin 06, 08, 10 WIB = pasca-momen. Dominasi berdasarkan 2 dari 3 sampel model Astrology V1, bukan jam resmi broker atau kepastian arah harga. Tanggal/jam astronomi tetap asli.</p>'+
   '</section>';
 }
 function render(){
@@ -61,11 +69,16 @@ function render(){
   return '<article class="am-type"><div class="am-glyph am-'+phase.id+'">'+glyphs[phase.id]+'</div><b>'+esc(phase.name)+'</b>'+
    '<small>'+count+' kejadian pada bulan ini</small></article>';
  }).join('');
+ const B=root.CebonkMomentBias;
+ const summary=B?.summary(result.moments,result.biases||{})||{state:'UNAVAILABLE',count:{BUY:0,SELL:0,NEUTRAL:0}};
+ $('amDominance').textContent='Dominasi model Astrology bulanan: '+(B?.label(summary.state)||'MODEL TIDAK TERSEDIA')+
+  ' · Bullish '+summary.count.BUY+' · Bearish '+summary.count.SELL+' · Netral '+summary.count.NEUTRAL;
  events.innerHTML=result.moments.map((event,i)=>{
   return '<article class="am-event"><div class="am-circle am-'+event.id+'">'+glyphs[event.id]+'</div>'+
     '<div class="am-event-body"><small>MOMEN '+(i+1)+' · SUDUT '+event.angle+'°</small>'+
     '<h4>'+esc(event.name)+'</h4><strong>'+esc(format(event.ms))+'</strong>'+
-    '<p>'+esc(event.detail)+'</p>'+bridgeHtml(event.bridge)+'</div></article>';
+    '<div class="am-moment-bias">Bias Astrology saat momen: '+biasHtml(result.biases?.[event.ms]?.event)+'</div>'+ 
+    '<p>'+esc(event.detail)+'</p>'+bridgeHtml(event.bridge,result.biases?.[event.ms])+'</div></article>';
  }).join('');
  $('amTitle').textContent=nameOf(result.month);
  $('amOutput').hidden=false;
@@ -81,16 +94,22 @@ async function run(){
   const A=await astronomy();
   status('Menghitung empat fase Bulan…');
   const next=M.calculate(A,month);
-  result=next;render();
+  let biases={};
+  try{
+   status('Menghitung dominasi dari mesin Astrology V1…');
+   const B=root.CebonkMomentBias,C=root.CebonkCore;
+   if(B&&C)biases=B.calculate(A,next.moments,C);
+  }catch(error){console.warn('Astrology V1 bias unavailable:',error.message);}
+  result={...next,biases};render();
  }catch(err){status('Gagal menghitung: '+(err?.message||String(err))+'. Tidak menerbitkan tanggal rekaan.');}
  finally{running=false;$('amRun').disabled=false;}
 }
 function exportCSV(){
  if(!result)return;
  const line=x=>'"'+String(x??'').replace(/"/g,'""')+'"';
- const rows=[['momen','sudut_derajat','waktu_wib','timestamp_utc','keterangan','jembatan_akhir_pekan','pra_momen_jumat_wib','pasca_momen_senin_wib'],
-  ...result.moments.map(x=>[x.name,x.angle,x.wib.datetime,new Date(x.ms).toISOString(),x.detail,
-   x.bridge?'YA':'TIDAK',x.bridge?.friday||'',x.bridge?.monday||''])];
+ const rows=[['momen','sudut_derajat','waktu_wib','timestamp_utc','keterangan','jembatan_akhir_pekan','pra_momen_jumat_wib','pasca_momen_senin_wib','bias_momen_astrology_v1','skor_momen_v1','bias_jumat_v1','bias_senin_v1'],
+  ...result.moments.map(x=>{const b=result.biases?.[x.ms];return [x.name,x.angle,x.wib.datetime,new Date(x.ms).toISOString(),x.detail,
+   x.bridge?'YA':'TIDAK',x.bridge?.friday||'',x.bridge?.monday||'',b?.event?.state||'',b?.event?.score??'',b?.friday?.state||'',b?.monday?.state||''];})];
  const data='\uFEFF'+rows.map(a=>a.map(line).join(',')).join('\r\n')+'\r\n';
  const url=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'}));
  const a=document.createElement('a');a.href=url;a.download='CEBONK_4_MOMEN_ASTROLOGY_'+result.month+'.csv';
@@ -126,6 +145,11 @@ function mount(){
  '#astroMonthlyView .am-bridge-days small{display:block;font-size:10px;color:#bbcadc;letter-spacing:0}'+
  '#astroMonthlyView .am-bridge-days strong{display:block;font-size:13px;color:#f1cf93;margin-top:4px}'+
  '#astroMonthlyView .am-bridge p{font-size:11px;color:#b9cedf}'+
+ '#astroMonthlyView .am-moment-bias{font-size:11px;margin:10px 0 5px;color:#bbcbdc}'+
+ '#astroMonthlyView .am-bias{display:inline-block;margin:5px 0 2px;padding:5px 8px;border-radius:6px;font-size:11px;font-weight:750;background:#303c4b;color:#d8e2ea}'+
+ '#astroMonthlyView .am-bias.buy{background:#15392d;color:#a3eac6}'+
+ '#astroMonthlyView .am-bias.sell{background:#4c2830;color:#ffc5cc}'+
+ '#astroMonthlyView #amDominance{margin:11px 0;padding:12px;border:1px solid #56728e;border-radius:10px;font-size:13px;font-weight:700}'+
  '#astroMonthlyView .am-warning{font-size:12px;line-height:1.6;color:#f0dfbf;background:#2f281c;border-left:3px solid #dab578;padding:12px;border-radius:8px;margin-top:13px}'+
  '@media(max-width:700px){#astroMonthlyView .am-types{grid-template-columns:1fr 1fr}#astroMonthlyView .am-events{grid-template-columns:1fr}#astroMonthlyView .am-hero{padding:17px 14px}#astroMonthlyView .am-controls button{flex:1}}';
  document.head.appendChild(style);
@@ -136,9 +160,9 @@ function mount(){
  '<button id="amPrev" type="button">Sebelumnya</button><button id="amNext" type="button">Berikutnya</button>'+
  '<button id="amRun" type="button" class="primary">Hitung Bulanan</button><button id="amExport" type="button" disabled>Unduh CSV</button></div>'+
  '<p id="amStatus" class="am-muted" role="status">Pilih bulan, lalu hitung empat momen astronomi.</p>'+
- '<div id="amOutput" hidden><h3 id="amTitle"></h3><div id="amCounts" class="am-types"></div>'+
+ '<div id="amOutput" hidden><h3 id="amTitle"></h3><div id="amCounts" class="am-types"></div><div id="amDominance" aria-live="polite"></div>'+
  '<h3>Waktu tepat empat momen utama</h3><div id="amEvents" class="am-events"></div></div>'+
- '<p class="am-warning"><b>Catatan:</b> Jika suatu momen jatuh Sabtu/Minggu WIB, ditampilkan Jumat sebelumnya dan Senin sesudahnya sebagai jembatan pengamatan. Jumlah momen astronomi tidak bertambah. Jadwal broker XAUUSD/XAGUSD dapat berbeda dari batas hari kalender. Empat momen berarti empat jenis fase Bulan, bukan selalu empat kejadian di setiap bulan kalender. Ijtimak tidak sama dengan hilal yang terlihat. Empat momen ini adalah peristiwa astronomi, bukan sinyal BUY/SELL. Hubungan siklus Bulan dengan harga XAUUSD/XAGUSD belum terbukti sebagai strategi trading.</p>';
+ '<p class="am-warning"><b>Catatan:</b> Jika suatu momen jatuh Sabtu/Minggu WIB, ditampilkan Jumat sebelumnya dan Senin sesudahnya sebagai jembatan pengamatan. Jumlah momen astronomi tidak bertambah. Jadwal broker XAUUSD/XAGUSD dapat berbeda dari batas hari kalender. Empat momen berarti empat jenis fase Bulan, bukan selalu empat kejadian di setiap bulan kalender. Ijtimak tidak sama dengan hilal yang terlihat. Empat momen adalah peristiwa astronomi. Label Bullish/Bearish berasal dari bobot eksperimen Astrology V1 website, bukan dari fase Bulan, bukan win rate atau instruksi BUY/SELL. Hubungannya dengan harga XAUUSD/XAGUSD belum terbukti sebagai strategi trading.</p>';
  wrap.insertBefore(view,wrap.querySelector('footer'));
  const now=new Date(Date.now()+7*3600000).toISOString().slice(0,7);
  $('amMonth').value=now>='2020-01'&&now<='2040-12'?now:'2026-10';
