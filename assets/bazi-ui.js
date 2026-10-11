@@ -168,7 +168,7 @@ function mount(){
  $('bzDownload').addEventListener('click',exportCSV);
  ['bzDate','bzHour','bzSect'].forEach(id=>$(id).addEventListener('change',()=>{$('bzStatus').textContent='Parameter berubah; klik Hitung BaZi.';$('bzDownload').disabled=true;calculated=null;}));
  function activate(which,hash,chosen){
-  for(const id of ['astroView','astroNewsView','baziView','astroMonthlyView','bbmaScannerView','liquidityScannerView','technicalView','combinedView','combined2View']){
+  for(const id of ['astroView','albiruniPanel','astroNewsView','baziView','astroMonthlyView','bbmaScannerView','liquidityScannerView','technicalView','combinedView','combined2View']){
    const el=$(id);if(el)el.hidden=id!==which;
   }
   for(const b of nav.querySelectorAll('.viewtab'))b.classList.toggle('active',b.id===(chosen||(which==='baziView'?'tabBazi':which==='astroNewsView'?'tabAstroNews':'tabAstro')));
@@ -182,7 +182,9 @@ function mount(){
    if(t.id==='tabTriple')activate('astroMonthlyView','momen-astrology','tabTriple');
   if(t.id==='tabAstro')activate('astroView','astrology');
   if(t.id==='tabAstroNews')activate('astroNewsView','astrology-news');
+  if(t.id==='tabAlBiruni')activate('albiruniPanel','al-biruni','tabAlBiruni');
  });
+ if(location.hash==='#al-biruni')activate('albiruniPanel','al-biruni','tabAlBiruni');
  if(location.hash==='#bazi-astrology')activate('baziView','bazi-astrology');
  if(location.hash==='#momen-astrology'||location.hash==='#triple-cycle')activate('astroMonthlyView','momen-astrology','tabTriple');
 }
