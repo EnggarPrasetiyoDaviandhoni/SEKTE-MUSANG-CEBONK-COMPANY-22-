@@ -1,4 +1,4 @@
-/* CEBONK FOUR MONTHLY MOON MOMENTS v2.0.0 — pure astronomical phase times.
+/* CEBONK FOUR MONTHLY MOON MOMENTS v2.1.0 — pure astronomical phase times.
    Four categories are 0, 90, 180, 270 degrees of geocentric lunar phase.
    Does not estimate visible hilal, calculate Hijri start, or predict trades. */
 (function(root){
@@ -21,6 +21,21 @@ function wib(ms){
  const s=new Date(ms+WIB).toISOString();
  return Object.freeze({date:s.slice(0,10),time:s.slice(11,16),datetime:s.slice(0,16).replace('T',' ')+' WIB'});
 }
+// Retain the exact astronomical timestamp. Weekend observation dates are WIB calendar days.
+function weekendBridge(ms){
+ assert(Number.isFinite(ms),'Waktu fase tidak valid.');
+ const local=new Date(ms+WIB);
+ const day=local.getUTCDay();
+ if(day!==0&&day!==6)return null;
+ const midnight=Date.UTC(local.getUTCFullYear(),local.getUTCMonth(),local.getUTCDate());
+ const iso=t=>new Date(t).toISOString().slice(0,10);
+ return Object.freeze({
+  flag:'JEMBATAN_AKHIR_PEKAN',
+  eventDate:iso(midnight),
+  friday:iso(midnight-(day===6?1:2)*DAY),
+  monday:iso(midnight+(day===6?2:1)*DAY)
+ });
+}
 function calculate(A,month){
  assert(A&&typeof A.SearchMoonPhase==='function','Astronomy Engine belum tersedia.');
  const {start,end}=bounds(month),moments=[];
@@ -32,7 +47,7 @@ function calculate(A,month){
    const ms=+found.date;
    assert(ms>=from&&ms<=from+45*DAY&&ms>prior,'Urutan fase Bulan tidak valid.');
    prior=ms;
-   if(ms>=start&&ms<end)moments.push(Object.freeze({id:phase.id,angle:phase.angle,name:phase.name,detail:phase.detail,ms,wib:wib(ms)}));
+   if(ms>=start&&ms<end)moments.push(Object.freeze({id:phase.id,angle:phase.angle,name:phase.name,detail:phase.detail,ms,wib:wib(ms),bridge:weekendBridge(ms)}));
    from=ms+MIN;
   }
  }
@@ -41,9 +56,9 @@ function calculate(A,month){
  const count=Object.fromEntries(PHASES.map(p=>[p.id,0]));
  for(const m of moments)count[m.id]++;
  // Four phase TYPES, not necessarily four events in each Gregorian month; a 28-day month can miss one type.
- return Object.freeze({version:'2.0.0',month,start,end,phases:PHASES,moments:Object.freeze(moments),counts:Object.freeze(count)});
+ return Object.freeze({version:'2.1.0',month,start,end,phases:PHASES,moments:Object.freeze(moments),counts:Object.freeze(count)});
 }
-const api=Object.freeze({VERSION:'2.0.0',PHASES,bounds,wib,calculate});
+const api=Object.freeze({VERSION:'2.1.0',PHASES,bounds,wib,weekendBridge,calculate});
 root.CebonkFourMoments=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
