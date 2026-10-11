@@ -24,3 +24,5 @@ jobs:
         run: python3 ea/liquidity_sweep/weekly_atr/tests/test_weekly_atr.py
       - name: Audit v2.11 emoji Telegram and TXT parity
         run: python3 ea/liquidity_sweep/weekly_atr/tests/test_emoji_notifier.py
+      - name: Audit v2.12 actual INTI planetary aspects
+        run: python3 ea/liquidity_sweep/weekly_atr/tests/test_aspects_telegram.py
