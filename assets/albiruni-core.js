@@ -1,4 +1,4 @@
-/* Al-Biruni aspect timing, v1. Independent modern ephemeris implementation.
+/* Al-Biruni aspect timing, v1.1. Independent modern ephemeris implementation.
  * Historical inspiration: Al-Qanun al-Masudi XI, chapter 2.
  * No market prediction, price feed, legacy scoring or trade execution. */
 (function(root){
@@ -140,7 +140,7 @@ async function scan(engine,date,{mode='week',focus='moon',orb=2,stepMinutes=15,o
   onProgress(Math.round(65+(i+1)/selected.length*35));await yieldNow();
  }
  check();events.sort((a,b)=>a.closest-b.closest||a.start-b.start||a.id.localeCompare(b.id));
- return {version:'1.0.0',range,focus,orb,stepMinutes,resolutionSeconds:1,events};
+ return {version:'1.1.0',range,focus,orb,stepMinutes,resolutionSeconds:1,events};
 }
 function normalizeRules(input={}){
  const rules={};for(const a of ASPECTS)rules[a.angle]=['BUY','SELL','NETRAL'].includes(input[a.angle])?input[a.angle]:'NETRAL';
@@ -177,7 +177,53 @@ function toCSV(result,rules={}){
  const quote=x=>'"'+String(x).replace(/"/g,'""')+'"';
  return '\uFEFF'+[header,...rows].map(row=>row.map(quote).join(',')).join('\r\n')+'\r\n';
 }
-const API=Object.freeze({BODIES,ASPECTS,DAY,MIN,WIB,parseDate,period,iso,stamp,norm,signed,geometry,pairs,createEngine,scan,inspect,daily,direction,normalizeRules,toCSV});
+// Research-ready observations WITHOUT invented XAUUSD prices or presumed profitability.
+// Every true exact is one observation; a window with no exact has one explicitly
+// marked closest approach. Calendar days are evaluated in WIB; weekends never
+// transfer/shift their astronomical events onto Friday or Monday.
+function studyObservations(result,rules={}){
+ assert(result&&result.range&&Array.isArray(result.events),'Hasil aspek belum valid.');
+ const normalized=normalizeRules(rules),out=[];
+ for(const e of result.events){
+  const exact=e.exactTimes.length>0;
+  const moments=exact?e.exactTimes:[e.closest];
+  for(const ms of moments){
+   if(!Number.isFinite(ms)||ms<result.range.start||ms>=result.range.end)continue;
+   const dow=new Date(ms+WIB).getUTCDay();
+   out.push(Object.freeze({
+    eventId:e.id, pair:e.pair.join('/'), angle:e.angle,
+    kind:exact?'EXACT':'TERDEKAT_BUKAN_EXACT',
+    time:ms, timeWIB:stamp(ms),
+    orb:exact?0:e.closestOrb, windowStart:e.start, windowEnd:e.end,
+    weekday:dow>=1&&dow<=5?'HARI_KERJA':'AKHIR_PEKAN',
+    manualBias:normalized[e.angle],
+    clippedStart:e.startClipped,clippedEnd:e.endClipped
+   }));
+  }
+ }
+ out.sort((a,b)=>a.time-b.time||a.eventId.localeCompare(b.eventId));
+ return out;
+}
+function toStudyCSV(result,rules={}){
+ const observations=studyObservations(result,rules);
+ const header=[
+  'study_version','model','date_mode','focus','ephemeris','coord_system','orb_rule_deg','grid_minutes',
+  'event_id','pair','aspect_deg','observation_kind','time_utc','time_wib','orb_at_observation_deg',
+  'window_start_utc','window_end_utc','window_start_clipped','window_end_clipped','session_wib',
+  'manual_bias_UNVALIDATED','observed_xau_t0_EMPTY','observed_xau_1h_EMPTY','observed_xau_4h_EMPTY'
+ ];
+ const data=observations.map(e=>[
+  'ALBIRUNI_EVENT_STUDY_V1',result.version,result.range.mode,result.focus,
+  'astronomy-engine@2.1.19','geocentric_apparent_tropical_true_ecliptic_of_date',
+  result.orb,result.stepMinutes,e.eventId,e.pair,e.angle,e.kind,new Date(e.time).toISOString(),
+  e.timeWIB,e.orb.toFixed(8),new Date(e.windowStart).toISOString(),
+  new Date(e.windowEnd).toISOString(),e.clippedStart,e.clippedEnd,e.weekday,e.manualBias,
+  '','',''
+ ]);
+ const quote=x=>'"'+String(x).replace(/"/g,'""')+'"';
+ return '\uFEFF'+[header,...data].map(row=>row.map(quote).join(',')).join('\r\n')+'\r\n';
+}
+const API=Object.freeze({BODIES,ASPECTS,DAY,MIN,WIB,parseDate,period,iso,stamp,norm,signed,geometry,pairs,createEngine,scan,inspect,daily,direction,normalizeRules,toCSV,studyObservations,toStudyCSV});
 root.CebonkAlBiruni=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
