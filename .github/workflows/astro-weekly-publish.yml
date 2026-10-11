@@ -13,6 +13,7 @@ on:
       - 'assets/astro-weekly-core.js'
       - 'scripts/generate-astro-weekly.mjs'
       - 'scripts/test-astro-weekly-feed.mjs'
+      - 'ea/liquidity_sweep/weekly_atr/**'
       - '.github/workflows/astro-weekly-publish.yml'
   pull_request:
     paths:
@@ -45,6 +46,8 @@ jobs:
         run: |
           node scripts/test-astro-weekly-feed.mjs
           node tests/astro-weekly.test.cjs
+      - name: Validate MT5 WebRequest source invariants
+        run: python3 ea/liquidity_sweep/weekly_atr/tests/test_weekly_auto.py
       - name: Publish to public repository (used by MT5 WebRequest)
         if: github.event_name != 'pull_request'
         run: |
