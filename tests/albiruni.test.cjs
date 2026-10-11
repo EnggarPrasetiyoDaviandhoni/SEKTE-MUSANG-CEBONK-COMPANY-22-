@@ -107,6 +107,30 @@ async function run(){
  assert.ok(reportDay.startWindow<=reportDay.core&&reportDay.core<reportDay.endWindow);
  assert.equal(reportDay.validated,false);
  assert.equal(reportDay.buyMinutes,120);
+ const dayEntry=C.periodEntryReport(pseudo,bullish);
+ assert.equal(dayEntry.mode,'day');
+ assert.equal(dayEntry.direction,'BUY');
+ assert.equal(dayEntry.entryDateWIB,'2026-10-05');
+ assert.equal(dayEntry.entryUTC,start+11*HOUR);
+ assert.equal(dayEntry.entryWIB,'2026-10-05 11:00:00 WIB');
+ assert.equal(dayEntry.startWIB,'2026-10-05 10:00:00 WIB');
+ assert.equal(dayEntry.coreWIB,dayEntry.entryWIB);
+ assert.equal(dayEntry.endWIB,'2026-10-05 12:00:00 WIB');
+ assert.deepEqual(dayEntry.aspect.pair,['Moon','Jupiter']);
+ assert.equal(dayEntry.aspect.angle,60);
+ assert.equal(dayEntry.validated,false);
+ assert.equal(dayEntry.resolutionMinutes,15);
+ const sellEntry=C.periodEntryReport(pseudo,bearish);
+ assert.equal(sellEntry.direction,'SELL');
+ assert.equal(sellEntry.entryUTC,start+11*HOUR);
+ assert.deepEqual(sellEntry.aspect.pair,['Mars','Saturn']);
+ const none=C.periodEntryReport(pseudo,windowResult([]));
+ assert.equal(none.direction,'WAIT');
+ assert.equal(none.entryUTC,null);
+ assert.equal(none.entryWIB,null);
+ assert.equal(none.reason,'NO_SINGLE_DIRECTION');
+ assert.equal(none.aspect,null);
+
  assert.equal(reportDay.singleDirection,true);
  assert.equal(reportDay.days[0].focusDirection,'BUY');
  assert.equal(reportDay.days[0].focusMinutes,120);
@@ -135,6 +159,13 @@ async function run(){
  assert.equal(tuesday.focusWindows.length,0);
  assert.equal(tuesday.focusWindow,null);
  assert.equal(tuesday.counterMinutes,60);
+ const weeklyEntry=C.periodEntryReport(pseudo,extendedWeek);
+ assert.equal(weeklyEntry.mode,'week');
+ assert.equal(weeklyEntry.direction,'BUY');
+ assert.equal(weeklyEntry.entryDateWIB,'2026-10-05');
+ assert.ok(weeklyEntry.entryUTC>=weeklyEntry.periodStart&&weeklyEntry.entryUTC<weeklyEntry.periodEnd);
+ assert.ok(weeklyEntry.summary.days.every(x=>x.focusWindows.every(w=>w.direction==='BUY')));
+
  assert.ok(oneWay.days.every(d=>d.focusWindows.every(w=>w.direction===oneWay.direction)));
 
  const emptyWeek=windowResult([]);
@@ -162,6 +193,18 @@ async function run(){
  assert.equal(reportMonth.days.find(x=>x.date==='2026-10-10').direction,'BUY');
  assert.equal(reportMonth.days.find(x=>x.date==='2026-10-10').focusDirection,'MARKET_TUTUP');
  assert.equal(reportMonth.days.find(x=>x.date==='2026-10-10').focusWindows.length,0);
+ const weekendOnly=C.periodEntryReport(pseudo,monthOnlyWeekend);
+ assert.equal(weekendOnly.direction,'WAIT');
+ assert.equal(weekendOnly.entryUTC,null,'Saturday window never becomes entry');
+ const sun=C.parseDate('2026-10-11');
+ const sundayOnly={...bullish,range:C.period('2026-10-11','day'),events:[{
+  ...bullish.events[0],start:sun+10*HOUR,end:sun+12*HOUR,
+  closest:sun+11*HOUR,exactTimes:[sun+11*HOUR]
+ }]};
+ const sundayEntry=C.periodEntryReport(pseudo,sundayOnly);
+ assert.equal(sundayEntry.direction,'WAIT');
+ assert.equal(sundayEntry.entryUTC,null);
+
 
  assert.ok(!reportMonth.days.find(x=>x.date==='2026-10-12').allWindows
    .some(x=>x.start===saturday),'never move weekend aspects to Monday');
@@ -174,7 +217,7 @@ async function run(){
  assert.throws(()=>C.inspect(linear,r,r.range.end));
  const csv=C.toCSV(r,{0:'BUY'});assert.match(csv,/manual_bias_UNVALIDATED/);assert.match(csv,/'?2026-10-05 12:00/);assert.match(csv,/"BUY"/);
  // Reproducible event-study rows contain NO fabricated price returns or win rates.
- assert.equal(r.version,'1.4.0');
+ assert.equal(r.version,'1.5.0');
  const obs=C.studyObservations(r,{0:'BUY'});
  const selected=obs.filter(x=>x.pair==='Sun/Moon'&&x.angle===0);
  assert.equal(selected.length,1);
