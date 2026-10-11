@@ -18,6 +18,7 @@ jobs:
       - run: npm install --no-save --no-package-lock --ignore-scripts astronomy-engine@2.1.19 jsdom@26.1.0
       - run: node tests/albiruni.test.cjs
       - run: node tests/albiruni-ui.test.cjs
+      - run: node tests/albiruni-feed-view.test.cjs
       - run: node tests/albiruni-three-horizon.test.cjs
       - run: node tests/site-tab-router.test.cjs
       - run: node tests/astro-weekly.test.cjs

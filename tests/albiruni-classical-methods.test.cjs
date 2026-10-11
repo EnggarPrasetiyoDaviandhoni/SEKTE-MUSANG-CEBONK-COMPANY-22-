@@ -1,0 +1,17 @@
+'use strict';
+const assert=require('node:assert/strict');
+const M=require('../assets/albiruni-classical-methods.js');
+const close=(x,y)=>assert.ok(Math.abs(x-y)<1e-9,x+' differs from '+y);
+assert.equal(M.planetaryHourRuler(0,1),'Sun');
+assert.equal(M.planetaryHourRuler(0,2),'Venus');
+assert.equal(M.planetaryHourRuler(1,1),'Moon');
+assert.equal(M.planetaryHourRuler(6,1),'Saturn');
+assert.throws(()=>M.planetaryHourRuler(7,1));
+assert.throws(()=>M.planetaryHourRuler(0,25));
+close(M.partOfFortuneDay(3*30+27+44/60,1*30+15+25/60,5*30+8+20/60),86+1/60);
+close(M.lunarStation27(0).segmentWidthDeg,13+1/3);
+assert.equal(M.lunarStation27(40).number,4);
+assert.equal(M.lunarStation27(359.999).number,27);
+assert.equal(M.doors22(),231);
+assert.deepEqual(M.gematriaExample(),{sum:753,zodiacRemainder:9,planetRemainder:4});
+console.log('PASS classical Al-Biruni / Kaplan arithmetic examples, no market prediction logic.');
