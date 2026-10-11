@@ -1,4 +1,4 @@
-/* Al-Biruni aspect timing, v1.1. Independent modern ephemeris implementation.
+/* Al-Biruni aspect timing, v1.2. Independent modern ephemeris implementation.
  * Historical inspiration: Al-Qanun al-Masudi XI, chapter 2.
  * No market prediction, price feed, legacy scoring or trade execution. */
 (function(root){
@@ -140,7 +140,7 @@ async function scan(engine,date,{mode='week',focus='moon',orb=2,stepMinutes=15,o
   onProgress(Math.round(65+(i+1)/selected.length*35));await yieldNow();
  }
  check();events.sort((a,b)=>a.closest-b.closest||a.start-b.start||a.id.localeCompare(b.id));
- return {version:'1.1.0',range,focus,orb,stepMinutes,resolutionSeconds:1,events};
+ return {version:'1.2.0',range,focus,orb,stepMinutes,resolutionSeconds:1,events};
 }
 function normalizeRules(input={}){
  const rules={};for(const a of ASPECTS)rules[a.angle]=['BUY','SELL','NETRAL'].includes(input[a.angle])?input[a.angle]:'NETRAL';
@@ -181,6 +181,77 @@ function toCSV(result,rules={}){
 // Every true exact is one observation; a window with no exact has one explicitly
 // marked closest approach. Calendar days are evaluated in WIB; weekends never
 // transfer/shift their astronomical events onto Friday or Monday.
+// CEBONK AUTO EXPERIMENT v1 — modern, UNVALIDATED XAUUSD hypothesis.
+// Planet sign is an explicit model assumption, NOT Al-Biruni's gold trading rule.
+// The aspect changes weighting only: sextile never means BUY by itself,
+// and square never means SELL by itself. Real gold returns are NOT available.
+const AUTO_NATURE=Object.freeze({Sun:0.20,Moon:0,Mercury:0,Venus:0.90,Mars:-0.95,Jupiter:1.15,Saturn:-1.15});
+const AUTO_ASPECT=Object.freeze({0:0.90,60:1.00,90:0.75,120:1.10,180:0.80});
+const AUTO_PHASE=Object.freeze({APPLYING:1.10,EXACT:1.25,SEPARATING:0.80,STATION:0.70});
+const AUTO_THRESHOLD=0.18,AUTO_CONFLICT_RATIO=0.45;
+function autoSignal(engine,result,ms){
+ assert(result&&result.range&&Number.isFinite(result.orb),'Periode Al-Biruni belum dihitung.');
+ const observed=inspect(engine,result,ms);
+ const items=observed.active.map(e=>{
+  const planetNature=(AUTO_NATURE[e.pair[0]]+AUTO_NATURE[e.pair[1]])/2;
+  const aspectWeight=AUTO_ASPECT[e.angle],phaseWeight=AUTO_PHASE[e.phase];
+  const orbWeight=Math.max(0,1-e.orb/result.orb);
+  const contribution=planetNature*aspectWeight*phaseWeight*orbWeight;
+  const nearestExact=e.exactTimes.length?
+   e.exactTimes.reduce((a,b)=>Math.abs(ms-a)<=Math.abs(ms-b)?a:b):null;
+  return {
+   id:e.id,pair:e.pair.slice(),angle:e.angle,name:e.name,
+   start:e.start,end:e.end,exact:nearestExact,closest:e.closest,
+   phase:e.phase,orb:e.orb,planetNature,aspectWeight,phaseWeight,
+   orbWeight,contribution
+  };
+ }).sort((a,b)=>Math.abs(b.contribution)-Math.abs(a.contribution)||a.id.localeCompare(b.id));
+ const buy=items.reduce((v,x)=>v+Math.max(0,x.contribution),0);
+ const sell=items.reduce((v,x)=>v+Math.max(0,-x.contribution),0);
+ const net=buy-sell;
+ let direction='NETRAL',reason='NO_ACTIVE_ASPECT';
+ if(items.length){
+  if(buy<AUTO_THRESHOLD&&sell<AUTO_THRESHOLD)reason='NO_STRONG_PLANETARY_COMBINATION';
+  else if(Math.min(buy,sell)>=AUTO_THRESHOLD&&
+          Math.min(buy,sell)>=Math.max(buy,sell)*AUTO_CONFLICT_RATIO){
+   direction='KONFLIK';reason='BUY_SELL_OVERLAP';
+  }else if(Math.abs(net)<AUTO_THRESHOLD)reason='NET_SCORE_BELOW_THRESHOLD';
+  else{direction=net>0?'BUY':'SELL';reason='DOMINANT_WEIGHTED_ASPECTS';}
+ }
+ const supporting=items.filter(e=>direction==='BUY'?e.contribution>0:direction==='SELL'?e.contribution<0:true);
+ return {
+  model:'ALBIRUNI_AUTO_EXPERIMENT_V1',validated:false,ms,
+  direction,reason,buy,sell,net,threshold:AUTO_THRESHOLD,
+  conflictRatio:AUTO_CONFLICT_RATIO,active:items,
+  dominant:supporting[0]||null
+ };
+}
+// Sampled aggregate bias windows; boundaries and PEAK are GRID-based estimates,
+// not exact orbital events. Exact MULAI/INTI/AKHIR are on dominant aspect above.
+function autoTimeline(engine,result,dayStart,{stepMinutes=15}={}){
+ assert(Number.isInteger(stepMinutes)&&stepMinutes>=5&&stepMinutes<=60&&
+        60%stepMinutes===0,'Grid AUTO harus membagi satu jam.');
+ assert(result.range.days.some(d=>d.start===dayStart),'Hari tidak ada dalam periode.');
+ const dayEnd=dayStart+DAY,raw=[];
+ let current=null;
+ for(let ms=dayStart;ms<dayEnd;ms+=stepMinutes*MIN){
+  const signal=autoSignal(engine,result,ms);
+  if(signal.direction!=='BUY'&&signal.direction!=='SELL'){current=null;continue;}
+  if(!current||current.direction!==signal.direction||current.end!==ms){
+   current={direction:signal.direction,start:ms,end:ms+stepMinutes*MIN,peak:ms,
+    peakNet:Math.abs(signal.net),dominantId:signal.dominant?.id||''};
+   raw.push(current);
+  }else{
+   current.end=ms+stepMinutes*MIN;
+   if(Math.abs(signal.net)>current.peakNet){
+    current.peakNet=Math.abs(signal.net);current.peak=ms;
+    current.dominantId=signal.dominant?.id||'';
+   }
+  }
+ }
+ return {model:'ALBIRUNI_AUTO_EXPERIMENT_V1',validated:false,
+  resolutionMinutes:stepMinutes,dayStart,windows:raw};
+}
 function studyObservations(result,rules={}){
  assert(result&&result.range&&Array.isArray(result.events),'Hasil aspek belum valid.');
  const normalized=normalizeRules(rules),out=[];
@@ -223,7 +294,7 @@ function toStudyCSV(result,rules={}){
  const quote=x=>'"'+String(x).replace(/"/g,'""')+'"';
  return '\uFEFF'+[header,...data].map(row=>row.map(quote).join(',')).join('\r\n')+'\r\n';
 }
-const API=Object.freeze({BODIES,ASPECTS,DAY,MIN,WIB,parseDate,period,iso,stamp,norm,signed,geometry,pairs,createEngine,scan,inspect,daily,direction,normalizeRules,toCSV,studyObservations,toStudyCSV});
+const API=Object.freeze({BODIES,ASPECTS,DAY,MIN,WIB,parseDate,period,iso,stamp,norm,signed,geometry,pairs,createEngine,scan,inspect,daily,direction,normalizeRules,toCSV,studyObservations,toStudyCSV,autoSignal,autoTimeline,AUTO_NATURE,AUTO_ASPECT,AUTO_PHASE,AUTO_THRESHOLD});
 root.CebonkAlBiruni=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
