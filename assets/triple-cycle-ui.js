@@ -136,8 +136,8 @@ async function compute(){
 }
 function lunarView(s){lunar(s);}
 function mount(){
- const anchor=$('m12Panel')||$('ayPanel')||$('mhPanel'),view=$('baziView');
- if(!view||!anchor||$('tcPanel'))return;
+ const anchor=$('m12Panel')||$('ayPanel')||$('mhPanel'),view=$('baziView'),jumps=view?.querySelector('.bz-jumps');
+ if(!view||$('tcPanel'))return;
  const style=document.createElement('style');style.id='tcStyles';style.textContent=
  '#tcPanel{border:1px solid #537d8b;border-radius:13px;background:#101e30;padding:16px;margin:17px 0;color:inherit;scroll-margin-top:15px}'+
  '#tcPanel h3{margin:3px 0;font-size:20px}#tcPanel h4{font-size:14px;margin:15px 0 8px}#tcPanel p{font-size:12px;line-height:1.6}'+
@@ -173,7 +173,7 @@ function mount(){
  '<div class="tc-columns"><div class="tc-box"><h4>Hisab fase Bulan (8 sudut)</h4><div id="tcLunar"></div></div>'+
  '<div class="tc-box"><h4>Periode Pilar Bulan BaZi</h4><div id="tcBazi"></div></div></div></div>'+
  '<p class="tc-warning"><b>Batasan ilmiah:</b> Fase astronomis dihitung dari posisi geosentris Matahari–Bulan menggunakan Astronomy Engine. Umur Bulan dihitung sejak ijtimak, bukan tinggi/visibilitas hilal. Tanggal Hijriah menggunakan kalender Umm al-Qura sebagai referensi, <b>bukan</b> keputusan pemerintah Indonesia atau hasil rukyat lokal. BaZi memakai batas musim surya dari pustaka kalender; waktu transisi ditaksir ke menit. BUY/SELL berasal dari 3 cuplikan model Astrology per hari (06.00, 12.00, 18.00 WIB), bukan hasil pengujian harga, bukan sinyal EA, dan bukan klaim bahwa hisab atau BaZi menyebabkan pasar naik/turun.</p>';
- anchor.parentElement.insertBefore(panel,anchor);
+ if(jumps)jumps.insertAdjacentElement('afterend',panel);else if(anchor)anchor.parentElement.insertBefore(panel,anchor);else view.prepend(panel);
  const now=new Date(Date.now()+420*60000).toISOString().slice(0,7);
  $('tcMonth').value=now>='2020-01'&&now<='2040-12'?now:'2026-10';
  $('tcRun').addEventListener('click',compute);
@@ -185,5 +185,6 @@ function mount(){
  });
  $('tcExport').addEventListener('click',exportCSV);
 }
+root.addEventListener('cebonk:triple-open',()=>{if(!result&&$('tcPanel')&&$('tcRun')&&!$('tcRun').disabled)compute();});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })(typeof window!=='undefined'?window:globalThis);
