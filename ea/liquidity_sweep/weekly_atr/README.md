@@ -4,7 +4,7 @@ VERSI BARU TERPISAH. EA lama v1.03 tidak diubah. Ini *desain eksperimen*; arah A
 
 ## Strategi
 
-1. Di situs, tab ASTROLOGY -> ASTROLOGY MINGGUAN -> pilih minggu Senin–Jumat -> **Hitung Mingguan** -> **Ekspor EA CSV**. File ekspor adalah CE﻿BONK_ASTRO_WEEKLY.csv (tanpa karakter tersembunyi; ejaan sebenarnya CEBONK_ASTRO_WEEKLY.csv).
+1. Di situs, tab ASTROLOGY -> ASTROLOGY MINGGUAN -> pilih minggu Senin–Jumat -> **Hitung Mingguan** -> **Ekspor EA CSV**. File ekspor adalah CEBONK_ASTRO_WEEKLY.csv.
 2. EA hanya menerima CSV model ASTRO_WEEKLY_V1 dengan dominasi mingguan BUY atau SELL dan hingga lima window kandidat yang searah (MULAI, INTI, AKHIR) dari hasil scanner. INTI ditampilkan sebagai puncak skor, bukan pemicu order tersendiri; entry boleh setelah MULAI sampai sebelum AKHIR.
 3. Harga M5 terakhir harus sweep swing high/low dari 10 candle M5 sebelumnya dan CLOSE kembali melewati level likuiditas. BUY jika sweep low/reclaim; SELL jika sweep high/reject. Satu candle closed, tanpa BOS/CHOCH/FVG, retest, atau tiga TF. Jika sweep dua sisi sekaligus, skip.
 4. Arah sweep wajib sama dengan arah Astrology CSV. Di luar waktu window, Sabtu/Minggu, CSV kosong/salah/stale -> tidak entry.
