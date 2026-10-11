@@ -209,7 +209,7 @@ function renderPeriodOverview(){
    ' WIB · sampling '+r.resolutionMinutes+' menit · Senin–Jumat untuk arah XAUUSD</p>'+
   '<div class="ab-period-focus"><span>FOKUS SATU ARAH · AUTO EKSPERIMEN</span>'+
    chip(r.direction)+'<small>BUY '+r.buyMinutes+' menit · SELL '+r.sellMinutes+
-   ' menit. '+r.focusDays+' dina searah · '+r.waitDays+' dina WAIT. Durasi model, dudu backtest.</small></div>'+
+   ' menit. '+r.focusDays+' dina searah · '+r.waitDays+' dina WAIT. Durasi model, bukan probabilitas / backtest.</small></div>'+
   '<div class="ab-period-times">'+
    '<div><small>MULAI</small><strong>'+esc(fmt(r.startWindow))+'</strong></div>'+
    '<div><small>INTI</small><strong>'+esc(fmt(r.core))+'</strong></div>'+
