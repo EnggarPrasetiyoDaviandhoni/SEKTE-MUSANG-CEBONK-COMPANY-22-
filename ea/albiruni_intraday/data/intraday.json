@@ -8,7 +8,7 @@
   "core_epoch": 1791779172,
   "end_epoch": 1791779400,
   "valid_until_epoch": 1791779400,
-  "published_epoch": 1791732648,
+  "published_epoch": 1791734079,
   "aspect": "Moon/Venus Konjungsi 0deg orb 1.049deg",
   "phase": "APPLYING",
   "reason": "READY",
@@ -19,7 +19,7 @@
     "sellMinutes": 45,
     "dominant": "BUY"
   },
-  "generated_at_utc": "2026-10-11T15:30:48.000Z",
+  "generated_at_utc": "2026-10-11T15:54:39.000Z",
   "candidate_entry_wib": "2026-10-12 09:30:00 WIB",
   "start_wib": "2026-10-12 09:15:00 WIB",
   "core_wib": "2026-10-12 11:26:12 WIB",
