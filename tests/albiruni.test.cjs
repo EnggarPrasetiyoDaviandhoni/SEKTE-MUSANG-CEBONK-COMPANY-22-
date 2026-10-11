@@ -141,7 +141,7 @@ async function run(){
  assert.throws(()=>C.inspect(linear,r,r.range.end));
  const csv=C.toCSV(r,{0:'BUY'});assert.match(csv,/manual_bias_UNVALIDATED/);assert.match(csv,/'?2026-10-05 12:00/);assert.match(csv,/"BUY"/);
  // Reproducible event-study rows contain NO fabricated price returns or win rates.
- assert.equal(r.version,'1.2.0');
+ assert.equal(r.version,'1.3.0');
  const obs=C.studyObservations(r,{0:'BUY'});
  const selected=obs.filter(x=>x.pair==='Sun/Moon'&&x.angle===0);
  assert.equal(selected.length,1);
