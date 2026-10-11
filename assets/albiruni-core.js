@@ -1,4 +1,4 @@
-/* Al-Biruni aspect timing, v1.2. Independent modern ephemeris implementation.
+/* Al-Biruni aspect timing, v1.3. Independent modern ephemeris implementation.
  * Historical inspiration: Al-Qanun al-Masudi XI, chapter 2.
  * No market prediction, price feed, legacy scoring or trade execution. */
 (function(root){
@@ -140,7 +140,7 @@ async function scan(engine,date,{mode='week',focus='moon',orb=2,stepMinutes=15,o
   onProgress(Math.round(65+(i+1)/selected.length*35));await yieldNow();
  }
  check();events.sort((a,b)=>a.closest-b.closest||a.start-b.start||a.id.localeCompare(b.id));
- return {version:'1.2.0',range,focus,orb,stepMinutes,resolutionSeconds:1,events};
+ return {version:'1.3.0',range,focus,orb,stepMinutes,resolutionSeconds:1,events};
 }
 function normalizeRules(input={}){
  const rules={};for(const a of ASPECTS)rules[a.angle]=['BUY','SELL','NETRAL'].includes(input[a.angle])?input[a.angle]:'NETRAL';
@@ -252,6 +252,47 @@ function autoTimeline(engine,result,dayStart,{stepMinutes=15}={}){
  return {model:'ALBIRUNI_AUTO_EXPERIMENT_V1',validated:false,
   resolutionMinutes:stepMinutes,dayStart,windows:raw};
 }
+// Coherent daily/weekly/monthly overview of the SAME AUTO experimental model.
+// Aggregation never moves weekend aspects to trading days, never invents market
+// prices, and never forces a direction when the evidence remains balanced.
+// All directional windows are sampled at the declared resolution, NOT exact
+// planetary aspect start/end timestamps.
+function autoPeriodSummary(engine,result,{stepMinutes}={}){
+ assert(result&&result.range&&Array.isArray(result.range.days),'Periode Al-Biruni belum dihitung.');
+ const resolution=stepMinutes??(result.range.mode==='month'?60:result.range.mode==='week'?30:15);
+ assert([15,30,60].includes(resolution),'Resolusi periode harus 15/30/60 menit.');
+ const days=[];
+ let buyDuration=0,sellDuration=0,neutralDays=0,conflictDays=0;
+ const all=[];
+ for(const day of result.range.days){
+  const report=autoTimeline(engine,result,day.start,{stepMinutes:resolution});
+  const ranked=report.windows.slice().sort((a,b)=>(b.end-b.start)-(a.end-a.start)||
+   b.peakNet-a.peakNet||a.start-b.start);
+  const buy=report.windows.filter(w=>w.direction==='BUY').reduce((v,w)=>v+(w.end-w.start)/MIN,0);
+  const sell=report.windows.filter(w=>w.direction==='SELL').reduce((v,w)=>v+(w.end-w.start)/MIN,0);
+  buyDuration+=buy;sellDuration+=sell;
+  const focus=buy>sell?'BUY':sell>buy?'SELL':'NETRAL';
+  if(focus==='NETRAL')neutralDays++;
+  if(buy>0&&sell>0)conflictDays++;
+  const selected=ranked.find(w=>w.direction===focus)||null;
+  days.push({date:day.date,weekday:day.weekday,direction:focus,
+    buyMinutes:buy,sellMinutes:sell,windowCount:report.windows.length,
+    window:selected,allWindows:report.windows});
+  all.push(...report.windows);
+ }
+ let direction=buyDuration>sellDuration?'BUY':sellDuration>buyDuration?'SELL':'NETRAL';
+ const focusWindows=all.filter(w=>w.direction===direction)
+  .sort((a,b)=>(b.end-b.start)-(a.end-a.start)||b.peakNet-a.peakNet||a.start-b.start);
+ const dominant=direction==='NETRAL'?null:focusWindows[0]||null;
+ return {
+  model:'ALBIRUNI_AUTO_EXPERIMENT_V1',validated:false,
+  mode:result.range.mode,start:result.range.start,end:result.range.end,
+  resolutionMinutes:resolution,direction,buyMinutes:buyDuration,sellMinutes:sellDuration,
+  neutralDays,daysWithBothDirections:conflictDays,days,
+  startWindow:dominant?.start??null,core:dominant?.peak??null,endWindow:dominant?.end??null,
+  dominantWindow:dominant
+ };
+}
 function studyObservations(result,rules={}){
  assert(result&&result.range&&Array.isArray(result.events),'Hasil aspek belum valid.');
  const normalized=normalizeRules(rules),out=[];
@@ -310,7 +351,7 @@ function toAutoStudyCSV(engine,result,rules={}){
  });
  return '\uFEFF'+rows.join('\r\n')+'\r\n';
 }
-const API=Object.freeze({BODIES,ASPECTS,DAY,MIN,WIB,parseDate,period,iso,stamp,norm,signed,geometry,pairs,createEngine,scan,inspect,daily,direction,normalizeRules,toCSV,studyObservations,toStudyCSV,toAutoStudyCSV,autoSignal,autoTimeline,AUTO_NATURE,AUTO_ASPECT,AUTO_PHASE,AUTO_THRESHOLD});
+const API=Object.freeze({BODIES,ASPECTS,DAY,MIN,WIB,parseDate,period,iso,stamp,norm,signed,geometry,pairs,createEngine,scan,inspect,daily,direction,normalizeRules,toCSV,studyObservations,toStudyCSV,toAutoStudyCSV,autoSignal,autoTimeline,autoPeriodSummary,AUTO_NATURE,AUTO_ASPECT,AUTO_PHASE,AUTO_THRESHOLD});
 root.CebonkAlBiruni=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
