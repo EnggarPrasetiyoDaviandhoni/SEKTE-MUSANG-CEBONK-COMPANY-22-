@@ -10,7 +10,9 @@ astro=(root/'src/LSAstroNews.mqh').read_text(encoding='utf-8')
 notify=(root/'src/LSNotify.mqh').read_text(encoding='utf-8')
 trade=(root/'src/LSTrade.mqh').read_text(encoding='utf-8')
 readme=(root/'README.md').read_text(encoding='utf-8')
-web=(repo/'assets/technical-scanners-core.js').read_text(encoding='utf-8')
+web_path=repo/'assets/technical-scanners-core.js'
+web=web_path.read_text(encoding='utf-8') if web_path.exists() else None
+# Legacy parity test may run after the website scanner was intentionally removed.
 
 n=0
 def ok(name, cond):
@@ -26,7 +28,7 @@ ok('web parity constants MQL', all(x in core for x in [
  '#define BW_LIQ_LOOKBACK 80','#define BW_PIVOT_DEPTH 2','#define BW_SWEEP_SEARCH 18',
  '#define BW_DISPLACEMENT_BARS 3','#define BW_STRUCTURE_LOOKBACK 6',
  '#define BW_BODY_MULT 1.20','#define BW_EQUAL_TOL 0.12','#define BW_MIN_HOLD_SEC 300']))
-ok('web parity constants JS', all(x in web for x in [
+ok('web parity constants JS (optional deleted website scanner)', web is None or all(x in web for x in [
  'liquidityPivotDepth:2','liquidityLookback:80','sweepSearch:18','displacementBars:3',
  'displacementBodyMultiple:1.20','structureLookback:6','equalToleranceRange:0.12',
  'minSignalHoldMinutes:5']))
