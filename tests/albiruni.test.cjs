@@ -66,7 +66,7 @@ async function run(){
   focus:'all',stepMinutes:15,events
  });
  const pseudo={longitude:(body)=>({
-  Sun:90,Moon:0,Mercury:180,Venus:60,Mars:180,Jupiter:60,Saturn:240
+  Sun:90,Moon:0,Mercury:180,Venus:150,Mars:180,Jupiter:60,Saturn:240
  })[body]};
  const t=start+11*HOUR;
  const bullish=windowResult([mk(['Moon','Jupiter'],60,'test-benefic-sextile')]);
