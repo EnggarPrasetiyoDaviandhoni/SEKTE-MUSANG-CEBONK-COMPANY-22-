@@ -116,12 +116,12 @@ async function run(){
  assert.equal(reportWeek.direction,'NETRAL');
  assert.equal(reportWeek.startWindow,null);
  assert.ok(reportWeek.days.every(x=>!x.marketClosed));
- const month=C.period('2026-10-11','month');
+ const monthRange=C.period('2026-10-11','month');
  const saturday=Date.parse('2026-10-10T10:00:00+07:00');
  const saturdayEvent={...mk(['Moon','Jupiter'],60,'saturday-only'),
   start:saturday,end:saturday+2*HOUR,closest:saturday+HOUR,exactTimes:[saturday+HOUR],
   startClipped:false,endClipped:false};
- const monthOnlyWeekend={version:'1.3.0',range:month,orb:2,focus:'all',stepMinutes:15,events:[saturdayEvent]};
+ const monthOnlyWeekend={version:'1.3.0',range:monthRange,orb:2,focus:'all',stepMinutes:15,events:[saturdayEvent]};
  const reportMonth=C.autoPeriodSummary(pseudo,monthOnlyWeekend);
  assert.equal(reportMonth.mode,'month');
  assert.equal(reportMonth.resolutionMinutes,60);
