@@ -96,3 +96,37 @@
 #albiruniPanel .ab-auto-win>span{flex:1 1 260px}
 #albiruniPanel .ab-auto-win button{min-height:32px;padding:6px 10px;font-size:11px}
 @media(max-width:700px){#albiruniPanel .ab-auto-config select{width:100%}#albiruniPanel .ab-auto-win>span{flex-basis:100%}}
+
+/* Al-Biruni v1.3: dedicated navigation and responsive daily / weekly / monthly reports. */
+#tabAlBiruni.active{background:#1e3249;color:#f0c16c;box-shadow:inset 0 0 0 1px #876c3b}
+#albiruniPanel .ab-period-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:0 0 17px}
+#albiruniPanel .ab-period-modes button{font-size:12px;font-weight:850;letter-spacing:.7px;min-width:0}
+#albiruniPanel .ab-period-modes button.active{color:#132033;background:#f0c16c;border-color:#f0c16c}
+#albiruniPanel .ab-period-summary{margin:0 0 14px;border:1px solid #506887;background:#122238;border-radius:12px;padding:16px}
+#albiruniPanel .ab-period-summary h3{font-size:14px;margin:0 0 8px;letter-spacing:.2px}
+#albiruniPanel .ab-period-sub{font-size:11px!important;color:#b9c9dd!important;line-height:1.65!important;margin:8px 0!important}
+#albiruniPanel .ab-period-focus{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}
+#albiruniPanel .ab-period-focus>span:first-child{font-size:12px}
+#albiruniPanel .ab-period-focus small{flex-basis:100%;color:#b9c9dd;font-size:11px}
+#albiruniPanel .ab-period-times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:15px 0}
+#albiruniPanel .ab-period-times>div{min-width:0;background:#0b1725;border:1px solid #39516e;border-radius:9px;padding:12px}
+#albiruniPanel .ab-period-times small{display:block;font-size:10px;color:#b9c9dd;letter-spacing:1px}
+#albiruniPanel .ab-period-times strong{display:block;font-variant-numeric:tabular-nums;font-size:15px;margin-top:6px;overflow-wrap:anywhere}
+#albiruniPanel .ab-period-days{border:1px solid #344760;padding:14px;border-radius:12px;margin-bottom:20px}
+#albiruniPanel .ab-period-days>h3{margin-bottom:12px;font-size:13px}
+#albiruniPanel .ab-period-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#albiruniPanel .ab-period-day{text-align:left;min-width:0;display:flex;flex-direction:column;gap:7px;align-items:flex-start;background:#101e31}
+#albiruniPanel .ab-period-day small{font-size:10px;color:#aebfd5}
+#albiruniPanel .ab-period-day span{font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+#albiruniPanel .ab-period-day strong{font-size:11px;color:#f1c779}
+#albiruniPanel .ab-period-day:focus-visible{outline:2px solid #70d7dc}
+@media(max-width:760px){
+ #albiruniPanel .ab-period-modes{gap:5px}
+ #albiruniPanel .ab-period-modes button{font-size:11px;letter-spacing:0;padding:10px 4px}
+ #albiruniPanel .ab-period-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ #albiruniPanel .ab-period-times>div{padding:9px}
+ #albiruniPanel .ab-period-times strong{font-size:13px}
+ #albiruniPanel .ab-period-summary{padding:12px}
+ #albiruniPanel .ab-period-days{padding:10px}
+}
+@media(max-width:360px){#albiruniPanel .ab-period-grid{grid-template-columns:1fr}}
