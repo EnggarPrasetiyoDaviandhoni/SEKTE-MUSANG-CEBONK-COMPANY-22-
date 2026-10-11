@@ -11,7 +11,7 @@ script=(repo/"scripts/generate-astro-news.mjs").read_text(encoding="utf8")
 checks={
  "standalone file source":'#property version "1.00"' in ea,
  "same website news engine":"News.calculate(core,Astronomy,params,events)" in script,
- "same website astrology model":"coreFromSite()" in script and "core.analyse(" in script,
+ "same website astrology model":"coreFromSite()" in script and "c.analyse(" in script,
  "website news original policy":all(x in script for x in ["pre:30","post:120","blockBefore:5","blockAfter:5","entrySpan:10","minWindow:15","otherRisk:true"]),
  "no technical direction rule":all(x not in ea for x in ["LSSweepDirection","BWScanDirection","iMA(","iRSI("]),
  "feed model and schema":"CEBONK_ASTRO_NEWS_V1" in ea and "StringSplit(line,44,p)!=11" in ea,
