@@ -391,6 +391,21 @@ void OnTimer(){
  if(t>0&&t!=gLastM5){gLastM5=t;LSEvaluate();}
 }
 void OnTick(){}
+// Broker-registered SL/TP exits; use one concise notification per completed deal.
+void OnTradeTransaction(const MqlTradeTransaction &trans,
+ const MqlTradeRequest &request,const MqlTradeResult &result){
+ if(trans.type!=TRADE_TRANSACTION_DEAL_ADD||trans.deal==0||
+    !HistoryDealSelect(trans.deal))return;
+ if(HistoryDealGetString(trans.deal,DEAL_SYMBOL)!=InpSymbol||
+    (ulong)HistoryDealGetInteger(trans.deal,DEAL_MAGIC)!=InpMagic)return;
+ long entry=HistoryDealGetInteger(trans.deal,DEAL_ENTRY);
+ if(entry!=DEAL_ENTRY_OUT&&entry!=DEAL_ENTRY_OUT_BY&&entry!=DEAL_ENTRY_INOUT)return;
+ long reason=HistoryDealGetInteger(trans.deal,DEAL_REASON);
+ if(reason==DEAL_REASON_TP)
+  LSNotice("TAKE PROFIT","😅 TAKE PROFIT",InpSymbol,gTester,gAuto);
+ else if(reason==DEAL_REASON_SL)
+  LSNotice("STOP LOSS","🥲 STOP LOSS",InpSymbol,gTester,gAuto);
+}
 void OnChartEvent(const int id,const long &l,const double &d,const string &s){
  if(id==CHARTEVENT_OBJECT_CLICK&&s==gButton){
   gAuto=!gAuto;LSPaint();
