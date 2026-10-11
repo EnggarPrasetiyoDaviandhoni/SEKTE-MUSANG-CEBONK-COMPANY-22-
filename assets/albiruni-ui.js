@@ -66,7 +66,7 @@ function save(){
 }
 function setBusy(value){
  busy=value;
- for(const id of ['abDate','abMode','abFocus','abOrb','abRun','abRunThree','abToday','abPrev','abNext'])$(id).disabled=value;
+ for(const id of ['abDate','abMode','abFocus','abOrb','abBiasMode','abRun','abRunThree','abToday','abPrev','abNext'])$(id).disabled=value;
  $('abCancel').disabled=!value;$('abCSV').disabled=value||!result;$('abStudyCSV').disabled=value||!result;$('abProgress').hidden=!value;
 }
 const THREE_MODES=Object.freeze([
