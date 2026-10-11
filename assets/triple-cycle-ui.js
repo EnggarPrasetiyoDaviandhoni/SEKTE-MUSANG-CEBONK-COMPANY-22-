@@ -121,7 +121,7 @@ function mount(){
  '<p id="amStatus" class="am-muted" role="status">Pilih bulan, lalu hitung empat momen astronomi.</p>'+
  '<div id="amOutput" hidden><h3 id="amTitle"></h3><div id="amCounts" class="am-types"></div>'+
  '<h3>Waktu tepat empat momen utama</h3><div id="amEvents" class="am-events"></div></div>'+
- '<p class="am-warning"><b>Catatan:</b> Empat momen berarti empat jenis fase Bulan, bukan selalu empat kejadian di setiap bulan kalender. Ijtimak tidak sama dengan hilal yang terlihat. Kalender ini tidak menentukan awal bulan Hijriah, tidak memuat BaZi, dan tidak mengeluarkan sinyal BUY/SELL. Hubungan siklus Bulan dengan harga XAUUSD/XAGUSD belum terbukti sebagai strategi trading.</p>';
+ '<p class="am-warning"><b>Catatan:</b> Empat momen berarti empat jenis fase Bulan, bukan selalu empat kejadian di setiap bulan kalender. Ijtimak tidak sama dengan hilal yang terlihat. Empat momen ini adalah peristiwa astronomi, bukan sinyal BUY/SELL. Hubungan siklus Bulan dengan harga XAUUSD/XAGUSD belum terbukti sebagai strategi trading.</p>';
  wrap.insertBefore(view,wrap.querySelector('footer'));
  const now=new Date(Date.now()+7*3600000).toISOString().slice(0,7);
  $('amMonth').value=now>='2020-01'&&now<='2040-12'?now:'2026-10';
