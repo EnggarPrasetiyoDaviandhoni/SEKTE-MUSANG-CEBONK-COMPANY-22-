@@ -50,9 +50,13 @@ assert.throws(()=>C.astrologyDays(Astro,Astronomy,month,()=>{},()=>true),/dibata
 const html=fs.readFileSync('index.html','utf8'),navigation=fs.readFileSync('assets/bazi-ui.js','utf8');
 const ui=fs.readFileSync('assets/triple-cycle-ui.js','utf8');
 assert.ok(html.includes('assets/triple-cycle-core.js?v=1.1.0'));
-assert.ok(html.includes('assets/triple-cycle-ui.js?v=1.1.0'));
+assert.ok(html.includes('assets/triple-cycle-ui.js?v=1.2.0'));
 assert.ok(html.indexOf('assets/triple-cycle-core.js')<html.indexOf('assets/triple-cycle-ui.js'));
 assert.ok(navigation.includes('data-bz-target="tcPanel"'));
+assert.ok(navigation.includes("tabTriple"),'Direct Triple Cycle tab must be visible');
+assert.ok(navigation.includes("location.hash==='#triple-cycle'"),'Hash must open the Triple Cycle directly');
+assert.ok(ui.includes("jumps.insertAdjacentElement('afterend',panel)"),'Triple Cycle must appear immediately after BaZi shortcuts on mobile');
+assert.ok(ui.includes("cebonk:triple-open"),'Open tab must start the monthly calculation');
 assert.ok(navigation.includes("'f60Panel','tcPanel'"));
 assert.ok(ui.includes('Bulan Baru')===false,'Lunar phase names are owned by the core');
 assert.ok(ui.includes('Umm al-Qura')&&ui.includes('bukan'));
