@@ -8,11 +8,26 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 repo=root.parents[1]
-ea=(root/'CEBONK_ALBIRUNI_INTRADAY_v1.00.mq5').read_text('utf8')
-txt=(root/'dist/CEBONK_ALBIRUNI_INTRADAY_v1.00.txt').read_text('utf8')
+ea=(root/'CEBONK_ALBIRUNI_INTRADAY_v1.01.mq5').read_text('utf8')
+txt=(root/'dist/CEBONK_ALBIRUNI_INTRADAY_v1.01.txt').read_text('utf8')
 generator=(repo/'scripts/generate-albiruni-intraday.mjs').read_text('utf8')
 workflow=(repo/'.github/workflows/albiruni-intraday-ea.yml').read_text('utf8')
 assert ea==txt,'Standalone TXT must equal exact MQ5 content'
+# Broker-session defer: no arbitrary WIB hour gate, never chase an open-market stale signal.
+assert 'InpEntryStartHourWIB' not in ea and 'InpEntryEndHourWIB' not in ea
+assert 'InpEntryStartHourWIB' not in (root/'CEBONK_ALBIRUNI_INTRADAY_v1.01.set').read_text('utf8')
+assert 'InpEntryEndHourWIB' not in (root/'CEBONK_ALBIRUNI_INTRADAY_v1.01.set').read_text('utf8')
+assert 'SymbolInfoSessionTrade(InpSymbol,day,n,sessionFrom,sessionTo)' in ea
+assert 'if(last<=first)last+=86400;' in ea, 'overnight session support'
+entry_policy=ea.split('void ABCheckEntry(',1)[1].split('int OnInit(',1)[0]
+assert 'WAIT_MARKET_OPEN' in entry_policy and 'ASTRO_PHASE_EXPIRED_SKIP' in entry_policy
+assert 'now>=s.core||now>=s.end||now>=s.expiry' in entry_policy, 'phase must remain before exact contact'
+assert 'entryKnown&&!openAtEntry' in entry_policy, 'defer only when schedule proves closed at scheduled entry'
+assert 'if(!deferred)' in entry_policy, 'normal late signal must be skipped'
+assert 'if(!nowKnown||!openNow)' in entry_policy, 'no delayed entry without live broker session confirmation'
+assert 'AFTER_DAILY_CLOSE_CUTOFF' in entry_policy, 'no entry after forced close cutoff'
+assert entry_policy.index('if(GlobalVariableCheck(ABGlobalKey(s.id)))')<entry_policy.index('ABPlace(s);')
+
 assert 'input bool InpNotifyAutopilot=true;' in ea, 'notification toggle input enabled by default'
 autopilot_handler=ea.split('void OnChartEvent(',1)[1].split('void OnTradeTransaction(',1)[0]
 assert autopilot_handler.index('gAuto=!gAuto;')<autopilot_handler.index('ABNotice(text);'), 'notify AFTER real click toggles state'
@@ -20,7 +35,7 @@ assert autopilot_handler.index('if(!InpEnableExperimentalAstro)')<autopilot_hand
 assert autopilot_handler.index('REAL_ACCOUNT_LOCKED')<autopilot_handler.index('ABNotice(text);'), 'real account lock BEFORE notice'
 assert 'AUTOPILOT ON' in autopilot_handler and 'AUTOPILOT OFF' in autopilot_handler
 assert 'MT5_PUSH_FAILED_ERR_' in ea and 'if(!SendNotification(' in ea, 'diagnose MT5 push failures'
-assert 'InpNotifyAutopilot=true' in (root/'CEBONK_ALBIRUNI_INTRADAY_v1.00.set').read_text('utf8'), 'preset sends toggle notices'
+assert 'InpNotifyAutopilot=true' in (root/'CEBONK_ALBIRUNI_INTRADAY_v1.01.set').read_text('utf8'), 'preset sends toggle notices'
 
 assert 'ObjectSetInteger(0,gButton,OBJPROP_XSIZE,260);' in ea, 'AUTOPILOT width 260px'
 assert 'ObjectSetInteger(0,gButton,OBJPROP_YSIZE,70);' in ea, 'AUTOPILOT height 70px'
