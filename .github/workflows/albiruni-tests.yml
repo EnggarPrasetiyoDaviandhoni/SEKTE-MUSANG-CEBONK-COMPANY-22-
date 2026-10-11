@@ -2,9 +2,9 @@ name: Al-Biruni panel checks
 on:
   push:
     branches: [main]
-    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
+    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/site-tab-router.test.cjs', 'assets/site-tab-router.js', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
   pull_request:
-    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
+    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/site-tab-router.test.cjs', 'assets/site-tab-router.js', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
 permissions:
   contents: read
 jobs:
@@ -18,4 +18,5 @@ jobs:
       - run: npm install --no-save --no-package-lock --ignore-scripts astronomy-engine@2.1.19 jsdom@26.1.0
       - run: node tests/albiruni.test.cjs
       - run: node tests/albiruni-ui.test.cjs
+      - run: node tests/site-tab-router.test.cjs
       - run: node tests/astro-weekly.test.cjs
