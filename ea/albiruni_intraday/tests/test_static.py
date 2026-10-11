@@ -35,6 +35,8 @@ required={
  'publisher uses independent Al-Biruni core': "require('../assets/albiruni-core.js')" in generator,
  'publisher requires Applying plus future exact': "x.phase==='APPLYING'" in generator and "x.exact>entry+5*MIN" in generator,
  'non-PR publish only': "github.event_name != 'pull_request'" in workflow,
+ 'preference flags grouped correctly': 'if((s.published<1600000000)||(p[3]!="WAIT"&&s.dir==0)){' in ea,
+ 'duplicate-day and duplicate-id precedence explicit': 'if((parsed[i].day==s.day)||(parsed[i].id==s.id&&s.dir!=0)){' in ea,
  'no other EA files changed': True,
 }
 for name,passed in required.items():
