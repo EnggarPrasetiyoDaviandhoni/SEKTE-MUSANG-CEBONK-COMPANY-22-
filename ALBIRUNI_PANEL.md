@@ -1,5 +1,21 @@
 # Panel Al-Biruni
 
+## Pembaruan v1.5 — 3 hasil independen sekaligus, tanggal dan jam kandidat ENTRY WIB
+
+**Tombol baru `Hitung 3 Dominasi + Jam Entry`** di tab AL-BIRUNI menghitung **tiga sumber periode secara terpisah** dengan ephemeris dan pengaturan orb/pasangan planet yang sama. Tidak mengambil arah harian dari mingguan, atau arah mingguan dari bulanan:
+
+| Kartu | Periode | Resolusi grid estimasi |
+|---|---|---|
+| HARIAN / INTRADAY | 1 tanggal WIB (dengan market tutup akhir pekan) | 15 menit |
+| MINGGUAN / SWING | Senin–Jumat WIB pekan tanggal acuan | 30 menit |
+| BULANAN / POSITION TRADE | Bulan kalender tanggal acuan; fokus hanya sesi hari kerja | 60 menit |
+
+Setiap kartu menampilkan BUY, SELL, atau **WAIT**, rentang tanggal periode, dan apabila ada window valid: **TANGGAL & JAM KANDIDAT ENTRY**, **MULAI**, **INTI**, **AKHIR** dalam tanggal dan jam WIB penuh. Entry kandidat dipilih dari **`peak` (INTI grid) window terpanjang dalam arah dominan periode itu**. Ini **puncak skor model eksperimen**, bukan penentuan eksekusi yang teruji; jam dapat sudah lewat dan aplikasi menandainya. Informasi aspek pendukung diambil ulang dari `autoSignal` pada jam INTI, mencantumkan pasangan planet, jenis, fase, dan orb.
+
+Jika hari Sabtu/Minggu, hasil harian adalah WAIT tanpa jam entry (meskipun aspek astronomi tetap dihitung). Jika arah seimbang, tidak ada window searah, atau data tidak valid, tampil WAIT/galat; **tidak mengarang waktu entry**. Rincian tabel aspek asli, AUTO/MANUAL, tiga tombol lama HARIAN/MINGGUAN/BULANAN, dan hasil seleksi individual tetap tersedia. Ganti tanggal/pasangan/orb membatalkan hasil 3 kartu sebelumnya. Tombol batal dan peringatan sumber pustaka tetap digunakan. Tidak melakukan transaksi, mengirim alert EA, mengambil candle emas, ataupun menghitung probabilitas, profit/loss, dan akurasi.
+
+**Metodologi:** mengolah `C.scan` **tiga kali** (mode day, week, month) lalu `C.periodEntryReport` masing-masing, sehingga ketiga dominasi boleh berbeda, misalnya SELL / BUY / SELL, sesuai hasil perhitungan, tanpa memaksa ketiganya sama arah. Bobot planet/aspek/fase tetap **hipotesis modern yang belum divalidasi**, bukan klaim rumus trading al-Biruni. Hasil merupakan kandidat waktu riset, bukan rekomendasi bertransaksi.
+
 ## Pembaruan v1.4 — Fokus satu arah per HARIAN / MINGGUAN / BULANAN
 
 - Mesin `autoPeriodSummary` menetapkan arah dominan **satu kali per periode**: BUY apabila total menit BUY > SELL, SELL apabila SELL > BUY, dan NETRAL bila sama kuat/nihil. Data hanya aspek planet yang sama, **bukan** sinyal harga teruji dari kitab Al-Biruni.
