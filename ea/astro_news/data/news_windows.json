@@ -1,0 +1,135 @@
+{
+  "model": "CEBONK_ASTRO_NEWS_V1",
+  "source": "CebonkNews.calculate + CebonkCore.analyse",
+  "experimental": true,
+  "calendar_checked": "2026-10-04",
+  "calendar_type": "WEBSITE_SNAPSHOT_NOT_LIVE",
+  "policy": {
+    "pre": 30,
+    "post": 120,
+    "blockBefore": 5,
+    "blockAfter": 5,
+    "entrySpan": 10,
+    "minWindow": 15,
+    "otherRisk": true
+  },
+  "events": [
+    {
+      "id": "nfp-20261002",
+      "news": "NFP / Employment Situation",
+      "release_epoch": 1790944200,
+      "agency": [
+        "BLS"
+      ],
+      "focus": "SELL",
+      "windows": [
+        {
+          "direction": "SELL",
+          "start_epoch": 1790944500,
+          "entry_end_epoch": 1790945100,
+          "end_epoch": 1790951400,
+          "peak_epoch": 1790944800,
+          "aspect": "Mars Opposition Pluto orb 0.54deg MENDEKAT / Mercury Square Mars orb 0.10deg MENJAUH"
+        }
+      ]
+    },
+    {
+      "id": "minutes-20261007",
+      "news": "FOMC Minutes",
+      "release_epoch": 1791396000,
+      "agency": [
+        "FED"
+      ],
+      "focus": "BUY",
+      "windows": [
+        {
+          "direction": "BUY",
+          "start_epoch": 1791396300,
+          "entry_end_epoch": 1791396900,
+          "end_epoch": 1791403200,
+          "peak_epoch": 1791396300,
+          "aspect": "Moon Sextile Venus orb 0.55deg MENJAUH / Mars Sextile Uranus orb 0.18deg MENJAUH"
+        }
+      ]
+    },
+    {
+      "id": "cpi-20261014",
+      "news": "CPI",
+      "release_epoch": 1791981000,
+      "agency": [
+        "BLS"
+      ],
+      "focus": "BUY",
+      "windows": [
+        {
+          "direction": "BUY",
+          "start_epoch": 1791981300,
+          "entry_end_epoch": 1791981900,
+          "end_epoch": 1791988200,
+          "peak_epoch": 1791981600,
+          "aspect": "Sun Sextile Jupiter orb 0.68deg MENDEKAT / Mars Trine Saturn orb 1.14deg MENDEKAT"
+        }
+      ]
+    },
+    {
+      "id": "ppi-20261015",
+      "news": "PPI",
+      "release_epoch": 1792067400,
+      "agency": [
+        "BLS"
+      ],
+      "focus": "BUY",
+      "windows": [
+        {
+          "direction": "BUY",
+          "start_epoch": 1792067700,
+          "entry_end_epoch": 1792068300,
+          "end_epoch": 1792074600,
+          "peak_epoch": 1792068000,
+          "aspect": "Mars Trine Saturn orb 0.51deg MENDEKAT / Sun Sextile Jupiter orb 0.15deg MENJAUH"
+        }
+      ]
+    },
+    {
+      "id": "fomc-20261028",
+      "news": "FOMC Statement",
+      "release_epoch": 1793210400,
+      "agency": [
+        "FED"
+      ],
+      "focus": "BUY",
+      "windows": [
+        {
+          "direction": "BUY",
+          "start_epoch": 1793210700,
+          "entry_end_epoch": 1793211300,
+          "end_epoch": 1793211900,
+          "peak_epoch": 1793210700,
+          "aspect": "Moon Sextile Saturn orb 0.96deg MENJAUH / Neptune Sextile Pluto orb 0.95deg MENJAUH"
+        }
+      ]
+    },
+    {
+      "id": "fed-pc-20261028",
+      "news": "FOMC Press Conference",
+      "release_epoch": 1793212200,
+      "agency": [
+        "FED"
+      ],
+      "focus": "NEUTRAL",
+      "windows": []
+    },
+    {
+      "id": "gdp-20261029",
+      "news": "GDP / Advance Q3 + PCE / Personal Income and Outlays",
+      "release_epoch": 1793277000,
+      "agency": [
+        "BEA",
+        "BEA"
+      ],
+      "focus": "NEUTRAL",
+      "windows": []
+    }
+  ],
+  "window_count": 5
+}
