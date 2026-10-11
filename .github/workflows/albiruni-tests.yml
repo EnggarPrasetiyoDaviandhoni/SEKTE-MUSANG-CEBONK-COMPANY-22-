@@ -2,9 +2,9 @@ name: Al-Biruni panel checks
 on:
   push:
     branches: [main]
-    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'index.html', '.github/workflows/albiruni-tests.yml']
+    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
   pull_request:
-    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'index.html', '.github/workflows/albiruni-tests.yml']
+    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
 permissions:
   contents: read
 jobs:
