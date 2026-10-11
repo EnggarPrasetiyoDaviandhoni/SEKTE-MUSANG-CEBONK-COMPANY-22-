@@ -60,7 +60,7 @@ async function run(){
 
  $('abCSV').click();assert.ok(blob&&blob.size>1000);assert.match($('abStatus').textContent,/CSV/);
  assert.equal($('abStudyCSV').disabled,false);
- $('abStudyCSV').click();assert.ok(blob&&blob.size>1000);assert.match($('abStatus').textContent,/riset diekspor/);
+ $('abStudyCSV').click();assert.ok(blob&&blob.size>1000);assert.match($('abStatus').textContent,/riset MANUAL diekspor/);
  assert.match($('abInspectInfo').textContent,/Arah NETRAL|Bias uji/);
 
  $('abMode').value='month';$('abMode').dispatchEvent(new w.Event('change'));assert.equal($('abResults').hidden,true);assert.equal($('abCSV').disabled,true);assert.equal($('abStudyCSV').disabled,true);
