@@ -1,0 +1,53 @@
+{
+  "model": "ASTRO_WEEKLY_V1",
+  "source": "Website CebonkCore V1 + CebonkAstroWeekly",
+  "experimental": true,
+  "week_monday_wib": "2026-10-12",
+  "week_direction": "BUY",
+  "total_slots": 1080,
+  "buy_minutes": 3490,
+  "sell_minutes": 125,
+  "windows": [
+    {
+      "date": "2026-10-16",
+      "direction": "BUY",
+      "start_epoch": 1792105200,
+      "core_epoch": 1792105200,
+      "end_epoch": 1792170000,
+      "minutes": 1080
+    },
+    {
+      "date": "2026-10-15",
+      "direction": "BUY",
+      "start_epoch": 1792018800,
+      "core_epoch": 1792018800,
+      "end_epoch": 1792083600,
+      "minutes": 1080
+    },
+    {
+      "date": "2026-10-14",
+      "direction": "BUY",
+      "start_epoch": 1791932400,
+      "core_epoch": 1791961200,
+      "end_epoch": 1791976500,
+      "minutes": 735
+    },
+    {
+      "date": "2026-10-14",
+      "direction": "BUY",
+      "start_epoch": 1791977400,
+      "core_epoch": 1791996900,
+      "end_epoch": 1791997200,
+      "minutes": 330
+    },
+    {
+      "date": "2026-10-13",
+      "direction": "BUY",
+      "start_epoch": 1791894900,
+      "core_epoch": 1791910500,
+      "end_epoch": 1791910800,
+      "minutes": 265
+    }
+  ],
+  "status": "READY"
+}
