@@ -193,7 +193,7 @@ async function run(){
  const astroEnd=html.indexOf('</div>\n<section id="albiruniPanel"');
  assert.ok(astroStart>=0&&astroEnd>astroStart,'Al-Biruni must be separate sibling view');
  assert.ok(html.indexOf('id="tabAlBiruni"')>=0,'Al-Biruni dedicated top navigation tab');
- assert.ok(html.indexOf('id="albiruniPanel" hidden')>astroEnd);
+ assert.ok(/<section id="albiruniPanel"[^>]* hidden><\/section>/.test(html),'dedicated Al-Biruni panel starts hidden');
  const baziNav=fs.readFileSync(path.join(ROOT,'assets/bazi-ui.js'),'utf8');
  assert.match(baziNav,/tabAlBiruni/);
  assert.match(baziNav,/al-biruni/);
