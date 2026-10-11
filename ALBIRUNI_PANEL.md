@@ -1,5 +1,13 @@
 # Panel Al-Biruni
 
+## Pembaruan v1.4 — Fokus satu arah per HARIAN / MINGGUAN / BULANAN
+
+- Mesin `autoPeriodSummary` menetapkan arah dominan **satu kali per periode**: BUY apabila total menit BUY > SELL, SELL apabila SELL > BUY, dan NETRAL bila sama kuat/nihil. Data hanya aspek planet yang sama, **bukan** sinyal harga teruji dari kitab Al-Biruni.
+- Setelah menentukan fokus, daftar `focusWindows` dan `focusWindow` tiap tanggal **hanya boleh searah fokus periode**. Hari dengan hanya arah lawan menjadi **WAIT**, tidak disulap menjadi arah fokus; Sabtu/Minggu **MARKET TUTUP**. Jumlah menit lawan disimpan sebagai `counterMinutes` untuk transparansi, tetapi tidak dipromosikan sebagai kandidat sinyal.
+- Jadwal periode MULAI–INTI–AKHIR memakai window dominan searah (grid: harian 15 menit, mingguan 30 menit, bulanan 60 menit). Detail aspek asli — termasuk arah lawan, exact/retrograde, dan fase — tetap tersedia pada tabel audit, diberi tanda SKIP bila berlawanan dengan fokus periode.
+- Mode MANUAL dan semua mesin Astrology, BaZi, Astrology News, EA MT5 tidak berubah. Tidak ada estimasi winrate, probabilitas, atau harga XAUUSD.
+- Tes memverifikasi BUY dominan Senin dan SELL Selasa: hasil mingguan tetap BUY, Selasa WAIT sementara arah mentah SELL tidak ditimpa, serta weekend tidak dipromosikan ke entry.
+
 ## Perbaikan isolasi tab v1.3.1 — Al-Biruni tidak campur BaZi
 
 Masalah screenshot Android: Al-Biruni lan BaZi muncul bersamaan. Penyebab struktural: beberapa skrip navigasi (`combined-tabs.js`, `bazi-ui.js`, `chinese-solar-ui.js`) mengatur daftar panel berbeda tanpa satu pengendali global. Terdapat risiko panel lama tertinggal tampil saat pindah tab.
