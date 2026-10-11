@@ -445,10 +445,10 @@ int OnInit(){
   ObjectSetInteger(0,gButton,OBJPROP_CORNER,CORNER_LEFT_UPPER);
   ObjectSetInteger(0,gButton,OBJPROP_XDISTANCE,10);
   ObjectSetInteger(0,gButton,OBJPROP_YDISTANCE,25);
-  ObjectSetInteger(0,gButton,OBJPROP_XSIZE,150);
-  ObjectSetInteger(0,gButton,OBJPROP_YSIZE,32);
+  ObjectSetInteger(0,gButton,OBJPROP_XSIZE,260);
+  ObjectSetInteger(0,gButton,OBJPROP_YSIZE,70);
   ObjectSetInteger(0,gButton,OBJPROP_COLOR,clrWhite);
-  ObjectSetInteger(0,gButton,OBJPROP_FONTSIZE,10);
+  ObjectSetInteger(0,gButton,OBJPROP_FONTSIZE,20);
  }
  ABPaint();
  EventSetTimer(1);
