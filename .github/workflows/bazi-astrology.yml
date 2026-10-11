@@ -6,6 +6,8 @@ on:
       - 'assets/bazi-core.js'
       - 'assets/bazi-ui.js'
       - 'assets/triple-cycle-*.js'
+      - 'assets/chinese-solar-*.js'
+      - 'tests/chinese-solar.test.cjs'
       - 'tests/triple-cycle.test.cjs'
       - 'tests/bazi-core.test.cjs'
       - '.github/workflows/bazi-astrology.yml'
@@ -15,6 +17,8 @@ on:
       - 'assets/bazi-core.js'
       - 'assets/bazi-ui.js'
       - 'assets/triple-cycle-*.js'
+      - 'assets/chinese-solar-*.js'
+      - 'tests/chinese-solar.test.cjs'
       - 'tests/triple-cycle.test.cjs'
       - 'tests/bazi-core.test.cjs'
       - '.github/workflows/bazi-astrology.yml'
@@ -34,6 +38,8 @@ jobs:
           node --check assets/bazi-ui.js
           node --check assets/triple-cycle-core.js
           node --check assets/triple-cycle-ui.js
+          node --check assets/chinese-solar-core.js
+          node --check assets/chinese-solar-ui.js
       - name: Install pinned Chinese calendar
         run: npm install --prefix /tmp/cebonk-bazi --no-save --package-lock=false --ignore-scripts lunar-javascript@1.7.7 astronomy-engine@2.1.19
       - name: BaZi calendar, timezone, and UI regression
@@ -42,3 +48,4 @@ jobs:
         run: |
           node tests/bazi-core.test.cjs
           node tests/triple-cycle.test.cjs
+          node tests/chinese-solar.test.cjs
