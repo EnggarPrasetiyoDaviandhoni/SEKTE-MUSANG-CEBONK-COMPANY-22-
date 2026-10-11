@@ -1,4 +1,4 @@
-# CEBONK AL-BIRUNI INTRADAY EA v1.00
+# CEBONK AL-BIRUNI INTRADAY EA v1.01 — WAIT MARKET OPEN
 
 Independent new MT5 Expert Advisor. No changes to BBMA, Liquidity Sweep, Luxor Astrology, BaZi, Astrology News or old EA. Astronomy-only experimental BUY/SELL, NOT a validated market predictor.
 
@@ -26,10 +26,10 @@ The new GitHub Actions workflow prepares Monday on Sunday 20:17 WIB, with daily 
 
 ## Install in MT5
 
-1. Download dist/CEBONK_ALBIRUNI_INTRADAY_v1.00.txt. Rename to CEBONK_ALBIRUNI_INTRADAY_v1.00.mq5.
+1. Download CEBONK_ALBIRUNI_INTRADAY_v1.01.mq5 (or rename dist/CEBONK_ALBIRUNI_INTRADAY_v1.01.txt to .mq5). The v1.00 files are retained only as a previous version.
 2. Put the MQ5 file in File -> Open Data Folder -> MQL5 -> Experts, then compile in MetaEditor.
 3. Apply to broker NOZAX chart XAUUSDc. Any chart TF; EA timer governs entry and M15 governs ATR.
-4. Optionally load CEBONK_ALBIRUNI_INTRADAY_v1.00.set. Always verify symbol, broker digits, volume and trading sessions.
+4. Optionally load CEBONK_ALBIRUNI_INTRADAY_v1.01.set. Always verify symbol, broker digits, volume and trading sessions.
 5. MT5 Tools -> Options -> Expert Advisors -> Allow WebRequest for listed URL:
    - https://raw.githubusercontent.com
    - https://api.telegram.org (if Telegram notification used)
@@ -42,7 +42,9 @@ Symbol XAUUSDc; fixed 0.01 lot; MAX spread 70 points; magic 221026; one own posi
 
 ATR(14) from closed M15 bar: SL=3xATR and TP=2x the actual tick-rounded risk (RR 1:2). ATR NEVER decides BUY or SELL. Stop levels, quote age, spread, volume step and broker trade permissions are checked.
 
-Entry only when current WIB day matches feed, current time is ENTRY to strictly before INTI/AKHIR, and delay <=480 seconds. If candidate is stale, no chase. StartHourWIB=07, EndHourWIB=23. After 23:45 WIB, attempts to close its own positions before intraday rollover; market closures and disconnections may prevent execution. Broker-side SL/TP remain placed. No BE, trailing, partial close, recovery or layering.
+**v1.01 market session policy:** No fixed 07:00–23:00 WIB hour gate. A BUY/SELL may be considered at the exact Al-Biruni ENTRY time on the matching WIB weekday. For a market that was open at its scheduled ENTRY, keep the existing 480-second late limit (no arbitrary chase). If the broker trading-session timetable proves the symbol's session was **closed at scheduled ENTRY**, label `WAIT_MARKET_OPEN`, and allow entry later only when the symbol's **broker trading session is open**, the same-day feed is still valid, and the APPLYING phase is **strictly before INTI** (also before expiry/AKHIR). Quote freshness, stop-level, lot, spread, real-account lock and all other guards still apply. Sessions are read from MT5 `SymbolInfoSessionTrade` in broker-server time, including overnight sessions. If session metadata is missing, do **not** extend the eight-minute entry grace; session schedule alone never guarantees broker will fill an order. Normal signal feed refresh stays unchanged; there is no broker-closed-order queue and no carryover across dates.
+
+**Auto-close remains unchanged:** if `InpCloseIntraday=true`, entry after its configured 23:45 WIB close cutoff is skipped to avoid an open-then-immediately-close loop; the EA attempts to close owned positions at/after the cutoff, even when feed is unavailable, and may fail during actual market closures or disconnections. If `InpCloseIntraday=false`, entry can be considered after 23:45 WIB if the Al-Biruni phase and broker session are still valid. Broker-side SL/TP remain placed. No BE, trailing, partial close, recovery or layering.
 
 OnTimer checks execution windows every second and polls WebRequest every 300 seconds. Time feed is Unix UTC epoch; display and Telegram convert to WIB; broker GMT+3 auto offset fallback configured. Live WebRequest is synchronous; broker/disconnection delays are possible.
 
