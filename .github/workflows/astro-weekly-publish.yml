@@ -1,0 +1,62 @@
+name: Publish weekly Astrology for MT5 (automatic)
+on:
+  schedule:
+    # Sun 21:17 WIB prepares Monday before market opens.
+    - cron: '17 14 * * 0'
+    # Daily retry/reconciliation at 03:17 WIB.
+    - cron: '17 20 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'assets/astro-weekly-core.js'
+      - 'scripts/generate-astro-weekly.mjs'
+      - 'scripts/test-astro-weekly-feed.mjs'
+      - 'ea/liquidity_sweep/weekly_atr/**'
+      - '.github/workflows/astro-weekly-publish.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'assets/astro-weekly-core.js'
+      - 'scripts/generate-astro-weekly.mjs'
+      - 'scripts/test-astro-weekly-feed.mjs'
+      - '.github/workflows/astro-weekly-publish.yml'
+permissions:
+  contents: write
+concurrency:
+  group: astro-weekly-publisher
+  cancel-in-progress: false
+jobs:
+  calculate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned ephemeris engine
+        run: npm install --no-save --no-package-lock --ignore-scripts astronomy-engine@2.1.19
+      - name: Generate from the same engine as the website
+        run: node scripts/generate-astro-weekly.mjs
+      - name: Verify published model and date slots
+        run: |
+          node scripts/test-astro-weekly-feed.mjs
+          node tests/astro-weekly.test.cjs
+      - name: Validate MT5 WebRequest source invariants
+        run: python3 ea/liquidity_sweep/weekly_atr/tests/test_weekly_auto.py
+      - name: Publish to public repository (used by MT5 WebRequest)
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ea/liquidity_sweep/weekly_atr/data/weekly.csv ea/liquidity_sweep/weekly_atr/data/weekly.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: publish Astrology weekly feed automatically [skip ci]"
+            git push origin HEAD:main
+          else
+            echo "Weekly Astrology feed unchanged."
+          fi
