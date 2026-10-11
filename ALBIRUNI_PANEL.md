@@ -1,5 +1,15 @@
 # Panel Al-Biruni
 
+## Perbaikan isolasi tab v1.3.1 — Al-Biruni tidak campur BaZi
+
+Masalah screenshot Android: Al-Biruni lan BaZi muncul bersamaan. Penyebab struktural: beberapa skrip navigasi (`combined-tabs.js`, `bazi-ui.js`, `chinese-solar-ui.js`) mengatur daftar panel berbeda tanpa satu pengendali global. Terdapat risiko panel lama tertinggal tampil saat pindah tab.
+
+- `assets/site-tab-router.js` dimuat terakhir dan menjadi pengendali tampilan 8 panel utama: Astrology, Al-Biruni, Astrology News, BaZi, 4 Momen, Kalender Cina, Combined 1, dan Combined 2.
+- Setiap klik tab maupun deep link `#al-biruni` / `#bazi-astrology` harus menunjukkan tepat satu panel utama; panel lain ditutup memakai `hidden`. Child technical Combined 1 tetap didukung.
+- CSS khusus root panels menegakkan `[hidden]` untuk mengatasi konflik tampilan dari stylesheet tema.
+- `tests/site-tab-router.test.cjs` menguji navigasi 8 tab dan sengaja menyimulasikan listener lama yang membuka BaZi ketika Al-Biruni diklik. Perhitungan astrologi, model arah, BaZi dan EA MT5 tidak diubah.
+
+
 Panel terpisah untuk jadwal aspek, dengan mingguan Senin–Jumat sebagai default,
 harian 24 jam, dan bulanan. Klik hari pada kalender untuk tabel mulai–inti–akhir.
 Kolom inti memuat semua kontak exact dalam satu window; jika tidak ada kontak
