@@ -37,10 +37,10 @@ function calculate(A,month){
   }
  }
  moments.sort((a,b)=>a.ms-b.ms);
- assert(moments.length>=4&&moments.length<=8,'Hasil perhitungan bulan tidak lengkap.');
+ assert(moments.length>=3&&moments.length<=5,'Hasil perhitungan bulan tidak masuk akal.');
  const count=Object.fromEntries(PHASES.map(p=>[p.id,0]));
  for(const m of moments)count[m.id]++;
- assert(PHASES.every(p=>count[p.id]>=1),'Ada fase utama yang belum terhitung.');
+ // Four phase TYPES, not necessarily four events in each Gregorian month; a 28-day month can miss one type.
  return Object.freeze({version:'2.0.0',month,start,end,phases:PHASES,moments:Object.freeze(moments),counts:Object.freeze(count)});
 }
 const api=Object.freeze({VERSION:'2.0.0',PHASES,bounds,wib,calculate});
