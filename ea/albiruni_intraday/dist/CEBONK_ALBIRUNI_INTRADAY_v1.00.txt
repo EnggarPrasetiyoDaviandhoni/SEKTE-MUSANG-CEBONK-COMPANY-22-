@@ -132,7 +132,7 @@ bool ABLoad(const string payload){
   s.start=StringToInteger(p[4]);s.entry=StringToInteger(p[5]);
   s.core=StringToInteger(p[6]);s.end=StringToInteger(p[7]);
   s.expiry=StringToInteger(p[8]);s.published=StringToInteger(p[9]);
-  if(s.published<1600000000||p[3]!="WAIT"&&s.dir==0){
+  if((s.published<1600000000)||(p[3]!="WAIT"&&s.dir==0)){
    gError="ALBIRUNI_BAD_DIRECTION";return false;
   }
   if(s.dir==0){
@@ -154,7 +154,7 @@ bool ABLoad(const string payload){
    }
   }
   for(int i=0;i<ArraySize(parsed);i++)
-   if(parsed[i].day==s.day||parsed[i].id==s.id&&s.dir!=0){
+   if((parsed[i].day==s.day)||(parsed[i].id==s.id&&s.dir!=0)){
     gError="ALBIRUNI_DUPLICATE_DATE_OR_ID";return false;
    }
   if(ArraySize(parsed)>=1100){gError="ALBIRUNI_TOO_MANY_DAYS";return false;}
