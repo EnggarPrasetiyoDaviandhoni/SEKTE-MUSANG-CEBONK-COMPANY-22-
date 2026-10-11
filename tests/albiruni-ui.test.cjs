@@ -27,7 +27,11 @@ async function run(){
  assert.equal($('abRuleState').textContent,'UJI MANUAL');assert.match(w.localStorage.getItem('cebonk.albiruni.v1'),/SELL/);
  $('abResetRules').click();assert.equal($('abRuleState').textContent,'NETRAL');
  $('abCSV').click();assert.ok(blob&&blob.size>1000);assert.match($('abStatus').textContent,/CSV/);
- $('abMode').value='month';$('abMode').dispatchEvent(new w.Event('change'));assert.equal($('abResults').hidden,true);assert.equal($('abCSV').disabled,true);
+ assert.equal($('abStudyCSV').disabled,false);
+ $('abStudyCSV').click();assert.ok(blob&&blob.size>1000);assert.match($('abStatus').textContent,/riset diekspor/);
+ assert.match($('abInspectInfo').textContent,/Arah NETRAL|Bias uji/);
+
+ $('abMode').value='month';$('abMode').dispatchEvent(new w.Event('change'));assert.equal($('abResults').hidden,true);assert.equal($('abCSV').disabled,true);assert.equal($('abStudyCSV').disabled,true);
  $('abDate').value='2024-02-11';$('abRun').click();
  await until(()=>$('abRun').disabled===false&&!$('abResults').hidden,'monthly calculation');
  assert.equal($('abCalendar').querySelectorAll('button').length,29);
