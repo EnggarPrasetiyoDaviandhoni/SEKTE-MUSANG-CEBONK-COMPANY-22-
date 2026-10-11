@@ -183,7 +183,7 @@ function mount(){
  '<div id="chOutput" hidden><p id="chSummary" class="ch-muted"></p>'+
  '<h3>4 Momen Pergantian Musim Tahunan</h3><div id="chSeasons" class="ch-grid"></div>'+
  '<h3 id="chMonthlyTitle"></h3><p id="chBias" class="ch-muted"></p><div id="chEvents" class="ch-events"></div></div>'+
- '<p class="ch-warning">**Perhitungan terpisah:** 24 fase kalender Tionghoa memakai posisi Matahari geosentris setiap 15°, bukan 4 fase Bulan. Label BUY/SELL berasal sepenuhnya dari mesin Astrology V1 riset CEBONK yang sudah ada; elemen, shio, atau musim tidak otomatis menentukan arah pasar. Jumat dan Senin di sekitar kejadian akhir pekan adalah tanggal kajian, bukan kepastian jam pasar XAUUSDc. Ini model eksperimental yang belum terbukti mampu memprediksi harga.</p>';
+ '<p class="ch-warning"><b>Perhitungan terpisah:</b> 24 fase kalender Tionghoa memakai posisi Matahari geosentris setiap 15°, bukan 4 fase Bulan. Label BUY/SELL berasal sepenuhnya dari mesin Astrology V1 riset CEBONK yang sudah ada; elemen, shio, atau musim tidak otomatis menentukan arah pasar. Jumat dan Senin di sekitar kejadian akhir pekan adalah tanggal kajian, bukan kepastian jam pasar XAUUSDc. Ini model eksperimental yang belum terbukti mampu memprediksi harga.</p>';
  wrap.insertBefore(view,wrap.querySelector('footer'));
  $('chMonth').value=new Date(Date.now()+7*3600000).toISOString().slice(0,7);
  $('chCompute').addEventListener('click',update);
