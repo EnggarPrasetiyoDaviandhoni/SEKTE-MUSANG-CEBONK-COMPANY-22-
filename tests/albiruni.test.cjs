@@ -72,6 +72,16 @@ async function run(){
  const bullish=windowResult([mk(['Moon','Jupiter'],60,'test-benefic-sextile')]);
  const bearish=windowResult([mk(['Mars','Saturn'],60,'test-malefic-sextile')]);
  assert.equal(C.autoSignal(pseudo,bullish,t).direction,'BUY');
+ const autoCsv=C.toAutoStudyCSV(pseudo,bullish);
+ assert.match(autoCsv,/auto_hypothesis_UNVALIDATED/);
+ assert.match(autoCsv,/observed_xau_t0_EMPTY/);
+ assert.match(autoCsv,/"BUY"/);
+ assert.equal(autoCsv.trim().replace(/^\uFEFF/,'').split('\r\n')[0].split(',').length,28);
+ assert.ok(autoCsv.trim().replace(/^\uFEFF/,'').split('\r\n').slice(1)
+  .every(x=>x.split(',').length===28));
+ const emptyCsv=C.toAutoStudyCSV(pseudo,windowResult([]));
+ assert.equal(emptyCsv.trim().split('\r\n').length,1,'zero events keep valid header');
+
  assert.equal(C.autoSignal(pseudo,bearish,t).direction,'SELL','sextile must NOT blindly give BUY');
  const neutral=windowResult([mk(['Moon','Mercury'],180,'neutral-opposition')]);
  assert.equal(C.autoSignal(pseudo,neutral,t).direction,'NETRAL','absence of signed planetary evidence must remain neutral');
