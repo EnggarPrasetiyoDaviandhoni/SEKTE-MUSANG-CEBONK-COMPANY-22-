@@ -27,3 +27,4 @@ InpTelegram=true
 InpTelegramToken=
 InpTelegramChatID=
 InpMT5Push=true
+InpNotifyAutopilot=true
