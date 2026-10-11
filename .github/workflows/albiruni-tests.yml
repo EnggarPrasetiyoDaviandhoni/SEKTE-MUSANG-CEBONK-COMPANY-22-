@@ -1,0 +1,21 @@
+name: Al-Biruni panel checks
+on:
+  push:
+    branches: [main]
+    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'index.html', '.github/workflows/albiruni-tests.yml']
+  pull_request:
+    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'index.html', '.github/workflows/albiruni-tests.yml']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --ignore-scripts astronomy-engine@2.1.19 jsdom@26.1.0
+      - run: node tests/albiruni.test.cjs
+      - run: node tests/albiruni-ui.test.cjs
+      - run: node tests/astro-weekly.test.cjs
