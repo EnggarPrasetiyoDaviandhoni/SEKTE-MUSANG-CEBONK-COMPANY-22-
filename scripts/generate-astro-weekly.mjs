@@ -20,7 +20,8 @@ function astrologyCore(){
  const end=html.indexOf('</script>',start);
  if(end<0)throw Error('SSOT Astrology core script end missing');
  const module={exports:{}};
- vm.runInNewContext(html.slice(start,end),{module,setTimeout,console},{timeout:15000,filename:'index.html#CebonkCore'});
+ // Share Node's Date constructor: astronomy-engine checks Date instanceof across realms.
+ vm.runInNewContext(html.slice(start,end),{module,setTimeout,console,Date},{timeout:15000,filename:'index.html#CebonkCore'});
  const core=module.exports;
  if(typeof core.createEngine!=='function'||typeof core.scan!=='function'||core.CFG?.step!==5)
   throw Error('Website Astrology engine API changed. Refuse publishing');
