@@ -32,6 +32,14 @@ async function run(){
  assert.equal($('abPeriodDays').hidden,false);
  assert.equal($('abPeriodDays').querySelectorAll('[data-ab-period-date]').length,5);
  assert.equal($('abPeriodDays').querySelectorAll('.ab-period-day').length,5);
+ const periodHeader=$('abPeriodDays').textContent;
+ const primary=$('abPeriodSummary').querySelector('.ab-period-focus .ab-chip')?.textContent.trim();
+ assert.ok(['BUY','SELL','NETRAL'].includes(primary));
+ assert.match($('abPeriodSummary').textContent,/FOKUS SATU ARAH/);
+ const weekFocus=[...$('abPeriodDays').querySelectorAll('.ab-period-day')].map(x=>x.querySelector('.ab-chip')?.textContent.trim());
+ assert.ok(weekFocus.every(x=>x===primary||x==='WAIT'||x===undefined),'opposite side must never appear in focused cards');
+ assert.match(periodHeader,/Rincian saben tanggal/);
+
  assert.equal($('abPeriodSummary').textContent.includes('probabilitas'),true);
  $('tabAstro').click();assert.equal($('albiruniPanel').hidden,true);
  $('tabAlBiruni').click();assert.equal($('albiruniPanel').hidden,false);
@@ -40,7 +48,7 @@ async function run(){
  assert.equal($('abAutoWindows').hidden,false,'AUTO timeline available');
  assert.match($('abRuleState').textContent,/AUTO/);
  assert.match($('abAutoStatus').textContent,/AUTO EKSPERIMEN/);
- assert.match($('abAutoWindows').textContent,/Window hipotesis AUTO/);
+ assert.match($('abAutoWindows').textContent,/FOKUS 1 ARAH/);
  $('abStudyCSV').click();
  assert.ok(blob&&blob.size>1000);
  assert.match($('abStatus').textContent,/CSV riset AUTO/);

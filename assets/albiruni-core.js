@@ -1,4 +1,4 @@
-/* Al-Biruni aspect timing, v1.3. Independent modern ephemeris implementation.
+/* Al-Biruni aspect timing, v1.4. Independent modern ephemeris implementation.
  * Historical inspiration: Al-Qanun al-Masudi XI, chapter 2.
  * No market prediction, price feed, legacy scoring or trade execution. */
 (function(root){
@@ -140,7 +140,7 @@ async function scan(engine,date,{mode='week',focus='moon',orb=2,stepMinutes=15,o
   onProgress(Math.round(65+(i+1)/selected.length*35));await yieldNow();
  }
  check();events.sort((a,b)=>a.closest-b.closest||a.start-b.start||a.id.localeCompare(b.id));
- return {version:'1.3.0',range,focus,orb,stepMinutes,resolutionSeconds:1,events};
+ return {version:'1.4.0',range,focus,orb,stepMinutes,resolutionSeconds:1,events};
 }
 function normalizeRules(input={}){
  const rules={};for(const a of ASPECTS)rules[a.angle]=['BUY','SELL','NETRAL'].includes(input[a.angle])?input[a.angle]:'NETRAL';
@@ -287,11 +287,31 @@ function autoPeriodSummary(engine,result,{stepMinutes}={}){
  const focusWindows=all.filter(w=>w.direction===direction)
   .sort((a,b)=>(b.end-b.start)-(a.end-a.start)||b.peakNet-a.peakNet||a.start-b.start);
  const dominant=direction==='NETRAL'?null:focusWindows[0]||null;
+ // ONE WAY: establish ONE primary direction for the whole chosen date/week/month.
+ // A day with no matching windows is WAIT, never reclassified as the opposite
+ // and never given an invented entry window. Raw observations remain untouched.
+ let focusDays=0,waitDays=0,counterMinutes=0;
+ const focusedDays=days.map(day=>{
+  const selected=direction==='NETRAL'||day.marketClosed?[]:
+   day.allWindows.filter(w=>w.direction===direction);
+  const ranked=selected.slice().sort((a,b)=>(b.end-b.start)-(a.end-a.start)||
+   b.peakNet-a.peakNet||a.start-b.start);
+  const focusWindow=ranked[0]||null;
+  const focusMinutes=selected.reduce((m,w)=>m+(w.end-w.start)/MIN,0);
+  const counterDuration=day.marketClosed?0:
+   (direction==='BUY'?day.sellMinutes:direction==='SELL'?day.buyMinutes:day.buyMinutes+day.sellMinutes);
+  counterMinutes+=counterDuration;
+  if(!day.marketClosed){if(focusMinutes>0)focusDays++;else waitDays++;}
+  return {...day,focusDirection:day.marketClosed?'MARKET_TUTUP':
+   focusMinutes>0?direction:'WAIT',focusMinutes,focusWindow,
+   focusWindows:selected,counterMinutes:counterDuration};
+ });
  return {
-  model:'ALBIRUNI_AUTO_EXPERIMENT_V1',validated:false,
+  model:'ALBIRUNI_AUTO_EXPERIMENT_V1',validated:false,singleDirection:true,
+  focusDays,waitDays,counterMinutes,
   mode:result.range.mode,start:result.range.start,end:result.range.end,
   resolutionMinutes:resolution,direction,buyMinutes:buyDuration,sellMinutes:sellDuration,
-  neutralDays,daysWithBothDirections:conflictDays,days,
+  neutralDays,daysWithBothDirections:conflictDays,days:focusedDays,
   startWindow:dominant?.start??null,core:dominant?.peak??null,endWindow:dominant?.end??null,
   dominantWindow:dominant
  };

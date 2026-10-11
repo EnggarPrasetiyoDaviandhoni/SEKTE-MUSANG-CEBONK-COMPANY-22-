@@ -85,7 +85,10 @@ function inspect(){
   const snapshot=C.inspect(engine,result,ms,rules);
   const automatic=biasMode==='AUTO'?C.autoSignal(engine,result,ms):null;
   const direction=automatic?automatic.direction:snapshot.direction;
-  $('abInspectLabel').innerHTML=chip(direction)+' <span>· '+esc(selectedDate+' '+time+' WIB')+'</span>';
+  const primary=periodSummary?.direction||'NETRAL';
+  const counter=automatic&&['BUY','SELL'].includes(primary)&&direction!==primary;
+  $('abInspectLabel').innerHTML=chip(direction)+' <span>· '+esc(selectedDate+' '+time+' WIB')+'</span>'+
+   (counter?' <small>· LUAR FOKUS '+esc(primary)+' / SKIP</small>':'');
   const phases={APPLYING:'Mendekat',EXACT:'Exact',SEPARATING:'Menjauh',STATION:'Titik balik'};
   if(automatic){
    const explanations={
@@ -103,6 +106,7 @@ function inspect(){
    const d=automatic.dominant;
    $('abAutoStatus').hidden=false;
    $('abAutoStatus').innerHTML='<b>🔮 '+esc(direction)+' · AUTO EKSPERIMEN</b>'+
+    (counter?'<p>SKIP: jam iki ora searah fokus '+esc(primary)+' kanggo periode sing dipilih.</p>':'')+
     '<p>Bobot model: BUY '+automatic.buy.toFixed(3)+' · SELL '+automatic.sell.toFixed(3)+
     ' · bukan persentase kemungkinan profit.</p>'+
     (d?'<p>Aspek dominan: '+esc(pairLabel(d))+' '+esc(d.name)+' '+d.angle+'° · '+
@@ -150,17 +154,21 @@ function renderDay(){
  $('abBiasTableHeader').textContent=biasMode==='AUTO'?'Asumsi bobot awal':'Bias uji manual';
  if(biasMode==='AUTO'){
   // Estimated bias windows sampled at 15-minute spacing; exact orbital times are in event rows.
-  const timeline=C.autoTimeline(engine,result,day.start,{stepMinutes:15});
-  const windows=timeline.windows;
+  const report=periodSummary||C.autoPeriodSummary(engine,result);
+  const selected=report.days.find(d=>d.date===selectedDate);
+  const windows=selected?.focusWindows||[],focus=report.direction;
+  const shown=selected?.marketClosed?'MARKET TUTUP':
+   focus==='NETRAL'?'NETRAL / WAIT':windows.length?focus:'WAIT / TIDAK SEARAH';
   $('abAutoWindows').hidden=false;
-  $('abAutoWindows').innerHTML='<h4>Window hipotesis AUTO · '+windows.length+' kandidat · grid 15 menit</h4>'+
+  $('abAutoWindows').innerHTML='<h4>FOKUS 1 ARAH · '+esc(shown)+' · '+
+   windows.length+' window searah · grid '+report.resolutionMinutes+' menit</h4>'+
    (windows.map(w=>'<div class="ab-auto-win">'+chip(w.direction)+
     ' <span>MULAI ~'+esc(shortTime(w.start))+
     ' · INTI grid ~'+esc(shortTime(w.peak))+
     ' · AKHIR ~'+esc(shortTime(w.end))+' WIB</span>'+
     ' <button type="button" data-ab-autopick="'+w.peak+'">Lihat INTI</button></div>').join('')||
-    '<p>Belum ada window BUY/SELL kuat pada tanggal ini. NETRAL/KONFLIK boleh terjadi.</p>')+
-   '<small>Sampling 15 menit, bukan bukti waktu pergerakan emas. Lihat INTI menampilkan alasan planet saat itu.</small>';
+    '<p>Ora ana window searah fokus periode. Ora diganti dadi sinyal arah lawan.</p>')+
+   '<small>Data aspek lan arah lawan tetep ana ing tabel audit ngisor, nanging ora dadi kandidat fokus. Waktu grid iku perkiraan, dudu bukti tren XAUUSD.</small>';
  }else{$('abAutoWindows').hidden=true;$('abAutoWindows').replaceChildren();}
  $('abEvents').innerHTML=day.events.map(e=>{
   const exact=e.exactTimes.length?e.exactTimes.map(ms=>esc(shortTime(ms))).join('<br>'):
@@ -199,9 +207,9 @@ function renderPeriodOverview(){
   '<h3>RINGKASAN '+modeNames[mode]+' · AL-BIRUNI AUTO EKSPERIMEN</h3>'+
   '<p class="ab-period-sub">'+esc(C.iso(r.start))+' — '+esc(C.iso(r.end-1))+
    ' WIB · sampling '+r.resolutionMinutes+' menit · Senin–Jumat untuk arah XAUUSD</p>'+
-  '<div class="ab-period-focus"><span>Arah dominan berdasarkan durasi bobot hipotesis</span>'+
+  '<div class="ab-period-focus"><span>FOKUS SATU ARAH · AUTO EKSPERIMEN</span>'+
    chip(r.direction)+'<small>BUY '+r.buyMinutes+' menit · SELL '+r.sellMinutes+
-   ' menit. Bukan probabilitas lan dudu backtest.</small></div>'+
+   ' menit. '+r.focusDays+' dina searah · '+r.waitDays+' dina WAIT. Durasi model, bukan probabilitas / backtest.</small></div>'+
   '<div class="ab-period-times">'+
    '<div><small>MULAI</small><strong>'+esc(fmt(r.startWindow))+'</strong></div>'+
    '<div><small>INTI</small><strong>'+esc(fmt(r.core))+'</strong></div>'+
@@ -212,19 +220,20 @@ function renderPeriodOverview(){
    '. Waktu perkiraan grid, bukan prediksi pergerakan emas.':
    'Arah imbang / ora ana window kuat. Tetep NETRAL.')+'</p>';
  $('abPeriodDays').hidden=false;
- $('abPeriodDays').innerHTML='<h3>Rincian per tanggal</h3>'+
+ $('abPeriodDays').innerHTML='<h3>Rincian saben tanggal · mung '+esc(r.direction)+'</h3>'+
   '<div class="ab-period-grid">'+r.days.map(d=>{
-   const w=d.window;
+   const w=d.focusWindow;
    return '<button type="button" data-ab-period-date="'+d.date+
-    '" class="ab-period-day" aria-label="'+esc(d.date)+' '+esc(d.direction)+'">'+
+    '" class="ab-period-day" aria-label="'+esc(d.date)+' '+esc(d.focusDirection)+'">'+
     '<small>'+weekdays[d.weekday]+' '+esc(d.date)+'</small>'+
-    (d.marketClosed?'<strong>MARKET TUTUP</strong>':chip(d.direction))+
-    '<span>BUY '+d.buyMinutes+'m · SELL '+d.sellMinutes+'m</span>'+
+    (d.marketClosed?'<strong>MARKET TUTUP</strong>':chip(d.focusDirection))+
+    '<span>Durasi searah '+d.focusMinutes+'m'+
+    (d.counterMinutes?' · '+d.counterMinutes+'m lawan diabaikan':'')+'</span>'+
     '<span>'+(w?'MULAI ~'+esc(fmt(w.start))+' · INTI ~'+esc(fmt(w.peak))+
-      ' · AKHIR ~'+esc(fmt(w.end)):'Tidak ada window dominan')+'</span>'+
+      ' · AKHIR ~'+esc(fmt(w.end)):'WAIT · ora ana window searah')+'</span>'+
     '</button>';
   }).join('')+'</div>'+
-  '<p class="ab-period-sub">Sabtu/Minggu tetep ditampilake, ora digeser menyang Jumat/Senin. Klik tanggal kanggo rincian aspek.</p>';
+  '<p class="ab-period-sub">Mung window '+esc(r.direction)+' sing ditonjolake. Arah lawan ora diganti, tetep bisa diaudit. Sabtu/Minggu market tutup.</p>';
 }
 function render(){
  if(!result)return;
