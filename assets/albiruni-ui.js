@@ -7,7 +7,7 @@ const $=id=>panel.querySelector('#'+id),KEY='cebonk.albiruni.v1';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names={Sun:'Matahari',Moon:'Bulan',Mercury:'Merkurius',Venus:'Venus',Mars:'Mars',Jupiter:'Jupiter',Saturn:'Saturnus'};
 const weekdays=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-let result=null,engine=null,selectedDate='',busy=false,token=0,loading=null;
+let result=null,engine=null,selectedDate='',busy=false,token=0,loading=null,periodSummary=null;
 let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){saved={};}
 let rules=C.normalizeRules(saved.rules);
 let biasMode=saved.biasMode==='MANUAL'?'MANUAL':'AUTO';
@@ -17,6 +17,11 @@ panel.innerHTML=`
   <span class="ab-tag">7 BENDA LANGIT · WIB</span>
  </div>
  <div class="ab-body">
+  <div class="ab-period-modes" aria-label="Pilihan hitungan Al-Biruni">
+   <button type="button" data-ab-mode="day">HARIAN</button>
+   <button type="button" data-ab-mode="week">MINGGUAN</button>
+   <button type="button" data-ab-mode="month">BULANAN</button>
+  </div>
   <div class="ab-controls">
    <div><label for="abDate">Tanggal acuan WIB</label><input id="abDate" type="date" min="2020-01-01" max="2040-12-31" required></div>
    <div><label for="abMode">Rentang perhitungan</label><select id="abMode"><option value="week">Mingguan · Senin–Jumat</option><option value="day">Harian · 24 jam</option><option value="month">Bulanan · kalender penuh</option></select></div>
@@ -27,6 +32,8 @@ panel.innerHTML=`
   <div class="ab-actions"><button id="abRun" class="ab-primary" type="button">Hitung peta aspek</button><button id="abToday" type="button">Hari ini</button><button id="abCancel" type="button" disabled>Batalkan</button><button id="abPrev" class="ab-next" type="button" aria-label="Periode sebelumnya">← Sebelumnya</button><button id="abNext" type="button" aria-label="Periode berikutnya">Berikutnya →</button><button id="abCSV" type="button" disabled>Unduh CSV aspek</button><button id="abStudyCSV" type="button" disabled>CSV riset XAUUSD</button></div>
   <div id="abStatusBox" class="ab-status" role="status" aria-live="polite"><progress id="abProgress" max="100" value="0" hidden></progress><span id="abStatus">Siap menghitung panel baru.</span></div>
   <div id="abResults" class="ab-results" hidden>
+   <div id="abPeriodSummary" class="ab-period-summary" hidden></div>
+   <div id="abPeriodDays" class="ab-period-days" hidden></div>
    <div class="ab-metrics">
     <div class="ab-metric"><span>Kontak exact dalam periode</span><strong id="abExactCount">—</strong><small id="abPeriodLabel">—</small></div>
     <div class="ab-metric"><span>Window aspek</span><strong id="abWindowCount">—</strong><small id="abSettingsLabel">—</small></div>
@@ -58,7 +65,7 @@ function setBusy(value){
  $('abCancel').disabled=!value;$('abCSV').disabled=value||!result;$('abStudyCSV').disabled=value||!result;$('abProgress').hidden=!value;
 }
 function invalidate(){
- token++;result=null;engine=null;selectedDate='';$('abResults').hidden=true;$('abCalendar').replaceChildren();$('abEvents').replaceChildren();$('abActive').replaceChildren();$('abCSV').disabled=true;$('abStudyCSV').disabled=true;
+ token++;result=null;engine=null;periodSummary=null;selectedDate='';$('abResults').hidden=true;$('abCalendar').replaceChildren();$('abEvents').replaceChildren();$('abActive').replaceChildren();$('abCSV').disabled=true;$('abStudyCSV').disabled=true;
  status('Pengaturan berubah. Klik Hitung peta aspek untuk memperbarui hasil.');save();
 }
 function shortTime(ms){return C.stamp(ms).replace(' WIB','');}
@@ -169,9 +176,60 @@ function renderDay(){
  }).join('')||'<tr><td colspan="5" class="ab-empty">Tidak ada window aspek pada hari ini.</td></tr>';
  inspect();
 }
+function renderPeriodOverview(){
+ if(!result||!engine)return;
+ const modeNames={day:'HARIAN',week:'MINGGUAN',month:'BULANAN'};
+ const mode=result.range.mode;
+ panel.querySelectorAll('[data-ab-mode]').forEach(b=>{
+  const active=b.dataset.abMode===mode;
+  b.classList.toggle('active',active);
+  b.setAttribute('aria-pressed',String(active));
+ });
+ if(biasMode!=='AUTO'){
+  $('abPeriodSummary').hidden=false;
+  $('abPeriodSummary').innerHTML='<h3>RINGKASAN '+modeNames[mode]+' · MANUAL</h3>'+
+   '<p>Mode MANUAL ora ngitung arah otomatis. Pilih jam lan atur label aspek kanggo uji hipotesis.</p>';
+  $('abPeriodDays').hidden=true;$('abPeriodDays').replaceChildren();return;
+ }
+ if(!periodSummary)periodSummary=C.autoPeriodSummary(engine,result);
+ const r=periodSummary,focus=r.dominantWindow;
+ const fmt=ms=>ms===null?'—':shortTime(ms).slice(11,19);
+ $('abPeriodSummary').hidden=false;
+ $('abPeriodSummary').innerHTML=
+  '<h3>RINGKASAN '+modeNames[mode]+' · AL-BIRUNI AUTO EKSPERIMEN</h3>'+
+  '<p class="ab-period-sub">'+esc(C.iso(r.start))+' — '+esc(C.iso(r.end-1))+
+   ' WIB · sampling '+r.resolutionMinutes+' menit · Senin–Jumat untuk arah XAUUSD</p>'+
+  '<div class="ab-period-focus"><span>Arah dominan berdasarkan durasi bobot hipotesis</span>'+
+   chip(r.direction)+'<small>BUY '+r.buyMinutes+' menit · SELL '+r.sellMinutes+
+   ' menit. Bukan probabilitas lan dudu backtest.</small></div>'+
+  '<div class="ab-period-times">'+
+   '<div><small>MULAI</small><strong>'+esc(fmt(r.startWindow))+'</strong></div>'+
+   '<div><small>INTI</small><strong>'+esc(fmt(r.core))+'</strong></div>'+
+   '<div><small>AKHIR</small><strong>'+esc(fmt(r.endWindow))+'</strong></div>'+
+  '</div>'+
+  '<p class="ab-period-sub">'+(focus?
+   'Window dominan paling dawa: '+esc(C.iso(focus.start))+
+   '. Waktu perkiraan grid, bukan prediksi pergerakan emas.':
+   'Arah imbang / ora ana window kuat. Tetep NETRAL.')+'</p>';
+ $('abPeriodDays').hidden=false;
+ $('abPeriodDays').innerHTML='<h3>Rincian per tanggal</h3>'+
+  '<div class="ab-period-grid">'+r.days.map(d=>{
+   const w=d.window;
+   return '<button type="button" data-ab-period-date="'+d.date+
+    '" class="ab-period-day" aria-label="'+esc(d.date)+' '+esc(d.direction)+'">'+
+    '<small>'+weekdays[d.weekday]+' '+esc(d.date)+'</small>'+
+    (d.marketClosed?'<strong>MARKET TUTUP</strong>':chip(d.direction))+
+    '<span>BUY '+d.buyMinutes+'m · SELL '+d.sellMinutes+'m</span>'+
+    '<span>'+(w?'MULAI ~'+esc(fmt(w.start))+' · INTI ~'+esc(fmt(w.peak))+
+      ' · AKHIR ~'+esc(fmt(w.end)):'Tidak ada window dominan')+'</span>'+
+    '</button>';
+  }).join('')+'</div>'+
+  '<p class="ab-period-sub">Sabtu/Minggu tetep ditampilake, ora digeser menyang Jumat/Senin. Klik tanggal kanggo rincian aspek.</p>';
+}
 function render(){
  if(!result)return;
  const days=C.daily(result),exact=result.events.reduce((n,e)=>n+e.exactTimes.length,0);
+ renderPeriodOverview();
  $('abResults').hidden=false;$('abCSV').disabled=false;$('abStudyCSV').disabled=false;
  $('abExactCount').textContent=String(exact);$('abWindowCount').textContent=String(result.events.length);
  $('abPeriodLabel').textContent=C.iso(result.range.start)+' → '+C.iso(result.range.end-1)+' WIB';
@@ -202,7 +260,7 @@ async function library(){
 async function run(){
  if(busy)return;
  const date=$('abDate').value,mode=$('abMode').value,focus=$('abFocus').value,orb=Number($('abOrb').value);
- result=null;engine=null;$('abResults').hidden=true;$('abCSV').disabled=true;$('abStudyCSV').disabled=true;
+ result=null;engine=null;periodSummary=null;$('abResults').hidden=true;$('abCSV').disabled=true;$('abStudyCSV').disabled=true;
  try{C.period(date,mode);if(!Number.isFinite(orb)||orb<0.25||orb>5)throw Error('Orb harus 0.25°–5°.');}
  catch(e){status(e.message,true);return;}
  const request=++token;setBusy(true);$('abProgress').value=0;status('Memuat ephemeris panel Al-Biruni…');save();
@@ -211,7 +269,7 @@ async function run(){
   const isolated=C.createEngine(A);
   const calculated=await C.scan(isolated,date,{mode,focus,orb,cancelled:()=>request!==token,onProgress:p=>{if(request===token){$('abProgress').value=p;status('Menghitung aspek dan waktu kontak · '+p+'%');}}});
   if(request!==token)return;
-  engine=isolated;result=calculated;
+  engine=isolated;result=calculated;periodSummary=null;
   const today=C.iso(Date.now());selectedDate=result.range.days.some(d=>d.date===date)?date:result.range.days.some(d=>d.date===today)?today:result.range.days[0].date;
   render();status('Selesai · peta aspek dihitung. AUTO/MANUAL tetap hipotesis, bukan prediksi teruji.');
  }catch(e){if(request===token){result=null;engine=null;$('abResults').hidden=true;$('abCSV').disabled=true;$('abStudyCSV').disabled=true;status('Perhitungan gagal: '+(e.message||String(e)),true);}}
@@ -231,14 +289,26 @@ if(['moon','all'].includes(saved.focus))$('abFocus').value=saved.focus;
 if(Number.isFinite(saved.orb)&&saved.orb>=0.25&&saved.orb<=5)$('abOrb').value=String(saved.orb);
 C.ASPECTS.forEach(a=>$('abRule'+a.angle).value=rules[a.angle]);
 for(const id of ['abDate','abMode','abFocus','abOrb'])$(id).addEventListener('change',invalidate);
+panel.querySelectorAll('[data-ab-mode]').forEach(b=>b.addEventListener('click',()=>{
+ const mode=b.dataset.abMode;
+ if(!['day','week','month'].includes(mode)||busy)return;
+ if($('abMode').value!==mode){$('abMode').value=mode;invalidate();run();}
+}));
+$('abPeriodDays').addEventListener('click',e=>{
+ const b=e.target.closest('[data-ab-period-date]');if(!b||!result)return;
+ const date=b.dataset.abPeriodDate;
+ if(!result.range.days.some(x=>x.date===date))return;
+ selectedDate=date;renderDay();
+ $('abDayTitle').scrollIntoView?.({behavior:'smooth',block:'start'});
+});
 $('abBiasMode').addEventListener('change',()=>{
  biasMode=$('abBiasMode').value==='MANUAL'?'MANUAL':'AUTO';save();
- if(result){updateRuleSummary();renderDay();}
+ if(result){updateRuleSummary();renderPeriodOverview();renderDay();}
 });
 $('abRun').addEventListener('click',run);
 $('abToday').addEventListener('click',()=>{$('abDate').value=C.iso(Date.now());run();});
 $('abPrev').addEventListener('click',()=>move(-1));$('abNext').addEventListener('click',()=>move(1));
-$('abCancel').addEventListener('click',()=>{token++;result=null;engine=null;$('abResults').hidden=true;setBusy(false);status('Dibatalkan. Klik Hitung peta aspek untuk memulai lagi.');});
+$('abCancel').addEventListener('click',()=>{token++;result=null;engine=null;periodSummary=null;$('abResults').hidden=true;setBusy(false);status('Dibatalkan. Klik Hitung peta aspek untuk memulai lagi.');});
 $('abAutoWindows').addEventListener('click',event=>{
  const b=event.target.closest('[data-ab-autopick]');if(!b||!result)return;
  const timeMs=Number(b.dataset.abAutopick);
@@ -262,6 +332,10 @@ $('abStudyCSV').addEventListener('click',()=>{
  const a=document.createElement('a');a.href=url;a.download='ALBIRUNI_RISET_XAUUSD_'+biasMode+'_'+C.iso(result.range.start)+'_'+result.range.mode+'.csv';
  panel.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  status('CSV riset '+biasMode+' diekspor: waktu exact/terdekat dan label hipotesis; harga XAUUSD tetap kosong.');
+});
+const nav=document.querySelector('.viewtabs');
+if(nav)nav.addEventListener('click',e=>{
+ const tab=e.target.closest('.viewtab');if(tab)panel.hidden=tab.id!=='tabAlBiruni';
 });
 run();
 })(window);
