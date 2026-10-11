@@ -1,0 +1,24 @@
+name: Weekly Liquidity Sweep Static Audit
+on:
+  push:
+    paths:
+      - 'ea/liquidity_sweep/weekly_atr/**'
+      - 'assets/astro-weekly-ui.js'
+      - '.github/workflows/ls-weekly-atr.yml'
+  pull_request:
+    paths:
+      - 'ea/liquidity_sweep/weekly_atr/**'
+      - 'assets/astro-weekly-ui.js'
+      - '.github/workflows/ls-weekly-atr.yml'
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check web weekly export JS syntax
+        run: node --check assets/astro-weekly-ui.js
+      - name: Audit v2 source invariants
+        run: python3 ea/liquidity_sweep/weekly_atr/tests/test_weekly_atr.py
