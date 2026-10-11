@@ -83,7 +83,7 @@ function astrologyDays(C,A,month,onProgress=()=>{},cancelled=()=>false){
    const r=C.analyse(engine.get(t-step),engine.get(t),engine.get(t+step),true);
    requireOK(Number.isFinite(r.score),'Skor Astrology tidak tersedia.');
    const state=C.classify(r.score,prev);prev=r.score;
-   snapshots.push({ms:t,state,score:r.score,active:r.active});
+   snapshots.push({ms:t,state,score:r.score,active:r.active,speeds:r.speeds});
   }
   const buy=snapshots.filter(x=>x.state==='BUY').length,sell=snapshots.filter(x=>x.state==='SELL').length;
   const state=buy>=2?'BUY':sell>=2?'SELL':snapshots.some(x=>x.state==='TRANSITION')?'TRANSISI':'NETRAL';
