@@ -1,0 +1,65 @@
+name: Al-Biruni Intraday EA feed + Telegram checks
+on:
+  schedule:
+    # Sunday 20:17 WIB: publish Monday before broker week opens.
+    - cron: '17 13 * * 0'
+    # Monday-Friday 04:17 and 06:17 WIB: daily refresh + retry.
+    - cron: '17 21 * * 0-4'
+    - cron: '17 23 * * 0-4'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/albiruni-core.js'
+      - 'scripts/generate-albiruni-intraday.mjs'
+      - 'tests/albiruni-intraday-feed.test.cjs'
+      - 'ea/albiruni_intraday/**'
+      - '.github/workflows/albiruni-intraday-ea.yml'
+  pull_request:
+    paths:
+      - 'assets/albiruni-core.js'
+      - 'scripts/generate-albiruni-intraday.mjs'
+      - 'tests/albiruni-intraday-feed.test.cjs'
+      - 'ea/albiruni_intraday/**'
+      - '.github/workflows/albiruni-intraday-ea.yml'
+permissions:
+  contents: write
+concurrency:
+  group: albiruni-intraday-publisher
+  cancel-in-progress: false
+jobs:
+  validate-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Astronomy Engine (no scripts)
+        run: npm install --no-save --no-package-lock --ignore-scripts astronomy-engine@2.1.19
+      - name: Test Al-Biruni signal direction and valid phase timing
+        run: node tests/albiruni-intraday-feed.test.cjs
+      - name: Test output from real ephemeris on a known weekday
+        run: |
+          node scripts/generate-albiruni-intraday.mjs --date=2026-10-12 --out=/tmp/albiruni-day.csv --json=/tmp/albiruni-day.json
+          python3 ea/albiruni_intraday/tests/test_static.py /tmp/albiruni-day.csv /tmp/albiruni-day.json
+      - name: Create real daily feed for LIVE MT5
+        if: github.event_name != 'pull_request'
+        run: |
+          node scripts/generate-albiruni-intraday.mjs
+          python3 ea/albiruni_intraday/tests/test_static.py ea/albiruni_intraday/data/intraday.csv ea/albiruni_intraday/data/intraday.json
+      - name: Publish fresh feed to GitHub RAW
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ea/albiruni_intraday/data/intraday.csv ea/albiruni_intraday/data/intraday.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: update Al-Biruni intraday experimental schedule [skip ci]"
+            git push origin HEAD:main
+          else
+            echo "Feed unchanged"
+          fi
