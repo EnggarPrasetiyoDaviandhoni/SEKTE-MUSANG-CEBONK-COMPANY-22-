@@ -130,3 +130,27 @@
  #albiruniPanel .ab-period-days{padding:10px}
 }
 @media(max-width:360px){#albiruniPanel .ab-period-grid{grid-template-columns:1fr}}
+
+/* v1.5 — Three INDEPENDENT Al-Biruni trading-horizon research cards (not trade signals) */
+#albiruniPanel .ab-three-result{margin:12px 0 24px;padding:15px;border:1px solid #516986;border-radius:12px;background:rgba(10,25,42,.84)}
+#albiruniPanel .ab-three-result>h3{font-size:15px;margin:1px 0 6px;color:#f0c16c;letter-spacing:.4px}
+#albiruniPanel .ab-three-intro{font-size:11px;color:#b7cbe0;line-height:1.65;margin:0 0 14px}
+#albiruniPanel .ab-three-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#albiruniPanel .ab-three-card{min-width:0;padding:13px 12px;background:#101c2e;border:1px solid #3e536e;border-radius:11px;overflow-wrap:anywhere}
+#albiruniPanel .ab-three-card header{display:flex;justify-content:space-between;align-items:center;gap:9px;margin-bottom:12px}
+#albiruniPanel .ab-three-card h4{font-size:13px;color:#f2d6a3;letter-spacing:.5px;margin:0}
+#albiruniPanel .ab-three-card header small{color:#a7c0d8;font-size:10px;letter-spacing:.6px}
+#albiruniPanel .ab-three-direction .ab-chip{font-size:13px}
+#albiruniPanel .ab-three-range{font-size:10px;color:#b7cbe0;line-height:1.6}
+#albiruniPanel .ab-three-entry{display:flex;flex-direction:column;gap:6px;padding:12px;background:#14273c;border:1px solid #4c6f85;border-radius:9px;margin:10px 0 12px}
+#albiruniPanel .ab-three-entry small{font-size:10px;letter-spacing:.4px;color:#a9c9de}
+#albiruniPanel .ab-three-entry strong{font-size:16px;color:#f3d38e;font-variant-numeric:tabular-nums;line-height:1.4}
+#albiruniPanel .ab-three-entry span{font-size:10px;color:#c7d5e3}
+#albiruniPanel .ab-three-times{display:flex;flex-direction:column;gap:6px}
+#albiruniPanel .ab-three-times div{display:flex;flex-direction:column;gap:3px;background:#0b1727;border:1px solid #304860;padding:8px;border-radius:7px}
+#albiruniPanel .ab-three-times small{font-size:10px;color:#aec4d8}
+#albiruniPanel .ab-three-times b{font-size:12px;font-variant-numeric:tabular-nums;color:#e5eff9;font-weight:650}
+#albiruniPanel .ab-three-aspect{font-size:11px;color:#d7e5f3;line-height:1.6;margin:12px 0}
+#albiruniPanel .ab-three-muted{font-size:10px;color:#a6bed6;line-height:1.5}
+@media(max-width:900px){#albiruniPanel .ab-three-cards{grid-template-columns:1fr}#albiruniPanel .ab-three-card{padding:14px}#albiruniPanel .ab-three-times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}#albiruniPanel .ab-three-times b{font-size:11px}}
+@media(max-width:450px){#albiruniPanel .ab-three-result{padding:11px}#albiruniPanel .ab-three-times{grid-template-columns:1fr}#albiruniPanel .ab-three-entry strong{font-size:15px}}
