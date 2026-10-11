@@ -294,7 +294,23 @@ function toStudyCSV(result,rules={}){
  const quote=x=>'"'+String(x).replace(/"/g,'""')+'"';
  return '\uFEFF'+[header,...data].map(row=>row.map(quote).join(',')).join('\r\n')+'\r\n';
 }
-const API=Object.freeze({BODIES,ASPECTS,DAY,MIN,WIB,parseDate,period,iso,stamp,norm,signed,geometry,pairs,createEngine,scan,inspect,daily,direction,normalizeRules,toCSV,studyObservations,toStudyCSV,autoSignal,autoTimeline,AUTO_NATURE,AUTO_ASPECT,AUTO_PHASE,AUTO_THRESHOLD});
+// Append AUTO hypotheses to the EXISTING 24-column study format without
+// filling broker prices or silently altering the legacy manual study schema.
+function toAutoStudyCSV(engine,result,rules={}){
+ const observations=studyObservations(result,rules);
+ const raw=toStudyCSV(result,rules).replace(/^\uFEFF/,'').trimEnd().split('\r\n');
+ assert(raw.length===observations.length+1,'Baris riset AUTO tidak selaras.');
+ const tail=['auto_hypothesis_UNVALIDATED','auto_buy_weight','auto_sell_weight','auto_reason'];
+ const q=x=>'"'+String(x).replace(/"/g,'""')+'"';
+ const rows=[raw[0]+','+tail.map(q).join(',')];
+ observations.forEach((o,i)=>{
+  const signal=autoSignal(engine,result,o.time);
+  rows.push(raw[i+1]+','+[signal.direction,signal.buy.toFixed(6),
+   signal.sell.toFixed(6),signal.reason].map(q).join(','));
+ });
+ return '\uFEFF'+rows.join('\r\n')+'\r\n';
+}
+const API=Object.freeze({BODIES,ASPECTS,DAY,MIN,WIB,parseDate,period,iso,stamp,norm,signed,geometry,pairs,createEngine,scan,inspect,daily,direction,normalizeRules,toCSV,studyObservations,toStudyCSV,toAutoStudyCSV,autoSignal,autoTimeline,AUTO_NATURE,AUTO_ASPECT,AUTO_PHASE,AUTO_THRESHOLD});
 root.CebonkAlBiruni=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
