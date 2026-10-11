@@ -72,23 +72,68 @@ function updateRuleSummary(){
 function inspect(){
  if(!result||!engine)return;
  const time=$('abTime').value;if(!/^\d{2}:\d{2}(:\d{2})?$/.test(time))return;
- const [h,m,s=0]=time.split(':').map(Number);if(h>23||m>59||s>59)return;
+ const [h,m,sec=0]=time.split(':').map(Number);if(h>23||m>59||sec>59)return;
  try{
-  const snapshot=C.inspect(engine,result,C.parseDate(selectedDate)+(h*60+m)*C.MIN+s*1000,rules);
-  $('abInspectLabel').innerHTML=chip(snapshot.direction)+' <span>· '+esc(selectedDate+' '+time+' WIB')+'</span>';
-  const configured=Object.values(rules).some(v=>v!=='NETRAL');
-  $('abInspectInfo').textContent=snapshot.direction==='KONFLIK'?'BUY dan SELL aktif bersamaan; tidak ada arah tunggal.':configured?'Bias uji manual pada window aktif; bukan sinyal pasar terverifikasi.':'Arah NETRAL: aturan BUY/SELL belum diatur.';
-  const phases={APPLYING:'Mendekat',EXACT:'Exact',SEPARATING:'Menjauh',STATION:'Titik balik / laju orb kecil'};
+  const ms=C.parseDate(selectedDate)+(h*60+m)*C.MIN+sec*1000;
+  const snapshot=C.inspect(engine,result,ms,rules);
+  const automatic=biasMode==='AUTO'?C.autoSignal(engine,result,ms):null;
+  const direction=automatic?automatic.direction:snapshot.direction;
+  $('abInspectLabel').innerHTML=chip(direction)+' <span>· '+esc(selectedDate+' '+time+' WIB')+'</span>';
+  const phases={APPLYING:'Mendekat',EXACT:'Exact',SEPARATING:'Menjauh',STATION:'Titik balik'};
+  if(automatic){
+   const explanations={
+    NO_ACTIVE_ASPECT:'Tidak ada aspek aktif pada jam ini.',
+    NO_STRONG_PLANETARY_COMBINATION:'Aspek aktif ada, namun bobot planet terlalu lemah.',
+    BUY_SELL_OVERLAP:'Aspek BUY dan SELL bersamaan; KONFLIK.',
+    NET_SCORE_BELOW_THRESHOLD:'Kekuatan arah bersih kurang dari batas minimum.',
+    DOMINANT_WEIGHTED_ASPECTS:'Arah hipotesis sesuai jumlah bobot planet, aspek, fase dan orb.'
+   };
+   $('abRuleState').textContent=direction+' · AUTO';
+   $('abRuleCaption').textContent='AUTO V1 EKSPERIMEN · bukan probabilitas pasar.';
+   $('abInspectInfo').textContent=(explanations[automatic.reason]||automatic.reason)+
+    ' Bobot BUY '+automatic.buy.toFixed(3)+' / SELL '+automatic.sell.toFixed(3)+
+    ' (bukan confidence).';
+   const d=automatic.dominant;
+   $('abAutoStatus').hidden=false;
+   $('abAutoStatus').innerHTML='<b>🔮 '+esc(direction)+' · AUTO EKSPERIMEN</b>'+
+    '<p>Bobot model: BUY '+automatic.buy.toFixed(3)+' · SELL '+automatic.sell.toFixed(3)+
+    ' · bukan persentase kemungkinan profit.</p>'+
+    (d?'<p>Aspek dominan: '+esc(pairLabel(d))+' '+esc(d.name)+' '+d.angle+'° · '+
+       esc(phases[d.phase]||d.phase)+' · orb '+d.orb.toFixed(3)+'°</p>'+
+       '<div class="ab-auto-times">'+
+       '<span>MULAI ASPEK '+esc(shortTime(d.start))+'</span>'+
+       '<span>INTI ASPEK '+esc(shortTime(d.exact??d.closest))+
+         (d.exact===null?' (terdekat, bukan exact)':'')+'</span>'+
+       '<span>AKHIR ASPEK '+esc(shortTime(d.end))+'</span></div>':
+       '<p>Tidak ada aspek dominan pada jam ini.</p>')+
+    '<small>Jam di atas milik aspek DOMINAN, tidak membuktikan awal/akhir tren XAUUSD.</small>';
+  }else{
+   $('abAutoStatus').hidden=true;$('abAutoStatus').replaceChildren();
+   updateRuleSummary();
+   const configured=Object.values(rules).some(v=>v!=='NETRAL');
+   $('abInspectInfo').textContent=snapshot.direction==='KONFLIK'?
+    'BUY dan SELL aktif bersamaan; tidak ada arah tunggal.':
+    configured?'Bias uji manual pada window aktif; bukan sinyal terverifikasi.':
+    'Arah NETRAL karena aturan manual belum diatur.';
+  }
   $('abActive').innerHTML=snapshot.active.map(e=>{
-   const upcoming=e.exactTimes.find(ms=>ms>=snapshot.ms);
-   const previous=e.exactTimes.filter(ms=>ms<snapshot.ms).slice(-1)[0];
+   const upcoming=e.exactTimes.find(t=>t>=ms);
+   const previous=e.exactTimes.filter(t=>t<ms).slice(-1)[0];
    const info=upcoming!==undefined?'Exact berikutnya: '+shortTime(upcoming):
     previous!==undefined?'Exact sebelumnya: '+shortTime(previous):
     'Titik terdekat: '+shortTime(e.closest)+' (bukan exact)';
-   return esc(pairLabel(e))+' '+e.angle+'° · orb '+e.orb.toFixed(4)+'° · '+phases[e.phase]+' · '+chip(e.bias)+
+   const a=automatic?.active.find(x=>x.id===e.id);
+   const label=a?chip(a.contribution>0?'BUY':a.contribution<0?'SELL':'NETRAL')+
+     ' bobot '+a.contribution.toFixed(3):chip(e.bias);
+   return esc(pairLabel(e))+' '+e.angle+'° · orb '+e.orb.toFixed(4)+
+    '° · '+esc(phases[e.phase]||e.phase)+' · '+label+
     ' <small>· '+esc(info)+'</small>';
-  }).join('<br>')||'Tidak ada aspek dalam orb pada jam ini.';
- }catch(e){$('abInspectInfo').textContent='Gagal memeriksa waktu: '+(e.message||String(e));$('abActive').replaceChildren();}
+  }).join('<br>')||'Tidak ada aspek aktif pada jam yang diperiksa.';
+ }catch(e){
+  $('abAutoStatus').hidden=true;
+  $('abInspectInfo').textContent='Gagal memeriksa waktu: '+(e.message||String(e));
+  $('abActive').replaceChildren();
+ }
 }
 function renderDay(){
  if(!result)return;
