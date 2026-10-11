@@ -56,6 +56,34 @@ async function run(){
  assert.equal(C.normalizeRules({0:'<script>'})[0],'NETRAL');
  assert.throws(()=>C.inspect(linear,r,r.range.end));
  const csv=C.toCSV(r,{0:'BUY'});assert.match(csv,/manual_bias_UNVALIDATED/);assert.match(csv,/'?2026-10-05 12:00/);assert.match(csv,/"BUY"/);
+ // Reproducible event-study rows contain NO fabricated price returns or win rates.
+ assert.equal(r.version,'1.1.0');
+ const obs=C.studyObservations(r,{0:'BUY'});
+ const selected=obs.filter(x=>x.pair==='Sun/Moon'&&x.angle===0);
+ assert.equal(selected.length,1);
+ assert.equal(selected[0].kind,'EXACT');
+ assert.equal(selected[0].manualBias,'BUY');
+ assert.equal(selected[0].weekday,'HARI_KERJA');
+ assert.ok(Math.abs(selected[0].time-(start+12*HOUR))<=1000);
+ const study=C.toStudyCSV(r,{0:'BUY'});
+ assert.match(study,/ALBIRUNI_EVENT_STUDY_V1/);
+ assert.match(study,/observed_xau_t0_EMPTY/);
+ assert.match(study,/observed_xau_4h_EMPTY/);
+ assert.match(study,/manual_bias_UNVALIDATED/);
+ assert.doesNotMatch(study,/winrate|profit_factor|forecast_price/);
+ const studyRows=study.trim().replace(/^\uFEFF/,'').split('\r\n');
+ assert.equal(studyRows[0].split(',').length,24);
+ assert.ok(studyRows.slice(1).every(x=>x.split(',').length===24));
+ assert.ok(studyRows.some(x=>x.includes('"EXACT"')&&x.includes('"BUY"')));
+ const miss=C.studyObservations(grazing);
+ assert.ok(miss.some(x=>x.pair==='Sun/Moon'&&x.angle===0&&x.kind==='TERDEKAT_BUKAN_EXACT'));
+ const rep=C.studyObservations(repeated).filter(x=>x.pair==='Sun/Moon'&&x.angle===0);
+ assert.equal(rep.length,3,'each repeated exact must remain a separate study observation');
+ const weekend=await C.scan(mock(h=>h-(6*24+12)),'2026-10-11',{mode:'day',...fast});
+ const sunday=C.studyObservations(weekend).find(x=>x.pair==='Sun/Moon'&&x.angle===0);
+ assert.ok(sunday&&sunday.weekday==='AKHIR_PEKAN','Sunday remains Sunday, not shifted to Friday or Monday');
+ assert.equal(C.toStudyCSV(weekend).includes('"AKHIR_PEKAN"'),true);
+
  // An independently supplied lunar phase search checks a real exact contact.
  const real=C.createEngine(A),week=await C.scan(real,'2026-10-12',{...fast});
  // SearchMoonPhase uses GeoVector(...,false). Match that documented source

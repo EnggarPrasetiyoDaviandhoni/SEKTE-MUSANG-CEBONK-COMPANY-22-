@@ -22,22 +22,22 @@ panel.innerHTML=`
    <div><label for="abFocus">Pasangan benda langit</label><select id="abFocus"><option value="moon">Bulan ↔ 6 benda lainnya</option><option value="all">Semua pasangan klasik · 21</option></select></div>
    <div><label for="abOrb">Orb window (°)</label><input id="abOrb" type="number" min="0.25" max="5" step="0.25" value="2" required></div>
   </div>
-  <div class="ab-actions"><button id="abRun" class="ab-primary" type="button">Hitung peta aspek</button><button id="abToday" type="button">Hari ini</button><button id="abCancel" type="button" disabled>Batalkan</button><button id="abPrev" class="ab-next" type="button" aria-label="Periode sebelumnya">← Sebelumnya</button><button id="abNext" type="button" aria-label="Periode berikutnya">Berikutnya →</button><button id="abCSV" type="button" disabled>Unduh CSV</button></div>
+  <div class="ab-actions"><button id="abRun" class="ab-primary" type="button">Hitung peta aspek</button><button id="abToday" type="button">Hari ini</button><button id="abCancel" type="button" disabled>Batalkan</button><button id="abPrev" class="ab-next" type="button" aria-label="Periode sebelumnya">← Sebelumnya</button><button id="abNext" type="button" aria-label="Periode berikutnya">Berikutnya →</button><button id="abCSV" type="button" disabled>Unduh CSV aspek</button><button id="abStudyCSV" type="button" disabled>CSV riset XAUUSD</button></div>
   <div id="abStatusBox" class="ab-status" role="status" aria-live="polite"><progress id="abProgress" max="100" value="0" hidden></progress><span id="abStatus">Siap menghitung panel baru.</span></div>
   <div id="abResults" class="ab-results" hidden>
    <div class="ab-metrics">
     <div class="ab-metric"><span>Kontak exact dalam periode</span><strong id="abExactCount">—</strong><small id="abPeriodLabel">—</small></div>
     <div class="ab-metric"><span>Window aspek</span><strong id="abWindowCount">—</strong><small id="abSettingsLabel">—</small></div>
-    <div class="ab-metric"><span>Aturan arah XAUUSD</span><strong id="abRuleState">NETRAL</strong><small id="abRuleCaption">Arah belum divalidasi.</small></div>
+    <div class="ab-metric"><span>Hipotesis arah XAUUSD (manual)</span><strong id="abRuleState">NETRAL</strong><small id="abRuleCaption">Arah belum divalidasi.</small></div>
    </div>
    <div class="ab-section-title"><h3 id="abCalendarTitle">Pilih hari untuk rincian</h3><small>Jumlah exact = peristiwa langit, bukan jumlah entry</small></div>
    <div id="abCalendar" class="ab-calendar" aria-label="Peta harian aspek"></div>
    <h3 id="abDayTitle" class="ab-date-title"></h3>
    <div class="ab-table-wrap"><table><caption class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden">Awal, exact atau titik terdekat, dan akhir window aspek pada hari dipilih</caption><thead><tr><th>Pasangan / aspek</th><th>Mulai window</th><th>Inti · exact</th><th>Akhir window</th><th>Bias uji manual</th></tr></thead><tbody id="abEvents"></tbody></table></div>
    <div class="ab-inspect"><div><label for="abTime">Periksa jam WIB</label><input id="abTime" type="time" value="12:00:00" step="1"></div><div><strong id="abInspectLabel">—</strong><small id="abInspectInfo">—</small><div id="abActive" class="ab-active"></div></div></div>
-   <p class="ab-footnote">Awal/akhir memakai orb yang dipilih. Tanda “batas periode” berarti window sudah aktif atau masih berlanjut; bukan awal/akhir kontak yang terkonfirmasi. Kalender WIB tidak memeriksa jam broker atau hari libur.</p>
+   <p class="ab-footnote">Mode mingguan menghitung Senin–Jumat saja; kontak Sabtu/Minggu tidak digeser ke Jumat/Senin. Awal/akhir memakai orb yang dipilih. Tanda “batas periode” berarti window sudah aktif atau masih berlanjut; bukan awal/akhir kontak yang terkonfirmasi. Kalender WIB tidak memeriksa jam broker atau hari libur.</p>
   </div>
-  <details id="abRules"><summary>Setelan BUY/SELL untuk uji hipotesis</summary><p>Default semua NETRAL. Pilih label untuk menguji aturanmu sendiri. Label ini bukan aturan trading dari kitab al-Biruni dan belum diuji dengan harga XAUUSD. Bila window BUY dan SELL tumpang tindih, hasilnya KONFLIK.</p><div class="ab-rules">${C.ASPECTS.map(a=>`<div><label for="abRule${a.angle}">${a.name} ${a.angle}°</label><select id="abRule${a.angle}" data-ab-rule="${a.angle}"><option value="NETRAL">NETRAL</option><option value="BUY">BUY · uji manual</option><option value="SELL">SELL · uji manual</option></select></div>`).join('')}</div><button id="abResetRules" class="ab-small-button" type="button">Reset semua NETRAL</button><p id="abSaveNote">Setelan disimpan di perangkat ini.</p></details>
+  <details id="abRules"><summary>Setelan BUY/SELL untuk uji hipotesis</summary><p>Default semua NETRAL. Pilih label untuk menguji aturanmu sendiri. Label ini bukan aturan trading dari kitab al-Biruni dan belum diuji dengan harga XAUUSD. Bila window BUY dan SELL tumpang tindih, hasilnya KONFLIK.</p><div class="ab-rules">${C.ASPECTS.map(a=>`<div><label for="abRule${a.angle}">${a.name} ${a.angle}°</label><select id="abRule${a.angle}" data-ab-rule="${a.angle}"><option value="NETRAL">NETRAL</option><option value="BUY">BUY · uji manual</option><option value="SELL">SELL · uji manual</option></select></div>`).join('')}</div><button id="abResetRules" class="ab-small-button" type="button">Reset semua NETRAL</button><p id="abSaveNote">Setelan disimpan di perangkat ini.</p><p>CSV riset hanya mengekspor waktu aspek dan kolom harga XAUUSD kosong untuk dipasangkan dengan data pasar di luar situs. Tanpa data harga, tidak ada hasil backtest atau winrate.</p></details>
   <details><summary>Metode dan sumber al-Biruni</summary><p>Versi ini mengambil konsep aspek dan tahap mendekat, tepat, lalu menjauh dari Maqalah XI, Bab 2, <i>Al-Qanun al-Masudi</i>. Ini implementasi timing dengan ephemeris modern, bukan reproduksi seluruh rumus kitab. Hanya selisih bujur ekliptika; tidak mencakup lintang aspek, rumah, tasyir, atau siklus panjang.</p><p>Posisi geosentrik tropikal dihitung memakai Astronomy Engine 2.1.19, apparent true ecliptic of date. Pencarian memakai grid 15 menit, lalu akar sudut aspek dan batas orb disempurnakan hingga interval ≤1 detik. Angka tersebut adalah resolusi pencarian numerik, bukan jaminan akurasi astronomi satu detik. Retrograde dan kontak berulang tetap dicatat; titik terdekat yang tidak mencapai aspek tidak dilabeli exact. Orb 2° adalah setelan awal aplikasi yang bisa diubah, bukan angka baku dari kitab.</p><p><a href="https://archive.org/details/kitabalqanunalma03biru/page/n307/mode/1up" target="_blank" rel="noopener noreferrer">Edisi cetak jilid III, halaman 1373 · applying/exact/separating</a> · <a href="https://www.qdl.qa/en/archive/81055/vdc_100022880536.0x000001" target="_blank" rel="noopener noreferrer">Manuskrip British Library Or 1997</a> · <a href="https://archive.org/details/al-qanun-al-masudi-biruni-muhammad-ibn-ahmad" target="_blank" rel="noopener noreferrer">Koleksi yang kamu kirim</a> · <a href="https://github.com/cosinekitty/astronomy/blob/v2.1.19/source/js/README.md" target="_blank" rel="noopener noreferrer">Dokumentasi ephemeris</a>.</p></details>
  </div>`;
 const status=(message,error=false)=>{$('abStatus').textContent=message;$('abStatusBox').classList.toggle('ab-error',error);};
@@ -51,10 +51,10 @@ function save(){
 function setBusy(value){
  busy=value;
  for(const id of ['abDate','abMode','abFocus','abOrb','abRun','abToday','abPrev','abNext'])$(id).disabled=value;
- $('abCancel').disabled=!value;$('abCSV').disabled=value||!result;$('abProgress').hidden=!value;
+ $('abCancel').disabled=!value;$('abCSV').disabled=value||!result;$('abStudyCSV').disabled=value||!result;$('abProgress').hidden=!value;
 }
 function invalidate(){
- token++;result=null;engine=null;selectedDate='';$('abResults').hidden=true;$('abCalendar').replaceChildren();$('abEvents').replaceChildren();$('abActive').replaceChildren();$('abCSV').disabled=true;
+ token++;result=null;engine=null;selectedDate='';$('abResults').hidden=true;$('abCalendar').replaceChildren();$('abEvents').replaceChildren();$('abActive').replaceChildren();$('abCSV').disabled=true;$('abStudyCSV').disabled=true;
  status('Pengaturan berubah. Klik Hitung peta aspek untuk memperbarui hasil.');save();
 }
 function shortTime(ms){return C.stamp(ms).replace(' WIB','');}
@@ -74,7 +74,15 @@ function inspect(){
   const configured=Object.values(rules).some(v=>v!=='NETRAL');
   $('abInspectInfo').textContent=snapshot.direction==='KONFLIK'?'BUY dan SELL aktif bersamaan; tidak ada arah tunggal.':configured?'Bias uji manual pada window aktif; bukan sinyal pasar terverifikasi.':'Arah NETRAL: aturan BUY/SELL belum diatur.';
   const phases={APPLYING:'Mendekat',EXACT:'Exact',SEPARATING:'Menjauh',STATION:'Titik balik / laju orb kecil'};
-  $('abActive').innerHTML=snapshot.active.map(e=>`${esc(pairLabel(e))} ${e.angle}° · orb ${e.orb.toFixed(4)}° · ${phases[e.phase]} · ${chip(e.bias)}`).join('<br>')||'Tidak ada aspek dalam orb pada jam ini.';
+  $('abActive').innerHTML=snapshot.active.map(e=>{
+   const upcoming=e.exactTimes.find(ms=>ms>=snapshot.ms);
+   const previous=e.exactTimes.filter(ms=>ms<snapshot.ms).slice(-1)[0];
+   const info=upcoming!==undefined?'Exact berikutnya: '+shortTime(upcoming):
+    previous!==undefined?'Exact sebelumnya: '+shortTime(previous):
+    'Titik terdekat: '+shortTime(e.closest)+' (bukan exact)';
+   return esc(pairLabel(e))+' '+e.angle+'° · orb '+e.orb.toFixed(4)+'° · '+phases[e.phase]+' · '+chip(e.bias)+
+    ' <small>· '+esc(info)+'</small>';
+  }).join('<br>')||'Tidak ada aspek dalam orb pada jam ini.';
  }catch(e){$('abInspectInfo').textContent='Gagal memeriksa waktu: '+(e.message||String(e));$('abActive').replaceChildren();}
 }
 function renderDay(){
@@ -91,7 +99,7 @@ function renderDay(){
 function render(){
  if(!result)return;
  const days=C.daily(result),exact=result.events.reduce((n,e)=>n+e.exactTimes.length,0);
- $('abResults').hidden=false;$('abCSV').disabled=false;
+ $('abResults').hidden=false;$('abCSV').disabled=false;$('abStudyCSV').disabled=false;
  $('abExactCount').textContent=String(exact);$('abWindowCount').textContent=String(result.events.length);
  $('abPeriodLabel').textContent=C.iso(result.range.start)+' → '+C.iso(result.range.end-1)+' WIB';
  $('abSettingsLabel').textContent=(result.focus==='moon'?'6 pasangan Bulan':'21 pasangan klasik')+' · orb '+result.orb+'°';
@@ -121,7 +129,7 @@ async function library(){
 async function run(){
  if(busy)return;
  const date=$('abDate').value,mode=$('abMode').value,focus=$('abFocus').value,orb=Number($('abOrb').value);
- result=null;engine=null;$('abResults').hidden=true;$('abCSV').disabled=true;
+ result=null;engine=null;$('abResults').hidden=true;$('abCSV').disabled=true;$('abStudyCSV').disabled=true;
  try{C.period(date,mode);if(!Number.isFinite(orb)||orb<0.25||orb>5)throw Error('Orb harus 0.25°–5°.');}
  catch(e){status(e.message,true);return;}
  const request=++token;setBusy(true);$('abProgress').value=0;status('Memuat ephemeris panel Al-Biruni…');save();
@@ -133,7 +141,7 @@ async function run(){
   engine=isolated;result=calculated;
   const today=C.iso(Date.now());selectedDate=result.range.days.some(d=>d.date===date)?date:result.range.days.some(d=>d.date===today)?today:result.range.days[0].date;
   render();status('Selesai · jadwal aspek astronomi. Bias BUY/SELL mengikuti setelan uji manual.');
- }catch(e){if(request===token){result=null;engine=null;$('abResults').hidden=true;$('abCSV').disabled=true;status('Perhitungan gagal: '+(e.message||String(e)),true);}}
+ }catch(e){if(request===token){result=null;engine=null;$('abResults').hidden=true;$('abCSV').disabled=true;$('abStudyCSV').disabled=true;status('Perhitungan gagal: '+(e.message||String(e)),true);}}
  finally{if(request===token)setBusy(false);}
 }
 function move(delta){
@@ -162,6 +170,14 @@ $('abCSV').addEventListener('click',()=>{
  const url=URL.createObjectURL(new Blob([C.toCSV(result,rules)],{type:'text/csv;charset=utf-8'}));
  const a=document.createElement('a');a.href=url;a.download='ALBIRUNI_ASPECTS_'+C.iso(result.range.start)+'_'+result.range.mode+'.csv';panel.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  status('CSV seluruh periode diunduh, termasuk batas periode dan label hipotesis manual.');
+});
+$('abStudyCSV').addEventListener('click',()=>{
+ if(!result||busy)return;
+ const csv=C.toStudyCSV(result,rules);
+ const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+ const a=document.createElement('a');a.href=url;a.download='ALBIRUNI_RISET_XAUUSD_'+C.iso(result.range.start)+'_'+result.range.mode+'.csv';
+ panel.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ status('CSV riset diekspor: semua kontak exact/terdekat; harga XAUUSD kosong, belum ada backtest.');
 });
 run();
 })(window);

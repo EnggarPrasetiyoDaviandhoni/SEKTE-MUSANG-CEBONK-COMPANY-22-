@@ -36,6 +36,20 @@ confidence atau probabilitas keuntungan. Panel tidak mengirim data ke EA.
 CSV menyimpan UTC, WIB, kontak berulang, orb, penanda batas periode dan label
 `manual_bias_UNVALIDATED`. Setelan memakai localStorage `cebonk.albiruni.v1`.
 
+## Perbaikan v1.1 — audit & bukti pengujian XAUUSD
+
+- Ekspor **CSV aspek** lama tetap tersedia. Ditambahkan tombol **CSV riset XAUUSD** yang menghasilkan satu baris tiap kontak **EXACT** (termasuk semua exact retrograde) atau satu baris **TERDEKAT_BUKAN_EXACT** untuk window tanpa exact. Urut sesuai waktu UTC; juga ditulis WIB.
+- Format riset memuat nama pasangan, sudut, window, status batas periode, orb setelan, grid, versi mesin, ephemeris, dan **manual_bias_UNVALIDATED**. Kolom observed_xau_t0_EMPTY / observed_xau_1h_EMPTY / observed_xau_4h_EMPTY sengaja **dibiarkan kosong** karena website tidak mengambil harga untuk panel ini. Pengguna harus menggabungkan data XAUUSD broker secara eksternal untuk melakukan uji pasar yang bebas look-ahead; winrate, return, probabilitas, dan rekomendasi perdagangan tidak dihitung.
+- Status pemeriksaan jam kini menyebut **exact berikutnya/sebelumnya**, atau *titik terdekat bukan exact*. Ini keterangan astronomi, tidak mengubah logika arah.
+- **Mingguan tetap hanya Senin–Jumat**; kontak yang terjadi Sabtu/Minggu tidak digeser atau diklaim sebagai sinyal pada Jumat/Senin. Harian dan bulanan tetap menghitung tanggal kalender apa adanya.
+- Pemetaan BUY/SELL masih hipotesis **manual**, NETRAL sebagai default, KONFLIK jika overlap. Tidak ditambah rumus arah pasar atas nama al-Biruni tanpa dasar teks terverifikasi dan data validasi. Data ini **belum** dibaca EA MT5.
+- Dependency Astronomy Engine tetap memakai runtime library versi 2.1.19. Browser masih perlu internet/cache; dua CDN tersedia, namun **belum** ada paket offline yang berdiri sendiri. Jangan klaim fitur tersedia offline.
+- Ketelitian root bertaraf bracket numerik sekitar 1 detik, **bukan** presisi ephemeris mutlak; angka UTC yang memiliki milidetik adalah artefak solver, bukan hasil pengamatan langit langsung.
+
+### Verifikasi sumber vs adaptasi modern
+
+British Library Or 1997 di Qatar Digital Library mengidentifikasi `al-Qanun al-Masudi` sebagai naskah 11 maqalah dan Maqalah XI membahas astrologi: https://www.qdl.qa/en/archive/81055/vdc_100022880536.0x000001 . Itu membenarkan cakupan sejarah **secara umum**, bukan membuktikan pemetaan aspek → prediksi XAUUSD, orb 2°, penggunaan ephemeris modern atau 5-minute trading window. Semua bagian tersebut harus diperlakukan sebagai pilihan implementasi/hipotesis modern; belum ada bukti statistik kemampuan prediksi arah harga.
+
 ## Pemisahan dari astrology lama
 
 Modul `assets/albiruni-core.js`, `assets/albiruni-ui.js` dan `assets/albiruni.css`
@@ -59,7 +73,7 @@ Maqalah XI, Bab 2. Ini bukan pemindahan seluruh sebelas maqalah ke JavaScript.
 
 `node tests/albiruni.test.cjs` mencakup kalender WIB, wrap sudut, akar antarsampel,
 awal/akhir orb, near miss, kontak saat titik balik, retrograde berulang, batas
-periode, pembatalan, kegagalan ephemeris, konflik aturan, dan CSV. Kontak Bulan–
+periode, pembatalan, kegagalan ephemeris, konflik aturan, CSV aspek, CSV riset, exact berulang dan label akhir pekan. Kontak Bulan–
 Matahari aktual dibandingkan dengan `SearchMoonPhase` resmi dengan konvensi
 koordinat tanpa aberration yang disamakan untuk tes tersebut. Mode produksi
 apparent juga dibandingkan dengan solver akar `Search` resmi secara terpisah.
