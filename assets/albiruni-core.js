@@ -270,15 +270,18 @@ function autoPeriodSummary(engine,result,{stepMinutes}={}){
    b.peakNet-a.peakNet||a.start-b.start);
   const buy=report.windows.filter(w=>w.direction==='BUY').reduce((v,w)=>v+(w.end-w.start)/MIN,0);
   const sell=report.windows.filter(w=>w.direction==='SELL').reduce((v,w)=>v+(w.end-w.start)/MIN,0);
-  buyDuration+=buy;sellDuration+=sell;
+  const marketClosed=day.weekday===0||day.weekday===6;
+  // Weekend planetary states are calculated and shown but excluded from
+  // directional XAUUSD summaries; never shift to Friday/Monday.
+  if(!marketClosed){buyDuration+=buy;sellDuration+=sell;}
   const focus=buy>sell?'BUY':sell>buy?'SELL':'NETRAL';
   if(focus==='NETRAL')neutralDays++;
   if(buy>0&&sell>0)conflictDays++;
   const selected=ranked.find(w=>w.direction===focus)||null;
-  days.push({date:day.date,weekday:day.weekday,direction:focus,
+  days.push({date:day.date,weekday:day.weekday,marketClosed,direction:focus,
     buyMinutes:buy,sellMinutes:sell,windowCount:report.windows.length,
     window:selected,allWindows:report.windows});
-  all.push(...report.windows);
+  if(!marketClosed)all.push(...report.windows);
  }
  let direction=buyDuration>sellDuration?'BUY':sellDuration>buyDuration?'SELL':'NETRAL';
  const focusWindows=all.filter(w=>w.direction===direction)
