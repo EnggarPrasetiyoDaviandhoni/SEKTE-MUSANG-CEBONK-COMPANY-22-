@@ -89,6 +89,19 @@
   '</ul><p><a target="_blank" rel="noopener noreferrer" href="https://archive.org/details/TahqiqMaLiAlHind_201701/page/n61/mode/1up">Teks Arab Taḥqīq mā li-l-Hind</a> menjadi pembanding bagi terjemahan India, bukan karya tambahan.</p>'+
   '<p>Audit matematika sederhana: 22 × 21 ÷ 2 = <strong>231 pasangan huruf</strong> (komentar Sefer Yetzirah); nilai contoh Abraham dan Sarah 248 + 505 = <strong>753</strong>, dengan sisa 9 saat dibagi 12 dan sisa 4 saat dibagi 7. Ini hasil simbolis, bukan prediksi harga emas.</p>'+
   '<p>Perhitungan dinamis 7 planet dan aspek tetap dari albiruni-core.js. Metode kitab lain hanya boleh mempengaruhi sinyal setelah definisi masukan, koordinat, halaman sumber, dan hasil uji harga terdokumentasi.</p></details>';
+ const maths=root.CebonkAlBiruniClassical;
+ if(maths){
+  const sample=root.document.createElement('p');
+  const pof=maths.partOfFortuneDay(3*30+27+44/60,1*30+15+25/60,5*30+8+20/60);
+  const value=maths.gematriaExample();
+  sample.textContent='Periksa hitungan sumber: penguasa jam pertama Minggu = '+maths.planetaryHourRuler(0,1)+
+   '; 27 bagian Bulan, contoh bujur sideris 40° = sektor '+maths.lunarStation27(40).number+
+   ' (harus tahu titik awal sideris); Part of Fortune siang contoh §475 = '+pof.toFixed(4)+'° ekliptika'+
+   '; 231 gerbang = '+maths.doors22()+
+   '; gematria Abraham+Sarah = '+value.sum+' (sisa 12: '+value.zodiacRemainder+', sisa 7: '+value.planetRemainder+').'+
+   ' Ini contoh hitung kitab, BUKAN sinyal perdagangan.';
+  books.querySelector('details').appendChild(sample);
+ }
  panel.appendChild(books);
  root.CebonkAlBiruniFeedView=Object.freeze({parseFeed,FEED_URL,refresh});
  refresh();
