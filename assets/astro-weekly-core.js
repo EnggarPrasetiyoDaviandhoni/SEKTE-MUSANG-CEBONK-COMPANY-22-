@@ -68,7 +68,26 @@ async function scanWeek(date,scanner,notify=()=>{},cancelled=()=>false){
  notify({index:5,percent:100});
  return summarize(result);
 }
-const API=Object.freeze({monday,weekDates,summarize,scanWeek});
+// EA bridge: export the actual weekly scanner output, never reconstruct signals inside MT5.
+function toEACsv(report,date){
+ const week=monday(date),days=new Set(weekDates(date).map(d=>d.date));
+ requireValid(report&&Array.isArray(report.candidates)&&typeof report.direction==='string','Hasil mingguan belum tersedia.');
+ const head='week_monday_wib,week_direction,date_wib,start_epoch,core_epoch,end_epoch,window_direction,model';
+ const out=[head],direction=report.direction;
+ if(direction==='BUY'||direction==='SELL'){
+  requireValid(report.candidates.length<=5,'Terlalu banyak window.');
+  for(const x of report.candidates){
+   requireValid(x&&days.has(x.date)&&x.direction===direction,'Window harus searah dominasi minggu.');
+   requireValid([x.start,x.core,x.end].every(t=>Number.isSafeInteger(t)&&t%300000===0),
+    'Waktu window bukan grid 5 menit.');
+   requireValid(x.start<=x.core&&x.core<x.end&&x.end-x.start>=1800000,
+    'Mulai/inti/akhir tidak valid.');
+   out.push([week,direction,x.date,x.start/1000,x.core/1000,x.end/1000,direction,'CEBONK_ASTRO_WEEKLY_V1'].join(','));
+  }
+ }
+ return out.join('\n')+'\n';
+}
+const API=Object.freeze({monday,weekDates,summarize,scanWeek,toEACsv});
 root.CebonkAstroWeekly=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
