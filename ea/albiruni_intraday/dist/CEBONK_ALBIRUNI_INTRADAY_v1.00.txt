@@ -44,6 +44,7 @@ input bool InpTelegram=true;
 input string InpTelegramToken="";
 input string InpTelegramChatID="";
 input bool InpMT5Push=true;
+input bool InpNotifyAutopilot=true; // Notify only after successful ON/OFF button click.
 
 struct ABSignal{
  string day,id,aspect,phase;
@@ -328,7 +329,11 @@ string ABURLEncode(const string value){
  return out;
 }
 void ABNotice(const string msg){
- if(InpMT5Push&&!gTester)SendNotification(StringSubstr(msg,0,250));
+ if(InpMT5Push&&!gTester){
+  ResetLastError();
+  if(!SendNotification(StringSubstr(msg,0,250)))
+   ABStatus("MT5_PUSH_FAILED_ERR_"+(string)GetLastError());
+ }
  if(!InpTelegram||gTester)return;
  if(InpTelegramToken==""||InpTelegramChatID==""){
   ABStatus("TELEGRAM_NOT_CONFIGURED");return;
@@ -484,6 +489,12 @@ void OnChartEvent(const int id,const long &l,const double &d,const string &name)
   }
  }
  gAuto=!gAuto;ABPaint();ABStatus(gAuto?"AUTOPILOT_ON":"AUTOPILOT_OFF");
+ // One real user click -> one notice. Never announce ON for a blocked request.
+ if(InpNotifyAutopilot){
+  string text="🦊 AL-BIRUNI INTRADAY\n"+
+   (gAuto?"🟢 AUTOPILOT ON":"🔴 AUTOPILOT OFF")+"\n📊 "+InpSymbol;
+  ABNotice(text); // Telegram and MT5 Push have independent enable switches.
+ }
 }
 void OnTradeTransaction(const MqlTradeTransaction &trans,
  const MqlTradeRequest &request,const MqlTradeResult &result){

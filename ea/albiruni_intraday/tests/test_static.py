@@ -13,6 +13,15 @@ txt=(root/'dist/CEBONK_ALBIRUNI_INTRADAY_v1.00.txt').read_text('utf8')
 generator=(repo/'scripts/generate-albiruni-intraday.mjs').read_text('utf8')
 workflow=(repo/'.github/workflows/albiruni-intraday-ea.yml').read_text('utf8')
 assert ea==txt,'Standalone TXT must equal exact MQ5 content'
+assert 'input bool InpNotifyAutopilot=true;' in ea, 'notification toggle input enabled by default'
+autopilot_handler=ea.split('void OnChartEvent(',1)[1].split('void OnTradeTransaction(',1)[0]
+assert autopilot_handler.index('gAuto=!gAuto;')<autopilot_handler.index('ABNotice(text);'), 'notify AFTER real click toggles state'
+assert autopilot_handler.index('if(!InpEnableExperimentalAstro)')<autopilot_handler.index('ABNotice(text);'), 'experimental lock BEFORE notice'
+assert autopilot_handler.index('REAL_ACCOUNT_LOCKED')<autopilot_handler.index('ABNotice(text);'), 'real account lock BEFORE notice'
+assert 'AUTOPILOT ON' in autopilot_handler and 'AUTOPILOT OFF' in autopilot_handler
+assert 'MT5_PUSH_FAILED_ERR_' in ea and 'if(!SendNotification(' in ea, 'diagnose MT5 push failures'
+assert 'InpNotifyAutopilot=true' in (root/'CEBONK_ALBIRUNI_INTRADAY_v1.00.set').read_text('utf8'), 'preset sends toggle notices'
+
 assert 'ObjectSetInteger(0,gButton,OBJPROP_XSIZE,260);' in ea, 'AUTOPILOT width 260px'
 assert 'ObjectSetInteger(0,gButton,OBJPROP_YSIZE,70);' in ea, 'AUTOPILOT height 70px'
 assert 'ObjectSetInteger(0,gButton,OBJPROP_FONTSIZE,20);' in ea, 'AUTOPILOT font size 20'

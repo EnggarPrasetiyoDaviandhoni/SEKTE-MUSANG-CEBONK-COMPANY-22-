@@ -48,6 +48,8 @@ OnTimer checks execution windows every second and polls WebRequest every 300 sec
 
 ## Telegram / Push messages
 
+**AUTOPILOT notifications:** on each successful chart button click, one `🟢 AUTOPILOT ON` or `🔴 AUTOPILOT OFF` notice is sent to both enabled channels (Telegram and MT5 Push), including the symbol. No false ON notice is sent when `REAL_ACCOUNT_LOCKED` or `EXPERIMENTAL_ASTRO_NOT_ACKNOWLEDGED` prevents enabling. Controlled by `InpNotifyAutopilot=true`; attaching/restarting the EA does not issue a toggle notice. `SendNotification` failures log `MT5_PUSH_FAILED_ERR_<code>` in Experts. Configure MetaQuotes ID under MT5 Tools → Options → Notifications and enable push there; to receive Telegram, configure token and chat ID and allow `https://api.telegram.org` in Tools → Options → Expert Advisors.
+
 Notice only after an actual broker DEAL_ADD, NOT after merely receiving a schedule. Keyed by unique position ID to avoid duplicate ENTRY or TP/SL notices on restart/partial fills. Push and Telegram can be enabled independently.
 
 Illustrative ENTRY format (numbers below are dummy data):
