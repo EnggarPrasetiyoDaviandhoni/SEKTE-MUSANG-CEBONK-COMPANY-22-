@@ -77,3 +77,22 @@
  #albiruniPanel .ab-rules{grid-template-columns:1fr 1fr}
  #albiruniPanel .ab-inspect{grid-template-columns:110px 1fr;gap:10px}
 }
+
+/* Al-Biruni v1.2: panel-local AUTO experiment controls and sampled windows. */
+#albiruniPanel .ab-auto-config{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:13px 14px;margin:12px 0;border:1px solid #4e5c70;background:#111e30;border-radius:11px}
+#albiruniPanel .ab-auto-config label{margin:0;font-size:12px;font-weight:700}
+#albiruniPanel .ab-auto-config select{width:min(420px,100%);max-width:100%}
+#albiruniPanel .ab-auto-warning{flex-basis:100%;font-size:11px;line-height:1.5;color:#eccb99}
+#albiruniPanel .ab-auto-status{padding:14px 16px;border:1px solid #49607b;background:#101e31;border-radius:10px;margin:10px 0 18px}
+#albiruniPanel .ab-auto-status b{font-size:15px}
+#albiruniPanel .ab-auto-status p{margin:8px 0;font-size:12px}
+#albiruniPanel .ab-auto-status small{font-size:11px;color:#adbdd2}
+#albiruniPanel .ab-auto-times{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0}
+#albiruniPanel .ab-auto-times span{font-size:11px;border:1px solid #4f5c6d;padding:7px;border-radius:7px;flex:1 1 155px}
+#albiruniPanel .ab-auto-windows{margin:10px 0 20px;border:1px solid #40526a;padding:13px;border-radius:9px;max-height:370px;overflow:auto}
+#albiruniPanel .ab-auto-windows h4{font-size:13px;margin:0 0 9px}
+#albiruniPanel .ab-auto-windows>small{font-size:10px;color:#adbdd2}
+#albiruniPanel .ab-auto-win{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 3px;border-bottom:1px solid #344456;font-size:12px}
+#albiruniPanel .ab-auto-win>span{flex:1 1 260px}
+#albiruniPanel .ab-auto-win button{min-height:32px;padding:6px 10px;font-size:11px}
+@media(max-width:700px){#albiruniPanel .ab-auto-config select{width:100%}#albiruniPanel .ab-auto-win>span{flex-basis:100%}}

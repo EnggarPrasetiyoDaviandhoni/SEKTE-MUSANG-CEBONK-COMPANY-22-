@@ -21,14 +21,46 @@ async function run(){
  const $=id=>w.document.getElementById(id);
  await until(()=>$('abRun').disabled===false&&!$('abResults').hidden,'initial calculation');
  assert.equal($('abCalendar').querySelectorAll('button').length,5);
+ assert.equal($('abBiasMode').value,'AUTO','AUTO must be default for existing users');
+ assert.equal($('abAutoStatus').hidden,false,'AUTO summary available');
+ assert.equal($('abAutoWindows').hidden,false,'AUTO timeline available');
+ assert.match($('abRuleState').textContent,/AUTO/);
+ assert.match($('abAutoStatus').textContent,/AUTO EKSPERIMEN/);
+ assert.match($('abAutoWindows').textContent,/Window hipotesis AUTO/);
+ $('abStudyCSV').click();
+ assert.ok(blob&&blob.size>1000);
+ assert.match($('abStatus').textContent,/CSV riset AUTO/);
+ assert.match($('abAutoStatus').textContent,/bukan persentase kemungkinan profit/);
+
+ const firstWindow=$('abAutoWindows').querySelector('[data-ab-autopick]');
+ if(firstWindow){
+  firstWindow.click();
+  assert.match($('abInspectLabel').textContent,/BUY|SELL|NETRAL|KONFLIK/);
+  assert.match($('abAutoStatus').textContent,/MULAI ASPEK|Tidak ada aspek dominan/);
+ }
+ $('abBiasMode').value='MANUAL';
+ $('abBiasMode').dispatchEvent(new w.Event('change'));
+ assert.equal($('abAutoWindows').hidden,true,'manual mode hides AUTO candidate windows');
+ assert.equal($('abAutoStatus').hidden,true);
+ assert.equal($('abRuleState').textContent,'NETRAL');
+ assert.match(w.localStorage.getItem('cebonk.albiruni.v1'),/"biasMode":"MANUAL"/);
+
  assert.equal($('abRuleState').textContent,'NETRAL');
  $('abCalendar').querySelectorAll('button')[2].click();assert.match($('abDayTitle').textContent,/Rabu/);
  $('abRule90').value='SELL';$('abRule90').dispatchEvent(new w.Event('change'));
  assert.equal($('abRuleState').textContent,'UJI MANUAL');assert.match(w.localStorage.getItem('cebonk.albiruni.v1'),/SELL/);
  $('abResetRules').click();assert.equal($('abRuleState').textContent,'NETRAL');
+ $('abBiasMode').value='AUTO';$('abBiasMode').dispatchEvent(new w.Event('change'));
+ assert.equal($('abAutoWindows').hidden,false);
+ assert.match($('abRuleState').textContent,/AUTO/);
+ // Changing manual bias while AUTO is active must not make it a live trade signal.
+ $('abRule0').value='SELL';$('abRule0').dispatchEvent(new w.Event('change'));
+ assert.match($('abRuleState').textContent,/AUTO/);
+ $('abBiasMode').value='MANUAL';$('abBiasMode').dispatchEvent(new w.Event('change'));
+
  $('abCSV').click();assert.ok(blob&&blob.size>1000);assert.match($('abStatus').textContent,/CSV/);
  assert.equal($('abStudyCSV').disabled,false);
- $('abStudyCSV').click();assert.ok(blob&&blob.size>1000);assert.match($('abStatus').textContent,/riset diekspor/);
+ $('abStudyCSV').click();assert.ok(blob&&blob.size>1000);assert.match($('abStatus').textContent,/riset MANUAL diekspor/);
  assert.match($('abInspectInfo').textContent,/Arah NETRAL|Bias uji/);
 
  $('abMode').value='month';$('abMode').dispatchEvent(new w.Event('change'));assert.equal($('abResults').hidden,true);assert.equal($('abCSV').disabled,true);assert.equal($('abStudyCSV').disabled,true);

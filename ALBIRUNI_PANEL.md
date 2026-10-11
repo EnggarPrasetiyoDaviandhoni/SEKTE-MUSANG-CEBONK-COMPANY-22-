@@ -36,6 +36,23 @@ confidence atau probabilitas keuntungan. Panel tidak mengirim data ke EA.
 CSV menyimpan UTC, WIB, kontak berulang, orb, penanda batas periode dan label
 `manual_bias_UNVALIDATED`. Setelan memakai localStorage `cebonk.albiruni.v1`.
 
+## Mode AUTO EKSPERIMEN v1.2 (default)
+
+**AUTO** otomatis menghitung hipotesis BUY/SELL/KONFLIK/NETRAL dari aspek planet saat jam WIB dipilih, terpisah dari **MANUAL** v1.1 yang tidak berubah. Pengaturan mode disimpan pada localStorage `cebonk.albiruni.v1`. Hasil bukan prediksi harga yang teruji, tidak terhubung ke EA/Telegram, dan **BUKAN rumus trading dari Al-Biruni**. Dasar Al-Biruni yang disitasi hanya timing aspek, bukan bobot pasar.
+
+Metode eksplisit yang dapat diaudit dalam `assets/albiruni-core.js`:
+
+- Sifat planet menurut **asumsi modern developer** (bukan koefisien kitab): Matahari +0.20; Bulan 0; Merkurius 0; Venus +0.90; Mars −0.95; Jupiter +1.15; Saturnus −1.15.
+- Bobot aspek (pengali kekuatan, **bukan tanda arah langsung**): Konjungsi 0.90; Sextile 1.00; Square 0.75; Trine 1.10; Opposition 0.80. Karena itu Sextile Mars–Saturnus bisa menyumbang SELL; Square Venus–Jupiter bisa menyumbang BUY.
+- Bobot fase applying 1.10, exact 1.25, separating 0.80, stationary 0.70. Bobot orb `max(0,1-orb/orbSetting)`, dengan default `orbSetting = 2°`.
+- Kontribusi pasangan = `((natureP1+natureP2)/2) * aspectWeight * phaseWeight * orbWeight`. Pisahkan kontribusi positif menjadi `buy`, dan absolut negatif menjadi `sell`; `net=buy-sell`. Angka ini **skor model**, bukan probabilitas atau winrate.
+- Ambang arah 0.18. Dua sisi disebut **KONFLIK** bila masing-masing ≥0.18 dan sisi lemah ≥45% sisi kuat; jika tidak, BUY ketika net≥0.18, SELL ketika net≤−0.18, selain itu NETRAL. NETRAL bukan bug bila tidak ada aspek kuat.
+- Panel menunjukkan alasan `reason`, bobot BUY dan SELL, semua aspek aktif berikut orb/fase, dan MULAI–INTI–AKHIR astronomis untuk *aspek dominan*. Jam tersebut **bukan awal–inti–akhir tren harga emas**.
+- Kalender hari terpilih menampilkan daftar **window bias AUTO** yang disampling setiap 15 menit. Awal/inti/akhir pada daftar itu memakai tanda ~ karena berupa **estimasi grid**, bukan waktu exact. Klik **Lihat INTI** untuk audit pada jam grid tertentu; rentang setiap aspek tetap dihitung dengan akar presisi numerik terpisah.
+- CSV riset mode AUTO menambah empat kolom `auto_hypothesis_UNVALIDATED`, `auto_buy_weight`, `auto_sell_weight`, `auto_reason` ke 24 kolom studi waktu astronomis yang lama. Mode MANUAL tetap memakai CSV 24 kolom. Harga broker tetap kosong. Belum ada uji profitabilitas XAUUSD 2024–2026; kalibrasi dan evaluasi di dataset out-of-sample diperlukan sebelum mempertimbangkan pemakaian finansial.
+
+**Batasan:** bobot ini hipotesis buatan aplikasi, bukan pengetahuan yang dibuktikan dari `Al-Qanun al-Masudi` atau studi pasar. Perhitungan aspek berbasis kalender dan ephemeris modern tetap terpisah dari aturan arah. Tidak ada pengiriman trade atau feed baru untuk MT5. Panel dapat menunjukkan BUY/SELL lebih sering dibanding versi yang semua aturan MANUAL awalnya NETRAL, tetapi tidak dipaksa menjadi selalu BUY/SELL.
+
 ## Perbaikan v1.1 — audit & bukti pengujian XAUUSD
 
 - Ekspor **CSV aspek** lama tetap tersedia. Ditambahkan tombol **CSV riset XAUUSD** yang menghasilkan satu baris tiap kontak **EXACT** (termasuk semua exact retrograde) atau satu baris **TERDEKAT_BUKAN_EXACT** untuk window tanpa exact. Urut sesuai waktu UTC; juga ditulis WIB.

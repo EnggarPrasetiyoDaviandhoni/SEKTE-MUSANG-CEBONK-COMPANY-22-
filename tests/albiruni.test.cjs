@@ -54,10 +54,58 @@ async function run(){
  assert.equal(C.direction([{angle:0}],{0:'BUY'}),'BUY');
  assert.equal(C.direction([{angle:0},{angle:90}],{0:'BUY',90:'SELL'}),'KONFLIK');
  assert.equal(C.normalizeRules({0:'<script>'})[0],'NETRAL');
+ // AUTO hypothesis: transparent, deterministic and independent of manual rule settings.
+ // No simplistic Sextile=BUY / Square=SELL mapping. Planet natures contribute sign.
+ const mk=(pair,angle,id)=>({
+  id,pair,name:C.ASPECTS.find(x=>x.angle===angle).name,angle,
+  start:start+10*HOUR,end:start+12*HOUR,exactTimes:[start+11*HOUR],
+  closest:start+11*HOUR,closestOrb:0,startClipped:false,endClipped:false
+ });
+ const windowResult=events=>({
+  version:'1.2.0',range:C.period('2026-10-05','day'),orb:2,
+  focus:'all',stepMinutes:15,events
+ });
+ const pseudo={longitude:(body)=>({
+  Sun:90,Moon:0,Mercury:180,Venus:150,Mars:180,Jupiter:60,Saturn:240
+ })[body]};
+ const t=start+11*HOUR;
+ const bullish=windowResult([mk(['Moon','Jupiter'],60,'test-benefic-sextile')]);
+ const bearish=windowResult([mk(['Mars','Saturn'],60,'test-malefic-sextile')]);
+ assert.equal(C.autoSignal(pseudo,bullish,t).direction,'BUY');
+ const autoCsv=C.toAutoStudyCSV(pseudo,bullish);
+ assert.match(autoCsv,/auto_hypothesis_UNVALIDATED/);
+ assert.match(autoCsv,/observed_xau_t0_EMPTY/);
+ assert.match(autoCsv,/"BUY"/);
+ assert.equal(autoCsv.trim().replace(/^\uFEFF/,'').split('\r\n')[0].split(',').length,28);
+ assert.ok(autoCsv.trim().replace(/^\uFEFF/,'').split('\r\n').slice(1)
+  .every(x=>x.split(',').length===28));
+ const emptyCsv=C.toAutoStudyCSV(pseudo,windowResult([]));
+ assert.equal(emptyCsv.trim().split('\r\n').length,1,'zero events keep valid header');
+
+ assert.equal(C.autoSignal(pseudo,bearish,t).direction,'SELL','sextile must NOT blindly give BUY');
+ const neutral=windowResult([mk(['Moon','Mercury'],180,'neutral-opposition')]);
+ assert.equal(C.autoSignal(pseudo,neutral,t).direction,'NETRAL','absence of signed planetary evidence must remain neutral');
+ const squareBuy=windowResult([mk(['Venus','Jupiter'],90,'benefic-square')]);
+ assert.equal(C.autoSignal(pseudo,squareBuy,t).direction,'BUY','square must NOT blindly give SELL');
+ const opposite=windowResult([mk(['Moon','Jupiter'],60,'buy'),mk(['Mars','Saturn'],60,'sell')]);
+ const contradiction=C.autoSignal(pseudo,opposite,t);
+ assert.equal(contradiction.direction,'KONFLIK');
+ assert.equal(contradiction.reason,'BUY_SELL_OVERLAP');
+ assert.equal(contradiction.validated,false);
+ assert.equal(contradiction.model,'ALBIRUNI_AUTO_EXPERIMENT_V1');
+ assert.equal(C.autoSignal(pseudo,bullish,start+9*HOUR).direction,'NETRAL','outside aspect windows must remain neutral');
+ assert.deepEqual(C.normalizeRules()[60],'NETRAL','MANUAL legacy baseline unchanged');
+ assert.equal(C.AUTO_THRESHOLD,0.18);
+ const autoDay=C.autoTimeline(pseudo,bullish,start);
+ assert.equal(autoDay.resolutionMinutes,15);
+ assert.ok(autoDay.windows.some(x=>x.direction==='BUY'&&x.start===start+10*HOUR&&x.end===start+12*HOUR));
+ assert.ok(autoDay.windows.every(x=>x.peak>=x.start&&x.peak<x.end));
+ assert.throws(()=>C.autoTimeline(pseudo,bullish,start-86400000),/Hari tidak ada/);
+
  assert.throws(()=>C.inspect(linear,r,r.range.end));
  const csv=C.toCSV(r,{0:'BUY'});assert.match(csv,/manual_bias_UNVALIDATED/);assert.match(csv,/'?2026-10-05 12:00/);assert.match(csv,/"BUY"/);
  // Reproducible event-study rows contain NO fabricated price returns or win rates.
- assert.equal(r.version,'1.1.0');
+ assert.equal(r.version,'1.2.0');
  const obs=C.studyObservations(r,{0:'BUY'});
  const selected=obs.filter(x=>x.pair==='Sun/Moon'&&x.angle===0);
  assert.equal(selected.length,1);
