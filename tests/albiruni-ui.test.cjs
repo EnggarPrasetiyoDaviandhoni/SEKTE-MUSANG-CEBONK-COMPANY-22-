@@ -77,6 +77,7 @@ async function run(){
  $('abStudyCSV').click();assert.ok(blob&&blob.size>1000);assert.match($('abStatus').textContent,/riset MANUAL diekspor/);
  assert.match($('abInspectInfo').textContent,/Arah NETRAL|Bias uji/);
 
+ $('abBiasMode').value='AUTO';$('abBiasMode').dispatchEvent(new w.Event('change'));
  $('abMode').value='month';$('abMode').dispatchEvent(new w.Event('change'));assert.equal($('abResults').hidden,true);assert.equal($('abCSV').disabled,true);assert.equal($('abStudyCSV').disabled,true);
  $('abDate').value='2024-02-11';$('abRun').click();
  await until(()=>$('abRun').disabled===false&&!$('abResults').hidden,'monthly calculation');
