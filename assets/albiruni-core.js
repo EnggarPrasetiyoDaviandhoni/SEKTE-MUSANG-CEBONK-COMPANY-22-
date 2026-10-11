@@ -1,4 +1,4 @@
-/* Al-Biruni aspect timing, v1.4. Independent modern ephemeris implementation.
+/* Al-Biruni aspect timing, v1.5. Independent modern ephemeris implementation.
  * Historical inspiration: Al-Qanun al-Masudi XI, chapter 2.
  * No market prediction, price feed, legacy scoring or trade execution. */
 (function(root){
@@ -140,7 +140,7 @@ async function scan(engine,date,{mode='week',focus='moon',orb=2,stepMinutes=15,o
   onProgress(Math.round(65+(i+1)/selected.length*35));await yieldNow();
  }
  check();events.sort((a,b)=>a.closest-b.closest||a.start-b.start||a.id.localeCompare(b.id));
- return {version:'1.4.0',range,focus,orb,stepMinutes,resolutionSeconds:1,events};
+ return {version:'1.5.0',range,focus,orb,stepMinutes,resolutionSeconds:1,events};
 }
 function normalizeRules(input={}){
  const rules={};for(const a of ASPECTS)rules[a.angle]=['BUY','SELL','NETRAL'].includes(input[a.angle])?input[a.angle]:'NETRAL';
@@ -316,6 +316,59 @@ function autoPeriodSummary(engine,result,{stepMinutes}={}){
   dominantWindow:dominant
  };
 }
+// An independently computed horizon gives ONE direction and (only when a
+// dominant market-day window exists) a dated, WIB-stamped candidate time.
+// ENTRY = highest raw model score's sampled grid instant ("INTI"), NOT a
+// verified market entry, astronomical exact, order, or forward forecast.
+// Preserve all cross-horizon disagreements; no forced alignment.
+function periodEntryReport(engine,result){
+ const summary=autoPeriodSummary(engine,result);
+ const w=summary.dominantWindow;
+ const hasCandidate=(summary.direction==='BUY'||summary.direction==='SELL')&&
+  w&&Number.isFinite(w.start)&&Number.isFinite(w.peak)&&Number.isFinite(w.end)&&
+  w.start<=w.peak&&w.peak<w.end&&
+  w.start>=result.range.start&&w.end<=result.range.end;
+ if(!hasCandidate){
+  return {mode:summary.mode,model:summary.model,validated:false,
+   direction:'WAIT',periodDirection:summary.direction,
+   reason:summary.direction==='NETRAL'?'NO_SINGLE_DIRECTION':'NO_VALID_MARKET_WINDOW',
+   resolutionMinutes:summary.resolutionMinutes,
+   periodStart:summary.start,periodEnd:summary.end,
+   entryUTC:null,entryWIB:null,entryDateWIB:null,
+   startUTC:null,coreUTC:null,endUTC:null,startWIB:null,coreWIB:null,endWIB:null,
+   aspect:null,summary};
+ }
+ // A valid focus window is already weekday-only in autoPeriodSummary;
+ // double-check to fail closed when called with malformed results.
+ const weekday=new Date(w.peak+WIB).getUTCDay();
+ if(weekday===0||weekday===6){
+  return {mode:summary.mode,model:summary.model,validated:false,
+   direction:'WAIT',periodDirection:summary.direction,reason:'MARKET_CLOSED',
+   resolutionMinutes:summary.resolutionMinutes,periodStart:summary.start,periodEnd:summary.end,
+   entryUTC:null,entryWIB:null,entryDateWIB:null,
+   startUTC:null,coreUTC:null,endUTC:null,startWIB:null,coreWIB:null,endWIB:null,
+   aspect:null,summary};
+ }
+ const active=autoSignal(engine,result,w.peak);
+ const dominant=active.dominant&&
+  Math.sign(active.dominant.contribution)===(summary.direction==='BUY'?1:-1)?
+  active.dominant:null;
+ const aspect=dominant?{
+  pair:dominant.pair.slice(),name:dominant.name,angle:dominant.angle,
+  phase:dominant.phase,orb:dominant.orb,contribution:dominant.contribution,
+  exactUTC:dominant.exact,closestUTC:dominant.closest
+ }:null;
+ return {
+  mode:summary.mode,model:summary.model,validated:false,
+  direction:summary.direction,periodDirection:summary.direction,
+  reason:'DOMINANT_WINDOW_PEAK_GRID',resolutionMinutes:summary.resolutionMinutes,
+  periodStart:summary.start,periodEnd:summary.end,
+  entryUTC:w.peak,entryWIB:stamp(w.peak),entryDateWIB:iso(w.peak),
+  startUTC:w.start,coreUTC:w.peak,endUTC:w.end,
+  startWIB:stamp(w.start),coreWIB:stamp(w.peak),endWIB:stamp(w.end),
+  aspect,summary
+ };
+}
 function studyObservations(result,rules={}){
  assert(result&&result.range&&Array.isArray(result.events),'Hasil aspek belum valid.');
  const normalized=normalizeRules(rules),out=[];
@@ -374,7 +427,7 @@ function toAutoStudyCSV(engine,result,rules={}){
  });
  return '\uFEFF'+rows.join('\r\n')+'\r\n';
 }
-const API=Object.freeze({BODIES,ASPECTS,DAY,MIN,WIB,parseDate,period,iso,stamp,norm,signed,geometry,pairs,createEngine,scan,inspect,daily,direction,normalizeRules,toCSV,studyObservations,toStudyCSV,toAutoStudyCSV,autoSignal,autoTimeline,autoPeriodSummary,AUTO_NATURE,AUTO_ASPECT,AUTO_PHASE,AUTO_THRESHOLD});
+const API=Object.freeze({BODIES,ASPECTS,DAY,MIN,WIB,parseDate,period,iso,stamp,norm,signed,geometry,pairs,createEngine,scan,inspect,daily,direction,normalizeRules,toCSV,studyObservations,toStudyCSV,toAutoStudyCSV,autoSignal,autoTimeline,autoPeriodSummary,periodEntryReport,AUTO_NATURE,AUTO_ASPECT,AUTO_PHASE,AUTO_THRESHOLD});
 root.CebonkAlBiruni=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
