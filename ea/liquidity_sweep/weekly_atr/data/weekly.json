@@ -14,7 +14,8 @@
       "start_epoch": 1792105200,
       "core_epoch": 1792105200,
       "end_epoch": 1792170000,
-      "minutes": 1080
+      "minutes": 1080,
+      "aspects_at_core": "Mars Trine Saturn (orb 0.25 deg; MENDEKAT) | Sun Sextile Jupiter (orb 0.51 deg; MENJAUH)"
     },
     {
       "date": "2026-10-15",
@@ -22,7 +23,8 @@
       "start_epoch": 1792018800,
       "core_epoch": 1792018800,
       "end_epoch": 1792083600,
-      "minutes": 1080
+      "minutes": 1080,
+      "aspects_at_core": "Sun Sextile Jupiter (orb 0.33 deg; MENDEKAT) | Mars Trine Saturn (orb 0.87 deg; MENDEKAT)"
     },
     {
       "date": "2026-10-14",
@@ -30,7 +32,8 @@
       "start_epoch": 1791932400,
       "core_epoch": 1791961200,
       "end_epoch": 1791976500,
-      "minutes": 735
+      "minutes": 735,
+      "aspects_at_core": "Moon Sextile Pluto (orb 0.02 deg; TEPAT) | Sun Sextile Jupiter (orb 0.88 deg; MENDEKAT)"
     },
     {
       "date": "2026-10-14",
@@ -38,7 +41,8 @@
       "start_epoch": 1791977400,
       "core_epoch": 1791996900,
       "end_epoch": 1791997200,
-      "minutes": 330
+      "minutes": 330,
+      "aspects_at_core": "Sun Sextile Jupiter (orb 0.54 deg; MENDEKAT) | Mars Trine Saturn (orb 1.03 deg; MENDEKAT)"
     },
     {
       "date": "2026-10-13",
@@ -46,7 +50,8 @@
       "start_epoch": 1791894900,
       "core_epoch": 1791910500,
       "end_epoch": 1791910800,
-      "minutes": 265
+      "minutes": 265,
+      "aspects_at_core": "Neptune Sextile Pluto (orb 0.55 deg; MENJAUH) | Sun Sextile Jupiter (orb 1.37 deg; MENDEKAT)"
     }
   ],
   "status": "READY"
