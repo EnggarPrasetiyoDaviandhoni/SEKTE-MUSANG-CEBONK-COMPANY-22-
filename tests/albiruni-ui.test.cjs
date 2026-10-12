@@ -19,6 +19,7 @@ async function run(){
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-core.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-classic.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-ui.js'),'utf8'));
+ w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-election-gate.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-classic-ui.js'),'utf8'));
  const $=id=>w.document.getElementById(id);
  await until(()=>$('abRun').disabled===false&&!$('abResults').hidden,'initial calculation');
@@ -35,6 +36,8 @@ async function run(){
  assert.match($('abClassicResults').textContent,/Tidak ada rumus BUY\/SELL/);
  assert.match($('abClassicResults').textContent,/ASCENDANT/);
  assert.match($('abClassicResults').textContent,/KONTAK BENEFIC/);
+ assert.match($('abClassicResults').textContent,/KUALITAS WAKTU AL-BIRUNI/);
+ assert.match($('abClassicResults').textContent,/MENGUNTUNGKAN|MERUGIKAN|CAMPURAN/);
  assert.match($('abClassicResults').textContent,/KONTAK MALEFIC/);
  assert.match($('abClassicResults').textContent,/MALAM|SIANG/);
  $('abClassicLat').value='-7.3000';
