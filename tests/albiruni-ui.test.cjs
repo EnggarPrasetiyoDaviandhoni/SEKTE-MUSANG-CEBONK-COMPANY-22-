@@ -14,15 +14,16 @@ async function run(){
  w.CebonkCore=Object.freeze({sentinel:'legacy'});w.CEBONK_ASTRO_STATE=Object.freeze({sentinel:'unchanged'});
  const oldCore=w.CebonkCore,oldState=w.CEBONK_ASTRO_STATE;
  const errors=[];w.addEventListener('error',e=>errors.push(e.error||e.message));
- w.fetch=async (url,opts)=>({
+ w.fetch=async (url,opts)=>{assert.match(url,/majority_v2\.json$/,'EA 1.02 must read majority V2 only');return ({
    ok:true,json:async()=>({
-    model:'ALBIRUNI_INTRADAY_V1',date_wib:'2026-10-12',
-    signal_id:'NONE',direction:'WAIT',entry_epoch:0,
+    model:'ALBIRUNI_MAJORITY_V2',date_wib:'2026-10-12',
+    signal_id:'NONE',direction:'WAIT',entry_epoch:0,buy_aspects:0,sell_aspects:0,
+    summary:{directionRule:'ASPECT_COUNT_MAJORITY_V2',dominant:'SELL',buyVotes:30,sellVotes:128},
     published_epoch:1791801290,reason:'WAIT_ELECTION_TIME_NOT_FAVORABLE',
-    election:{status:'CAMPURAN',reference:{latitude:-6.2,longitude:106.8167,gateMode:'enforce'},
-     entry_wib:'2026-10-12 09:30 WIB',check_wib:'2026-10-12 11:21 WIB'}
+    election:{eligible:false,status:'CAMPURAN',reference:{latitude:-6.2,longitude:106.8167,gateMode:'enforce'},
+     entry_wib:'2026-10-12 10:00 WIB',check_wib:'2026-10-12 13:37 WIB'}
    })
-  });
+  });};
   let blob=null;
  w.URL.createObjectURL=value=>{blob=value;return 'blob:test';};w.URL.revokeObjectURL=()=>{};w.HTMLAnchorElement.prototype.click=function(){};
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-core.js'),'utf8'));
@@ -39,6 +40,11 @@ async function run(){
   'EA decision must render before time inspector, not hidden below classical tables');
  await until(()=>$('abFinalFeedStatus').textContent.includes('EA WAIT'),'published EA WAIT');
  assert.match($('abFinalFeedStatus').textContent,/CAMPURAN/);
+  assert.match($('abFinalFeedStatus').textContent,/FOKUS ARAH HARIAN/);
+  assert.match($('abFinalFeedStatus').textContent,/SELL 128 \/ BUY 30/);
+  assert.match($('abFinalFeedStatus').textContent,/Feed v1\.02/);
+  assert.match($('abFinalFeedStatus').textContent,/IZIN ENTRY EA/);
+  assert.match($('abFinalFeedStatus').textContent,/tidak diterbitkan/);
  assert.match($('abFinalFeedStatus').textContent,/2026-10-12/);
  assert.match($('abFinalFeedStatus').textContent,/Filter/);
  assert.match($('abInspectLabel').textContent,/BELUM FILTER EA/);

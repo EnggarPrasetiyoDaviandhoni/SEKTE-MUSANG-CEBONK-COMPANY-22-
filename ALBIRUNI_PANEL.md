@@ -1,3 +1,13 @@
+## Koreksi UI v1.02: ARAH mayoritas ≠ IZIN entry — 12 Oktober 2026
+
+Panel final menampilkan **FOKUS ARAH HARIAN** terpisah dari **IZIN ENTRY EA**. Pada 2026-10-12, sinyal AUTO pukul 12:00 WIB adalah SELL (2 SELL, 1 BUY), dan mayoritas harian dari sampler tercatat SELL 128 suara vs BUY 30 suara. **Feed EA v1.02 tetap WAIT** karena kualitas waktu klasik §527 CAMPURAN.
+
+Web membaca `ea/albiruni_intraday/data/majority_v2.json` milik EA v1.02, **bukan** `intraday.json` v1.01. JSON harus `ALBIRUNI_MAJORITY_V2`, mempunyai jumlah suara dan label `ASPECT_COUNT_MAJORITY_V2`, serta konsisten dengan pembatas `WAIT` / gate §527. Bila feed tidak ada, tanggal berbeda, atau kontradiktif, panel tidak menampilkan sinyal palsu. Tombol perbarui membaca lagi tanpa cache.
+
+Perubahan hanya presentasi/read-only, tidak mengubah generator, EA, atau filter ketat. Mengubah CAMPURAN menjadi entry tetap perlu evaluasi strategi terpisah dan pengujian risiko.
+
+---
+
 ## Perubahan model AUTO — mayoritas jumlah aspek (12 Oktober 2026)
 
 Berdasarkan permintaan pengguna, model `ALBIRUNI_AUTO_MAJORITY_V2` menentukan fokus arah dari **jumlah aspek aktif berarah**: **2 SELL + 1 BUY = SELL**, **2 BUY + 1 SELL = BUY**, **imbang = KONFLIK** dan **tanpa arah = NETRAL/WAIT**. Aspek berkekuatan bobot kecil (seperti SELL −0.006) tetap dihitung sebagai satu aspek selama masih aktif dan kontribusinya memiliki tanda SELL. Tidak menghitung sekadar banyaknya label tanpa arah; aspek 0 diabaikan. Fase applying/separating keduanya masuk hitungan sesuai permintaan.
