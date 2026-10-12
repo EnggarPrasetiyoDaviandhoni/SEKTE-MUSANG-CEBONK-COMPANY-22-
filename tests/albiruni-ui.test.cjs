@@ -14,13 +14,17 @@ async function run(){
  w.CebonkCore=Object.freeze({sentinel:'legacy'});w.CEBONK_ASTRO_STATE=Object.freeze({sentinel:'unchanged'});
  const oldCore=w.CebonkCore,oldState=w.CEBONK_ASTRO_STATE;
  const errors=[];w.addEventListener('error',e=>errors.push(e.error||e.message));
- w.fetch=async (url,opts)=>{assert.match(url,/majority_v2\.json$/,'EA 1.02 must read majority V2 only');return ({
+ w.fetch=async (url,opts)=>{assert.match(url,/majority_direct_v3\.json$/,'EA 1.03 must read direct V3 only');return ({
    ok:true,json:async()=>({
-    model:'ALBIRUNI_MAJORITY_V2',date_wib:'2026-10-12',
-    signal_id:'NONE',direction:'WAIT',entry_epoch:0,buy_aspects:0,sell_aspects:0,
+    model:'ALBIRUNI_MAJORITY_DIRECT_V3',date_wib:'2026-10-12',
+    signal_id:'AB-20261012-SELL-TEST',direction:'SELL',
+    entry_epoch:Math.floor(Date.parse('2026-10-12T03:00:00Z')/1000),
+    core_epoch:Math.floor(Date.parse('2026-10-12T06:42:35Z')/1000),
+    end_epoch:Math.floor(Date.parse('2026-10-12T07:30:00Z')/1000),
+    phase:'APPLYING',buy_aspects:1,sell_aspects:2,
     summary:{directionRule:'ASPECT_COUNT_MAJORITY_V2',dominant:'SELL',buyVotes:30,sellVotes:128},
     published_epoch:1791801290,reason:'WAIT_ELECTION_TIME_NOT_FAVORABLE',
-    election:{eligible:false,status:'CAMPURAN',reference:{latitude:-6.2,longitude:106.8167,gateMode:'enforce'},
+    election:{eligible:null,status:'NOT_APPLIED',reference:{latitude:-6.2,longitude:106.8167,gateMode:'majority'},
      entry_wib:'2026-10-12 10:00 WIB',check_wib:'2026-10-12 13:37 WIB'}
    })
   });};
@@ -38,18 +42,18 @@ async function run(){
  assert.ok($('abFinalDecision'),'EA decision must be displayed beside time inspector');
  assert.ok($('abFinalDecision').compareDocumentPosition($('abTime')) & w.Node.DOCUMENT_POSITION_FOLLOWING,
   'EA decision must render before time inspector, not hidden below classical tables');
- await until(()=>$('abFinalFeedStatus').textContent.includes('EA WAIT'),'published EA WAIT');
- assert.match($('abFinalFeedStatus').textContent,/CAMPURAN/);
-  assert.match($('abFinalFeedStatus').textContent,/FOKUS ARAH HARIAN/);
+ await until(()=>$('abFinalFeedStatus').textContent.includes('EA DIRECT SELL'),'published direct SELL');
+ assert.match($('abFinalFeedStatus').textContent,/TIDAK DITERAPKAN/);
+  assert.match($('abFinalFeedStatus').textContent,/ARAH MAYORITAS HARIAN WEB/);
   assert.match($('abFinalFeedStatus').textContent,/SELL 128 \/ BUY 30/);
-  assert.match($('abFinalFeedStatus').textContent,/Feed v1\.02/);
-  assert.match($('abFinalFeedStatus').textContent,/IZIN ENTRY EA/);
-  assert.match($('abFinalFeedStatus').textContent,/tidak diterbitkan/);
+  assert.match($('abFinalFeedStatus').textContent,/feed v1\.03/);
+  assert.match($('abFinalFeedStatus').textContent,/JADWAL ENTRY EA DIRECT/);
+  assert.match($('abFinalFeedStatus').textContent,/SELL 2 \/ BUY 1/);
  assert.match($('abFinalFeedStatus').textContent,/2026-10-12/);
- assert.match($('abFinalFeedStatus').textContent,/Filter/);
+ assert.match($('abFinalFeedStatus').textContent,/Filter waktu/);
  assert.match($('abInspectLabel').textContent,/BELUM FILTER EA/);
  $('abRefreshFeed').click();
- await until(()=>$('abFinalFeedStatus').textContent.includes('EA WAIT'),'refresh final EA decision');
+ await until(()=>$('abFinalFeedStatus').textContent.includes('EA DIRECT SELL'),'refresh direct EA feed');
  $('abClassicCalc').click();
  await until(()=>$('abClassicResults').textContent.includes('SKOR MARTABAT KLASIK'),'classical direction and dignity');
  assert.match($('abClassicResults').textContent,/ARAH HARIAN/);
