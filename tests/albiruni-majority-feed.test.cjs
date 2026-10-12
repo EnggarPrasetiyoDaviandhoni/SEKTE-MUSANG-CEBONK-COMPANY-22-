@@ -37,7 +37,7 @@ async function main(){
  const result={range:C.period(date,'day'),orb:2,focus:'all',events:[
   mk(['Moon','Venus'],0,'buy'),mk(['Moon','Mars'],90,'sell-one'),
   mk(['Venus','Mars'],90,'sell-two')]};
- const engine={longitude:body=>({Moon:0,Venus:0,Mars:90})[body]??0};
+ const engine={longitude:(body,ms)=>({Moon:(ms-start)/h-12,Venus:0,Mars:90})[body]??0};
  let requestedFocus=null;
  const build=await P.build(date,{engine,publishedMs:Date.parse('2026-10-11T14:00:00Z'),
   scanFunction:async(_engine,_date,opts)=>{requestedFocus=opts.focus;return result;},
