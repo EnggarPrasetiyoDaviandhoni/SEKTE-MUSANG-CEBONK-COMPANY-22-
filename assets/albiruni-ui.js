@@ -28,7 +28,7 @@ panel.innerHTML=`
    <div><label for="abFocus">Pasangan benda langit</label><select id="abFocus"><option value="moon">Bulan ↔ 6 benda lainnya</option><option value="all">Semua pasangan klasik · 21</option></select></div>
    <div><label for="abOrb">Orb window (°)</label><input id="abOrb" type="number" min="0.25" max="5" step="0.25" value="2" required></div>
   </div>
-  <div class="ab-auto-config"><label for="abBiasMode">Mesin interpretasi arah XAUUSD</label><select id="abBiasMode"><option value="AUTO">AUTO EKSPERIMEN · penilaian planet & aspek</option><option value="MANUAL">MANUAL · aturan uji sendiri</option></select><span class="ab-auto-warning">AUTO merupakan hipotesis modern BELUM tervalidasi, bukan rumus harga dari kitab Al-Biruni atau order EA.</span></div>
+  <div class="ab-auto-config"><label for="abBiasMode">Mesin interpretasi arah XAUUSD</label><select id="abBiasMode"><option value="AUTO">AUTO MAYORITAS · jumlah aspek aktif BUY/SELL</option><option value="MANUAL">MANUAL · aturan uji sendiri</option></select><span class="ab-auto-warning">AUTO memakai suara terbanyak aspek aktif: 2 SELL + 1 BUY = SELL; imbang = KONFLIK. Hipotesis modern BELUM tervalidasi, bukan rumus trading Al-Biruni.</span></div>
   <div class="ab-actions"><button id="abRunThree" class="ab-primary" type="button">Hitung 3 Dominasi + Jam Entry</button><button id="abRun" class="ab-primary" type="button">Hitung peta aspek</button><button id="abToday" type="button">Hari ini</button><button id="abCancel" type="button" disabled>Batalkan</button><button id="abPrev" class="ab-next" type="button" aria-label="Periode sebelumnya">← Sebelumnya</button><button id="abNext" type="button" aria-label="Periode berikutnya">Berikutnya →</button><button id="abCSV" type="button" disabled>Unduh CSV aspek</button><button id="abStudyCSV" type="button" disabled>CSV riset XAUUSD</button></div>
   <div id="abStatusBox" class="ab-status" role="status" aria-live="polite"><progress id="abProgress" max="100" value="0" hidden></progress><span id="abStatus">Siap menghitung panel baru.</span></div>
   <div id="abThreeResult" class="ab-three-result" hidden>
@@ -42,7 +42,7 @@ panel.innerHTML=`
    <div class="ab-metrics">
     <div class="ab-metric"><span>Kontak exact dalam periode</span><strong id="abExactCount">—</strong><small id="abPeriodLabel">—</small></div>
     <div class="ab-metric"><span>Window aspek</span><strong id="abWindowCount">—</strong><small id="abSettingsLabel">—</small></div>
-    <div class="ab-metric"><span>Hipotesis arah XAUUSD (AUTO/MANUAL)</span><strong id="abRuleState">NETRAL</strong><small id="abRuleCaption">Arah belum divalidasi.</small></div>
+    <div class="ab-metric"><span>Hipotesis arah XAUUSD (MAYORITAS/MANUAL)</span><strong id="abRuleState">NETRAL</strong><small id="abRuleCaption">Arah belum divalidasi.</small></div>
    </div>
    <div id="abAutoStatus" class="ab-auto-status" role="status" aria-live="polite" hidden></div>
    <div class="ab-section-title"><h3 id="abCalendarTitle">Pilih hari untuk rincian</h3><small>Jumlah exact = peristiwa langit, bukan jumlah entry</small></div>
@@ -51,10 +51,10 @@ panel.innerHTML=`
    <div id="abAutoWindows" class="ab-auto-windows" hidden></div>
    <div class="ab-table-wrap"><table><caption class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden">Awal, exact atau titik terdekat, dan akhir window aspek pada hari dipilih</caption><thead><tr><th>Pasangan / aspek</th><th>Mulai window</th><th>Inti · exact</th><th>Akhir window</th><th id="abBiasTableHeader">Bias uji manual</th></tr></thead><tbody id="abEvents"></tbody></table></div>
    <div class="ab-inspect"><div><label for="abTime">Periksa jam WIB</label><input id="abTime" type="time" value="12:00:00" step="1"></div><div><strong id="abInspectLabel">—</strong><small id="abInspectInfo">—</small><div id="abActive" class="ab-active"></div></div></div>
-   <p class="ab-footnote">AUTO memakai bobot planet, jenis aspek, fase dan orb sebagai HIPOTESIS, bukan probabilitas. Window AUTO disampling per 15 menit, bukan batas exact astronomis. Mode mingguan menghitung Senin–Jumat saja; kontak Sabtu/Minggu tidak digeser ke Jumat/Senin. Awal/akhir memakai orb yang dipilih. Tanda “batas periode” berarti window sudah aktif atau masih berlanjut; bukan awal/akhir kontak yang terkonfirmasi. Kalender WIB tidak memeriksa jam broker atau hari libur.</p>
+   <p class="ab-footnote">AUTO menentukan fokus dari JUMLAH aspek aktif BUY/SELL. Bobot tetap untuk audit, bukan penentu arah atau probabilitas. Window AUTO disampling per 15 menit, bukan batas exact astronomis. Mode mingguan menghitung Senin–Jumat saja; kontak Sabtu/Minggu tidak digeser ke Jumat/Senin. Awal/akhir memakai orb yang dipilih. Tanda “batas periode” berarti window sudah aktif atau masih berlanjut; bukan awal/akhir kontak yang terkonfirmasi. Kalender WIB tidak memeriksa jam broker atau hari libur.</p>
   </div>
   <details id="abRules"><summary>Setelan BUY/SELL untuk uji hipotesis</summary><p>Default semua NETRAL. Pilih label untuk menguji aturanmu sendiri. Label ini bukan aturan trading dari kitab al-Biruni dan belum diuji dengan harga XAUUSD. Bila window BUY dan SELL tumpang tindih, hasilnya KONFLIK.</p><div class="ab-rules">${C.ASPECTS.map(a=>`<div><label for="abRule${a.angle}">${a.name} ${a.angle}°</label><select id="abRule${a.angle}" data-ab-rule="${a.angle}"><option value="NETRAL">NETRAL</option><option value="BUY">BUY · uji manual</option><option value="SELL">SELL · uji manual</option></select></div>`).join('')}</div><button id="abResetRules" class="ab-small-button" type="button">Reset semua NETRAL</button><p id="abSaveNote">Setelan disimpan di perangkat ini.</p><p>CSV riset hanya mengekspor waktu aspek dan kolom harga XAUUSD kosong untuk dipasangkan dengan data pasar di luar situs. Tanpa data harga, tidak ada hasil backtest atau winrate.</p></details>
-  <details><summary>Metode dan sumber al-Biruni</summary><p>Versi ini mengambil konsep aspek dan tahap mendekat, tepat, lalu menjauh dari Maqalah XI, Bab 2, <i>Al-Qanun al-Masudi</i>. Ini implementasi timing dengan ephemeris modern, bukan reproduksi seluruh rumus kitab. Hanya selisih bujur ekliptika; tidak mencakup lintang aspek, rumah, tasyir, atau siklus panjang. **AUTO** adalah model hipotesis modern: bobot planet ±, aspek, applying/exact/separating, dan orb; bukan rumus perdagangan emas al-Biruni, tanpa backtest, tanpa data harga, dan tidak dibaca EA.</p><p>Posisi geosentrik tropikal dihitung memakai Astronomy Engine 2.1.19, apparent true ecliptic of date. Pencarian memakai grid 15 menit, lalu akar sudut aspek dan batas orb disempurnakan hingga interval ≤1 detik. Angka tersebut adalah resolusi pencarian numerik, bukan jaminan akurasi astronomi satu detik. Retrograde dan kontak berulang tetap dicatat; titik terdekat yang tidak mencapai aspek tidak dilabeli exact. Orb 2° adalah setelan awal aplikasi yang bisa diubah, bukan angka baku dari kitab.</p><p><a href="https://archive.org/details/kitabalqanunalma03biru/page/n307/mode/1up" target="_blank" rel="noopener noreferrer">Edisi cetak jilid III, halaman 1373 · applying/exact/separating</a> · <a href="https://www.qdl.qa/en/archive/81055/vdc_100022880536.0x000001" target="_blank" rel="noopener noreferrer">Manuskrip British Library Or 1997</a> · <a href="https://archive.org/details/al-qanun-al-masudi-biruni-muhammad-ibn-ahmad" target="_blank" rel="noopener noreferrer">Koleksi yang kamu kirim</a> · <a href="https://github.com/cosinekitty/astronomy/blob/v2.1.19/source/js/README.md" target="_blank" rel="noopener noreferrer">Dokumentasi ephemeris</a>.</p></details>
+  <details><summary>Metode dan sumber al-Biruni</summary><p>Versi ini mengambil konsep aspek dan tahap mendekat, tepat, lalu menjauh dari Maqalah XI, Bab 2, <i>Al-Qanun al-Masudi</i>. Ini implementasi timing dengan ephemeris modern, bukan reproduksi seluruh rumus kitab. Hanya selisih bujur ekliptika; tidak mencakup lintang aspek, rumah, tasyir, atau siklus panjang. **AUTO** adalah hipotesis modern: suara aspek aktif paling banyak menentukan arah; imbang adalah KONFLIK; bukan rumus perdagangan emas al-Biruni, tanpa backtest, tanpa data harga, dan tidak dibaca EA.</p><p>Posisi geosentrik tropikal dihitung memakai Astronomy Engine 2.1.19, apparent true ecliptic of date. Pencarian memakai grid 15 menit, lalu akar sudut aspek dan batas orb disempurnakan hingga interval ≤1 detik. Angka tersebut adalah resolusi pencarian numerik, bukan jaminan akurasi astronomi satu detik. Retrograde dan kontak berulang tetap dicatat; titik terdekat yang tidak mencapai aspek tidak dilabeli exact. Orb 2° adalah setelan awal aplikasi yang bisa diubah, bukan angka baku dari kitab.</p><p><a href="https://archive.org/details/kitabalqanunalma03biru/page/n307/mode/1up" target="_blank" rel="noopener noreferrer">Edisi cetak jilid III, halaman 1373 · applying/exact/separating</a> · <a href="https://www.qdl.qa/en/archive/81055/vdc_100022880536.0x000001" target="_blank" rel="noopener noreferrer">Manuskrip British Library Or 1997</a> · <a href="https://archive.org/details/al-qanun-al-masudi-biruni-muhammad-ibn-ahmad" target="_blank" rel="noopener noreferrer">Koleksi yang kamu kirim</a> · <a href="https://github.com/cosinekitty/astronomy/blob/v2.1.19/source/js/README.md" target="_blank" rel="noopener noreferrer">Dokumentasi ephemeris</a>.</p></details>
  </div>`;
 const status=(message,error=false)=>{$('abStatus').textContent=message;$('abStatusBox').classList.toggle('ab-error',error);};
 const pairLabel=e=>e.pair.map(id=>names[id]).join(' ↔ ');
@@ -86,7 +86,7 @@ function renderThree(){
  $('abThreeCards').innerHTML=THREE_MODES.map(m=>{
   const p=threePlans[m.mode];if(!p)throw Error('Hasil tiga periode tidak lengkap.');
   const entry=p.entryUTC!==null,direction=entry?p.direction:'WAIT';
-  const reason=entry?'Puncak bobot hipotesis window dominan':
+  const reason=entry?'Puncak dominasi mayoritas aspek pada window terpilih':
    p.reason==='NO_SINGLE_DIRECTION'?'Tidak ada satu arah dominan':
    p.reason==='MARKET_CLOSED'?'Market tutup':'Tidak ada window valid searah dominasi';
   const a=p.aspect;
@@ -104,7 +104,7 @@ function renderThree(){
     '<div class="ab-three-entry"><small>TANGGAL & JAM KANDIDAT ENTRY (WIB)</small>'+
     '<strong>'+esc(p.entryWIB)+'</strong>'+
     '<span>'+(p.entryUTC<Date.now()?'WAKTU TELAH LEWAT · ':'')+
-    'Kandidat INTI eksperimen, bukan sinyal order MT5</span></div>'+
+    'Kandidat INTI mayoritas aspek, bukan sinyal order MT5</span></div>'+
     '<div class="ab-three-times">'+
     '<div><small>MULAI</small><b>'+esc(p.startWIB)+'</b></div>'+
     '<div><small>INTI</small><b>'+esc(p.coreWIB)+'</b></div>'+
@@ -113,7 +113,7 @@ function renderThree(){
     '<div class="ab-three-entry"><small>TANGGAL & JAM KANDIDAT ENTRY (WIB)</small>'+
     '<strong>WAIT — TIDAK ADA ENTRY</strong><span>'+esc(reason)+'</span></div>')+
    '<p class="ab-three-muted">'+esc(reason)+
-   ' · BUY '+p.summary.buyMinutes+' menit / SELL '+p.summary.sellMinutes+
+   ' · SUARA BUY '+p.summary.buyVotes+' / SELL '+p.summary.sellVotes+'; BUY '+p.summary.buyMinutes+' menit / SELL '+p.summary.sellMinutes+
    ' menit (skor durasi, bukan tingkat keberhasilan).</p>'+
    '</article>';
  }).join('');
@@ -176,26 +176,27 @@ function inspect(){
   const primary=periodSummary?.direction||'NETRAL';
   const counter=automatic&&['BUY','SELL'].includes(primary)&&direction!==primary;
   $('abInspectLabel').innerHTML='<span class="ab-auto-only">ASPEK '+(automatic?'AUTO EKSPERIMEN · BELUM FILTER EA':'MANUAL · UJI HIPOTESIS')+'</span> '+chip(direction)+' <span>· '+esc(selectedDate+' '+time+' WIB')+'</span>'+
-   (counter?' <small>· LUAR FOKUS '+esc(primary)+' / SKIP</small>':'');
+   (automatic?' <small>· FOKUS JAM '+esc(direction)+' · SELL '+automatic.sellCount+' / BUY '+automatic.buyCount+' aspek</small>':'')+
+     (counter?' <small>· FOKUS PERIODE '+esc(primary)+' BERBEDA (BUKAN ENTRY)</small>':'');
   const phases={APPLYING:'Mendekat',EXACT:'Exact',SEPARATING:'Menjauh',STATION:'Titik balik'};
   if(automatic){
    const explanations={
     NO_ACTIVE_ASPECT:'Tidak ada aspek aktif pada jam ini.',
-    NO_STRONG_PLANETARY_COMBINATION:'Aspek aktif ada, namun bobot planet terlalu lemah.',
-    BUY_SELL_OVERLAP:'Aspek BUY dan SELL bersamaan; KONFLIK.',
+    NO_SIGNED_ASPECTS:'Aspek aktif ada, tetapi tidak mempunyai arah BUY/SELL.',
+    BUY_SELL_COUNT_TIE:'Jumlah aspek BUY dan SELL sama; KONFLIK.',
     NET_SCORE_BELOW_THRESHOLD:'Kekuatan arah bersih kurang dari batas minimum.',
-    DOMINANT_WEIGHTED_ASPECTS:'Arah hipotesis sesuai jumlah bobot planet, aspek, fase dan orb.'
+    DOMINANT_ASPECT_COUNT:'Arah berdasarkan jumlah aspek aktif terbanyak.'
    };
    $('abRuleState').textContent=direction+' · AUTO';
-   $('abRuleCaption').textContent='AUTO V1 EKSPERIMEN · bukan probabilitas pasar.';
+   $('abRuleCaption').textContent='AUTO MAYORITAS V2 · jumlah aspek, bukan bobot. Belum tervalidasi.';
    $('abInspectInfo').textContent=(explanations[automatic.reason]||automatic.reason)+
-    ' Bobot BUY '+automatic.buy.toFixed(3)+' / SELL '+automatic.sell.toFixed(3)+
+    ' Jumlah aspek BUY '+automatic.buyCount+' / SELL '+automatic.sellCount+'. Bobot audit BUY '+automatic.buy.toFixed(3)+' / SELL '+automatic.sell.toFixed(3)+
     ' (bukan confidence).';
    const d=automatic.dominant;
    $('abAutoStatus').hidden=false;
-   $('abAutoStatus').innerHTML='<b>ASPEK AUTO '+esc(direction)+' · BUKAN KEPUTUSAN EA</b>'+
+   $('abAutoStatus').innerHTML='<b>ASPEK AUTO MAYORITAS '+esc(direction)+' · '+automatic.sellCount+' SELL / '+automatic.buyCount+' BUY · BUKAN KEPUTUSAN EA</b>'+
     (counter?'<p>SKIP: jam iki ora searah fokus '+esc(primary)+' kanggo periode sing dipilih.</p>':'')+
-    '<p>Bobot model: BUY '+automatic.buy.toFixed(3)+' · SELL '+automatic.sell.toFixed(3)+
+    '<p>Bobot audit (bukan penentu arah): BUY '+automatic.buy.toFixed(3)+' · SELL '+automatic.sell.toFixed(3)+
     ' · bukan persentase kemungkinan profit.</p>'+
     (d?'<p>Aspek dominan: '+esc(pairLabel(d))+' '+esc(d.name)+' '+d.angle+'° · '+
        esc(phases[d.phase]||d.phase)+' · orb '+d.orb.toFixed(3)+'°</p>'+
@@ -239,7 +240,7 @@ function renderDay(){
  const day=C.daily(result).find(d=>d.date===selectedDate);if(!day)return;
  panel.querySelectorAll('[data-ab-date]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.abDate===selectedDate)));
  $('abDayTitle').textContent=weekdays[day.weekday]+', '+selectedDate+' · '+day.exactCount+' exact / '+day.events.length+' window aktif';
- $('abBiasTableHeader').textContent=biasMode==='AUTO'?'Asumsi bobot awal':'Bias uji manual';
+ $('abBiasTableHeader').textContent=biasMode==='AUTO'?'Klasifikasi aspek':'Bias uji manual';
  if(biasMode==='AUTO'){
   // Estimated bias windows sampled at 15-minute spacing; exact orbital times are in event rows.
   const report=periodSummary||C.autoPeriodSummary(engine,result);
@@ -296,8 +297,8 @@ function renderPeriodOverview(){
   '<p class="ab-period-sub">'+esc(C.iso(r.start))+' — '+esc(C.iso(r.end-1))+
    ' WIB · sampling '+r.resolutionMinutes+' menit · Senin–Jumat untuk arah XAUUSD</p>'+
   '<div class="ab-period-focus"><span>FOKUS SATU ARAH · AUTO EKSPERIMEN</span>'+
-   chip(r.direction)+'<small>BUY '+r.buyMinutes+' menit · SELL '+r.sellMinutes+
-   ' menit. '+r.focusDays+' dina searah · '+r.waitDays+' dina WAIT. Durasi model, bukan probabilitas / backtest.</small></div>'+
+   chip(r.direction)+'<small>SUARA BUY '+r.buyVotes+' · SELL '+r.sellVotes+' (penentu arah). BUY '+r.buyMinutes+' menit · SELL '+r.sellMinutes+
+   ' menit. '+r.focusDays+' dina searah · '+r.waitDays+' dina WAIT. Suara mayoritas model, bukan probabilitas / backtest.</small></div>'+
   '<div class="ab-period-times">'+
    '<div><small>MULAI</small><strong>'+esc(fmt(r.startWindow))+'</strong></div>'+
    '<div><small>INTI</small><strong>'+esc(fmt(r.core))+'</strong></div>'+
