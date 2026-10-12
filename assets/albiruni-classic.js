@@ -22,6 +22,27 @@ const TRIPLICITY=Object.freeze({
 });
 // §449: Chaldean order, Aries starts Mars / Sun / Venus.
 const FACE_CYCLE=Object.freeze(['Mars','Sun','Venus','Mercury','Moon','Saturn','Jupiter']);
+// Egyptian bounds, transcribed from the original §453 table (PDF p.59).
+// Each row: five planets and their inclusive upper degree boundaries.
+// Position exactly on a boundary belongs to the NEXT term (zero-based degrees).
+const EGYPTIAN_TERMS=Object.freeze([
+ [['Jupiter',6],['Venus',12],['Mercury',20],['Mars',25],['Saturn',30]], // Aries
+ [['Venus',8],['Mercury',14],['Jupiter',22],['Saturn',27],['Mars',30]], // Taurus
+ [['Mercury',6],['Jupiter',12],['Venus',17],['Mars',24],['Saturn',30]], // Gemini
+ [['Mars',7],['Venus',13],['Mercury',19],['Jupiter',26],['Saturn',30]], // Cancer
+ [['Jupiter',6],['Venus',11],['Saturn',18],['Mercury',24],['Mars',30]], // Leo
+ [['Mercury',7],['Venus',17],['Jupiter',21],['Mars',28],['Saturn',30]], // Virgo
+ [['Saturn',6],['Mercury',14],['Jupiter',21],['Venus',28],['Mars',30]], // Libra
+ [['Mars',7],['Venus',11],['Mercury',19],['Jupiter',24],['Saturn',30]], // Scorpio
+ [['Jupiter',12],['Venus',17],['Mercury',21],['Saturn',26],['Mars',30]], // Sagittarius
+ [['Mercury',7],['Jupiter',14],['Venus',22],['Saturn',26],['Mars',30]], // Capricorn
+ [['Mercury',7],['Venus',13],['Jupiter',20],['Mars',25],['Saturn',30]], // Aquarius
+ [['Venus',12],['Jupiter',16],['Mercury',19],['Mars',28],['Saturn',30]] // Pisces
+ ].map(row=>Object.freeze(row.map(([body,upper])=>Object.freeze([body,upper])))));
+function egyptianTerm(index,degree){
+ assert(Number.isInteger(index)&&index>=0&&index<12&&Number.isFinite(degree)&&degree>=0&&degree<30,'Derajat term tidak valid.');
+ return EGYPTIAN_TERMS[index].find(([,limit])=>degree<limit)[0];
+}
 function assert(condition,message){if(!condition)throw Error(message);}
 function normalize(x){assert(Number.isFinite(x),'Bujur planet tidak valid.');return ((x%360)+360)%360;}
 function position(body,longitude,sect){
@@ -31,17 +52,18 @@ function position(body,longitude,sect){
  const index=Math.floor(norm/30),degree=norm-index*30;
  const element=ELEMENT[index],trip=TRIPLICITY[element];
  const face=FACE_CYCLE[(index*3+Math.floor(degree/10))%7];
+ const termLord=egyptianTerm(index,degree);
  const points=Object.freeze({
   domicile:DOMICILE[index]===body?5:0,
   exaltation:EXALTATION[body]===index?4:0,
-  term:null, // §453 lists Egyptian/Ptolemaic alternatives: no silent invented +3.
+  term:termLord===body?3:0, // Chosen Egyptian system, not Ptolemy's alternative.
   triplicity:(trip[sect]===body||trip.partner===body)?2:0,
   face:face===body?1:0
  });
- const subtotal=points.domicile+points.exaltation+points.triplicity+points.face;
+ const subtotal=points.domicile+points.exaltation+points.term+points.triplicity+points.face;
  return Object.freeze({body,longitude:norm,sign:SIGNS[index],signDegree:degree,
-  element,sect,faceLord:face,triplicity:trip,points,subtotal,
-  complete:false,termStatus:'BELUM_DIPILIH_MESIR_ATAU_PTOLEMAIOS',
+  element,sect,faceLord:face,termLord,triplicity:trip,points,subtotal,
+  complete:true,termStatus:'MESIR_§453',
   detriment:DOMICILE[(index+6)%12]===body,
   fall:EXALTATION[body] === ((index+6)%12)});
 }
@@ -50,10 +72,10 @@ function assess(longitudes,sect){
  const rows=BODIES.map(body=>position(body,longitudes[body],sect))
   .sort((a,b)=>b.subtotal-a.subtotal||BODIES.indexOf(a.body)-BODIES.indexOf(b.body));
  return Object.freeze({
-  model:'ALBIRUNI_CLASSICAL_PARTIAL_V1',kind:'RESEARCH_ONLY',
+  model:'ALBIRUNI_CLASSICAL_DIGNITY_EGYPTIAN_V2',kind:'RESEARCH_ONLY',
   marketValidated:false,tradingDirection:null,sect,
-  completeDignity:false,rows,
-  limitations:'Term 3 poin tidak dihitung; siang/malam dipilih manual; tidak menghitung Ascendant, house, latitude conjunction, atau BUY/SELL.',
+  completeDignity:true,termSystem:'EGYPTIAN_§453',rows,
+  limitations:'Skor martabat menggunakan Egyptian terms pilihan §453 (bukan tabel Ptolemy). Penilaian electional/house dan arah harga bukan hasil penilaian ini.',
   reference:'The Book of Instruction, PDF pp.37, 50-59, 98-102, 126-127'
  });
 }
@@ -151,14 +173,14 @@ function chart(A,engine,ms,{latitude,longitude,orb=2}={}){
   longitudes,significators,contacts,indication,moonAscRuler,moonGold,
   beneficCount,maleficCount,dignities,
   // Explicit missing steps of §527 and §453: no market direction at all.
-  termSystem:'UNSELECTED_EGYPTIAN_OR_PTOLEMAIC',
+  termSystem:'EGYPTIAN_§453',
   fullElectional:false,marketValidated:false,tradingDirection:null,
-  limitations:'Kontak aspek dan martabat parsial saja; ASC tropikal geometri dan siang/malam otomatis. Term, seluruh house, occultation, konjungsi lintang, serta interpretasi urusan spesifik belum lengkap. Tidak ada formula BUY/SELL XAUUSD dari kitab.',
+  limitations:'Martabat 5/4/3/2/1 memakai Egyptian terms §453, bukan tabel Ptolemy. ASC tropikal aproksimasi dan siang/malam otomatis; seluruh house, occultation, konjungsi lintang, interpretasi electional lengkap belum diterapkan. Tidak ada rumus BUY/SELL XAUUSD dari kitab.',
   sourcePages:'Al-Biruni Wright 1934 PDF pp.37, 50-59, 98-102, 126-127'
  });
 }
 
-const API=Object.freeze({BODIES,SIGNS,DOMICILE,EXALTATION,ELEMENT,TRIPLICITY,FACE_CYCLE,ASPECTS,BENEFICS,MALEFICS,normalize,position,assess,ascendant,meanObliquity,aspectBetween,chart});
+const API=Object.freeze({BODIES,SIGNS,DOMICILE,EXALTATION,ELEMENT,TRIPLICITY,FACE_CYCLE,EGYPTIAN_TERMS,egyptianTerm,ASPECTS,BENEFICS,MALEFICS,normalize,position,assess,ascendant,meanObliquity,aspectBetween,chart});
 root.CebonkAlBiruniClassic=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
