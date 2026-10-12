@@ -108,7 +108,7 @@ button.addEventListener('click',async()=>{
     '<div><small>MULAI</small><strong>'+stamp(daily.startUTC)+'</strong></div>'+
     '<div><small>INTI</small><strong>'+stamp(daily.coreUTC)+'</strong></div>'+
     '<div><small>AKHIR</small><strong>'+stamp(daily.endUTC)+'</strong></div></div>'+
-   '<p>BUY/SELL AUTO ini berasal dari bobot aplikasi lama dan bukan bagian dari rumus asli Al-Biruni. Tidak ada transaksi atau notifikasi EA yang dikirim dari panel ini.</p>';
+   '<p>Tidak ada rumus BUY/SELL XAUUSD asli dalam kitab yang dirujuk. BUY/SELL AUTO berasal dari bobot aplikasi modern. Tidak ada transaksi atau notifikasi EA yang dikirim dari panel ini.</p>';
  }catch(e){if(ticket===version)output.textContent='AL-BIRUNI KLASIK gagal dihitung: '+(e.message||String(e));}
  finally{button.disabled=false;}
 });
