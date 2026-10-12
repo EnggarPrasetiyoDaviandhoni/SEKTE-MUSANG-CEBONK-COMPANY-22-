@@ -30,7 +30,7 @@ def segment(code,left,right):
  return code[code.index(left):code.index(right,code.index(left))]
 for left,right in [
  ('bool ABTradeAllowed(', 'bool ABValidLot('),
- ('bool ABOpenPosition(', 'string ABURLEncode('),
+ ('bool ABPlace(', 'string ABURLEncode('),
  ('void ABCheckEntry(', 'int OnInit('),
  ('void OnTimer()', 'void OnTick()'),
 ]:
