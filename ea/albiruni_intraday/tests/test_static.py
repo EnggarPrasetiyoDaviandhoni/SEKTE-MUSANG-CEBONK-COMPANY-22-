@@ -88,6 +88,18 @@ with source.open(encoding='utf-8-sig',newline='') as f:
 assert len(rows)==1,'Live publisher emits one day, no mixed directions'
 row=rows[0]
 assert row['model']=='ALBIRUNI_INTRADAY_V1'
+assert 'election' in manifest and isinstance(manifest['election'],dict),'No classic gate audit'
+assert manifest['election']['status'] in ('MENGUNTUNGKAN','MERUGIKAN','CAMPURAN','WAIT')
+assert manifest['election']['reference']['gateMode']=='enforce','Production gate must enforce'
+if row['direction'] in ('BUY','SELL'):
+  assert manifest['election']['eligible'] is True,'Published ENTRY must have favorable classic time'
+  assert manifest['election']['status']=='MENGUNTUNGKAN'
+if manifest['reason']=='WAIT_ELECTION_TIME_NOT_FAVORABLE':
+  assert row['direction']=='WAIT' and manifest['election']['eligible'] is False
+assert "require('../assets/albiruni-classic.js')" in generator,'No classical chart in generator'
+assert "require('../assets/albiruni-election-gate.js')" in generator,'No time quality screening'
+assert "gateMode='enforce'" in generator,'Default must be fail-closed'
+
 assert manifest['experimental'] is True
 assert manifest['date_wib']==row['date_wib']
 assert manifest['direction']==row['direction']
