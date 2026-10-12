@@ -13,6 +13,7 @@ assert.equal(favored.eligible,true);
 assert.equal(favored.marketValidated,false);
 const blocked=Gate.judge(chart([m('Bulan')]));
 assert.equal(blocked.status,'MERUGIKAN');
+assert.equal(Gate.judge(chart([m('Matahari (asosiasi emas §410)')])).eligible,false,'Gold significator malefic must veto time');
 assert.equal(blocked.eligible,false);
 assert.equal(Gate.judge(chart([b('Ascendant'),m('Bulan')])).status,'CAMPURAN');
 assert.equal(Gate.judge(chart([])).status,'CAMPURAN');
