@@ -47,6 +47,8 @@ function encode(result){
 function majorityRow(data){
  const base=data.feed;let buyAspects=0,sellAspects=0;
  if(base.direction!=='WAIT'){
+  assert(data.election?.eligible===true&&data.election?.reference?.gateMode==='enforce',
+   'Live V2 trading feed must pass electional gate and enforce mode');
   buyAspects=Number(data.majority?.buyAspects);
   sellAspects=Number(data.majority?.sellAspects);
   assert(Number.isInteger(buyAspects)&&Number.isInteger(sellAspects)&&
@@ -139,7 +141,7 @@ async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=0
   election:{status:'WAIT',reason:'MARKET_CLOSED',reference}};
  const ephemeris=engine||C.createEngine(A);
  const scan=await (scanFunction||C.scan)(ephemeris,date,{
-  mode:'day',focus:'moon',orb:2,stepMinutes:15});
+  mode:'day',focus:'all',orb:2,stepMinutes:15});
  const chosen=chooseCandidate(ephemeris,scan,date,{fromHour,toHour});
  const report=chosen.report;
  const summary={buyMinutes:report.buyMinutes,sellMinutes:report.sellMinutes,
@@ -207,7 +209,7 @@ async function main(){
    gateMode:opts.gate||'enforce'
   }),csv=encode(data.feed);
  const manifest={...data.feed,reason:data.reason,experimental:true,
-  source:'ALBIRUNI_AUTO_MAJORITY_V2 + albiruni-classic.js + albiruni-election-gate.js; Moon orb 2',
+  source:'ALBIRUNI_AUTO_MAJORITY_V2 + albiruni-classic.js + albiruni-election-gate.js; all 21 pairs orb 2',
    election:data.election,
   summary:data.summary,generated_at_utc:new Date(data.feed.published_epoch*1000).toISOString(),
   candidate_entry_wib:data.feed.entry_epoch?C.stamp(data.feed.entry_epoch*1000):null,
