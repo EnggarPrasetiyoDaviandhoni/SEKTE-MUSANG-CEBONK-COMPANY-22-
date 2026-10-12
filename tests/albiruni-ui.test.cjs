@@ -88,7 +88,9 @@ async function run(){
  assert.equal($('abAutoStatus').hidden,false,'AUTO summary available');
  assert.equal($('abAutoWindows').hidden,false,'AUTO timeline available');
  assert.match($('abRuleState').textContent,/AUTO/);
- assert.match($('abAutoStatus').textContent,/ASPEK AUTO/);
+ assert.match($('abAutoStatus').textContent,/ASPEK AUTO MAYORITAS/);
+ assert.match($('abInspectLabel').textContent,/FOKUS JAM/);
+ assert.match($('abAutoStatus').textContent,/SELL \\d+ \/ BUY \\d+/);
  assert.match($('abAutoWindows').textContent,/FOKUS 1 ARAH/);
  $('abStudyCSV').click();
  assert.ok(blob&&blob.size>1000);
