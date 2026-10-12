@@ -122,7 +122,7 @@ async function run(){
 
  assert.equal($('abRuleState').textContent,'NETRAL');
  $('abCalendar').querySelectorAll('button')[2].click();assert.match($('abDayTitle').textContent,/Rabu/);
- assert.match($('abFinalFeedStatus').textContent,/BELUM ADA FEED/,'historical feed must not be reused for another date');
+ assert.match($('abFinalFeedStatus').textContent,/tidak ada untuk 2026-10-14/,'historical feed must not be reused for another date');
  $('abRule90').value='SELL';$('abRule90').dispatchEvent(new w.Event('change'));
  assert.equal($('abRuleState').textContent,'UJI MANUAL');assert.match(w.localStorage.getItem('cebonk.albiruni.v1'),/SELL/);
  $('abResetRules').click();assert.equal($('abRuleState').textContent,'NETRAL');
