@@ -47,10 +47,10 @@ const finalCard=document.createElement('section');
 finalCard.id='abFinalDecision';
 finalCard.className='ab-final-decision';
 finalCard.setAttribute('aria-label','Keputusan final EA AL-BIRUNI');
-finalCard.innerHTML='<h3>AL-BIRUNI MAJORITY v1.02 · ARAH & IZIN ENTRY</h3>'+
+finalCard.innerHTML='<h3>AL-BIRUNI DIRECT v1.03 · MAYORITAS WEB → EA</h3>'+
  '<div id="abFinalFeedStatus" role="status" aria-live="polite">Memuat status feed EA dari GitHub…</div>'+
  '<button id="abRefreshFeed" type="button" class="ab-small-button">Perbarui status EA</button>'+
- '<small>Fokus aspek BUY/SELL dan izin entry EA ialah dua hasil berbeda. Mayoritas menentukan arah; filter waktu §527 dapat menolak entry menjadi WAIT. Data feed ini hanya jadwal riset, bukan bukti order broker.</small>';
+ '<small>EA DIRECT v1.03 menggunakan arah mayoritas aspek yang sama dengan AUTO WEB. Filter waktu klasik §527 TIDAK menjadi veto di mode DIRECT; v1.02 KETAT tetap ada terpisah. Feed jadwal ini bukan bukti order broker atau jaminan profit.</small>';
 if(inspector)inspector.parentNode.insertBefore(finalCard,inspector);
 let feed=null,feedError=null,feedLoading=true;
 const feedTarget=finalCard.querySelector('#abFinalFeedStatus');
@@ -58,84 +58,80 @@ const feedReason=reason=>({
  WAIT_ELECTION_TIME_NOT_FAVORABLE:'Filter §527 tidak mengizinkan entry pada kandidat waktu tersebut.',
  MARKET_CLOSED:'Pasar tutup',NO_APPLYING_EXACT_BEFORE_CORE:'Tidak ada kandidat APPLYING valid',
  NO_DOMINANT_OPEN_MARKET_DAY:'Arah belum dominan',READY:'Lolos filter waktu',
+ READY_MAJORITY_ONLY:'Lolos filter mayoritas; penilaian waktu klasik tidak diterapkan',
  SHADOW_ELECTION_AUDIT:'Mode audit saja'
 })[reason]||String(reason||'Alasan tidak tersedia');
 function renderFinal(){
  const p=read(),day=p.date;
  if(!day){feedTarget.textContent='Pilih tanggal pemeriksaan WIB.';return;}
- if(feedLoading){feedTarget.textContent='Memuat feed EA MAJORITY v1.02 bertanggal '+day+'…';return;}
+ if(feedLoading){feedTarget.textContent='Memuat feed DIRECT v1.03 untuk '+day+'…';return;}
  if(!feed){
-  feedTarget.textContent='KEPUTUSAN EA v1.02: TIDAK TERSEDIA · '+(feedError||'Feed V2 belum bisa dibaca')+
-   '. Jangan anggap fokus aspek sebagai sinyal entry.';return;
+  feedTarget.textContent='EA DIRECT v1.03: FEED TIDAK TERSEDIA · '+(feedError||'CSV/JSON belum terbit')+
+   '. Jangan mengambil keputusan order dari panel aspek semata.';return;
  }
  if(feed.date_wib!==day){
-  feedTarget.textContent='KEPUTUSAN EA v1.02 '+day+': BELUM ADA FEED UNTUK TANGGAL INI. Data terakhir '+
-   feed.date_wib+' · '+feed.direction+'. Fokus AUTO pada tanggal pilihan bukan feed EA untuk hari itu.';return;
+  feedTarget.textContent='FEED DIRECT v1.03 tidak ada untuk '+day+'. Data terakhir untuk '+
+   feed.date_wib+' ('+feed.direction+'); jangan anggap ini sinyal tanggal lain.';return;
  }
- const direction=['BUY','SELL','WAIT'].includes(feed.direction)?feed.direction:'TIDAK VALID';
- const buyAspects=Number(feed.buy_aspects),sellAspects=Number(feed.sell_aspects);
- const chartBuyVotes=Number(feed.summary?.buyVotes),chartSellVotes=Number(feed.summary?.sellVotes);
- const focus=feed.summary?.dominant;
- const hasDailyVotes=Number.isInteger(chartBuyVotes)&&chartBuyVotes>=0&&
-  Number.isInteger(chartSellVotes)&&chartSellVotes>=0&&
-  (focus==='BUY'?chartBuyVotes>chartSellVotes:
-   focus==='SELL'?chartSellVotes>chartBuyVotes:focus==='NETRAL');
- const valid=feed.model==='ALBIRUNI_MAJORITY_V2'&&
-  feed.summary?.directionRule==='ASPECT_COUNT_MAJORITY_V2'&&hasDailyVotes&&
-  Number.isInteger(buyAspects)&&Number.isInteger(sellAspects)&&
-  buyAspects>=0&&sellAspects>=0&&buyAspects+sellAspects<=21&&
-  (direction==='WAIT'?
-   feed.entry_epoch===0&&feed.signal_id==='NONE'&&buyAspects===0&&sellAspects===0:
-   Number.isFinite(feed.entry_epoch)&&feed.entry_epoch>0&&
-   feed.election?.eligible===true&&feed.election?.status==='MENGUNTUNGKAN'&&
-   (direction==='BUY'?buyAspects>sellAspects:sellAspects>buyAspects));
- if(!valid){feedTarget.textContent='FEED MAJORITY v1.02 TIDAK VALID / TIDAK KONSISTEN — JANGAN ENTRY.';return;}
- const el=feed.election||{},quality=el.status||'BELUM ADA',
-  published=Number.isFinite(feed.published_epoch)?
-   C.stamp(feed.published_epoch*1000):'Waktu publikasi tidak tersedia';
- const location=el.reference;
+ const dir=feed.direction;
+ const buy=Number(feed.buy_aspects),sell=Number(feed.sell_aspects);
+ const dailyBuy=Number(feed.summary?.buyVotes),dailySell=Number(feed.summary?.sellVotes);
+ const daily=feed.summary?.dominant;
+ const dailyValid=Number.isInteger(dailyBuy)&&Number.isInteger(dailySell)&&
+  dailyBuy>=0&&dailySell>=0&&
+  (daily==='BUY'?dailyBuy>dailySell:daily==='SELL'?dailySell>dailyBuy:daily==='NETRAL'?dailyBuy===dailySell:false);
+ const valid=feed.model==='ALBIRUNI_MAJORITY_DIRECT_V3'&&
+  feed.election?.reference?.gateMode==='majority'&&
+  feed.summary?.directionRule==='ASPECT_COUNT_MAJORITY_V2'&&dailyValid&&
+  Number.isInteger(buy)&&Number.isInteger(sell)&&buy>=0&&sell>=0&&buy+sell<=21&&
+  (dir==='WAIT'?
+   feed.signal_id==='NONE'&&feed.entry_epoch===0&&buy===0&&sell===0:
+   (dir==='BUY'||dir==='SELL')&&feed.entry_epoch>0&&
+   feed.election?.status==='NOT_APPLIED'&&feed.phase==='APPLYING'&&
+   (dir==='BUY'?buy>sell:sell>buy));
+ if(!valid){feedTarget.textContent='FEED DIRECT V3 TIDAK KONSISTEN — JANGAN ENTRY.';return;}
+ const published=Number.isFinite(feed.published_epoch)?
+  C.stamp(feed.published_epoch*1000):'tidak diketahui';
+ const location=feed.election?.reference;
  const different=location&&Number.isFinite(location.latitude)&&Number.isFinite(location.longitude)&&
   (Math.abs(location.latitude-p.lat)>0.0001||Math.abs(location.longitude-p.lon)>0.0001);
- feedTarget.innerHTML=
-  '<div class="ab-final-direction"><strong>EA '+escape(direction)+'</strong>'+
-   '<span>'+escape(day)+' WIB · Feed v1.02</span></div>'+
-  '<div class="ab-ea-focus"><div><small>FOKUS ARAH HARIAN · AUTO MAYORITAS</small><strong>'+escape(focus)+
-   '</strong><span>Akumulasi suara aspek: SELL '+chartSellVotes+' / BUY '+chartBuyVotes+
-   '</span></div><div><small>IZIN ENTRY EA SETELAH FILTER §527</small><strong>'+
-   escape(direction)+'</strong><span>Kualitas waktu: '+escape(quality)+'</span></div></div>'+
-  '<p><strong>Kenapa EA '+escape(direction)+'?</strong> '+escape(feedReason(feed.reason))+
-   '. Jumlah aspek jam tertentu bisa berbeda dari total suara harian.</p>'+
-  (direction!=='WAIT'?'<p><b>Suara pada kandidat ENTRY:</b> SELL '+sellAspects+
-   ' / BUY '+buyAspects+'</p>':'<p><b>Suara entry:</b> tidak diterbitkan karena filter waktu tidak lolos (0/0 dalam feed WAIT).</p>')+
-  (el.entry_wib?'<p><b>Kandidat yang diperiksa:</b> '+escape(el.entry_wib)+
-   (el.check_wib?' · Pemeriksaan pra-EXACT '+escape(el.check_wib):'')+'</p>':'')+
-  '<p><small>Feed diperbarui '+escape(published)+' · Mode '+
-   escape(location?.gateMode||'tidak diketahui')+'</small></p>'+
-  (different?'<p class="ab-final-warning">Lokasi panel berbeda dari referensi feed ('+
-   escape(location.latitude+', '+location.longitude)+
-   '). Kualitas waktu dan Ascendant bisa berbeda.</p>':'')+
-  '<p><small>Keputusan feed bukan konfirmasi transaksi di broker. Mayoritas aspek dan filter waktu ini adalah hipotesis riset yang belum tervalidasi terhadap XAUUSD.</small></p>';
+ const candidate=feed.entry_epoch>0?C.stamp(feed.entry_epoch*1000):null;
+ const expired=feed.entry_epoch>0&&Date.now()>feed.entry_epoch*1000+8*60000;
+ feedTarget.innerHTML='<div class="ab-final-direction"><strong>EA DIRECT '+escape(dir)+'</strong>'+
+  '<span>'+escape(day)+' WIB · feed v1.03</span></div>'+
+  '<div class="ab-ea-focus"><div><small>ARAH MAYORITAS HARIAN WEB</small><strong>'+
+   escape(daily)+'</strong><span>Akumulasi suara: SELL '+dailySell+
+   ' / BUY '+dailyBuy+'</span></div><div><small>JADWAL ENTRY EA DIRECT v1.03</small><strong>'+
+   escape(dir)+'</strong><span>'+escape(dir==='WAIT'?'Belum ada kandidat valid':'SELL '+sell+' / BUY '+buy+' pada kandidat')+
+   '</span></div></div>'+
+  '<p><strong>Filter waktu §527:</strong> TIDAK DITERAPKAN pada mode DIRECT. EA v1.02 KETAT tetap memakai filter tersebut.</p>'+
+  (candidate?'<p><b>Jadwal kandidat:</b> '+escape(candidate)+
+   ' · INTI '+escape(C.stamp(feed.core_epoch*1000))+
+   ' · AKHIR '+escape(C.stamp(feed.end_epoch*1000))+'</p>':'')+
+  (expired?'<p class="ab-final-warning"><b>Waktu entry sudah lewat.</b> EA tidak boleh mengejar sinyal terlambat; jadwal ini bukan sinyal masuk sekarang.</p>':'')+
+  '<p><b>Alasan feed:</b> '+escape(feedReason(feed.reason))+'</p>'+
+  '<p><small>Diterbitkan '+escape(published)+' · MT5 tetap memeriksa sesi broker, keterlambatan, spread, SL/TP, dan izin AUTOPILOT.</small></p>'+
+  (different?'<p class="ab-final-warning">Koordinat panel ('+p.lat+', '+p.lon+
+   ') berbeda dari referensi feed ('+location.latitude+', '+location.longitude+').</p>':'')+
+  '<p><small>Arah BUY/SELL adalah hipotesis astrologi belum tervalidasi; feed tidak menunjukkan apakah transaksi benar-benar tereksekusi.</small></p>';
 }
 async function refreshFeed(){
  feedLoading=true;renderFinal();
- if(typeof root.fetch!=='function'){feedLoading=false;feedError='Browser tidak menyediakan fetch';renderFinal();return;}
+ if(typeof root.fetch!=='function'){feedLoading=false;feedError='Fetch tidak tersedia';renderFinal();return;}
  const urls=[
-  'ea/albiruni_intraday/data/majority_v2.json',
-  'https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/albiruni_intraday/data/majority_v2.json'
+  'ea/albiruni_intraday/data/majority_direct_v3.json',
+  'https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/albiruni_intraday/data/majority_direct_v3.json'
  ];
  feed=null;feedError=null;
- for(const url of urls){
-  try{
-   const res=await root.fetch(url,{cache:'no-store'});
-   if(!res.ok)continue;
-   const x=await res.json();
-   if(!x||x.model!=='ALBIRUNI_MAJORITY_V2'||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(x.date_wib)||
-    !['BUY','SELL','WAIT'].includes(x.direction))continue;
-   feed=x;feedError=null;feedLoading=false;renderFinal();return;
-  }catch(e){feedError=String(e?.message||e);}
- }
- feedLoading=false;feedError=feedError||'File majority_v2.json tidak ditemukan atau model tidak cocok';
- renderFinal();
+ for(const url of urls)try{
+  const res=await root.fetch(url,{cache:'no-store'});
+  if(!res.ok)continue;
+  const x=await res.json();
+  if(!x||x.model!=='ALBIRUNI_MAJORITY_DIRECT_V3'||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(x.date_wib)||
+   !['BUY','SELL','WAIT'].includes(x.direction))continue;
+  feed=x;feedError=null;feedLoading=false;renderFinal();return;
+ }catch(e){feedError=String(e?.message||e);}
+ feedLoading=false;feedError=feedError||'Feed majority_direct_v3.json belum ada / format tidak cocok';renderFinal();
 }
 for(const id of ['abDate','abTime','abClassicLat','abClassicLon']){
  const el=panel.querySelector('#'+id)||details.querySelector('#'+id);

@@ -22,6 +22,11 @@ const MAJORITY_MODEL='ALBIRUNI_MAJORITY_V2';
 const MAJORITY_HEADER=HEADER+',buy_aspects,sell_aspects';
 const MAJORITY_PATH='ea/albiruni_intraday/data/majority_v2.csv';
 const MAJORITY_MANIFEST='ea/albiruni_intraday/data/majority_v2.json';
+// Opt-in standalone direct-majority feed: never changes original V1 or strict V2.
+const DIRECT_MODEL='ALBIRUNI_MAJORITY_DIRECT_V3';
+const DIRECT_HEADER=HEADER+',buy_aspects,sell_aspects';
+const DIRECT_PATH='ea/albiruni_intraday/data/majority_direct_v3.csv';
+const DIRECT_MANIFEST='ea/albiruni_intraday/data/majority_direct_v3.json';
 // Fixed reference location for the *astrological chart*, not user geolocation.
 // Default agrees with classical web panel; override explicitly for a test.
 const REFERENCE=Object.freeze({latitude:-6.2,longitude:106.8167});
@@ -62,6 +67,26 @@ function majorityRow(data){
 function encodeMajority(data){
  const row=majorityRow(data),line=encode({...row,model:MODEL}).trimEnd().split('\n')[1];
  return MAJORITY_HEADER+'\n'+line.replace(MODEL,MAJORITY_MODEL)+
+  ','+row.buy_aspects+','+row.sell_aspects+'\n';
+}
+function directRow(data){
+ const base=data.feed;let buyAspects=0,sellAspects=0;
+ assert(data.election?.reference?.gateMode==='majority',
+  'V3 requires explicit majority-only feed mode');
+ if(base.direction!=='WAIT'){
+  buyAspects=data.majority?.buyAspects;
+  sellAspects=data.majority?.sellAspects;
+  assert(Number.isInteger(buyAspects)&&Number.isInteger(sellAspects)&&
+   buyAspects>=0&&sellAspects>=0&&buyAspects+sellAspects<=21,
+   'V3: count certificate missing');
+  assert(base.direction==='BUY'?buyAspects>sellAspects:sellAspects>buyAspects,
+   'V3: feed direction contradicts majority');
+ }
+ return {...base,model:DIRECT_MODEL,buy_aspects:buyAspects,sell_aspects:sellAspects};
+}
+function encodeDirect(data){
+ const row=directRow(data),line=encode({...row,model:MODEL}).trimEnd().split('\n')[1];
+ return DIRECT_HEADER+'\n'+line.replace(MODEL,DIRECT_MODEL)+
   ','+row.buy_aspects+','+row.sell_aspects+'\n';
 }
 // The day-wide direction is fixed first. Only a supporting APPLYING aspect
@@ -130,7 +155,7 @@ async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=0
  assert(Number.isFinite(latitude)&&Math.abs(latitude)<=89.9,'Lintang electional tidak valid.');
  assert(Number.isFinite(longitude)&&Math.abs(longitude)<=180,'Bujur electional tidak valid.');
  assert(Number.isFinite(electionOrb)&&electionOrb>0&&electionOrb<=5,'Orb electional tidak valid.');
- assert(gateMode==='enforce'||gateMode==='shadow','Gate electional tidak valid.');
+ assert(['enforce','shadow','majority'].includes(gateMode),'Gate electional tidak valid.');
  const published=Math.floor(publishedMs/1000);
  assert(published>1600000000,'Bad published timestamp');
  const noop={model:MODEL,date_wib:date,signal_id:'NONE',direction:'WAIT',
@@ -151,7 +176,17 @@ async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=0
   election:{status:'WAIT',reason:'NO_VALID_ASTRONOMICAL_CANDIDATE',reference}};
  const evaluator=electionEvaluator||((ms)=>judgeAt(ephemeris,ms,latitude,longitude,electionOrb));
  let selected=null,quality=null,lastRejected=null,checked=0;
- for(const candidate of chosen.candidates){
+ if(gateMode==='majority'){
+  // Experimental direct majority mode explicitly does not apply classical time veto.
+  // Still requires daily majority, matching instant votes, a supporting APPLYING
+  // aspect with upcoming EXACT, broker session and risk controls in MT5.
+  selected=chosen.candidate;
+  checked=1;
+  quality={eligible:null,status:'NOT_APPLIED',
+   reason:'MAJORITY_ONLY_CLASSICAL_TIME_NOT_ENFORCED',
+   reference,checkedCandidates:1,entry_wib:C.stamp(selected.entry),
+   check_wib:null};
+ }else for(const candidate of chosen.candidates){
   checked++;
   try{
    const reading=qualify(candidate,evaluator);
@@ -163,7 +198,6 @@ async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=0
   }catch(e){
    lastRejected={eligible:false,status:'CAMPURAN',reason:'ELECTION_CALCULATION_FAILED',
     error:String(e?.message||e)};
-   // Fail closed; never convert missing ephemeris into favorable trading time.
   }
  }
  if(!selected)return {feed:noop,reason:'WAIT_ELECTION_TIME_NOT_FAVORABLE',summary,
@@ -184,7 +218,7 @@ async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=0
  assert(voted.direction===row.direction&&
  (row.direction==='BUY'?voted.buyCount>voted.sellCount:voted.sellCount>voted.buyCount),
  'Entry votes must agree with majority direction');
- return {feed:row,reason:gateMode==='shadow'?'SHADOW_ELECTION_AUDIT':'READY',
+ return {feed:row,reason:gateMode==='shadow'?'SHADOW_ELECTION_AUDIT':gateMode==='majority'?'READY_MAJORITY_ONLY':'READY',
   summary,election:quality,majority:{
    rule:'ASPECT_COUNT_MAJORITY_V2',entry_wib:C.stamp(c.entry),
    buyAspects:voted.buyCount,sellAspects:voted.sellCount,neutralAspects:voted.neutralCount
@@ -195,45 +229,68 @@ function parseArgs(args){
  for(const a of args){
   const m=/^--([a-z0-9-]+)=(.+)$/.exec(a);
   assert(m,'Use --date=YYYY-MM-DD or --out=path');
-  assert(['date','out','json','out-v2','json-v2','latitude','longitude','election-orb','gate'].includes(m[1]),'Unsupported argument '+m[1]);
+  assert(['date','out','json','out-v2','json-v2','out-v3','json-v3','latitude','longitude','election-orb','gate'].includes(m[1]),'Unsupported argument '+m[1]);
   opts[m[1]]=m[2];
  }
  return opts;
 }
 async function main(){
  const opts=parseArgs(process.argv.slice(2)),date=opts.date||targetDate();
- const data=await build(date,{
-   latitude:opts.latitude!==undefined?Number(opts.latitude):REFERENCE.latitude,
-   longitude:opts.longitude!==undefined?Number(opts.longitude):REFERENCE.longitude,
-   electionOrb:opts['election-orb']!==undefined?Number(opts['election-orb']):ELECTION_ORB,
-   gateMode:opts.gate||'enforce'
-  }),csv=encode(data.feed);
+ const latitude=opts.latitude!==undefined?Number(opts.latitude):REFERENCE.latitude;
+ const longitude=opts.longitude!==undefined?Number(opts.longitude):REFERENCE.longitude;
+ const electionOrb=opts['election-orb']!==undefined?Number(opts['election-orb']):ELECTION_ORB;
+ const legacyMode=opts.gate||'enforce';
+ // Shared ephemeris/21-pair scan for strict and direct feeds. Avoid duplicate scans.
+ const engine=C.createEngine(A);
+ const scan=await C.scan(engine,date,{mode:'day',focus:'all',orb:2,stepMinutes:15});
+ const common={latitude,longitude,electionOrb,engine,scanFunction:async()=>scan};
+ const data=await build(date,{...common,gateMode:legacyMode});
+ const direct=await build(date,{...common,gateMode:'majority'});
+ const csv=encode(data.feed);
  const manifest={...data.feed,reason:data.reason,experimental:true,
   source:'ALBIRUNI_AUTO_MAJORITY_V2 + albiruni-classic.js + albiruni-election-gate.js; all 21 pairs orb 2',
-   election:data.election,
-  summary:data.summary,generated_at_utc:new Date(data.feed.published_epoch*1000).toISOString(),
+  election:data.election,summary:data.summary,
+  generated_at_utc:new Date(data.feed.published_epoch*1000).toISOString(),
   candidate_entry_wib:data.feed.entry_epoch?C.stamp(data.feed.entry_epoch*1000):null,
   start_wib:data.feed.start_epoch?C.stamp(data.feed.start_epoch*1000):null,
   core_wib:data.feed.core_epoch?C.stamp(data.feed.core_epoch*1000):null,
   end_wib:data.feed.end_epoch?C.stamp(data.feed.end_epoch*1000):null};
  const majority=majorityRow(data),majorityCsv=encodeMajority(data);
-  const majorityAudit={...manifest,...majority,majority:data.majority||null,
-   source:'ALBIRUNI_MAJORITY_V2 + election §527 (research-only)'};
-  const dest=resolve(opts.out||PATH),json=resolve(opts.json||MANIFEST);
-  const writeV2=(!opts.out&&!opts.json)||opts['out-v2']!==undefined||opts['json-v2']!==undefined;
-  if(writeV2){
-   const v2=resolve(opts['out-v2']||MAJORITY_PATH),v2json=resolve(opts['json-v2']||MAJORITY_MANIFEST);
-   mkdirSync(dirname(v2),{recursive:true});mkdirSync(dirname(v2json),{recursive:true});
-   writeFileSync(v2,majorityCsv,'utf8');
-   writeFileSync(v2json,JSON.stringify(majorityAudit,null,2)+'\n','utf8');
-  }
+ const majorityAudit={...manifest,...majority,majority:data.majority||null,
+  source:'ALBIRUNI_MAJORITY_V2 + election §527 (research-only)'};
+ const directFeed=directRow(direct),directCsv=encodeDirect(direct);
+ const directAudit={...directFeed,reason:direct.reason,experimental:true,
+  source:'ALBIRUNI_MAJORITY_DIRECT_V3; majority direction; classical timing veto NOT applied',
+  election:direct.election,majority:direct.majority||null,summary:direct.summary,
+  generated_at_utc:new Date(directFeed.published_epoch*1000).toISOString(),
+  candidate_entry_wib:directFeed.entry_epoch?C.stamp(directFeed.entry_epoch*1000):null,
+  start_wib:directFeed.start_epoch?C.stamp(directFeed.start_epoch*1000):null,
+  core_wib:directFeed.core_epoch?C.stamp(directFeed.core_epoch*1000):null,
+  end_wib:directFeed.end_epoch?C.stamp(directFeed.end_epoch*1000):null};
+ const dest=resolve(opts.out||PATH),json=resolve(opts.json||MANIFEST);
+ const writeV2=(!opts.out&&!opts.json)||opts['out-v2']!==undefined||opts['json-v2']!==undefined;
+ const writeV3=(!opts.out&&!opts.json)||opts['out-v3']!==undefined||opts['json-v3']!==undefined;
+ if(writeV2){
+  const v2=resolve(opts['out-v2']||MAJORITY_PATH),v2json=resolve(opts['json-v2']||MAJORITY_MANIFEST);
+  mkdirSync(dirname(v2),{recursive:true});mkdirSync(dirname(v2json),{recursive:true});
+  writeFileSync(v2,majorityCsv,'utf8');
+  writeFileSync(v2json,JSON.stringify(majorityAudit,null,2)+'\n','utf8');
+ }
+ if(writeV3){
+  const v3=resolve(opts['out-v3']||DIRECT_PATH),v3json=resolve(opts['json-v3']||DIRECT_MANIFEST);
+  mkdirSync(dirname(v3),{recursive:true});mkdirSync(dirname(v3json),{recursive:true});
+  writeFileSync(v3,directCsv,'utf8');
+  writeFileSync(v3json,JSON.stringify(directAudit,null,2)+'\n','utf8');
+ }
  mkdirSync(dirname(dest),{recursive:true});mkdirSync(dirname(json),{recursive:true});
  writeFileSync(dest,csv,'utf8');
  writeFileSync(json,JSON.stringify(manifest,null,2)+'\n','utf8');
- console.log('AL-BIRUNI '+date+' '+data.feed.direction+
-  ' entryWIB='+(manifest.candidate_entry_wib||'WAIT')+' published='+
-  manifest.generated_at_utc+' EXPERIMENTAL');
+ console.log('AL-BIRUNI '+date+' strict='+data.feed.direction+
+  ' direct='+directFeed.direction+
+  ' directEntryWIB='+(directAudit.candidate_entry_wib||'WAIT')+
+  ' published='+directAudit.generated_at_utc+
+  ' UNVALIDATED_RESEARCH');
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)
  await main();
-export {MODEL,HEADER,MAJORITY_MODEL,MAJORITY_HEADER,MAJORITY_PATH,MAJORITY_MANIFEST,REFERENCE,ELECTION_ORB,targetDate,isBusinessDay,chooseCandidate,judgeAt,qualify,build,encode,majorityRow,encodeMajority,parseArgs};
+export {MODEL,HEADER,MAJORITY_MODEL,MAJORITY_HEADER,MAJORITY_PATH,MAJORITY_MANIFEST,DIRECT_MODEL,DIRECT_HEADER,DIRECT_PATH,DIRECT_MANIFEST,REFERENCE,ELECTION_ORB,targetDate,isBusinessDay,chooseCandidate,judgeAt,qualify,build,encode,majorityRow,encodeMajority,directRow,encodeDirect,parseArgs};
