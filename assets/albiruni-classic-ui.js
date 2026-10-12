@@ -58,6 +58,7 @@ const feedReason=reason=>({
  WAIT_ELECTION_TIME_NOT_FAVORABLE:'Filter §527 tidak mengizinkan entry pada kandidat waktu tersebut.',
  MARKET_CLOSED:'Pasar tutup',NO_APPLYING_EXACT_BEFORE_CORE:'Tidak ada kandidat APPLYING valid',
  NO_DOMINANT_OPEN_MARKET_DAY:'Arah belum dominan',READY:'Lolos filter waktu',
+ READY_MAJORITY_ONLY:'Lolos filter mayoritas; penilaian waktu klasik tidak diterapkan',
  SHADOW_ELECTION_AUDIT:'Mode audit saja'
 })[reason]||String(reason||'Alasan tidak tersedia');
 function renderFinal(){
