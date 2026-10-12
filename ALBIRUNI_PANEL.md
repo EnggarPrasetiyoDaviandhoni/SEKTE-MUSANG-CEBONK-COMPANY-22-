@@ -1,3 +1,13 @@
+## Integrasi waktu menguntungkan/merugikan ke EA — riset §527 (12 Oktober 2026)
+
+- Modul sumber tunggal baru `assets/albiruni-election-gate.js` menghitung klasifikasi MENGUNTUNGKAN / MERUGIKAN / CAMPURAN dari chart AL-BIRUNI KLASIK; penilaian berkaitan dengan waktu melakukan suatu urusan, **tidak memberi arah BUY/SELL modern**.
+- Engine arah BUY/SELL di `assets/albiruni-core.js` tetap hipotesis lama. Generator EA mengizinkan kandidat hanya bila dua pemeriksaan waktu klasik (ENTRY dan lima menit sebelum EXACT) sama-sama MENGUNTUNGKAN. Selain itu CSV = WAIT; tidak pernah membalik arah.
+- Source PDF: *The Book of Instruction in the Elements of the Art of Astrology* §527 (PDF p.126), §440–453 (p.50–59), §493–494 (p.101–102), §409–411 (p.37). Klasifikasi benefic/malefic berbasis prinsip kitab, tetapi persyaratan ambang dua waktu adalah **aturan riset modern**, bukan rumus asli kitab.
+- Lokasi referensi default Jakarta (-6.2, 106.8167); UI lokasi dapat diedit, generator `--latitude`/`--longitude`. Bila lokasi berbeda, hasil bisa berbeda. Semua penilaian dan alasan direkam dalam JSON audit.
+- Kontrak feed CSV 12 kolom `ALBIRUNI_INTRADAY_V1` dan file EA MQL5 tidak diubah. Autopilot real tidak diaktifkan. Belum ada verifikasi profit XAUUSD historis, compile MetaEditor, atau uji broker langsung.
+
+---
+
 ## AL-BIRUNI KLASIK v2 — implementasi kitab asli (12 Oktober 2026)
 
 Koreksi atas v1: panel penelitian klasik tidak cukup hanya menghitung empat komponen martabat. Implementasi v2 menambahkan:
