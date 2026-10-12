@@ -17,10 +17,16 @@ async function run(){
  let blob=null;
  w.URL.createObjectURL=value=>{blob=value;return 'blob:test';};w.URL.revokeObjectURL=()=>{};w.HTMLAnchorElement.prototype.click=function(){};
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-core.js'),'utf8'));
+ w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-classic.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-ui.js'),'utf8'));
+ w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-classic-ui.js'),'utf8'));
  const $=id=>w.document.getElementById(id);
  await until(()=>$('abRun').disabled===false&&!$('abResults').hidden,'initial calculation');
  assert.equal($('abCalendar').querySelectorAll('button').length,5);
+ assert.ok($('abClassicPanel'),'classical panel must exist');
+ $('abClassicCalc').click();
+ assert.match($('abClassicResults').textContent,/SKOR PARSIAL KLASIK/);
+ assert.match($('abClassicResults').textContent,/TIDAK ADA ARAH BUY\/SELL/);
  assert.equal($('abBiasMode').value,'AUTO','AUTO must be default for existing users');
  assert.equal($('albiruniPanel').hidden,true,'dedicated view starts hidden');
  $('tabAlBiruni').click();assert.equal($('albiruniPanel').hidden,false);
