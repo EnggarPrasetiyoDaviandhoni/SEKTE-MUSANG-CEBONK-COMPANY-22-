@@ -38,6 +38,90 @@ const read=()=>{
   lon:Number(details.querySelector('#abClassicLon').value)};
 };
 const signature=x=>JSON.stringify(x);
+
+/* Status feed broker is deliberately separate from AUTO aspect diagnostics.
+ * Never label a historical chart observation as an EA order.
+ */
+const inspector=panel.querySelector('.ab-inspect');
+const finalCard=document.createElement('section');
+finalCard.id='abFinalDecision';
+finalCard.className='ab-final-decision';
+finalCard.setAttribute('aria-label','Keputusan final EA AL-BIRUNI');
+finalCard.innerHTML='<h3>KEPUTUSAN EA FINAL · FILTER WAKTU KLASIK</h3>'+
+ '<div id="abFinalFeedStatus" role="status" aria-live="polite">Memuat status feed EA dari GitHub…</div>'+
+ '<small>Panel aspek AUTO di bawah hanyalah riset bobot planet. Keputusan BUY/SELL/WAIT EA berasal dari feed yang sudah melewati filter waktu klasik, bukan nilai AUTO pukul 12.00.</small>';
+if(inspector)inspector.parentNode.insertBefore(finalCard,inspector);
+let feed=null,feedError=null,feedLoading=true;
+const feedTarget=finalCard.querySelector('#abFinalFeedStatus');
+const feedReason=reason=>({
+ WAIT_ELECTION_TIME_NOT_FAVORABLE:'Filter §527 tidak mengizinkan entry pada kandidat waktu tersebut.',
+ MARKET_CLOSED:'Pasar tutup',NO_APPLYING_EXACT_BEFORE_CORE:'Tidak ada kandidat APPLYING valid',
+ NO_DOMINANT_OPEN_MARKET_DAY:'Arah belum dominan',READY:'Lolos filter waktu',
+ SHADOW_ELECTION_AUDIT:'Mode audit saja'
+})[reason]||String(reason||'Alasan tidak tersedia');
+function renderFinal(){
+ const p=read(),day=p.date;
+ if(!day){feedTarget.textContent='Pilih tanggal pemeriksaan WIB.';return;}
+ if(feedLoading){feedTarget.textContent='Memuat keputusan EA bertanggal '+day+'…';return;}
+ if(!feed){
+  feedTarget.textContent='KEPUTUSAN EA: TIDAK TERSEDIA · '+(feedError||'Feed belum bisa dibaca')+
+   '. Jangan gunakan skor AUTO sebagai pengganti keputusan feed.';return;
+ }
+ if(feed.date_wib!==day){
+  feedTarget.textContent='KEPUTUSAN EA '+day+': BELUM ADA FEED UNTUK TANGGAL INI. Data terbit terakhir '+feed.date_wib+
+   ' · '+feed.direction+'. Jangan menyamakan skor AUTO dengan sinyal EA.';return;
+ }
+ const direction=['BUY','SELL','WAIT'].includes(feed.direction)?feed.direction:'TIDAK VALID';
+ const valid=direction==='WAIT'?
+  feed.entry_epoch===0&&feed.signal_id==='NONE':
+  Number.isFinite(feed.entry_epoch)&&feed.entry_epoch>0&&
+   feed.election?.eligible===true&&feed.election?.status==='MENGUNTUNGKAN';
+ if(!valid){feedTarget.textContent='FEED TIDAK VALID / TIDAK KONSISTEN — JANGAN ENTRY.';return;}
+ const el=feed.election||{},quality=el.status||'BELUM ADA',
+  published=Number.isFinite(feed.published_epoch)?
+   C.stamp(feed.published_epoch*1000):'Waktu publikasi tidak tersedia';
+ const location=el.reference;
+ const different=location&&Number.isFinite(location.latitude)&&Number.isFinite(location.longitude)&&
+  (Math.abs(location.latitude-p.lat)>0.0001||Math.abs(location.longitude-p.lon)>0.0001);
+ feedTarget.innerHTML='<div class="ab-final-direction"><strong>EA '+escape(direction)+'</strong>'+
+  '<span>'+escape(day)+' WIB</span></div>'+
+  '<p><b>Waktu klasik kandidat:</b> '+escape(quality)+
+  ' · '+escape(feedReason(feed.reason))+'</p>'+
+  (el.entry_wib?'<p><b>Kandidat:</b> '+escape(el.entry_wib)+
+   (el.check_wib?' · Pemeriksaan pra-EXACT '+escape(el.check_wib):'')+'</p>':'')+
+  '<p><small>Feed diperbarui '+escape(published)+' · Mode '+escape(location?.gateMode||'tidak diketahui')+'</small></p>'+
+  (different?'<p class="ab-final-warning">Lokasi panel berbeda dengan lokasi feed ('+
+   escape(location.latitude+', '+location.longitude)+
+   '). Angka §527 pada panel dapat berbeda dari keputusan EA.</p>':'')+
+  '<p><small>Ini adalah keputusan feed terbit, bukan bukti bahwa transaksi telah dilakukan di broker.</small></p>';
+}
+async function refreshFeed(){
+ if(typeof root.fetch!=='function'){feedLoading=false;feedError='Browser tidak menyediakan fetch';renderFinal();return;}
+ const urls=[
+  'ea/albiruni_intraday/data/intraday.json',
+  'https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/albiruni_intraday/data/intraday.json'
+ ];
+ for(const url of urls){
+  try{
+   const res=await root.fetch(url,{cache:'no-store'});
+   if(!res.ok)continue;
+   const x=await res.json();
+   if(!x||x.model!=='ALBIRUNI_INTRADAY_V1'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(x.date_wib)||
+    !['BUY','SELL','WAIT'].includes(x.direction))continue;
+   feed=x;feedError=null;feedLoading=false;renderFinal();return;
+  }catch(e){feedError=String(e?.message||e);}
+ }
+ feedLoading=false;feedError=feedError||'File JSON tidak ditemukan';renderFinal();
+}
+for(const id of ['abDate','abTime','abClassicLat','abClassicLon']){
+ const el=panel.querySelector('#'+id)||details.querySelector('#'+id);
+ if(el){el.addEventListener('input',renderFinal);el.addEventListener('change',renderFinal);}
+}
+for(const id of ['abCalendar','abPeriodDays']){
+ const el=panel.querySelector('#'+id);if(el)el.addEventListener('click',renderFinal);
+}
+renderFinal();refreshFeed();
+
 const invalidate=()=>{version++;output.textContent='Parameter berubah. Hitung ulang analisis AL-BIRUNI KLASIK.';};
 for(const id of ['abDate','abTime','abOrb','abFocus','abMode','abClassicLat','abClassicLon']){
  const el=panel.querySelector('#'+id)||details.querySelector('#'+id);
