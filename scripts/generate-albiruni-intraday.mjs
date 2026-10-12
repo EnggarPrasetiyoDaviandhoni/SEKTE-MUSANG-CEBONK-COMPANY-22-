@@ -9,12 +9,18 @@ import {resolve,dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 const require=createRequire(import.meta.url);
 const C=require('../assets/albiruni-core.js');
+const Classic=require('../assets/albiruni-classic.js');
+const ElectionGate=require('../assets/albiruni-election-gate.js');
 const A=require('astronomy-engine');
 const MODEL='ALBIRUNI_INTRADAY_V1';
 const HEADER='model,date_wib,signal_id,direction,start_epoch,entry_epoch,core_epoch,end_epoch,valid_until_epoch,published_epoch,aspect,phase';
 const MIN=60000,DAY=86400000,WIB=7*3600000;
 const PATH='ea/albiruni_intraday/data/intraday.csv';
 const MANIFEST='ea/albiruni_intraday/data/intraday.json';
+// Fixed reference location for the *astrological chart*, not user geolocation.
+// Default agrees with classical web panel; override explicitly for a test.
+const REFERENCE=Object.freeze({latitude:-6.2,longitude:106.8167});
+const ELECTION_ORB=2;
 function assert(ok,msg){if(!ok)throw Error(msg);}
 const wibDate=ms=>new Date(ms+WIB).toISOString().slice(0,10);
 function targetDate(now=Date.now()){
@@ -72,25 +78,72 @@ function chooseCandidate(engine,scan,date,{fromHour=7,toHour=23}={}){
    dominantAspect:a,modelScore:Math.abs(a.contribution)});
  }
  return valid.length?{direction:report.direction,reason:'READY',
-  candidate:valid[0],report}:{direction:'WAIT',reason:'NO_APPLYING_EXACT_BEFORE_CORE',report};
+  candidate:valid[0],candidates:valid,report}:{direction:'WAIT',reason:'NO_APPLYING_EXACT_BEFORE_CORE',candidates:[],report};
 }
-async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=7,toHour=23}={}){
+function judgeAt(engine,ms,latitude,longitude,orb){
+ const chart=Classic.chart(A,engine,ms,{latitude,longitude,orb});
+ return ElectionGate.judge(chart);
+}
+function qualify(candidate,evaluator){
+ // Read at intended entry and five minutes before exact. Both are
+ // astronomical calculations, NOT observed market confirmations.
+ const nearCore=Math.max(candidate.entry,candidate.core-5*MIN);
+ const first=evaluator(candidate.entry),second=evaluator(nearCore);
+ const eligible=first?.eligible===true&&second?.eligible===true;
+ return Object.freeze({
+  eligible,status:eligible?'MENGUNTUNGKAN':
+   first?.status==='MERUGIKAN'||second?.status==='MERUGIKAN'?'MERUGIKAN':'CAMPURAN',
+  reason:eligible?'DUA_WAKTU_MENGUNTUNGKAN':'WAKTU_KLASIK_TIDAK_MENDUKUNG',
+  entry:first||null,beforeExact:second||null,
+  entry_wib:C.stamp(candidate.entry),check_wib:C.stamp(nearCore)
+ });
+}
+async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=7,toHour=23,
+ latitude=REFERENCE.latitude,longitude=REFERENCE.longitude,
+ electionOrb=ELECTION_ORB,electionEvaluator,gateMode='enforce'}={}){
  C.period(date,'day');
+ assert(Number.isFinite(latitude)&&Math.abs(latitude)<=89.9,'Lintang electional tidak valid.');
+ assert(Number.isFinite(longitude)&&Math.abs(longitude)<=180,'Bujur electional tidak valid.');
+ assert(Number.isFinite(electionOrb)&&electionOrb>0&&electionOrb<=5,'Orb electional tidak valid.');
+ assert(gateMode==='enforce'||gateMode==='shadow','Gate electional tidak valid.');
  const published=Math.floor(publishedMs/1000);
  assert(published>1600000000,'Bad published timestamp');
  const noop={model:MODEL,date_wib:date,signal_id:'NONE',direction:'WAIT',
   start_epoch:0,entry_epoch:0,core_epoch:0,end_epoch:0,valid_until_epoch:0,
   published_epoch:published,aspect:'NONE',phase:'NONE'};
- if(!isBusinessDay(date))return {feed:noop,reason:'MARKET_CLOSED',summary:null};
+ const reference={latitude,longitude,orb:electionOrb,gateMode};
+ if(!isBusinessDay(date))return {feed:noop,reason:'MARKET_CLOSED',summary:null,
+  election:{status:'WAIT',reason:'MARKET_CLOSED',reference}};
  const ephemeris=engine||C.createEngine(A);
  const scan=await (scanFunction||C.scan)(ephemeris,date,{
   mode:'day',focus:'moon',orb:2,stepMinutes:15});
  const chosen=chooseCandidate(ephemeris,scan,date,{fromHour,toHour});
- const c=chosen.candidate;
- if(!c)return {feed:noop,reason:chosen.reason,summary:{
-  buyMinutes:chosen.report.buyMinutes,sellMinutes:chosen.report.sellMinutes,
-  dominant:chosen.report.direction}};
- const seconds=x=>Math.floor(x/1000);
+ const report=chosen.report;
+ const summary={buyMinutes:report.buyMinutes,sellMinutes:report.sellMinutes,
+  dominant:report.direction};
+ if(!chosen.candidate)return {feed:noop,reason:chosen.reason,summary,
+  election:{status:'WAIT',reason:'NO_VALID_ASTRONOMICAL_CANDIDATE',reference}};
+ const evaluator=electionEvaluator||((ms)=>judgeAt(ephemeris,ms,latitude,longitude,electionOrb));
+ let selected=null,quality=null,lastRejected=null,checked=0;
+ for(const candidate of chosen.candidates){
+  checked++;
+  try{
+   const reading=qualify(candidate,evaluator);
+   if(reading.eligible||gateMode==='shadow'){
+    selected=candidate;quality={...reading,reference,checkedCandidates:checked};
+    break;
+   }
+   lastRejected=reading;
+  }catch(e){
+   lastRejected={eligible:false,status:'CAMPURAN',reason:'ELECTION_CALCULATION_FAILED',
+    error:String(e?.message||e)};
+   // Fail closed; never convert missing ephemeris into favorable trading time.
+  }
+ }
+ if(!selected)return {feed:noop,reason:'WAIT_ELECTION_TIME_NOT_FAVORABLE',summary,
+  election:{...(lastRejected||{}),status:lastRejected?.status||'CAMPURAN',
+   reference,checkedCandidates:checked}};
+ const c=selected,seconds=x=>Math.floor(x/1000);
  const row={model:MODEL,date_wib:date,signal_id:c.signalId,direction:c.direction,
   start_epoch:seconds(c.start),entry_epoch:seconds(c.entry),
   core_epoch:seconds(c.core),end_epoch:seconds(c.end),
@@ -101,25 +154,30 @@ async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=7
   row.core_epoch<row.end_epoch&&row.end_epoch<=midnight,
   'Invalid phase order: refuse feed');
  assert(C.iso(c.entry)===date&&isBusinessDay(date),'Entry day mismatch');
- return {feed:row,reason:'READY',summary:{
-  buyMinutes:chosen.report.buyMinutes,sellMinutes:chosen.report.sellMinutes,
-  dominant:chosen.report.direction}};
+ return {feed:row,reason:gateMode==='shadow'?'SHADOW_ELECTION_AUDIT':'READY',
+  summary,election:quality};
 }
 function parseArgs(args){
  const opts={};
  for(const a of args){
   const m=/^--([a-z-]+)=(.+)$/.exec(a);
   assert(m,'Use --date=YYYY-MM-DD or --out=path');
-  assert(['date','out','json'].includes(m[1]),'Unsupported argument '+m[1]);
+  assert(['date','out','json','latitude','longitude','election-orb','gate'].includes(m[1]),'Unsupported argument '+m[1]);
   opts[m[1]]=m[2];
  }
  return opts;
 }
 async function main(){
  const opts=parseArgs(process.argv.slice(2)),date=opts.date||targetDate();
- const data=await build(date),csv=encode(data.feed);
+ const data=await build(date,{
+   latitude:opts.latitude!==undefined?Number(opts.latitude):REFERENCE.latitude,
+   longitude:opts.longitude!==undefined?Number(opts.longitude):REFERENCE.longitude,
+   electionOrb:opts['election-orb']!==undefined?Number(opts['election-orb']):ELECTION_ORB,
+   gateMode:opts.gate||'enforce'
+  }),csv=encode(data.feed);
  const manifest={...data.feed,reason:data.reason,experimental:true,
-  source:'assets/albiruni-core.js v1.5; moon focus orb 2; forward exact',
+  source:'albiruni-core.js v1.5 + albiruni-classic.js + albiruni-election-gate.js; Moon orb 2',
+   election:data.election,
   summary:data.summary,generated_at_utc:new Date(data.feed.published_epoch*1000).toISOString(),
   candidate_entry_wib:data.feed.entry_epoch?C.stamp(data.feed.entry_epoch*1000):null,
   start_wib:data.feed.start_epoch?C.stamp(data.feed.start_epoch*1000):null,
@@ -135,4 +193,4 @@ async function main(){
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)
  await main();
-export {MODEL,HEADER,targetDate,isBusinessDay,chooseCandidate,build,encode,parseArgs};
+export {MODEL,HEADER,REFERENCE,ELECTION_ORB,targetDate,isBusinessDay,chooseCandidate,judgeAt,qualify,build,encode,parseArgs};
