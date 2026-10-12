@@ -1,3 +1,14 @@
+## Perubahan model AUTO — mayoritas jumlah aspek (12 Oktober 2026)
+
+Berdasarkan permintaan pengguna, model `ALBIRUNI_AUTO_MAJORITY_V2` menentukan fokus arah dari **jumlah aspek aktif berarah**: **2 SELL + 1 BUY = SELL**, **2 BUY + 1 SELL = BUY**, **imbang = KONFLIK** dan **tanpa arah = NETRAL/WAIT**. Aspek berkekuatan bobot kecil (seperti SELL −0.006) tetap dihitung sebagai satu aspek selama masih aktif dan kontribusinya memiliki tanda SELL. Tidak menghitung sekadar banyaknya label tanpa arah; aspek 0 diabaikan. Fase applying/separating keduanya masuk hitungan sesuai permintaan.
+
+- Sinyal pada jam tertentu memakai jumlah aspek di jam itu. Dominasi harian/mingguan/bulanan memakai **jumlah vote aspek yang disampling** di masing-masing tanggal/jam (mengecualikan Sabtu–Minggu untuk fokus trading), bukan bobot total atau jumlah menit yang mendapat label BUY/SELL.
+- Bobot planet, fase, orb dan aspek **tetap dihitung untuk diagnostik dan pemilihan titik puncak di saat jumlah suara sama**, tetapi tidak membalik arah mayoritas.
+- Web menampilkan `FOKUS JAM`, jumlah BUY dan SELL, serta fokus periode terpisah; arah periode masih bisa berbeda dengan jam tunggal. Feed EA memakai fungsi AUTO yang sama, dengan filter waktu §527 tetap aktif. Sinyal EA final tetap bisa WAIT.
+- Ini **hipotesis modern yang belum divalidasi**, bukan aturan klasik Al-Biruni atau bukti peningkatan winrate. Perubahan model dapat mengubah sinyal masa depan; uji data XAUUSD 2024–2026 dan demo sebelum akun real.
+
+---
+
 ## Koreksi tampilan web: peta AUTO ≠ keputusan EA (12 Oktober 2026)
 
 Ketika pengguna membuka tabel aspek dan melihat `KONFLIK`, `BUY`, atau `SELL` pada jam yang dipilih, itu adalah output `assets/albiruni-ui.js` (AUTO research), **bukan** keputusan feed yang diikuti MT5. Panel `KEPUTUSAN EA FINAL · FILTER WAKTU KLASIK` sekarang diletakkan **tepat sebelum Periksa jam WIB** dan membaca `ea/albiruni_intraday/data/intraday.json` dengan cache no-store, lalu fallback ke GitHub RAW. Menampilkan BUY/SELL/WAIT, kondisi waktu klasik, tanggal feed, alasan, dan kapan file dipublikasikan.

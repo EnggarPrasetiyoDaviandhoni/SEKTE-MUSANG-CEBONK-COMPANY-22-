@@ -1,3 +1,11 @@
+## Model V2 — fokus jumlah aspek aktif (12 Oktober 2026)
+
+Publisher kini mengimpor `assets/albiruni-core.js` yang menggunakan `ALBIRUNI_AUTO_MAJORITY_V2`. Arah jam dihitung dengan suara mayoritas aspek aktif: 2 SELL + 1 BUY → SELL, sebaliknya BUY, suara imbang → KONFLIK/WAIT. Arah dominan harian berasal dari akumulasi jumlah suara aspek dalam grid, bukan penjumlahan bobot planet. **Fokus jam dan fokus harian dapat berbeda** karena jendela waktunya berbeda; calon entry masih memerlukan arah harian searah jam APPLYING dan aspek EXACT berikutnya.
+
+Filter kualitas waktu Al-Biruni klasik §527 **tetap aktif** setelah pemilihan arah. MENGUNTUNGKAN pada dua titik → kandidat diteruskan, selain itu WAIT. File MQ5 tetap mengikuti kontrak 12 kolom, tidak memerlukan compile ulang untuk perubahan arah feed, tapi live EA dengan AUTOPILOT ON dapat mengambil feed yang berubah setelah GitHub Actions menerbitkannya. Penggunaan real belum tervalidasi dan tidak dianjurkan; uji di demo dahulu. Tidak ada jaminan strategi ini menang meskipun sinyal bertambah.
+
+---
+
 ## v1.02 publisher: §527 favorable/harmful/mixed electional gate (12 October 2026)
 
 The feed generator no longer applies a fixed 07:00–23:00 WIB candidate window. The EA still checks actual broker sessions and its existing intraday close cutoff; overnight market-closed windows do not cause guaranteed entries. 

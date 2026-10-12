@@ -120,7 +120,8 @@ async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=0
  const chosen=chooseCandidate(ephemeris,scan,date,{fromHour,toHour});
  const report=chosen.report;
  const summary={buyMinutes:report.buyMinutes,sellMinutes:report.sellMinutes,
-  dominant:report.direction};
+  buyVotes:report.buyVotes,sellVotes:report.sellVotes,
+  directionRule:'ASPECT_COUNT_MAJORITY_V2',dominant:report.direction};
  if(!chosen.candidate)return {feed:noop,reason:chosen.reason,summary,
   election:{status:'WAIT',reason:'NO_VALID_ASTRONOMICAL_CANDIDATE',reference}};
  const evaluator=electionEvaluator||((ms)=>judgeAt(ephemeris,ms,latitude,longitude,electionOrb));
@@ -176,7 +177,7 @@ async function main(){
    gateMode:opts.gate||'enforce'
   }),csv=encode(data.feed);
  const manifest={...data.feed,reason:data.reason,experimental:true,
-  source:'albiruni-core.js v1.5 + albiruni-classic.js + albiruni-election-gate.js; Moon orb 2',
+  source:'ALBIRUNI_AUTO_MAJORITY_V2 + albiruni-classic.js + albiruni-election-gate.js; Moon orb 2',
    election:data.election,
   summary:data.summary,generated_at_utc:new Date(data.feed.published_epoch*1000).toISOString(),
   candidate_entry_wib:data.feed.entry_epoch?C.stamp(data.feed.entry_epoch*1000):null,

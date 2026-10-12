@@ -181,7 +181,7 @@ function toCSV(result,rules={}){
 // Every true exact is one observation; a window with no exact has one explicitly
 // marked closest approach. Calendar days are evaluated in WIB; weekends never
 // transfer/shift their astronomical events onto Friday or Monday.
-// CEBONK AUTO EXPERIMENT v1 — modern, UNVALIDATED XAUUSD hypothesis.
+// CEBONK AUTO MAJORITY V2 — modern, UNVALIDATED XAUUSD hypothesis.
 // Planet sign is an explicit model assumption, NOT Al-Biruni's gold trading rule.
 // The aspect changes weighting only: sextile never means BUY by itself,
 // and square never means SELL by itself. Real gold returns are NOT available.
@@ -199,32 +199,33 @@ function autoSignal(engine,result,ms){
   const contribution=planetNature*aspectWeight*phaseWeight*orbWeight;
   const nearestExact=e.exactTimes.length?
    e.exactTimes.reduce((a,b)=>Math.abs(ms-a)<=Math.abs(ms-b)?a:b):null;
-  return {
-   id:e.id,pair:e.pair.slice(),angle:e.angle,name:e.name,
+  return {id:e.id,pair:e.pair.slice(),angle:e.angle,name:e.name,
    start:e.start,end:e.end,exact:nearestExact,closest:e.closest,
    phase:e.phase,orb:e.orb,planetNature,aspectWeight,phaseWeight,
-   orbWeight,contribution
-  };
+   orbWeight,contribution};
  }).sort((a,b)=>Math.abs(b.contribution)-Math.abs(a.contribution)||a.id.localeCompare(b.id));
  const buy=items.reduce((v,x)=>v+Math.max(0,x.contribution),0);
  const sell=items.reduce((v,x)=>v+Math.max(0,-x.contribution),0);
  const net=buy-sell;
- let direction='NETRAL',reason='NO_ACTIVE_ASPECT';
- if(items.length){
-  if(buy<AUTO_THRESHOLD&&sell<AUTO_THRESHOLD)reason='NO_STRONG_PLANETARY_COMBINATION';
-  else if(Math.min(buy,sell)>=AUTO_THRESHOLD&&
-          Math.min(buy,sell)>=Math.max(buy,sell)*AUTO_CONFLICT_RATIO){
-   direction='KONFLIK';reason='BUY_SELL_OVERLAP';
-  }else if(Math.abs(net)<AUTO_THRESHOLD)reason='NET_SCORE_BELOW_THRESHOLD';
-  else{direction=net>0?'BUY':'SELL';reason='DOMINANT_WEIGHTED_ASPECTS';}
- }
- const supporting=items.filter(e=>direction==='BUY'?e.contribution>0:direction==='SELL'?e.contribution<0:true);
- return {
-  model:'ALBIRUNI_AUTO_EXPERIMENT_V1',validated:false,ms,
-  direction,reason,buy,sell,net,threshold:AUTO_THRESHOLD,
-  conflictRatio:AUTO_CONFLICT_RATIO,active:items,
-  dominant:supporting[0]||null
- };
+ // One active unique event = one directional vote; zero = neutral.
+ // Includes APPLYING and SEPARATING equally as requested. Weights are
+ // retained only for ranking/debugging; they never determine BUY/SELL.
+ const buyCount=items.filter(x=>x.contribution>0).length;
+ const sellCount=items.filter(x=>x.contribution<0).length;
+ const neutralCount=items.length-buyCount-sellCount;
+ const voteMargin=buyCount-sellCount;
+ const direction=buyCount+sellCount===0?'NETRAL':
+   voteMargin===0?'KONFLIK':voteMargin>0?'BUY':'SELL';
+ const reason=items.length===0?'NO_ACTIVE_ASPECT':
+   buyCount+sellCount===0?'NO_SIGNED_ASPECTS':
+   voteMargin===0?'BUY_SELL_COUNT_TIE':'DOMINANT_ASPECT_COUNT';
+ const supporting=items.filter(x=>direction==='BUY'?x.contribution>0:
+  direction==='SELL'?x.contribution<0:true);
+ return {model:'ALBIRUNI_AUTO_MAJORITY_V2',
+  directionMode:'ASPECT_COUNT_MAJORITY_V2',validated:false,ms,
+  direction,reason,buy,sell,net,buyCount,sellCount,neutralCount,voteMargin,
+  threshold:AUTO_THRESHOLD,conflictRatio:AUTO_CONFLICT_RATIO,active:items,
+  dominant:supporting[0]||null};
 }
 // Sampled aggregate bias windows; boundaries and PEAK are GRID-based estimates,
 // not exact orbital events. Exact MULAI/INTI/AKHIR are on dominant aspect above.
@@ -233,24 +234,29 @@ function autoTimeline(engine,result,dayStart,{stepMinutes=15}={}){
         60%stepMinutes===0,'Grid AUTO harus membagi satu jam.');
  assert(result.range.days.some(d=>d.start===dayStart),'Hari tidak ada dalam periode.');
  const dayEnd=dayStart+DAY,raw=[];
- let current=null;
+ let current=null,buyVotes=0,sellVotes=0,neutralVotes=0;
  for(let ms=dayStart;ms<dayEnd;ms+=stepMinutes*MIN){
   const signal=autoSignal(engine,result,ms);
+  buyVotes+=signal.buyCount;sellVotes+=signal.sellCount;neutralVotes+=signal.neutralCount;
   if(signal.direction!=='BUY'&&signal.direction!=='SELL'){current=null;continue;}
+  const margin=Math.abs(signal.voteMargin),weight=Math.abs(signal.net);
   if(!current||current.direction!==signal.direction||current.end!==ms){
    current={direction:signal.direction,start:ms,end:ms+stepMinutes*MIN,peak:ms,
-    peakNet:Math.abs(signal.net),dominantId:signal.dominant?.id||''};
+    peakNet:margin,peakWeight:weight,dominantId:signal.dominant?.id||''};
    raw.push(current);
   }else{
    current.end=ms+stepMinutes*MIN;
-   if(Math.abs(signal.net)>current.peakNet){
-    current.peakNet=Math.abs(signal.net);current.peak=ms;
+   // Pick the most lopsided *count* for INTI. Weight only breaks tied counts
+   // for timing; it never reverses the chosen direction.
+   if(margin>current.peakNet||(margin===current.peakNet&&weight>current.peakWeight)){
+    current.peakNet=margin;current.peakWeight=weight;current.peak=ms;
     current.dominantId=signal.dominant?.id||'';
    }
   }
  }
- return {model:'ALBIRUNI_AUTO_EXPERIMENT_V1',validated:false,
-  resolutionMinutes:stepMinutes,dayStart,windows:raw};
+ return {model:'ALBIRUNI_AUTO_MAJORITY_V2',validated:false,
+  directionMode:'ASPECT_COUNT_MAJORITY_V2',
+  resolutionMinutes:stepMinutes,dayStart,windows:raw,buyVotes,sellVotes,neutralVotes};
 }
 // Coherent daily/weekly/monthly overview of the SAME AUTO experimental model.
 // Aggregation never moves weekend aspects to trading days, never invents market
@@ -262,30 +268,30 @@ function autoPeriodSummary(engine,result,{stepMinutes}={}){
  const resolution=stepMinutes??(result.range.mode==='month'?60:result.range.mode==='week'?30:15);
  assert([15,30,60].includes(resolution),'Resolusi periode harus 15/30/60 menit.');
  const days=[];
- let buyDuration=0,sellDuration=0,neutralDays=0,conflictDays=0;
+ let buyDuration=0,sellDuration=0,buyVotes=0,sellVotes=0,neutralDays=0,conflictDays=0;
  const all=[];
  for(const day of result.range.days){
   const report=autoTimeline(engine,result,day.start,{stepMinutes:resolution});
   const ranked=report.windows.slice().sort((a,b)=>(b.end-b.start)-(a.end-a.start)||
-   b.peakNet-a.peakNet||a.start-b.start);
+   b.peakNet-a.peakNet||b.peakWeight-a.peakWeight||a.start-b.start);
   const buy=report.windows.filter(w=>w.direction==='BUY').reduce((v,w)=>v+(w.end-w.start)/MIN,0);
   const sell=report.windows.filter(w=>w.direction==='SELL').reduce((v,w)=>v+(w.end-w.start)/MIN,0);
   const marketClosed=day.weekday===0||day.weekday===6;
   // Weekend planetary states are calculated and shown but excluded from
   // directional XAUUSD summaries; never shift to Friday/Monday.
-  if(!marketClosed){buyDuration+=buy;sellDuration+=sell;}
-  const focus=buy>sell?'BUY':sell>buy?'SELL':'NETRAL';
+  if(!marketClosed){buyDuration+=buy;sellDuration+=sell;buyVotes+=report.buyVotes;sellVotes+=report.sellVotes;}
+  const focus=report.buyVotes>report.sellVotes?'BUY':report.sellVotes>report.buyVotes?'SELL':'NETRAL';
   if(focus==='NETRAL')neutralDays++;
   if(buy>0&&sell>0)conflictDays++;
   const selected=ranked.find(w=>w.direction===focus)||null;
   days.push({date:day.date,weekday:day.weekday,marketClosed,direction:focus,
-    buyMinutes:buy,sellMinutes:sell,windowCount:report.windows.length,
+    buyMinutes:buy,sellMinutes:sell,buyVotes:report.buyVotes,sellVotes:report.sellVotes,windowCount:report.windows.length,
     window:selected,allWindows:report.windows});
   if(!marketClosed)all.push(...report.windows);
  }
- let direction=buyDuration>sellDuration?'BUY':sellDuration>buyDuration?'SELL':'NETRAL';
+ let direction=buyVotes>sellVotes?'BUY':sellVotes>buyVotes?'SELL':'NETRAL';
  const focusWindows=all.filter(w=>w.direction===direction)
-  .sort((a,b)=>(b.end-b.start)-(a.end-a.start)||b.peakNet-a.peakNet||a.start-b.start);
+  .sort((a,b)=>(b.end-b.start)-(a.end-a.start)||b.peakNet-a.peakNet||b.peakWeight-a.peakWeight||a.start-b.start);
  const dominant=direction==='NETRAL'?null:focusWindows[0]||null;
  // ONE WAY: establish ONE primary direction for the whole chosen date/week/month.
  // A day with no matching windows is WAIT, never reclassified as the opposite
@@ -295,7 +301,7 @@ function autoPeriodSummary(engine,result,{stepMinutes}={}){
   const selected=direction==='NETRAL'||day.marketClosed?[]:
    day.allWindows.filter(w=>w.direction===direction);
   const ranked=selected.slice().sort((a,b)=>(b.end-b.start)-(a.end-a.start)||
-   b.peakNet-a.peakNet||a.start-b.start);
+   b.peakNet-a.peakNet||b.peakWeight-a.peakWeight||a.start-b.start);
   const focusWindow=ranked[0]||null;
   const focusMinutes=selected.reduce((m,w)=>m+(w.end-w.start)/MIN,0);
   const counterDuration=day.marketClosed?0:
@@ -307,10 +313,10 @@ function autoPeriodSummary(engine,result,{stepMinutes}={}){
    focusWindows:selected,counterMinutes:counterDuration};
  });
  return {
-  model:'ALBIRUNI_AUTO_EXPERIMENT_V1',validated:false,singleDirection:true,
+  model:'ALBIRUNI_AUTO_MAJORITY_V2',directionMode:'ASPECT_COUNT_MAJORITY_V2',validated:false,singleDirection:true,
   focusDays,waitDays,counterMinutes,
   mode:result.range.mode,start:result.range.start,end:result.range.end,
-  resolutionMinutes:resolution,direction,buyMinutes:buyDuration,sellMinutes:sellDuration,
+  resolutionMinutes:resolution,direction,buyMinutes:buyDuration,sellMinutes:sellDuration,buyVotes,sellVotes,
   neutralDays,daysWithBothDirections:conflictDays,days:focusedDays,
   startWindow:dominant?.start??null,core:dominant?.peak??null,endWindow:dominant?.end??null,
   dominantWindow:dominant
@@ -417,13 +423,13 @@ function toAutoStudyCSV(engine,result,rules={}){
  const observations=studyObservations(result,rules);
  const raw=toStudyCSV(result,rules).replace(/^\uFEFF/,'').trimEnd().split('\r\n');
  assert(raw.length===observations.length+1,'Baris riset AUTO tidak selaras.');
- const tail=['auto_hypothesis_UNVALIDATED','auto_buy_weight','auto_sell_weight','auto_reason'];
+ const tail=['auto_hypothesis_UNVALIDATED','auto_buy_weight','auto_sell_weight','auto_reason','auto_buy_aspects','auto_sell_aspects'];
  const q=x=>'"'+String(x).replace(/"/g,'""')+'"';
  const rows=[raw[0]+','+tail.map(q).join(',')];
  observations.forEach((o,i)=>{
   const signal=autoSignal(engine,result,o.time);
   rows.push(raw[i+1]+','+[signal.direction,signal.buy.toFixed(6),
-   signal.sell.toFixed(6),signal.reason].map(q).join(','));
+   signal.sell.toFixed(6),signal.reason,signal.buyCount,signal.sellCount].map(q).join(','));
  });
  return '\uFEFF'+rows.join('\r\n')+'\r\n';
 }

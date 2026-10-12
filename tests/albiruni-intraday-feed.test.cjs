@@ -36,6 +36,8 @@ async function main(){
  assert.ok(good.election.entry.eligible);
  assert.match(good.election.check_wib,/2026-10-12/);
  assert.equal(good.feed.direction,'BUY');
+ assert.equal(good.summary.directionRule,'ASPECT_COUNT_MAJORITY_V2');
+ assert.ok(good.summary.buyVotes>good.summary.sellVotes,'Feed daily focus must come from aspect votes');
  assert.equal(good.feed.phase,'APPLYING');
  assert.equal(good.feed.date_wib,date);
  assert.ok(good.feed.signal_id.startsWith('AB-20261012-BUY-'));
