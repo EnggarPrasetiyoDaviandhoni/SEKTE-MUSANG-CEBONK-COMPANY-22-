@@ -1,3 +1,15 @@
+## v1.02 publisher: §527 favorable/harmful/mixed electional gate (12 October 2026)
+
+The unchanged MT5 EA v1.01 reads the **same 12-column ALBIRUNI_INTRADAY_V1 CSV**; no MQ5 or .set replacement is required. New publisher computes the same experimental daily BUY/SELL bias and an APPLYING candidate, then calls the **separate Al-Biruni election research engine** at candidate ENTRY and five minutes before astronomical EXACT. A candidate is published only when both time checks return MENGUNTUNGKAN; otherwise the EA sees WAIT and opens nothing. The gate **never changes BUY into SELL or vice versa**.
+
+Time quality follows an explicitly *modern conservative heuristic inspired by* the original electional considerations in the user-supplied §527: avoid malefic rays to Ascendant, Moon and their rulers; require benefic contact to Ascendant or Moon and a Moon–Ascendant ruler relationship. Mixed contacts, harmful contacts, insufficient support, missing ephemeris or uncertainty at sunrise/sunset => WAIT. This is **not a verbatim Al-Biruni BUY/SELL strategy**, and there is no established predictive value for XAUUSD.
+
+Location for Ascendant is **a chosen reference**, not automatically the broker's server or the user's actual geographic location. Publisher defaults to Jakarta latitude -6.2000, longitude +106.8167, election orb 2°. Override with `--latitude=-7.2575 --longitude=112.7521 --election-orb=2` for Surabaya, or another explicit location. To compare unfiltered outputs **offline only**, `--gate=shadow` keeps the previous direction and writes diagnostic election status; do not use shadow mode for unattended live publishing. Production defaults to `--gate=enforce`.
+
+The daily JSON manifest records `election.status`, `election.reason`, `election.reference`, candidate timestamps and two classical checks when present. CSV remains backward compatible. This only blocks some hypothetical trades; it **does not validate forecasting accuracy**, ensure profitable entries or replace MT5's separate real account lock (default OFF). A published position can remain open after the favorable window; existing ATR SL/TP, time cutoff, broker session deferral and risk controls are unchanged. Favorable classification is determined in advance, but not a guarantee that the broker session or price direction will cooperate.
+
+---
+
 # CEBONK AL-BIRUNI INTRADAY EA v1.01 — WAIT MARKET OPEN
 
 Independent new MT5 Expert Advisor. No changes to BBMA, Liquidity Sweep, Luxor Astrology, BaZi, Astrology News or old EA. Astronomy-only experimental BUY/SELL, NOT a validated market predictor.
