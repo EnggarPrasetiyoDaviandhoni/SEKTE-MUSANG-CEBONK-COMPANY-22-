@@ -6,7 +6,7 @@
 (function(root){
 'use strict';
 const STATUS=Object.freeze({FAVORABLE:'MENGUNTUNGKAN',HARMFUL:'MERUGIKAN',MIXED:'CAMPURAN'});
-const CRITICAL=new Set(['Ascendant','Bulan','Penguasa Ascendant','Penguasa tanda Bulan']);
+const CRITICAL=new Set(['Ascendant','Bulan','Penguasa Ascendant','Penguasa tanda Bulan','Matahari (asosiasi emas §410)']);
 function judge(chart){
  if(!chart||!Array.isArray(chart.contacts)||!chart.ascendantRuler||
     !Number.isFinite(chart.ascendant)||!Number.isFinite(chart.sunAltitudeDegrees))
