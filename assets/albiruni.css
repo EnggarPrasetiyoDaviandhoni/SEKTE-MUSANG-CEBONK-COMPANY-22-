@@ -154,3 +154,15 @@
 #albiruniPanel .ab-three-muted{font-size:10px;color:#a6bed6;line-height:1.5}
 @media(max-width:900px){#albiruniPanel .ab-three-cards{grid-template-columns:1fr}#albiruniPanel .ab-three-card{padding:14px}#albiruniPanel .ab-three-times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}#albiruniPanel .ab-three-times b{font-size:11px}}
 @media(max-width:450px){#albiruniPanel .ab-three-result{padding:11px}#albiruniPanel .ab-three-times{grid-template-columns:1fr}#albiruniPanel .ab-three-entry strong{font-size:15px}}
+
+/* Explain final published EA decision independently from experimental aspect chart. */
+#albiruniPanel .ab-final-decision{padding:16px;margin:12px 0 14px;background:#0a1d2b;border:1px solid #327c84;border-radius:12px;color:#e5f2f5}
+#albiruniPanel .ab-final-decision h3{font-size:14px;color:#b9e8ec;margin-bottom:10px}
+#albiruniPanel .ab-final-decision p{font-size:12px;line-height:1.6;margin:8px 0}
+#albiruniPanel .ab-final-decision small{font-size:11px;color:#a8bfca;line-height:1.6;display:block;margin-top:8px}
+#albiruniPanel .ab-final-direction{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#albiruniPanel .ab-final-direction strong{font-size:22px;color:#f0c16c;letter-spacing:.3px}
+#albiruniPanel .ab-final-direction span{font-size:11px;color:#a8bfca}
+#albiruniPanel .ab-final-warning{color:#ffd4a1}
+#albiruniPanel .ab-auto-only{font-size:11px;font-weight:800;color:#f0c16c;display:block;letter-spacing:.4px;margin-bottom:6px}
+#albiruniPanel #abRefreshFeed{margin-top:8px}

@@ -175,7 +175,7 @@ function inspect(){
   const direction=automatic?automatic.direction:snapshot.direction;
   const primary=periodSummary?.direction||'NETRAL';
   const counter=automatic&&['BUY','SELL'].includes(primary)&&direction!==primary;
-  $('abInspectLabel').innerHTML=chip(direction)+' <span>· '+esc(selectedDate+' '+time+' WIB')+'</span>'+
+  $('abInspectLabel').innerHTML='<span class="ab-auto-only">ASPEK '+(automatic?'AUTO EKSPERIMEN · BELUM FILTER EA':'MANUAL · UJI HIPOTESIS')+'</span> '+chip(direction)+' <span>· '+esc(selectedDate+' '+time+' WIB')+'</span>'+
    (counter?' <small>· LUAR FOKUS '+esc(primary)+' / SKIP</small>':'');
   const phases={APPLYING:'Mendekat',EXACT:'Exact',SEPARATING:'Menjauh',STATION:'Titik balik'};
   if(automatic){
@@ -193,7 +193,7 @@ function inspect(){
     ' (bukan confidence).';
    const d=automatic.dominant;
    $('abAutoStatus').hidden=false;
-   $('abAutoStatus').innerHTML='<b>🔮 '+esc(direction)+' · AUTO EKSPERIMEN</b>'+
+   $('abAutoStatus').innerHTML='<b>ASPEK AUTO '+esc(direction)+' · BUKAN KEPUTUSAN EA</b>'+
     (counter?'<p>SKIP: jam iki ora searah fokus '+esc(primary)+' kanggo periode sing dipilih.</p>':'')+
     '<p>Bobot model: BUY '+automatic.buy.toFixed(3)+' · SELL '+automatic.sell.toFixed(3)+
     ' · bukan persentase kemungkinan profit.</p>'+

@@ -14,7 +14,16 @@ async function run(){
  w.CebonkCore=Object.freeze({sentinel:'legacy'});w.CEBONK_ASTRO_STATE=Object.freeze({sentinel:'unchanged'});
  const oldCore=w.CebonkCore,oldState=w.CEBONK_ASTRO_STATE;
  const errors=[];w.addEventListener('error',e=>errors.push(e.error||e.message));
- let blob=null;
+ w.fetch=async (url,opts)=>({
+   ok:true,json:async()=>({
+    model:'ALBIRUNI_INTRADAY_V1',date_wib:'2026-10-12',
+    signal_id:'NONE',direction:'WAIT',entry_epoch:0,
+    published_epoch:1791801290,reason:'WAIT_ELECTION_TIME_NOT_FAVORABLE',
+    election:{status:'CAMPURAN',reference:{latitude:-6.2,longitude:106.8167,gateMode:'enforce'},
+     entry_wib:'2026-10-12 09:30 WIB',check_wib:'2026-10-12 11:21 WIB'}
+   })
+  });
+  let blob=null;
  w.URL.createObjectURL=value=>{blob=value;return 'blob:test';};w.URL.revokeObjectURL=()=>{};w.HTMLAnchorElement.prototype.click=function(){};
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-core.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-classic.js'),'utf8'));
@@ -25,6 +34,16 @@ async function run(){
  await until(()=>$('abRun').disabled===false&&!$('abResults').hidden,'initial calculation');
  assert.equal($('abCalendar').querySelectorAll('button').length,5);
  assert.ok($('abClassicPanel'),'classical panel must exist');
+ assert.ok($('abFinalDecision'),'EA decision must be displayed beside time inspector');
+ assert.ok($('abFinalDecision').compareDocumentPosition($('abTime')) & w.Node.DOCUMENT_POSITION_FOLLOWING,
+  'EA decision must render before time inspector, not hidden below classical tables');
+ await until(()=>$('abFinalFeedStatus').textContent.includes('EA WAIT'),'published EA WAIT');
+ assert.match($('abFinalFeedStatus').textContent,/CAMPURAN/);
+ assert.match($('abFinalFeedStatus').textContent,/2026-10-12/);
+ assert.match($('abFinalFeedStatus').textContent,/Filter/);
+ assert.match($('abInspectLabel').textContent,/BELUM FILTER EA/);
+ $('abRefreshFeed').click();
+ await until(()=>$('abFinalFeedStatus').textContent.includes('EA WAIT'),'refresh final EA decision');
  $('abClassicCalc').click();
  await until(()=>$('abClassicResults').textContent.includes('SKOR MARTABAT KLASIK'),'classical direction and dignity');
  assert.match($('abClassicResults').textContent,/ARAH HARIAN/);
@@ -69,7 +88,7 @@ async function run(){
  assert.equal($('abAutoStatus').hidden,false,'AUTO summary available');
  assert.equal($('abAutoWindows').hidden,false,'AUTO timeline available');
  assert.match($('abRuleState').textContent,/AUTO/);
- assert.match($('abAutoStatus').textContent,/AUTO EKSPERIMEN/);
+ assert.match($('abAutoStatus').textContent,/ASPEK AUTO/);
  assert.match($('abAutoWindows').textContent,/FOKUS 1 ARAH/);
  $('abStudyCSV').click();
  assert.ok(blob&&blob.size>1000);
@@ -91,6 +110,7 @@ async function run(){
 
  assert.equal($('abRuleState').textContent,'NETRAL');
  $('abCalendar').querySelectorAll('button')[2].click();assert.match($('abDayTitle').textContent,/Rabu/);
+ assert.match($('abFinalFeedStatus').textContent,/BELUM ADA FEED/,'historical feed must not be reused for another date');
  $('abRule90').value='SELL';$('abRule90').dispatchEvent(new w.Event('change'));
  assert.equal($('abRuleState').textContent,'UJI MANUAL');assert.match(w.localStorage.getItem('cebonk.albiruni.v1'),/SELL/);
  $('abResetRules').click();assert.equal($('abRuleState').textContent,'NETRAL');
