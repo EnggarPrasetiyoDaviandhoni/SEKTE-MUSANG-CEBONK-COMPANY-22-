@@ -1,0 +1,53 @@
+{
+  "model": "ALBIRUNI_MAJORITY_DIRECT_V3",
+  "date_wib": "2026-10-12",
+  "signal_id": "AB-20261012-SELL-17917873554",
+  "direction": "SELL",
+  "start_epoch": 1791773100,
+  "entry_epoch": 1791774000,
+  "core_epoch": 1791787355,
+  "end_epoch": 1791801700,
+  "valid_until_epoch": 1791801700,
+  "published_epoch": 1791805771,
+  "aspect": "Moon/Mars Square 90deg orb 1.868deg",
+  "phase": "APPLYING",
+  "buy_aspects": 1,
+  "sell_aspects": 2,
+  "reason": "READY_MAJORITY_ONLY",
+  "experimental": true,
+  "source": "ALBIRUNI_MAJORITY_DIRECT_V3; majority direction; classical timing veto NOT applied",
+  "election": {
+    "eligible": null,
+    "status": "NOT_APPLIED",
+    "reason": "MAJORITY_ONLY_CLASSICAL_TIME_NOT_ENFORCED",
+    "reference": {
+      "latitude": -6.2,
+      "longitude": 106.8167,
+      "orb": 2,
+      "gateMode": "majority"
+    },
+    "checkedCandidates": 1,
+    "entry_wib": "2026-10-12 10:00:00 WIB",
+    "check_wib": null
+  },
+  "majority": {
+    "rule": "ASPECT_COUNT_MAJORITY_V2",
+    "entry_wib": "2026-10-12 10:00:00 WIB",
+    "buyAspects": 1,
+    "sellAspects": 2,
+    "neutralAspects": 0
+  },
+  "summary": {
+    "buyMinutes": 0,
+    "sellMinutes": 1320,
+    "buyVotes": 30,
+    "sellVotes": 128,
+    "directionRule": "ASPECT_COUNT_MAJORITY_V2",
+    "dominant": "SELL"
+  },
+  "generated_at_utc": "2026-10-12T11:49:31.000Z",
+  "candidate_entry_wib": "2026-10-12 10:00:00 WIB",
+  "start_wib": "2026-10-12 09:45:00 WIB",
+  "core_wib": "2026-10-12 13:42:35 WIB",
+  "end_wib": "2026-10-12 17:41:40 WIB"
+}
