@@ -61,6 +61,8 @@ const study=C.chart(fakeA,engine,Date.UTC(2026,9,12,5,0,0),{latitude:0,longitude
 assert.equal(study.sect,'day');
 assert.equal(study.ascendantSign,'Cancer');
 assert.equal(study.ascendantRuler,'Moon');
+assert.equal(study.moonAscRuler,null,'Moon cannot form aspect to itself');
+assert.equal(study.contacts.filter(x=>x.actor==='Jupiter'&&x.target==='Penguasa Ascendant').length,1,'no duplicated contacts for repeated significator');
 assert.equal(study.lunarRuler,'Venus');
 assert.equal(study.dignities.completeDignity,true);
 assert.equal(study.termSystem,'EGYPTIAN_§453');
