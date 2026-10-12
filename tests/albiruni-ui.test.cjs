@@ -23,7 +23,7 @@ async function run(){
     end_epoch:Math.floor(Date.parse('2026-10-12T07:30:00Z')/1000),
     phase:'APPLYING',buy_aspects:1,sell_aspects:2,
     summary:{directionRule:'ASPECT_COUNT_MAJORITY_V2',dominant:'SELL',buyVotes:30,sellVotes:128},
-    published_epoch:1791801290,reason:'WAIT_ELECTION_TIME_NOT_FAVORABLE',
+    published_epoch:1791801290,reason:'READY_MAJORITY_ONLY',
     election:{eligible:null,status:'NOT_APPLIED',reference:{latitude:-6.2,longitude:106.8167,gateMode:'majority'},
      entry_wib:'2026-10-12 10:00 WIB',check_wib:'2026-10-12 13:37 WIB'}
    })
