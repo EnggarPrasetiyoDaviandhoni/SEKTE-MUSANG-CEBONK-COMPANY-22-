@@ -1,3 +1,18 @@
+## AL-BIRUNI KLASIK v2 — implementasi kitab asli (12 Oktober 2026)
+
+Koreksi atas v1: panel penelitian klasik tidak cukup hanya menghitung empat komponen martabat. Implementasi v2 menambahkan:
+
+- **Martabat klasik 5/4/3/2/1**, mencakup **Egyptian terms +3** yang ditranskripsi langsung dari tabel §453 PDF halaman 59. Pilihan metodologi eksplisit: Egyptian, **bukan tabel Ptolemaios**. Domicile §440 PDF 50; exaltation §443 PDF 52 (menggunakan sign-wide interpretation karena kitab mencatat perbedaan pendapat tentang derajat khusus), triplicity §445 PDF 53, face §449 PDF 56–57; bobot §494 PDF 101–102. Perbedaan versi harus dihormati dan tidak dihapus diam-diam.
+- **Ascendant lokal** berdasarkan waktu sidereal apparent Greenwich dari Astronomy Engine 2.1.19, koordinat lokasi yang dapat diubah, dan titik potong **horizon timur** terhadap ekliptika tropis dengan obliquity rata-rata. Karena precession/nutation tidak dihitung sepenuhnya dalam transformasi, ASC diberi label **aproksimasi**. Batas lintang ±89,9°.
+- **Siang/malam otomatis** berdasarkan tinggi geometris Matahari tanpa refraksi atmosfer pada koordinat yang dipilih. Di dekat horizon (altitude ±0,5°), hasil ditandai tidak pasti.
+- **Analisis §527 PDF 126**: posisi dan penguasa Ascendant; Bulan dan penguasa tanda Bulan; Matahari sebagai asosiasi simbolis emas dari §410 PDF 37; kedekatan aspek dengan Venus/Jupiter (benefic) atau Mars/Saturn (malefic); dan kontak Bulan–penguasa Ascendant. Input orb diambil dari panel pengguna dan **bukan satu-satunya batas dalam kitab** (§490 PDF 98–99).
+- Status `KONTAK_BENEFIC`, `KONTAK_MALEFIC`, `CAMPURAN`, atau `BELUM_ADA_KONTAK` merupakan **inventaris kontak aspek**, bukan putusan electional lengkap. Nama "asli" menunjukkan sumber aturan, bukan reproduksi semua teknik; seluruh rumah, pemilihan signifikator urusan, lintang aspek, dan interpretasi electional lengkap masih di luar lingkup.
+- **BUY/SELL/WAIT tetap tampak sebagai perbandingan tetapi berasal dari AUTO EKSPERIMEN modern**, bukan keputusan klasik, dan tidak dipakai untuk mengirim order EA MT5, mengubah feed, atau mengubah modul ASTROLOGY lama. Tidak ada rumus trading XAUUSD asli di kitab maupun validasi hubungan aspek dengan harga emas.
+
+Referensi PDF adalah nomor halaman *file 128 halaman yang diunggah*, bukan nomor halaman terbitan lain. Contoh lokasi awal Jakarta hanya preset demonstrasi, **bukan klaim pengguna berada di Jakarta**.
+
+---
+
 ## Koreksi tampilan arah 12 Oktober 2026
 
 Panel AL-BIRUNI KLASIK sekarang menampilkan arah **BUY/SELL/WAIT** dari model **AUTO EKSPERIMEN lama**, berdampingan dengan skor martabat klasik. Arah harian dan arah pada jam WIB yang diperiksa ditampilkan secara terpisah; jam kandidat, MULAI, INTI, AKHIR mengikuti perhitungan `periodEntryReport` yang sudah ada. Kondisi `KONFLIK` ditunjukkan sebagai WAIT untuk keputusan dengan label konflik yang eksplisit.

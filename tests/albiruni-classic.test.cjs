@@ -17,8 +17,15 @@ assert.equal(C.position('Moon',45,'night').points.triplicity,2);
 assert.equal(C.position('Moon',45,'night').points.face,1);
 assert.equal(C.position('Venus',360,'night').sign,'Aries');
 assert.equal(C.position('Moon',-1,'day').sign,'Pisces');
-assert.equal(C.position('Mars',1,'day').points.term,null);
-assert.equal(C.position('Sun',0,'day').points.term,null);
+assert.equal(C.position('Mars',1,'day').points.term,0);
+assert.equal(C.position('Mercury',15,'day').points.term,3);
+assert.equal(C.position('Venus',6,'day').points.term,3);
+assert.equal(C.position('Jupiter',5.999,'day').points.term,3);
+assert.equal(C.egyptianTerm(0,6),'Venus');
+assert.equal(C.egyptianTerm(11,29.99),'Saturn');
+assert.equal(C.egyptianTerm(0,0),'Jupiter');
+for(const row of C.EGYPTIAN_TERMS){assert.equal(row.length,5);assert.equal(row[4][1],30);for(let j=1;j<5;j++)assert.ok(row[j][1]>row[j-1][1]);}
+assert.equal(C.position('Sun',0,'day').points.term,0);
 assert.equal(C.position('Sun',190,'day').fall,true);
 assert.equal(C.position('Mars',190,'day').detriment,true);
 assert.throws(()=>C.position('Pluto',0,'day'),/Planet klasik/);
@@ -27,10 +34,49 @@ assert.throws(()=>C.position('Sun',0,'unknown'),/siang/);
 const all=Object.fromEntries(C.BODIES.map((b,i)=>[b,i*37]));
 const report=C.assess(all,'night');
 assert.equal(report.rows.length,7);
-assert.ok(report.rows.every(r=>r.complete===false&&r.points.term===null));
+assert.ok(report.rows.every(r=>r.complete===true&&[0,3].includes(r.points.term)));
+assert.equal(report.termSystem,'EGYPTIAN_§453');
 assert.deepEqual(report.rows.map(r=>r.subtotal),report.rows.map(r=>r.subtotal).slice().sort((a,b)=>b-a));
 assert.equal(report.tradingDirection,null);
 assert.equal(report.marketValidated,false);
 assert.equal(report.kind,'RESEARCH_ONLY');
-assert.equal(report.completeDignity,false);
-console.log('PASS: Al-Biruni classical dignity subtotal; unresolved terms and trading direction remain explicit.');
+assert.equal(report.completeDignity,true);
+
+assert.ok(Math.abs(C.ascendant(0,0,0,0)-90)<1e-9,'Equatorial 0 obliquity at LST=0 rises at 90° ecliptic');
+assert.ok(Math.abs(C.ascendant(6,0,0,0)-180)<1e-9,'Equatorial LST=6h east horizon is longitude 180°');
+assert.ok(Math.abs(C.ascendant(0,0,0,23.4393)-90)<0.01,'Obliquity must not swap east/west');
+assert.throws(()=>C.ascendant(0,90,0,23.4),/Lintang/);
+assert.throws(()=>C.ascendant(0,0,181,23.4),/Bujur/);
+assert.equal(C.aspectBetween(359,1,5).angle,0);
+assert.equal(C.aspectBetween(1,61,5).angle,60);
+assert.equal(C.aspectBetween(15,43,5),null);
+assert.ok(Math.abs(C.meanObliquity(Date.UTC(2000,0,1,12))-23.439291111)<0.000001);
+class Observer{constructor(latitude,longitude,height){this.latitude=latitude;this.longitude=longitude;this.height=height;}}
+const fakeA={MakeTime:x=>x,SiderealTime:()=>0,Observer,
+ Equator:()=>({ra:0,dec:0}),
+ Horizon:()=>({altitude:35})};
+const longitudes={Sun:10,Moon:45,Mercury:15,Venus:90,Mars:180,Jupiter:90,Saturn:270};
+const engine={longitude:(planet)=>longitudes[planet]};
+const study=C.chart(fakeA,engine,Date.UTC(2026,9,12,5,0,0),{latitude:0,longitude:0,orb:5});
+assert.equal(study.sect,'day');
+assert.equal(study.ascendantSign,'Cancer');
+assert.equal(study.ascendantRuler,'Moon');
+assert.equal(study.moonAscRuler,null,'Moon cannot form aspect to itself');
+assert.equal(new Set(study.contacts.map(x=>x.actor+'|'+x.target)).size,study.contacts.length,'no duplicate actor-target contacts');
+assert.equal(study.lunarRuler,'Venus');
+assert.equal(study.dignities.completeDignity,true);
+assert.equal(study.termSystem,'EGYPTIAN_§453');
+assert.equal(study.fullElectional,false);
+assert.equal(study.marketValidated,false);
+assert.equal(study.tradingDirection,null);
+assert.ok(study.contacts.some(c=>c.target==='Ascendant'&&c.actor==='Venus'));
+assert.ok(study.contacts.some(c=>c.target==='Ascendant'&&c.actor==='Jupiter'));
+const night=C.chart({...fakeA,Horizon:()=>({altitude:-12})},engine,Date.UTC(2026,9,12,5,0,0),
+ {latitude:0,longitude:0,orb:5});
+assert.equal(night.sect,'night');
+assert.ok(night.sunAltitudeDegrees<0);
+assert.throws(()=>C.chart(fakeA,engine,0,{latitude:NaN,longitude:0}),/Lintang/);
+assert.throws(()=>C.chart(fakeA,engine,0,{latitude:0,longitude:NaN}),/Bujur/);
+assert.throws(()=>C.chart({...fakeA,SiderealTime:null},engine,0,{latitude:0,longitude:0}),/Ephemeris/);
+
+console.log('PASS: Al-Biruni Egyptian terms, Ascendant east-horizon geometry, sect and §527 partial electional contacts.');
