@@ -3,9 +3,9 @@
  */
 (function(root){
 'use strict';
-const C=root.CebonkAlBiruni,K=root.CebonkAlBiruniClassic;
+const C=root.CebonkAlBiruni,K=root.CebonkAlBiruniClassic,Gate=root.CebonkAlBiruniElectionGate;
 const panel=document.getElementById('albiruniPanel');
-if(!C||!K||!panel)return;
+if(!C||!K||!Gate||!panel)return;
 const anchor=panel.querySelector('#abRules');
 if(!anchor)return;
 const details=document.createElement('details');
@@ -65,6 +65,7 @@ button.addEventListener('click',async()=>{
   // Existing AUTO is a separate, unvalidated market-direction model.
   const map=await C.scan(engine,inputs.date,{mode:'day',focus:inputs.focus,orb:inputs.orb});
   const auto=C.autoSignal(engine,map,ms),daily=C.periodEntryReport(engine,map);
+  const timeQuality=Gate.judge(election);
   if(ticket!==version||signature(read())!==key||panel.querySelector('#abResults')?.hidden)return;
   const modernDay=['BUY','SELL'].includes(daily.direction)?daily.direction:'WAIT';
   const modernTime=['BUY','SELL'].includes(auto.direction)?auto.direction:'WAIT';
@@ -81,6 +82,10 @@ button.addEventListener('click',async()=>{
    BELUM_ADA_KONTAK:'Belum ada kontak pada orb terpilih'};
   output.innerHTML=
    '<h3>AL-BIRUNI KLASIK · KAJIAN §527</h3>'+
+   '<p><strong>KUALITAS WAKTU AL-BIRUNI (§527):</strong> '+escape(timeQuality.status)+
+    ' · '+escape(timeQuality.reason)+
+    '. '+(timeQuality.eligible?'LOLOS FILTER WAKTU':'EA HARUS WAIT JIKA DIAJUKAN SAAT INI')+
+    '. Status berasal dari heuristik penelitian, bukan rumus trading kitab.</p>'+
    '<p><strong>INDIKASI ASTROLOGI:</strong> '+escape(meanings[election.indication]||election.indication)+
     '. Bukan arah harga atau keputusan trading.</p>'+
    '<p><strong>ASCENDANT:</strong> '+escape(election.ascendantSign)+' '+
@@ -102,6 +107,8 @@ button.addEventListener('click',async()=>{
     '<tbody>'+detailRows+'</tbody></table></div>'+
    '<p>Perhitungan ASC tropis memakai pendekatan obliquity rata-rata dan sidereal time. Sistem term Mesir sudah dihitung; seluruh house dan prosedur electional lengkap belum tersedia. Ini penilaian parsial, bukan hasil final kitab.</p>'+
    '<h3>ARAH XAUUSD · AUTO EKSPERIMEN MODERN (DIPISAH DARI KITAB)</h3>'+
+   '<p><strong>LAYAK DIAJUKAN KE EA:</strong> '+escape(timeQuality.eligible?'HANYA JIKA FASE/ARAH JUGA VALID':'WAIT · KUALITAS WAKTU BELUM MENDUKUNG')+
+    '. Perhitungan entry nyata memakai dua pembacaan (pada entry dan lima menit sebelum exact), bukan hanya waktu pemeriksaan ini.</p>'+
    '<p><strong>ARAH HARIAN:</strong> '+chip(modernDay)+' · <strong>ARAH JAM WIB:</strong> '+chip(modernTime)+
     (auto.direction==='KONFLIK'?' (KONFLIK)':'')+'. Belum tervalidasi sebagai prediksi harga.</p>'+
    '<div class="ab-period-times"><div><small>KANDIDAT</small><strong>'+escape(daily.entryWIB||'WAIT')+'</strong></div>'+
