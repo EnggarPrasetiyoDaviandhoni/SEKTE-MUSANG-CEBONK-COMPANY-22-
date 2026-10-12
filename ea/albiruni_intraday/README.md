@@ -1,3 +1,21 @@
+## EA AL-BIRUNI MAJORITY v1.02 — NEW STANDALONE (12 Oktober 2026)
+
+**EA MT5 baru, bukan sekadar pembaruan panel web.** Source: `CEBONK_ALBIRUNI_MAJORITY_v1.02.mq5`, mirror untuk salin sebagai .mq5: `dist/CEBONK_ALBIRUNI_MAJORITY_v1.02.txt`, preset: `CEBONK_ALBIRUNI_MAJORITY_v1.02.set`.
+
+**Arah mengikuti mayoritas aspek aktif:** SELL 2 + BUY 1 → SELL; BUY 2 + SELL 1 → BUY; imbang → WAIT. Publisher menyaring **semua 21 pasangan planet**, termasuk Venus–Mars yang tidak tercakup jika hanya memakai fokus Bulan. Arah dominan harian adalah jumlah suara aspek di grid sepanjang hari; EA mensyaratkan arah jam entry searah fokus harian dan aspek APPLYING yang menuju EXACT berikutnya.
+
+**Validasi tambahan di dalam EA:** file baru `ea/albiruni_intraday/data/majority_v2.csv` mempunyai 14 kolom (12 kolom lama + `buy_aspects,sell_aspects`) dengan model `ALBIRUNI_MAJORITY_V2`. Saat menemukan `SELL` tetapi BUY >= SELL, atau `BUY` tetapi SELL >= BUY, EA **menolak seluruh feed**, tidak entry. Kontrak lama dan file v1.01 tidak diubah. Format 14 kolom V2 hanya untuk EA v1.02. Jangan memasang EA v1.01 dan v1.02 bersamaan pada simbol/magic yang sama.
+
+**Filter waktu §527 tetap aktif di publisher:** kandidat entry hanya diterbitkan ketika dua pembacaan waktu dinilai MENGUNTUNGKAN. MERUGIKAN, CAMPURAN, atau perhitungan gagal → WAIT. Artinya mayoritas SELL **tidak menjamin entry SELL**. Ini hipotesis modern, bukan metode forecasting emas asli dari kitab dan belum punya backtest profitabilitas yang dapat dipercaya.
+
+**Instalasi:** simpan .mq5 di `MQL5/Experts`, kompilasi di MetaEditor, pasang pada NOZAX/XAUUSDc, ijinkan URL `https://raw.githubusercontent.com` untuk WebRequest, gunakan preset .set baru. Untuk pengujian strategi historis, ekspor file lokal `CEBONK_ALBIRUNI_MAJORITY_v1.02.csv` yang memuat histori feed V2; GitHub publisher hanya menerbitkan satu hari, **bukan** backtest 2024–2026. Jangan memakai CSV V1 pada EA V2.
+
+**Default:** AUTOPILOT OFF, `InpEnableExperimentalAstro=false`, `InpAllowRealAccount=false`. Lot 0.01, ATR(14) M15 untuk SL 3×ATR, RR 1:2, MaxSpread=70, tidak ada BE, trailing, partial, atau recovery. Tombol chart tetap AUTOPILOT besar. Telegram menyebut jumlah aspek BUY dan SELL pada entry berhasil; pemberitahuan TP/SL tetap mengikuti deal sebenarnya. Tidak mengaktifkan akun real secara otomatis.
+
+**Batas verifikasi:** static test dan feed-contract CI bukan hasil compile MetaEditor MT5 atau backtest broker. Perlu compile, Strategy Tester + data historis, dan uji demo sebelum memakai modal real.
+
+---
+
 ## Model V2 — fokus jumlah aspek aktif (12 Oktober 2026)
 
 Publisher kini mengimpor `assets/albiruni-core.js` yang menggunakan `ALBIRUNI_AUTO_MAJORITY_V2`. Arah jam dihitung dengan suara mayoritas aspek aktif: 2 SELL + 1 BUY → SELL, sebaliknya BUY, suara imbang → KONFLIK/WAIT. Arah dominan harian berasal dari akumulasi jumlah suara aspek dalam grid, bukan penjumlahan bobot planet. **Fokus jam dan fokus harian dapat berbeda** karena jendela waktunya berbeda; calon entry masih memerlukan arah harian searah jam APPLYING dan aspek EXACT berikutnya.

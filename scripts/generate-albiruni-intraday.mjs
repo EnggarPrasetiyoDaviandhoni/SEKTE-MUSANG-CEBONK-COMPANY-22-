@@ -17,6 +17,11 @@ const HEADER='model,date_wib,signal_id,direction,start_epoch,entry_epoch,core_ep
 const MIN=60000,DAY=86400000,WIB=7*3600000;
 const PATH='ea/albiruni_intraday/data/intraday.csv';
 const MANIFEST='ea/albiruni_intraday/data/intraday.json';
+// Distinct 14-column audit feed. Legacy 12-column feed remains available.
+const MAJORITY_MODEL='ALBIRUNI_MAJORITY_V2';
+const MAJORITY_HEADER=HEADER+',buy_aspects,sell_aspects';
+const MAJORITY_PATH='ea/albiruni_intraday/data/majority_v2.csv';
+const MAJORITY_MANIFEST='ea/albiruni_intraday/data/majority_v2.json';
 // Fixed reference location for the *astrological chart*, not user geolocation.
 // Default agrees with classical web panel; override explicitly for a test.
 const REFERENCE=Object.freeze({latitude:-6.2,longitude:106.8167});
@@ -38,6 +43,26 @@ function encode(result){
   result.valid_until_epoch,result.published_epoch,result.aspect,result.phase];
  assert(cols.length===12&&cols.every(x=>!/[\r\n,]/.test(q(x))),'Bad CSV field');
  return HEADER+'\n'+cols.join(',')+'\n';
+}
+function majorityRow(data){
+ const base=data.feed;let buyAspects=0,sellAspects=0;
+ if(base.direction!=='WAIT'){
+  assert(data.election?.eligible===true&&data.election?.reference?.gateMode==='enforce',
+   'Live V2 trading feed must pass electional gate and enforce mode');
+  buyAspects=Number(data.majority?.buyAspects);
+  sellAspects=Number(data.majority?.sellAspects);
+  assert(Number.isInteger(buyAspects)&&Number.isInteger(sellAspects)&&
+   buyAspects>=0&&sellAspects>=0&&buyAspects+sellAspects<=21,
+   'Invalid missing majority counts for V2');
+  assert(base.direction==='BUY'?buyAspects>sellAspects:sellAspects>buyAspects,
+   'V2 direction contradicts aspect counts');
+ }
+ return {...base,model:MAJORITY_MODEL,buy_aspects:buyAspects,sell_aspects:sellAspects};
+}
+function encodeMajority(data){
+ const row=majorityRow(data),line=encode({...row,model:MODEL}).trimEnd().split('\n')[1];
+ return MAJORITY_HEADER+'\n'+line.replace(MODEL,MAJORITY_MODEL)+
+  ','+row.buy_aspects+','+row.sell_aspects+'\n';
 }
 // The day-wide direction is fixed first. Only a supporting APPLYING aspect
 // with an actual upcoming EXACT contact can create a candidate, never a
@@ -116,7 +141,7 @@ async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=0
   election:{status:'WAIT',reason:'MARKET_CLOSED',reference}};
  const ephemeris=engine||C.createEngine(A);
  const scan=await (scanFunction||C.scan)(ephemeris,date,{
-  mode:'day',focus:'moon',orb:2,stepMinutes:15});
+  mode:'day',focus:'all',orb:2,stepMinutes:15});
  const chosen=chooseCandidate(ephemeris,scan,date,{fromHour,toHour});
  const report=chosen.report;
  const summary={buyMinutes:report.buyMinutes,sellMinutes:report.sellMinutes,
@@ -155,15 +180,22 @@ async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=0
   row.core_epoch<row.end_epoch&&row.end_epoch<=midnight,
   'Invalid phase order: refuse feed');
  assert(C.iso(c.entry)===date&&isBusinessDay(date),'Entry day mismatch');
+ const voted=C.autoSignal(ephemeris,scan,c.entry);
+ assert(voted.direction===row.direction&&
+ (row.direction==='BUY'?voted.buyCount>voted.sellCount:voted.sellCount>voted.buyCount),
+ 'Entry votes must agree with majority direction');
  return {feed:row,reason:gateMode==='shadow'?'SHADOW_ELECTION_AUDIT':'READY',
-  summary,election:quality};
+  summary,election:quality,majority:{
+   rule:'ASPECT_COUNT_MAJORITY_V2',entry_wib:C.stamp(c.entry),
+   buyAspects:voted.buyCount,sellAspects:voted.sellCount,neutralAspects:voted.neutralCount
+  }};
 }
 function parseArgs(args){
  const opts={};
  for(const a of args){
-  const m=/^--([a-z-]+)=(.+)$/.exec(a);
+  const m=/^--([a-z0-9-]+)=(.+)$/.exec(a);
   assert(m,'Use --date=YYYY-MM-DD or --out=path');
-  assert(['date','out','json','latitude','longitude','election-orb','gate'].includes(m[1]),'Unsupported argument '+m[1]);
+  assert(['date','out','json','out-v2','json-v2','latitude','longitude','election-orb','gate'].includes(m[1]),'Unsupported argument '+m[1]);
   opts[m[1]]=m[2];
  }
  return opts;
@@ -177,14 +209,24 @@ async function main(){
    gateMode:opts.gate||'enforce'
   }),csv=encode(data.feed);
  const manifest={...data.feed,reason:data.reason,experimental:true,
-  source:'ALBIRUNI_AUTO_MAJORITY_V2 + albiruni-classic.js + albiruni-election-gate.js; Moon orb 2',
+  source:'ALBIRUNI_AUTO_MAJORITY_V2 + albiruni-classic.js + albiruni-election-gate.js; all 21 pairs orb 2',
    election:data.election,
   summary:data.summary,generated_at_utc:new Date(data.feed.published_epoch*1000).toISOString(),
   candidate_entry_wib:data.feed.entry_epoch?C.stamp(data.feed.entry_epoch*1000):null,
   start_wib:data.feed.start_epoch?C.stamp(data.feed.start_epoch*1000):null,
   core_wib:data.feed.core_epoch?C.stamp(data.feed.core_epoch*1000):null,
   end_wib:data.feed.end_epoch?C.stamp(data.feed.end_epoch*1000):null};
- const dest=resolve(opts.out||PATH),json=resolve(opts.json||MANIFEST);
+ const majority=majorityRow(data),majorityCsv=encodeMajority(data);
+  const majorityAudit={...manifest,...majority,majority:data.majority||null,
+   source:'ALBIRUNI_MAJORITY_V2 + election §527 (research-only)'};
+  const dest=resolve(opts.out||PATH),json=resolve(opts.json||MANIFEST);
+  const writeV2=(!opts.out&&!opts.json)||opts['out-v2']!==undefined||opts['json-v2']!==undefined;
+  if(writeV2){
+   const v2=resolve(opts['out-v2']||MAJORITY_PATH),v2json=resolve(opts['json-v2']||MAJORITY_MANIFEST);
+   mkdirSync(dirname(v2),{recursive:true});mkdirSync(dirname(v2json),{recursive:true});
+   writeFileSync(v2,majorityCsv,'utf8');
+   writeFileSync(v2json,JSON.stringify(majorityAudit,null,2)+'\n','utf8');
+  }
  mkdirSync(dirname(dest),{recursive:true});mkdirSync(dirname(json),{recursive:true});
  writeFileSync(dest,csv,'utf8');
  writeFileSync(json,JSON.stringify(manifest,null,2)+'\n','utf8');
@@ -194,4 +236,4 @@ async function main(){
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)
  await main();
-export {MODEL,HEADER,REFERENCE,ELECTION_ORB,targetDate,isBusinessDay,chooseCandidate,judgeAt,qualify,build,encode,parseArgs};
+export {MODEL,HEADER,MAJORITY_MODEL,MAJORITY_HEADER,MAJORITY_PATH,MAJORITY_MANIFEST,REFERENCE,ELECTION_ORB,targetDate,isBusinessDay,chooseCandidate,judgeAt,qualify,build,encode,majorityRow,encodeMajority,parseArgs};
