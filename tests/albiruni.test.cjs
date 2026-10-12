@@ -76,9 +76,9 @@ async function run(){
  assert.match(autoCsv,/auto_hypothesis_UNVALIDATED/);
  assert.match(autoCsv,/observed_xau_t0_EMPTY/);
  assert.match(autoCsv,/"BUY"/);
- assert.equal(autoCsv.trim().replace(/^\uFEFF/,'').split('\r\n')[0].split(',').length,28);
+ assert.equal(autoCsv.trim().replace(/^\uFEFF/,'').split('\r\n')[0].split(',').length,30);
  assert.ok(autoCsv.trim().replace(/^\uFEFF/,'').split('\r\n').slice(1)
-  .every(x=>x.split(',').length===28));
+  .every(x=>x.split(',').length===30));
  const emptyCsv=C.toAutoStudyCSV(pseudo,windowResult([]));
  assert.equal(emptyCsv.trim().split('\r\n').length,1,'zero events keep valid header');
 
@@ -90,12 +90,33 @@ async function run(){
  const opposite=windowResult([mk(['Moon','Jupiter'],60,'buy'),mk(['Mars','Saturn'],60,'sell')]);
  const contradiction=C.autoSignal(pseudo,opposite,t);
  assert.equal(contradiction.direction,'KONFLIK');
- assert.equal(contradiction.reason,'BUY_SELL_OVERLAP');
+ assert.equal(contradiction.reason,'BUY_SELL_COUNT_TIE');
  assert.equal(contradiction.validated,false);
- assert.equal(contradiction.model,'ALBIRUNI_AUTO_EXPERIMENT_V1');
+ assert.equal(contradiction.model,'ALBIRUNI_AUTO_MAJORITY_V2');
  assert.equal(C.autoSignal(pseudo,bullish,start+9*HOUR).direction,'NETRAL','outside aspect windows must remain neutral');
  assert.deepEqual(C.normalizeRules()[60],'NETRAL','MANUAL legacy baseline unchanged');
- assert.equal(C.AUTO_THRESHOLD,0.18);
+ assert.equal(C.AUTO_THRESHOLD,0.18,'Legacy coefficient remains available but must not decide majority');
+  const screenshotEngine={longitude:body=>({Moon:0,Venus:0,Mars:90,Jupiter:0})[body]??0};
+  const twoSellOneBuy=windowResult([
+    mk(['Moon','Venus'],0,'buy-strong'),
+    mk(['Venus','Mars'],90,'sell-tiny'),
+    mk(['Moon','Mars'],90,'sell-other')
+  ]);
+  const majority=C.autoSignal(screenshotEngine,twoSellOneBuy,t);
+  assert.equal(majority.buyCount,1);
+  assert.equal(majority.sellCount,2);
+  assert.equal(majority.direction,'SELL','2 SELL 1 BUY => SELL even if sum of weighted contributions favors BUY');
+  assert.equal(majority.reason,'DOMINANT_ASPECT_COUNT');
+  assert.ok(majority.buy>majority.sell,'fixture ensures legacy weighted model would have chosen BUY');
+  assert.equal(majority.directionMode,'ASPECT_COUNT_MAJORITY_V2');
+  const majorityDay=C.autoPeriodSummary(screenshotEngine,twoSellOneBuy);
+  assert.equal(majorityDay.direction,'SELL','daily focus uses number of aspect-time votes');
+  assert.ok(majorityDay.sellVotes>majorityDay.buyVotes);
+  assert.equal(majorityDay.days[0].direction,'SELL');
+  assert.equal(majorityDay.buyMinutes,0);
+  assert.equal(C.autoSignal(pseudo,opposite,t).buyCount,1);
+  assert.equal(C.autoSignal(pseudo,opposite,t).sellCount,1);
+
  const autoDay=C.autoTimeline(pseudo,bullish,start);
  assert.equal(autoDay.resolutionMinutes,15);
  const reportDay=C.autoPeriodSummary(pseudo,bullish);
