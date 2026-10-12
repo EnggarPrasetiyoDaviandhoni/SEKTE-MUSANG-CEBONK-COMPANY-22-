@@ -1,3 +1,14 @@
+## Perbaikan AL-BIRUNI KLASIK — audit 12 Oktober 2026
+
+Penambahan panel riset mandiri berdasarkan PDF *The Book of Instruction in the Elements of the Art of Astrology* (unggahan 128 halaman), bukan formula prediksi XAUUSD dari kitab.
+
+- Sumber yang diterapkan: §440 domicile (PDF 50), §443 exaltation (PDF 52), §445 triplicity (PDF 53), §449 face (PDF 56–57), dan §494 skor martabat (PDF 101–102). Simbol emas §409–411 berada di PDF 37; timing applying/separating §489–490 di PDF 98–99.
+- Hitung skor parsial: domicile +5; exaltation +4; triplicity +2; face +1. **Term +3 sengaja belum dihitung** sebab §453 menampilkan alternatif tabel Mesir dan Ptolemaios; tidak boleh mengarang nilai untuk salah satunya.
+- Pengguna memilih siang/malam manual. Belum menghitung Ascendant, rumah, konjungsi lintang, maupun pemilihan waktu §527. Hasil **bukan BUY/SELL, probabilitas harga, atau sinyal EA**.
+- Perbaikan sengaja terisolasi: ASTROLOGY lama, AUTO AL-BIRUNI v1.5, feed GitHub, EA MT5, dan transaksi akun real tidak diubah.
+- Temuan belum diperbaiki dalam PR ini: pengaturan web focus/orb tidak identik dengan generator feed (moon/orb 2, jam 07–23 WIB); sistem BUY/SELL AUTO belum memiliki validasi XAUUSD 2024–2026. Jangan gunakan model untuk akun real tanpa audit backtest out-of-sample dan kontrol risiko.
+
+---
 # Panel Al-Biruni
 
 ## Pembaruan v1.5 — 3 hasil independen sekaligus, tanggal dan jam kandidat ENTRY WIB
