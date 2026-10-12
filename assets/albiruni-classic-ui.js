@@ -49,6 +49,7 @@ finalCard.className='ab-final-decision';
 finalCard.setAttribute('aria-label','Keputusan final EA AL-BIRUNI');
 finalCard.innerHTML='<h3>KEPUTUSAN EA FINAL · FILTER WAKTU KLASIK</h3>'+
  '<div id="abFinalFeedStatus" role="status" aria-live="polite">Memuat status feed EA dari GitHub…</div>'+
+ '<button id="abRefreshFeed" type="button" class="ab-small-button">Perbarui status EA</button>'+
  '<small>Panel aspek AUTO di bawah hanyalah riset bobot planet. Keputusan BUY/SELL/WAIT EA berasal dari feed yang sudah melewati filter waktu klasik, bukan nilai AUTO pukul 12.00.</small>';
 if(inspector)inspector.parentNode.insertBefore(finalCard,inspector);
 let feed=null,feedError=null,feedLoading=true;
@@ -96,6 +97,7 @@ function renderFinal(){
   '<p><small>Ini adalah keputusan feed terbit, bukan bukti bahwa transaksi telah dilakukan di broker.</small></p>';
 }
 async function refreshFeed(){
+ feedLoading=true;renderFinal();
  if(typeof root.fetch!=='function'){feedLoading=false;feedError='Browser tidak menyediakan fetch';renderFinal();return;}
  const urls=[
   'ea/albiruni_intraday/data/intraday.json',
@@ -106,7 +108,7 @@ async function refreshFeed(){
    const res=await root.fetch(url,{cache:'no-store'});
    if(!res.ok)continue;
    const x=await res.json();
-   if(!x||x.model!=='ALBIRUNI_INTRADAY_V1'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(x.date_wib)||
+   if(!x||x.model!=='ALBIRUNI_INTRADAY_V1'||!/^\d{4}-\d{2}-\d{2}$/.test(x.date_wib)||
     !['BUY','SELL','WAIT'].includes(x.direction))continue;
    feed=x;feedError=null;feedLoading=false;renderFinal();return;
   }catch(e){feedError=String(e?.message||e);}
@@ -120,6 +122,7 @@ for(const id of ['abDate','abTime','abClassicLat','abClassicLon']){
 for(const id of ['abCalendar','abPeriodDays']){
  const el=panel.querySelector('#'+id);if(el)el.addEventListener('click',renderFinal);
 }
+finalCard.querySelector('#abRefreshFeed').addEventListener('click',()=>refreshFeed());
 renderFinal();refreshFeed();
 
 const invalidate=()=>{version++;output.textContent='Parameter berubah. Hitung ulang analisis AL-BIRUNI KLASIK.';};
