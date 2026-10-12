@@ -94,7 +94,7 @@ button.addEventListener('click',async()=>{
     election.maleficCount+' · orb '+inputs.orb+'°. Matahari sebagai lambang emas berasal dari §410, bukan aturan BUY.</p>'+
    (contacts?'<ul>'+contacts+'</ul>':'<p>Tidak ada kontak cukup dekat pada orb yang dipilih.</p>')+
    '<p><strong>Bulan ↔ Penguasa Ascendant:</strong> '+
-    (election.moonAscRuler?'aspek '+election.moonAscRuler.angle+'°, orb '+election.moonAscRuler.orb.toFixed(3)+'°':'tidak dekat')+
+    (election.ascendantRuler==='Moon'?'Bulan sendiri adalah penguasa Ascendant (bukan aspek dua planet)':election.moonAscRuler?'aspek '+election.moonAscRuler.angle+'°, orb '+election.moonAscRuler.orb.toFixed(3)+'°':'tidak dekat')+
     ' · <strong>Bulan ↔ Matahari:</strong> '+
     (election.moonGold?'aspek '+election.moonGold.angle+'°, orb '+election.moonGold.orb.toFixed(3)+'°':'tidak dekat')+'</p>'+
    '<p><strong>SKOR MARTABAT KLASIK · MESIR §453</strong> · martabat 5/4/3/2/1 dari tabel Egyptian Terms (§453).</p>'+
