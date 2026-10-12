@@ -145,12 +145,15 @@ function chart(A,engine,ms,{latitude,longitude,orb=2}={}){
   {id:lunarRuler,longitude:longitudes[lunarRuler],label:'Penguasa tanda Bulan'},
   {id:'Sun',longitude:longitudes.Sun,label:'Matahari (asosiasi emas §410)'}
  ];
- const contacts=[];
+ const contacts=[],seenContacts=new Set();
  for(const actor of [...BENEFICS,...MALEFICS]){
   for(const target of significators){
    if(actor===target.id)continue;
+   const key=actor+'|'+target.id;
+   if(seenContacts.has(key))continue; // Distinct roles can designate the same planet.
    const a=aspectBetween(longitudes[actor],target.longitude,orb);
    if(!a)continue;
+   seenContacts.add(key);
    contacts.push(Object.freeze({
     actor,target:target.label,angle:a.angle,orb:a.orb,
     role:BENEFICS.includes(actor)?'BENEFIC':'MALEFIC'
@@ -161,7 +164,7 @@ function chart(A,engine,ms,{latitude,longitude,orb=2}={}){
  const maleficCount=contacts.length-beneficCount;
  const indication=beneficCount&&maleficCount?'CAMPURAN':
   beneficCount?'KONTAK_BENEFIC':maleficCount?'KONTAK_MALEFIC':'BELUM_ADA_KONTAK';
- const moonAscRuler=aspectBetween(longitudes.Moon,longitudes[risingRuler],orb);
+ const moonAscRuler=risingRuler==='Moon'?null:aspectBetween(longitudes.Moon,longitudes[risingRuler],orb);
  const moonGold=aspectBetween(longitudes.Moon,longitudes.Sun,orb);
  return Object.freeze({
   model:'ALBIRUNI_CLASSICAL_ELECTIONAL_PARTIAL_V2',kind:'RESEARCH_ONLY',
