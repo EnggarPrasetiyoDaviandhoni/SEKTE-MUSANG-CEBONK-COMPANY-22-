@@ -8,7 +8,7 @@
   "core_epoch": 1791881136,
   "end_epoch": 1791895314,
   "valid_until_epoch": 1791895314,
-  "published_epoch": 1791840504,
+  "published_epoch": 1791847840,
   "aspect": "Moon/Jupiter Square 90deg orb 1.788deg",
   "phase": "APPLYING",
   "buy_aspects": 2,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "BUY"
   },
-  "generated_at_utc": "2026-10-12T21:28:24.000Z",
+  "generated_at_utc": "2026-10-12T23:30:40.000Z",
   "candidate_entry_wib": "2026-10-13 12:15:00 WIB",
   "start_wib": "2026-10-13 12:00:00 WIB",
   "core_wib": "2026-10-13 15:45:36 WIB",
