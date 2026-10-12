@@ -18,7 +18,7 @@ details.innerHTML=[
  '<div><label for="abClassicLon">Bujur ° (timur positif)</label><input id="abClassicLon" type="number" value="106.8167" min="-180" max="180" step="0.0001"></div></div>',
  '<button id="abClassicCalc" type="button">Hitung AL-BIRUNI KLASIK + bandingkan arah AUTO</button>',
  '<div id="abClassicResults" role="status" aria-live="polite">Hitung peta aspek dahulu, pilih hari & jam WIB, lalu hitung klasik.</div>',
- '<p>Kitab PDF: §410 hal.37, §440–453 hal.50–59, §489–494 hal.98–102, §527 hal.126. Martabat +5/+4/+2/+1; term +3 belum dihitung. Metode ini tidak mengirim perintah ke EA.</p>'
+ '<p>Kitab PDF: §410 hal.37, §440–453 hal.50–59, §489–494 hal.98–102, §527 hal.126. Martabat 5/4/3/2/1 dengan term Mesir dari tabel §453; versi Ptolemaios tidak digunakan. Metode ini tidak mengirim perintah ke EA.</p>'
 ].join('');
 anchor.parentNode.insertBefore(details,anchor);
 const output=details.querySelector('#abClassicResults');
@@ -97,10 +97,10 @@ button.addEventListener('click',async()=>{
     (election.moonAscRuler?'aspek '+election.moonAscRuler.angle+'°, orb '+election.moonAscRuler.orb.toFixed(3)+'°':'tidak dekat')+
     ' · <strong>Bulan ↔ Matahari:</strong> '+
     (election.moonGold?'aspek '+election.moonGold.angle+'°, orb '+election.moonGold.orb.toFixed(3)+'°':'tidak dekat')+'</p>'+
-   '<p><strong>SKOR PARSIAL KLASIK</strong> · martabat +5/+4/+2/+1; term +3 belum dihitung.</p>'+
+   '<p><strong>SKOR MARTABAT KLASIK · MESIR §453</strong> · martabat 5/4/3/2/1 dari tabel Egyptian Terms (§453).</p>'+
    '<div class="ab-table-wrap"><table><thead><tr><th>Planet</th><th>Zodiak</th><th>Subtotal</th><th>Martabat</th></tr></thead>'+
     '<tbody>'+detailRows+'</tbody></table></div>'+
-   '<p>Perhitungan ASC tropis memakai pendekatan obliquity rata-rata dan sidereal time. Sistem term, seluruh house, dan prosedur electional lengkap belum tersedia. Ini penilaian parsial, bukan hasil final kitab.</p>'+
+   '<p>Perhitungan ASC tropis memakai pendekatan obliquity rata-rata dan sidereal time. Sistem term Mesir sudah dihitung; seluruh house dan prosedur electional lengkap belum tersedia. Ini penilaian parsial, bukan hasil final kitab.</p>'+
    '<h3>ARAH XAUUSD · AUTO EKSPERIMEN MODERN (DIPISAH DARI KITAB)</h3>'+
    '<p><strong>ARAH HARIAN:</strong> '+chip(modernDay)+' · <strong>ARAH JAM WIB:</strong> '+chip(modernTime)+
     (auto.direction==='KONFLIK'?' (KONFLIK)':'')+'. Belum tervalidasi sebagai prediksi harga.</p>'+
