@@ -1,3 +1,11 @@
+## Koreksi tampilan arah 12 Oktober 2026
+
+Panel AL-BIRUNI KLASIK sekarang menampilkan arah **BUY/SELL/WAIT** dari model **AUTO EKSPERIMEN lama**, berdampingan dengan skor martabat klasik. Arah harian dan arah pada jam WIB yang diperiksa ditampilkan secara terpisah; jam kandidat, MULAI, INTI, AKHIR mengikuti perhitungan `periodEntryReport` yang sudah ada. Kondisi `KONFLIK` ditunjukkan sebagai WAIT untuk keputusan dengan label konflik yang eksplisit.
+
+**Batasan penting:** skor martabat klasik itu sendiri tidak menghasilkan arah XAUUSD. Bobot arah AUTO tidak berasal dari rumus klasik Al-Biruni dan belum tervalidasi secara historis. Modul tidak mengubah EA, generator feed, ataupun sinyal trading langsung. Untuk evaluasi mingguan/bulanan gunakan tombol “Hitung 3 Dominasi” yang sudah ada. Perubahan hanya memperjelas informasi dan tidak memperbaiki akurasi model yang pernah menghasilkan SL.
+
+---
+
 ## Perbaikan AL-BIRUNI KLASIK — audit 12 Oktober 2026
 
 Penambahan panel riset mandiri berdasarkan PDF *The Book of Instruction in the Elements of the Art of Astrology* (unggahan 128 halaman), bukan formula prediksi XAUUSD dari kitab.
