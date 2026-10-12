@@ -174,3 +174,14 @@
 #albiruniPanel .ab-ea-focus strong{font-size:19px;color:#f1c56f;display:block;line-height:1.3}
 #albiruniPanel .ab-ea-focus span{font-size:11px;color:#c4d7df;line-height:1.5;display:block;margin-top:5px}
 @media(max-width:550px){#albiruniPanel .ab-ea-focus{grid-template-columns:1fr}}
+
+/* No.159 Sri + No.147 Saat Agung: read-only Primbon Dagang observer. */
+#albiruniPanel .ab-primbon-dagang{margin:12px 0 18px;padding:15px;border:1px solid #53657c;background:#111f31;border-radius:11px}
+#albiruniPanel .ab-primbon-dagang h3{font-size:14px;margin:0 0 7px;color:#f0c16c}
+#albiruniPanel .ab-primbon-dagang p{font-size:12px;line-height:1.65;margin:0 0 12px;color:#c6d3e5}
+#albiruniPanel .ab-primbon-dagang small{display:block;font-size:10px;color:#aebcd2;margin-top:9px;line-height:1.65}
+#albiruniPanel .ab-primbon-entry{margin-top:10px}
+#albiruniPanel .ab-primbon-labels{padding:12px;border:1px solid #3d5470;background:#0a182a;border-radius:9px;line-height:1.6}
+#albiruniPanel .ab-primbon-labels strong{display:block;font-size:11px;color:#f0c16c;letter-spacing:.3px;margin-bottom:6px}
+#albiruniPanel .ab-primbon-labels div{font-size:12px;overflow-wrap:anywhere}
+#albiruniPanel .ab-primbon-dagang a{color:#9fdde6}

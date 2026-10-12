@@ -123,15 +123,21 @@ async function refreshFeed(){
   'https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/albiruni_intraday/data/majority_direct_v3.json'
  ];
  feed=null;feedError=null;
+ root.CebonkAlBiruniDirectFeed=null;
  for(const url of urls)try{
   const res=await root.fetch(url,{cache:'no-store'});
   if(!res.ok)continue;
   const x=await res.json();
   if(!x||x.model!=='ALBIRUNI_MAJORITY_DIRECT_V3'||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(x.date_wib)||
    !['BUY','SELL','WAIT'].includes(x.direction))continue;
-  feed=x;feedError=null;feedLoading=false;renderFinal();return;
+  feed=x;feedError=null;feedLoading=false;
+  root.CebonkAlBiruniDirectFeed=x;
+  renderFinal();root.dispatchEvent(new root.Event('cebonk:direct-feed-updated'));
+  return;
  }catch(e){feedError=String(e?.message||e);}
  feedLoading=false;feedError=feedError||'Feed majority_direct_v3.json belum ada / format tidak cocok';renderFinal();
+ root.dispatchEvent(new root.Event('cebonk:direct-feed-updated'));
+
 }
 for(const id of ['abDate','abTime','abClassicLat','abClassicLon']){
  const el=panel.querySelector('#'+id)||details.querySelector('#'+id);

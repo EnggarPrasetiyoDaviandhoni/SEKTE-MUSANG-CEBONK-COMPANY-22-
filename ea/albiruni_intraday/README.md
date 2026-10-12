@@ -1,3 +1,26 @@
+## PRIMBON DAGANG + SAAT AGUNG — mode observasi, TANPA filter entry (12 Oktober 2026)
+
+Sumber primer transkripsi:
+- No.159, hari–pasaran Sri untuk **dagang / golek sandhang pangan**: https://jv.wikisource.org/wiki/Kaca:Kitab_Primbon_Betaljemur_Adammakna.pdf/125 (nomor halaman cetak 124 pada versi Wikisumber ini; nomor halaman lain antar edisi berbeda).
+- No.147, **Saat Agung** untuk keperluan umum: https://jv.wikisource.org/wiki/Kaca:Kitab_Primbon_Betaljemur_Adammakna.pdf/119 (nomor halaman cetak 118 pada transkripsi Jawa).
+- Siklus pasaran berpatokan pada **2026-10-12 Senin Pahing** (beberapa kalender Jawa Oktober 2026 sepakat, mis. detikJatim). Siklus 5 pasaran diulang tiap hari tanpa tanggal lahir.
+
+**Tabel No.159**: Minggu Pon; Senin Kliwon; Selasa Pahing; Rabu Wage; Kamis Pahing; Jumat Wage; Sabtu Legi = SRI. Selain kombinasi tersebut = DUDU SRI, **bukan otomatis dina ala**. Bukan Pancasuda umum Sri–Lungguh–Gedhong–Lara–Pati.
+
+**Saat Agung No.147**: Wiji, Cahya, Rejeki = kategori waktu baik menurut naskah. Lara, Malaekat, Puji, Pati = dianjurkan dihindari menurut naskah. Tabel jam 7 hari dikopi ke `assets/primbon-dagang.js`, dengan rentang akhir eksklusif. Jam 11–1 / 1–3 setelah jam 11 dinormalisasi menjadi 11:00–13:00 / 13:00–15:00 sesuai urutan jam tabel. **Jam di luar rentang tabel = DI LUAR TABEL**, bukan buruk. Ini bukan Saat II/Ratu No.165.
+
+**Konvensi waktu:**
+- UI dan notifikasi EA menggunakan WIB UTC+7, **bukan jam server broker**.
+- SRI No.159 menggunakan pergantian hari pasaran setelah **18:00 WIB sebagai pendekatan Maghrib**, bukan matahari terbenam astronomis aktual; label bisa bergeser dekat Maghrib di kota/tanggal berbeda. Kalender pasar tradisional yang memakai pergantian 00.00 juga bisa berbeda untuk sesi malam.
+- Saat Agung No.147 menggunakan nama hari sipil WIB beserta jam tabel yang tertulis, **tidak diteruskan** ke jam di luar tabel atau ditafsir ulang mengikuti hari Jawa setelah Maghrib. Waktu di luar rentang tetap tak berlabel. Perlu kajian sumber tambahan jika ingin perhitungan malam yang berbeda.
+- Tanggal lahir pengguna **tidak diperlukan**.
+
+**Integrasi:** `assets/primbon-dagang.js` (perhitungan murni testable) dan `assets/primbon-dagang-ui.js` (panel baca-saja) tampil di halaman AL-BIRUNI untuk tanggal/jam pilihan serta kandidat entry dari feed `majority_direct_v3.json` yang sama. `CEBONK_ALBIRUNI_SRI_SAAT_v1.04.mq5` (TXT dan SET disertakan) melanjutkan feed **V3 yang sama tanpa mengubah 14 kolom CSV**; satu-satunya logika baru adalah **menambahkan Sri dan Saat Agung ke notifikasi Telegram/MT5 ketika entry sudah sukses**.
+
+**Tidak memblokir trading sama sekali.** Bukan penentu arah BUY/SELL, bukan syarat masuk, tidak menaikkan atau menurunkan risiko dan lot, tidak mengubah gate market; tidak ada klaim Primbon bisa memprediksi XAUUSD. EA v1.03 tetap tersedia; v1.04 default AUTOPILOT OFF, pengakuan riset OFF, izin akun real OFF, SL 3×ATR(14) M15, TP RR 1:2, spread NOZAX 70, cutoff intraday lama tetap sama. Jangan jalankan kedua versi pada simbol/magic sama; gunakan MetaEditor untuk compile dan Strategy Tester/demo sebelum akun real. Static CI **bukan** kompilasi MQL5 atau backtest historis.
+
+---
+
 ## EA AL-BIRUNI MAJORITY v1.02 — NEW STANDALONE (12 Oktober 2026)
 
 **EA MT5 baru, bukan sekadar pembaruan panel web.** Source: `CEBONK_ALBIRUNI_MAJORITY_v1.02.mq5`, mirror untuk salin sebagai .mq5: `dist/CEBONK_ALBIRUNI_MAJORITY_v1.02.txt`, preset: `CEBONK_ALBIRUNI_MAJORITY_v1.02.set`.

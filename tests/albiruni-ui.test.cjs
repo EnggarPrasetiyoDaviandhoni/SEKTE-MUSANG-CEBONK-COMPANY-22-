@@ -35,14 +35,24 @@ async function run(){
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-ui.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-election-gate.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(ROOT,'assets/albiruni-classic-ui.js'),'utf8'));
+ w.eval(fs.readFileSync(path.join(ROOT,'assets/primbon-dagang.js'),'utf8'));
+ w.eval(fs.readFileSync(path.join(ROOT,'assets/primbon-dagang-ui.js'),'utf8'));
  const $=id=>w.document.getElementById(id);
  await until(()=>$('abRun').disabled===false&&!$('abResults').hidden,'initial calculation');
  assert.equal($('abCalendar').querySelectorAll('button').length,5);
  assert.ok($('abClassicPanel'),'classical panel must exist');
  assert.ok($('abFinalDecision'),'EA decision must be displayed beside time inspector');
+ assert.ok($('abPrimbonDagang'),'Sri + Saat Agung panel must be separate');
+ assert.match($('abPrimbonDagang').textContent,/bukan filter order/);
+ assert.match($('abPrimbonSelected').textContent,/No.159/);
+ assert.match($('abPrimbonSelected').textContent,/No.147/);
  assert.ok($('abFinalDecision').compareDocumentPosition($('abTime')) & w.Node.DOCUMENT_POSITION_FOLLOWING,
   'EA decision must render before time inspector, not hidden below classical tables');
  await until(()=>$('abFinalFeedStatus').textContent.includes('EA DIRECT SELL'),'published direct SELL');
+ await until(()=>$('abPrimbonEntry').textContent.includes('KANDIDAT ENTRY EA DIRECT'),'primbon candidate from same V3 feed');
+ assert.match($('abPrimbonEntry').textContent,/Senin Pahing/);
+ assert.match($('abPrimbonEntry').textContent,/Rejeki/);
+ assert.match($('abPrimbonEntry').textContent,/observasi tok/i);
  assert.match($('abFinalFeedStatus').textContent,/TIDAK DITERAPKAN/);
   assert.match($('abFinalFeedStatus').textContent,/ARAH MAYORITAS HARIAN WEB/);
   assert.match($('abFinalFeedStatus').textContent,/SELL 128 \/ BUY 30/);
