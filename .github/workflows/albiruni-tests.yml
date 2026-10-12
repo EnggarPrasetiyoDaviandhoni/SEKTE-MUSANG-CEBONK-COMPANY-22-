@@ -2,9 +2,9 @@ name: Al-Biruni panel checks
 on:
   push:
     branches: [main]
-    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'assets/site-tab-router.js', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
+    paths: ['assets/albiruni-*.js', 'assets/primbon-dagang*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/primbon-dagang.test.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'assets/site-tab-router.js', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
   pull_request:
-    paths: ['assets/albiruni-*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'assets/site-tab-router.js', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
+    paths: ['assets/albiruni-*.js', 'assets/primbon-dagang*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/primbon-dagang.test.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'assets/site-tab-router.js', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
 permissions:
   contents: read
 jobs:
@@ -20,6 +20,7 @@ jobs:
       - run: node tests/albiruni-classic.test.cjs
       - run: node tests/albiruni-election-gate.test.cjs
       - run: node tests/albiruni-ui.test.cjs
+      - run: node tests/primbon-dagang.test.cjs
       - run: node tests/albiruni-three-horizon.test.cjs
       - run: node tests/site-tab-router.test.cjs
       - run: node tests/astro-weekly.test.cjs
