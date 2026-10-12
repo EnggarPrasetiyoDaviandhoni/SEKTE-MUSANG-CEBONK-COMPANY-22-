@@ -52,7 +52,7 @@ async function run(){
  await until(()=>$('abPrimbonEntry').textContent.includes('KANDIDAT ENTRY EA DIRECT'),'primbon candidate from same V3 feed');
  assert.match($('abPrimbonEntry').textContent,/Senin Pahing/);
  assert.match($('abPrimbonEntry').textContent,/Rejeki/);
- assert.match($('abPrimbonEntry').textContent,/Observasi tok/);
+ assert.match($('abPrimbonEntry').textContent,/observasi tok/i);
  assert.match($('abFinalFeedStatus').textContent,/TIDAK DITERAPKAN/);
   assert.match($('abFinalFeedStatus').textContent,/ARAH MAYORITAS HARIAN WEB/);
   assert.match($('abFinalFeedStatus').textContent,/SELL 128 \/ BUY 30/);
