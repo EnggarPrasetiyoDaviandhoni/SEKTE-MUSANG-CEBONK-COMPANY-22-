@@ -193,7 +193,7 @@ async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=0
 function parseArgs(args){
  const opts={};
  for(const a of args){
-  const m=/^--([a-z-]+)=(.+)$/.exec(a);
+  const m=/^--([a-z0-9-]+)=(.+)$/.exec(a);
   assert(m,'Use --date=YYYY-MM-DD or --out=path');
   assert(['date','out','json','out-v2','json-v2','latitude','longitude','election-orb','gate'].includes(m[1]),'Unsupported argument '+m[1]);
   opts[m[1]]=m[2];
