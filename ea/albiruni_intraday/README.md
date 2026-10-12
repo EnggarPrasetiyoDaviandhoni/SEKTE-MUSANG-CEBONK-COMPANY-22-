@@ -1,5 +1,7 @@
 ## v1.02 publisher: §527 favorable/harmful/mixed electional gate (12 October 2026)
 
+The feed generator no longer applies a fixed 07:00–23:00 WIB candidate window. The EA still checks actual broker sessions and its existing intraday close cutoff; overnight market-closed windows do not cause guaranteed entries. 
+
 The unchanged MT5 EA v1.01 reads the **same 12-column ALBIRUNI_INTRADAY_V1 CSV**; no MQ5 or .set replacement is required. New publisher computes the same experimental daily BUY/SELL bias and an APPLYING candidate, then calls the **separate Al-Biruni election research engine** at candidate ENTRY and five minutes before astronomical EXACT. A candidate is published only when both time checks return MENGUNTUNGKAN; otherwise the EA sees WAIT and opens nothing. The gate **never changes BUY into SELL or vice versa**.
 
 Time quality follows an explicitly *modern conservative heuristic inspired by* the original electional considerations in the user-supplied §527: avoid malefic rays to Ascendant, Moon and their rulers; require benefic contact to Ascendant or Moon and a Moon–Ascendant ruler relationship. Mixed contacts, harmful contacts, insufficient support, missing ephemeris or uncertainty at sunrise/sunset => WAIT. This is **not a verbatim Al-Biruni BUY/SELL strategy**, and there is no established predictive value for XAUUSD.
