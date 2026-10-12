@@ -46,23 +46,27 @@ jobs:
         run: npm install --no-save --no-package-lock --ignore-scripts astronomy-engine@2.1.19
       - name: Test Al-Biruni signal direction and valid phase timing
         run: node tests/albiruni-intraday-feed.test.cjs
+      - name: Test majority EA feed contract
+        run: node tests/albiruni-majority-feed.test.cjs
       - name: Test electional favorable/harmful/mixed gate
         run: node tests/albiruni-election-gate.test.cjs
       - name: Test output from real ephemeris on a known weekday
         run: |
-          node scripts/generate-albiruni-intraday.mjs --date=2026-10-12 --out=/tmp/albiruni-day.csv --json=/tmp/albiruni-day.json
+          node scripts/generate-albiruni-intraday.mjs --date=2026-10-12 --out=/tmp/albiruni-day.csv --json=/tmp/albiruni-day.json --out-v2=/tmp/majority-v2.csv --json-v2=/tmp/majority-v2.json
           python3 ea/albiruni_intraday/tests/test_static.py /tmp/albiruni-day.csv /tmp/albiruni-day.json
+          python3 ea/albiruni_intraday/tests/test_majority_v2.py /tmp/majority-v2.csv /tmp/majority-v2.json
       - name: Create real daily feed for LIVE MT5
         if: github.event_name != 'pull_request'
         run: |
           node scripts/generate-albiruni-intraday.mjs
           python3 ea/albiruni_intraday/tests/test_static.py ea/albiruni_intraday/data/intraday.csv ea/albiruni_intraday/data/intraday.json
+          python3 ea/albiruni_intraday/tests/test_majority_v2.py ea/albiruni_intraday/data/majority_v2.csv ea/albiruni_intraday/data/majority_v2.json
       - name: Publish fresh feed to GitHub RAW
         if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ea/albiruni_intraday/data/intraday.csv ea/albiruni_intraday/data/intraday.json
+          git add ea/albiruni_intraday/data/intraday.csv ea/albiruni_intraday/data/intraday.json ea/albiruni_intraday/data/majority_v2.csv ea/albiruni_intraday/data/majority_v2.json
           if ! git diff --cached --quiet; then
             git commit -m "data: update Al-Biruni intraday experimental schedule [skip ci]"
             git push origin HEAD:main
