@@ -1,3 +1,13 @@
+## Koreksi tampilan web: peta AUTO ≠ keputusan EA (12 Oktober 2026)
+
+Ketika pengguna membuka tabel aspek dan melihat `KONFLIK`, `BUY`, atau `SELL` pada jam yang dipilih, itu adalah output `assets/albiruni-ui.js` (AUTO research), **bukan** keputusan feed yang diikuti MT5. Panel `KEPUTUSAN EA FINAL · FILTER WAKTU KLASIK` sekarang diletakkan **tepat sebelum Periksa jam WIB** dan membaca `ea/albiruni_intraday/data/intraday.json` dengan cache no-store, lalu fallback ke GitHub RAW. Menampilkan BUY/SELL/WAIT, kondisi waktu klasik, tanggal feed, alasan, dan kapan file dipublikasikan.
+
+Untuk tanggal 2026-10-12, feed yang telah diterbitkan adalah `WAIT_ELECTION_TIME_NOT_FAVORABLE`, `CAMPURAN`, sementara peta AUTO jam 12:00 dapat tetap menunjukkan KONFLIK. Ini **dua output berbeda yang tidak boleh disamakan**. Jika tanggal yang dipilih tidak sama dengan tanggal feed, panel tidak menampilkan feed lama sebagai keputusan saat ini. Jika feed gagal dimuat, panel menyatakan tidak tersedia (tidak menebak sinyal). Ada tombol "Perbarui status EA". Locale tempat Ascendant pada web dan feed dapat berbeda; panel mengingatkan pengguna bila koordinat tidak cocok.
+
+Tidak mengubah arah AUTO, generator, kode MQ5, broker trade, atau pengaturan AUTOPILOT. Tidak ada klaim prediksi XAUUSD telah tervalidasi; perubahan ini **koreksi keterbacaan dan konsistensi informasi**, bukan perbaikan winrate.
+
+---
+
 ## Integrasi waktu menguntungkan/merugikan ke EA — riset §527 (12 Oktober 2026)
 
 - Modul sumber tunggal baru `assets/albiruni-election-gate.js` menghitung klasifikasi MENGUNTUNGKAN / MERUGIKAN / CAMPURAN dari chart AL-BIRUNI KLASIK; penilaian berkaitan dengan waktu melakukan suatu urusan, **tidak memberi arah BUY/SELL modern**.
