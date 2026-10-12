@@ -42,7 +42,7 @@ function encode(result){
 // The day-wide direction is fixed first. Only a supporting APPLYING aspect
 // with an actual upcoming EXACT contact can create a candidate, never a
 // neutral, weekend, retrograde-only near-miss, or post-exact slot.
-function chooseCandidate(engine,scan,date,{fromHour=7,toHour=23}={}){
+function chooseCandidate(engine,scan,date,{fromHour=0,toHour=24}={}){
  const report=C.autoPeriodSummary(engine,scan,{stepMinutes:15});
  const day=report.days[0];
  if(!day||day.marketClosed||!['BUY','SELL'].includes(report.direction))
@@ -98,7 +98,7 @@ function qualify(candidate,evaluator){
   entry_wib:C.stamp(candidate.entry),check_wib:C.stamp(nearCore)
  });
 }
-async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=7,toHour=23,
+async function build(date,{publishedMs=Date.now(),engine,scanFunction,fromHour=0,toHour=24,
  latitude=REFERENCE.latitude,longitude=REFERENCE.longitude,
  electionOrb=ELECTION_ORB,electionEvaluator,gateMode='enforce'}={}){
  C.period(date,'day');
