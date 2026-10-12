@@ -62,7 +62,7 @@ assert.equal(study.sect,'day');
 assert.equal(study.ascendantSign,'Cancer');
 assert.equal(study.ascendantRuler,'Moon');
 assert.equal(study.moonAscRuler,null,'Moon cannot form aspect to itself');
-assert.equal(study.contacts.filter(x=>x.actor==='Jupiter'&&x.target==='Penguasa Ascendant').length,1,'no duplicated contacts for repeated significator');
+assert.equal(new Set(study.contacts.map(x=>x.actor+'|'+x.target)).size,study.contacts.length,'no duplicate actor-target contacts');
 assert.equal(study.lunarRuler,'Venus');
 assert.equal(study.dignities.completeDignity,true);
 assert.equal(study.termSystem,'EGYPTIAN_§453');
