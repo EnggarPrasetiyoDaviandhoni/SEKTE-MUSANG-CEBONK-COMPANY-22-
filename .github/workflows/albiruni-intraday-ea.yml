@@ -16,6 +16,8 @@ on:
       - 'scripts/generate-albiruni-intraday.mjs'
       - 'tests/albiruni-intraday-feed.test.cjs'
       - 'ea/albiruni_intraday/**'
+      - 'assets/primbon-dagang*.js'
+      - 'tests/primbon-dagang.test.cjs'
       - '.github/workflows/albiruni-intraday-ea.yml'
   pull_request:
     paths:
@@ -25,6 +27,8 @@ on:
       - 'scripts/generate-albiruni-intraday.mjs'
       - 'tests/albiruni-intraday-feed.test.cjs'
       - 'ea/albiruni_intraday/**'
+      - 'assets/primbon-dagang*.js'
+      - 'tests/primbon-dagang.test.cjs'
       - '.github/workflows/albiruni-intraday-ea.yml'
 permissions:
   contents: write
@@ -50,6 +54,8 @@ jobs:
         run: node tests/albiruni-majority-feed.test.cjs
       - name: Test majority-only V3 entry independently from strict V2
         run: node tests/albiruni-direct-majority-feed.test.cjs
+      - name: Audit nonblocking Primbon observer EA v1.04
+        run: python3 ea/albiruni_intraday/tests/test_primbon_observer.py
       - name: Test electional favorable/harmful/mixed gate
         run: node tests/albiruni-election-gate.test.cjs
       - name: Test output from real ephemeris on a known weekday
