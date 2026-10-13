@@ -81,6 +81,9 @@ function done(){
  assert.match($('aftPlanetCoverage').textContent,/7\/8 slot/);
  assert.match($('aftShare').textContent,/durasi/i,'legacy duration clearly labeled separate');
  assert.equal($('aftPlanetPairs').querySelectorAll('tr').length,2);
+ assert.equal($('aftPlanetRanking').querySelectorAll('tr').length,4);
+ assert.equal($('aftZodiacRanking').querySelectorAll('tr').length,4);
+ assert.match($('aftZodiacCoverage').textContent,/100\.0%/);
  assert.match($('aftPlanetPairs').textContent,/longitude/);
  assert.match($('aftPlanetPairs').textContent,/Taurus/);
  assert.equal($('aftStart').textContent,'06:10');
