@@ -4,6 +4,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {JSDOM}=require('jsdom');
 const F=require('../assets/astrodox-follow-trend-core.js');
+const P=require('../assets/astrodox-planet-strength.js');
 const ROOT=path.resolve(__dirname,'..');
 const ui=fs.readFileSync(path.join(ROOT,'assets/astrodox-follow-trend-ui.js'),'utf8');
 const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
@@ -11,6 +12,7 @@ assert.match(html,/id="tabAstroFollowTrend"/);
 assert.match(html,/id="astroFollowTrendView"/);
 assert.match(html,/astrodox-follow-trend-core\.js/);
 assert.match(html,/astrodox-follow-trend-ui\.js/);
+assert.match(html,/astrodox-planet-strength\.js/);
 assert.match(html,/astrodox-follow-trend\.css/);
 assert.ok(!/CebonkAlBiruni|CebonkMetalHistory|OrderSend|trade\.Buy|trade\.Sell|majority_direct/.test(ui),'panel must only read Astrology V1');
 const dom=new JSDOM('<main><section id="astroFollowTrendView" hidden></section></main>',
@@ -34,11 +36,20 @@ const C={
   scanned++;params={date,startMinute,enabled};
   progress(30);
   assert.equal(cancelled(),false);
-  return [2,2,2,2,0,-2,-2,-2].map((score,i)=>({ms:start+i*5*60000,score}));
+  return [2,2,2,2,0,-2,-2,-2].map((score,i)=>({
+   ms:start+i*5*60000,score,
+   positions:{Venus:{lon:45},Jupiter:{lon:165},Mars:{lon:350},Saturn:{lon:20}},
+   active:score===0?[]:[
+    {id1:'Venus',id2:'Jupiter',name:'Trine',angle:120,orb:0.7,
+     phase:'APPLYING',impact:score>0?2:0.2,local:false},
+    {id1:'Mars',id2:'Saturn',name:'Square',angle:90,orb:1.2,
+     phase:'SEPARATING',impact:score>0?-1:-2,local:false}]
+  }));
  }
 };
 w.CebonkCore=C;
 w.CebonkAstrodoxFollowTrend=F;
+w.CebonkAstrodoxPlanetStrength=P;
 w.eval(ui);
 const $=id=>w.document.getElementById(id);
 assert.equal($('aftDate').value,'2026-10-14');
@@ -63,7 +74,18 @@ function done(){
  assert.deepEqual(params,{date:'2026-10-14',startMinute:360,enabled:true});
  assert.equal(scanned,1);
  assert.equal(cleared,1);
- assert.equal($('aftDirection').textContent,'BUY');
+ assert.equal($('aftDirection').textContent,'BUY','duration-based direction stays intact');
+ assert.equal($('aftPlanetBuy').textContent,'46.2%','planet composition must NOT copy duration 66.7%');
+ assert.equal($('aftPlanetSell').textContent,'53.8%','negative aspect weights are included');
+ assert.match($('aftPlanetDirection').textContent,/CAMPURAN/,'weighted configuration direction differs from duration direction');
+ assert.match($('aftPlanetCoverage').textContent,/7\/8 slot/);
+ assert.match($('aftShare').textContent,/durasi/i,'legacy duration clearly labeled separate');
+ assert.equal($('aftPlanetPairs').querySelectorAll('tr').length,2);
+ assert.equal($('aftPlanetRanking').querySelectorAll('tr').length,4);
+ assert.equal($('aftZodiacRanking').querySelectorAll('tr').length,4);
+ assert.match($('aftZodiacCoverage').textContent,/100\.0%/);
+ assert.match($('aftPlanetPairs').textContent,/longitude/);
+ assert.match($('aftPlanetPairs').textContent,/Taurus/);
  assert.equal($('aftStart').textContent,'06:10');
  assert.equal($('aftCore').textContent,'06:10');
  assert.equal($('aftEnd').textContent,'06:20');
@@ -71,6 +93,7 @@ function done(){
  assert.match($('aftStatus').textContent,/status trading tetap WAIT/);
  assert.equal($('aftWindows').querySelectorAll('tr').length,2);
  assert.equal($('aftRows').querySelectorAll('tr').length,8);
+ assert.equal($('aftRows').querySelector('tr').cells.length,9,'all-slot audit includes weights and planetary percentages');
  assert.equal(w.CEBONK_ASTRO_STATE,sentinel,'legacy data must stay untouched');
  assert.equal(w.CebonkAlBiruni.sentinel,true);
  $('aftConfirm').value='6';

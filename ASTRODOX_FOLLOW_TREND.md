@@ -56,3 +56,56 @@ Keputusan trading website: **WAIT**, tidak mengirim perintah broker/EA/Telegram.
 3. Lakukan perbandingan dengan ASTRODOX V1 lama dan baseline acak/sederhana.
 4. Jangan mengaktifkan order kecuali sudah ada validasi out-of-sample yang
    meyakinkan dan kontrol risiko/eksekusi tersendiri.
+
+## Persentase kekuatan konfigurasi planet (v1.1)
+
+Modul Follow Trend sekarang memiliki **dua metrik berbeda**, tidak boleh disamakan.
+
+### A. Persentase bobot konfigurasi planet
+Untuk setiap interval 5 menit, gunakan **kontribusi aspek asli** `sample.active[].impact`
+dari `CebonkCore.analyse`. Kontribusi lokal ASC/MC `local=true` dikecualikan
+sesuai skor arah V1; tidak ada koefisien baru untuk pasar.
+
+- `BobotBUY = Σ max(impact,0)`
+- `BobotSELL = Σ max(-impact,0)`
+- `BUY% = 100 × BobotBUY / (BobotBUY + BobotSELL)`
+- `SELL% = 100 × BobotSELL / (BobotBUY + BobotSELL)`
+- `NET% = BUY% − SELL%`.
+
+Persentase dihitung dari total bobot aspek aktif pada seluruh sampel hari itu,
+**bukan** dari durasi keadaan BUY/SELL atau rasio profit. V1 sudah memakai
+sifat/bobot planet, longitude untuk jarak sudut, jenis aspek, orb, dan
+fase Applying/Exact/Separating. Nilai zodiak tampil sebagai **lokasi**
+benda langit dan tidak diberikan koefisien baru. Bila bobot total 0 atau data
+aspek tidak tersedia, hasil persentase **TIDAK TERSEDIA**, bukan 50% atau 100%
+asumsi. Karena normalisasi bersifat relatif, satu kontribusi sangat kecil
+dapat menghasilkan 100% — **bukan** berarti kuat secara absolut. Total bobot
+dan jumlah slot yang berkontribusi harus dibaca bersama persentase.
+
+### B. Persentase durasi Follow Trend (lama)
+Perhitungan durasi dan algoritme konfirmasi lama tetap utuh di panel yang sama
+dengan label **DOMINASI DURASI**. Persentase durasi hanya memakai total menit
+BUY/SELL yang terkonfirmasi, bukan bobot planet. Dua angka itu mungkin berbeda
+atau bahkan mempunyai arah dominasi berbeda.
+
+### Audit planet, zodiak, degrees, longitude dan aspek
+- Per-planet: masing-masing pasangan aspek membagi bobot absolut **50/50**
+  ke dua planet yang berpartisipasi; digunakan sebagai atribusi pelaporan,
+  bukan sebagai rumus skor baru.
+- Per-zodiak: kontribusi planet tersebut dicatat menurut tanda zodiak dari
+  longitude ketika aspek dihitung. Ini adalah pengelompokan distribusi bobot,
+  **bukan** klaim bahwa suatu tanda zodiak secara otomatis bullish/bearish.
+- Pasangan aspek: daftar nilai bobot terbesar berikut sudut nominal aspek,
+  orb, fase, longitude kedua planet, dan derajat pada zodiaknya.
+- Cakupan bobot dengan longitude lengkap ditampilkan; jangan menciptakan
+  tanda zodiak jika posisi planet tidak tersedia.
+- Per-slot tabel/CSV menampilkan bobot positif dan negatif, BUY% dan SELL%
+  konfigurasi bersamaan dengan status Follow Trend.
+
+**Interpretasi:** persentase konfigurasi adalah ukuran komposisi algoritma
+ASTRODOX V1, bukan pengukuran kesuksesan ramalan atau probabilitas kenaikan
+XAUUSD. Status trading website tetap WAIT. Belum ada bukti out-of-sample
+bahwa bobot astrologi mengikuti tren harga emas.
+
+Berkas: `assets/astrodox-planet-strength.js`, tambahan UI Follow Trend,
+`tests/astrodox-planet-strength.test.cjs`, dan pengujian UI/regresi.
