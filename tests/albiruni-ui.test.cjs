@@ -9,6 +9,8 @@ async function until(fn,label){for(let i=0;i<500;i++){if(fn())return;await new P
 async function run(){
  const dom=new JSDOM('<main><nav class="viewtabs"><button class="viewtab" id="tabAstro">ASTROLOGY</button><button class="viewtab" id="tabAlBiruni">ASTROLOGY AL-BIRUNI</button></nav><div id="astroView"><input id="dateInput" value="2026-10-11"></div><section id="albiruniPanel" hidden></section><div id="statusText">old status</div></main>',{url:'https://example.test/',runScripts:'outside-only'});
  const w=dom.window;
+ // Freeze fixture clock: the direct SELL test feed is dated 2026-10-12.
+ w.Date.now=()=>Date.parse('2026-10-12T00:00:00Z');
  w.eval(fs.readFileSync(path.join(path.dirname(require.resolve('astronomy-engine')),'astronomy.browser.min.js'),'utf8'));
  const browserAstronomy=w.Astronomy;
  w.CebonkCore=Object.freeze({sentinel:'legacy'});w.CEBONK_ASTRO_STATE=Object.freeze({sentinel:'unchanged'});
