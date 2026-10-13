@@ -2,9 +2,9 @@ name: Al-Biruni panel checks
 on:
   push:
     branches: [main]
-    paths: ['assets/albiruni-*.js', 'assets/primbon-dagang*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/primbon-dagang.test.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'tests/astrodox-audit.test.cjs', 'assets/astrodox-audit.js', 'assets/astrodox-follow-trend-core.js', 'assets/astrodox-planet-strength.js', 'tests/astrodox-planet-strength.test.cjs', 'assets/astrodox-follow-trend-ui.js', 'assets/astrodox-follow-trend.css', 'tests/astrodox-follow-trend.test.cjs', 'tests/astrodox-follow-trend-ui.test.cjs', 'ASTRODOX_FOLLOW_TREND.md', 'assets/site-tab-router.js', 'assets/site-simple-ui.js', 'assets/site-simple.css', 'tests/site-simple-ui.test.cjs', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
+    paths: ['assets/albiruni-*.js', 'assets/albiruni-classical-direction.css', 'tests/albiruni-classical-direction.test.cjs', 'tests/albiruni-classical-direction-ui.test.cjs', 'assets/primbon-dagang*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/primbon-dagang.test.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'tests/astrodox-audit.test.cjs', 'assets/astrodox-audit.js', 'assets/astrodox-follow-trend-core.js', 'assets/astrodox-planet-strength.js', 'tests/astrodox-planet-strength.test.cjs', 'assets/astrodox-follow-trend-ui.js', 'assets/astrodox-follow-trend.css', 'tests/astrodox-follow-trend.test.cjs', 'tests/astrodox-follow-trend-ui.test.cjs', 'ASTRODOX_FOLLOW_TREND.md', 'assets/site-tab-router.js', 'assets/site-simple-ui.js', 'assets/site-simple.css', 'tests/site-simple-ui.test.cjs', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
   pull_request:
-    paths: ['assets/albiruni-*.js', 'assets/primbon-dagang*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/primbon-dagang.test.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'tests/astrodox-audit.test.cjs', 'assets/astrodox-audit.js', 'assets/astrodox-follow-trend-core.js', 'assets/astrodox-planet-strength.js', 'tests/astrodox-planet-strength.test.cjs', 'assets/astrodox-follow-trend-ui.js', 'assets/astrodox-follow-trend.css', 'tests/astrodox-follow-trend.test.cjs', 'tests/astrodox-follow-trend-ui.test.cjs', 'ASTRODOX_FOLLOW_TREND.md', 'assets/site-tab-router.js', 'assets/site-simple-ui.js', 'assets/site-simple.css', 'tests/site-simple-ui.test.cjs', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
+    paths: ['assets/albiruni-*.js', 'assets/albiruni-classical-direction.css', 'tests/albiruni-classical-direction.test.cjs', 'tests/albiruni-classical-direction-ui.test.cjs', 'assets/primbon-dagang*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/primbon-dagang.test.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'tests/astrodox-audit.test.cjs', 'assets/astrodox-audit.js', 'assets/astrodox-follow-trend-core.js', 'assets/astrodox-planet-strength.js', 'tests/astrodox-planet-strength.test.cjs', 'assets/astrodox-follow-trend-ui.js', 'assets/astrodox-follow-trend.css', 'tests/astrodox-follow-trend.test.cjs', 'tests/astrodox-follow-trend-ui.test.cjs', 'ASTRODOX_FOLLOW_TREND.md', 'assets/site-tab-router.js', 'assets/site-simple-ui.js', 'assets/site-simple.css', 'tests/site-simple-ui.test.cjs', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
 permissions:
   contents: read
 jobs:
@@ -18,6 +18,8 @@ jobs:
       - run: npm install --no-save --no-package-lock --ignore-scripts astronomy-engine@2.1.19 jsdom@26.1.0
       - run: node tests/albiruni.test.cjs
       - run: node tests/albiruni-classic.test.cjs
+      - run: node tests/albiruni-classical-direction.test.cjs
+      - run: node tests/albiruni-classical-direction-ui.test.cjs
       - run: node tests/albiruni-election-gate.test.cjs
       - run: node tests/albiruni-ui.test.cjs
       - run: node tests/primbon-dagang.test.cjs
