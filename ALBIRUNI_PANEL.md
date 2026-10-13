@@ -273,3 +273,76 @@ Referensi historiografis utama:
 [Al-Biruni, *The Book of Instruction in the Elements of the Art of Astrology*,
 R. Ramsay Wright (1934), reproduksi digital](https://www.skyscript.co.uk/albiruni_elements.html).
 Tidak ada klaim bahwa teori astrologi telah terbukti memprediksi XAUUSD.
+
+
+## Pembaruan 14 Oktober 2026 — AL-BIRUNI KLASIK sebagai panel utama (eksperimen, v1.0)
+
+**Perubahan otoritas UI:** Tab AL-BIRUNI sekarang menampilkan modul
+`assets/albiruni-classical-direction-ui.js` sebagai panel **utama**.
+Panel pemungutan suara mayoritas aspek modern, pemilihan bias MANUAL, detail
+klasik lama, dan arsip feed EA dipertahankan dalam `#abLegacyArchive`
+yang tertutup secara default. Logic lama dan format feed EA **tidak diganti
+secara diam-diam**. ASTRODOX, BaZi, kalender, EA dan feed VPS tidak diubah.
+
+**Interpretasi model yang dipilih pengguna**:
+- Kualitas astrologi **MENGUNTUNGKAN** → label eksperimen **BUY**.
+- Kualitas astrologi **MERUGIKAN** → label eksperimen **SELL**.
+- Data tak cukup, kondisi bertentangan/tidak dominan, dekat batas siang-malam,
+  atau sesi tak tersedia → **WAIT**.
+- Label "CAMPURAN" tidak menjadi status UI panel klasik baru.
+  Implementasi `assets/albiruni-election-gate.js` lama masih memuat
+  status raw historis untuk kompatibilitas EA lama, dan hanya terlihat bila
+  arsip dibuka.
+
+**SSOT mesin baru:** `assets/albiruni-classical-direction.js`
+hanya menerima hasil `CebonkAlBiruniClassic.chart`, **tidak memanggil**
+`autoSignal`, `autoPeriodSummary` atau model
+`ASPECT_COUNT_MAJORITY_V2`. Nilai yang digunakan:
+- Martabat esensial 5/4/3/2/1 (domicile, exaltation, Egyptian term,
+  triplicity, face) dari §440–453 dan §493–494.
+- Kelemahan detriment/fall, dekat Matahari, retrograde/stationary
+  dari diagnostik kondisi parsial (§498–513).
+- Ascendant, Bulan, penguasa Ascendant dan penguasa tanda Bulan;
+  Matahari sebagai lambang simbolis emas (§410), bukan indikator harga.
+- Kontak benefic Venus/Jupiter dan malefic Mars/Saturn pada penanda penting,
+  kedekatan orb, jenis sudut aspek dan fase berbasis velocity bila tersedia.
+- Aspek Bulan terhadap penguasa Ascendant memberi bobot pelengkap.
+- Nilai dukungan dan tekanan dijumlah menggunakan koefisien eksplisit
+  **buatan model riset modern** (lihat source). Ambang BUY memerlukan
+  dukungan >=3 poin, >=1 kontak benefic, net >=2.2 poin, dan dukungan
+  >=1.65×tekanan. SELL menggunakan aturan simetris untuk tekanan.
+  Tanpa kondisi penentu → WAIT. Angka-angka ambang ini **bukan** kutipan kitab.
+
+**Stabilitas arah:** Dua slot 15 menit berurutan untuk harian, dua slot
+30 menit untuk mingguan, dua slot 60 menit untuk bulanan. Tidak memindahkan
+jam AWAL ke belakang slot konfirmasi. INTI = skor net absolut terkuat dalam
+window arah yang terkonfirmasi, AKHIR = akhir slot eksklusif; ini bukan
+waktu gerakan harga emas yang telah diverifikasi. Sesama periode dipilih
+berdasarkan jumlah **kekuatan net klasifikasi** (bukan jumlah aspek).
+
+**Waktu & lokasi:** Input koordinat manual (Jakarta hanya nilai awal);
+WIB 06:00–24:00, Senin–Jumat; akhir pekan tidak dihitung dan tidak
+dipindahkan ke Jumat/Senin. Tanggal di luar 2020–2040 atau geometri
+tidak lengkap menghasilkan gagal/WAIT tanpa membuat data palsu.
+
+**Keterbatasan historis yang wajib disebut:** mesin `CebonkAlBiruniClassic.chart`
+adalah penilaian **parsial**. Rumah astrologi menyeluruh, reception,
+besiegement, signifikator khusus perdagangan, dan rangkaian electional
+lengkap Al-Biruni belum tersedia. Karena itu, penamaan *klasik* berarti
+menggunakan sebagian kaidah klasik sebagai variabel, **bukan** mengklaim
+mereproduksi semua langkah kitab. Tidak ada kaidah klasik asli yang
+menyatakan "menguntungkan = emas naik" atau "merugikan = emas turun".
+Pemetaan tersebut merupakan **hipotesis modern pengguna**, belum
+memiliki bukti backtest harga XAUUSD, profit, atau winrate.
+
+**Keamanan:** Semua hasil ditampilkan sebagai riset dan
+`tradeDecision='WAIT'`. Tidak mengirim WebRequest atau transaksi MT5.
+EA lama di PC/VPS **tidak otomatis berhenti** setelah perubahan website.
+Jika tidak menginginkan operasi EA lama, pengguna harus menonaktifkan
+AutoTrading di terminal atau VPS tempat EA berjalan.
+
+Pengujian:
+- `tests/albiruni-classical-direction.test.cjs` — sampel benefic/malefic,
+  martabat, BUY/SELL/WAIT, tanpa look-ahead, tidak meneruskan sinyal melewati hari.
+- `tests/albiruni-classical-direction-ui.test.cjs` — model baru tidak memanggil
+  voting lama, tab utama dan arsip terpisah, serta sumber ASTRODOX tidak berubah.

@@ -1,0 +1,54 @@
+/* New classical AL-BIRUNI research interface: scoped, mobile responsive. */
+#albiruniPanel .ab-classical-primary{border-bottom:2px solid #5e4c31;background:linear-gradient(140deg,#152538 0%,#101a29 80%);color:#eaf0f8}
+#albiruniPanel .ab-classical-primary[hidden]{display:none!important}
+#albiruniPanel .abcp-head{display:flex;gap:14px;justify-content:space-between;align-items:flex-start;padding:22px 23px 16px;border-bottom:1px solid #35475c}
+#albiruniPanel .abcp-head small{color:#f0c16c;font-size:10px;letter-spacing:1.6px;font-weight:750}
+#albiruniPanel .abcp-head h2{font-size:22px;margin:6px 0 7px;line-height:1.25}
+#albiruniPanel .abcp-head p{font-size:12px;line-height:1.65;color:#b9c9de;margin:0}
+#albiruniPanel .abcp-head p strong{color:#dceaf5}
+#albiruniPanel .abcp-pill{font-size:10px;border:1px solid #556c83;border-radius:99px;padding:6px 10px;white-space:nowrap;color:#c8dcec}
+#albiruniPanel .abcp-body{padding:20px 23px}
+#albiruniPanel .abcp-inputs{display:grid;grid-template-columns:1.15fr 1.2fr .8fr .8fr .7fr;gap:10px;align-items:end}
+#albiruniPanel .abcp-inputs label{min-width:0;font-size:11px}
+#albiruniPanel .abcp-inputs input,#albiruniPanel .abcp-inputs select{margin-top:6px;width:100%;font-variant-numeric:tabular-nums}
+#albiruniPanel .abcp-caution{font-size:12px;line-height:1.65;margin:15px 0;padding:12px 13px;color:#efdbb7;border-radius:9px;background:#302819;border:1px solid #695338}
+#albiruniPanel .abcp-actions{display:flex;gap:10px;align-items:center;margin:12px 0;flex-wrap:wrap}
+#albiruniPanel .abcp-actions #abClassicalMainRun{background:#f0c16c;color:#162033;border-color:#f0c16c;font-weight:750;min-height:44px}
+#albiruniPanel .abcp-status{font-size:12px;color:#b6c8de;line-height:1.6;margin:10px 0 14px}
+#albiruniPanel .abcp-status.abcp-error{color:#ffb5b5}
+#albiruniPanel .abcp-focus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:11px 0}
+#albiruniPanel .abcp-focus>div{background:#0e1b2c;border:1px solid #3b526e;padding:16px;border-radius:10px}
+#albiruniPanel .abcp-focus small,#albiruniPanel .abcp-time-grid small{font-size:10px;letter-spacing:.65px;color:#b7c9dc;display:block}
+#albiruniPanel .abcp-focus strong{display:block;font-size:27px;line-height:1.4;margin:5px 0}
+#albiruniPanel .abcp-focus span{font-size:11px;line-height:1.55;color:#b5c7db;display:block}
+#albiruniPanel .abcp-buy{color:#7addb0}
+#albiruniPanel .abcp-sell{color:#ffa1a1}
+#albiruniPanel .abcp-wait{color:#edc783}
+#albiruniPanel .abcp-time-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:11px 0}
+#albiruniPanel .abcp-time-grid>div{min-width:0;border:1px solid #38516a;background:#142236;border-radius:10px;padding:12px}
+#albiruniPanel .abcp-time-grid strong{display:block;font-size:14px;line-height:1.45;margin-top:5px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#albiruniPanel .abcp-weights,#albiruniPanel .abcp-evidence,#albiruniPanel .abcp-disclaimer{font-size:12px;line-height:1.65;color:#cad8e5;margin:9px 0}
+#albiruniPanel .abcp-disclaimer{color:#a8bed5;font-size:11px}
+#albiruniPanel .abcp-details{padding:0 14px 12px;border:1px solid #425b72;background:#121f30;border-radius:10px;margin-top:12px}
+#albiruniPanel .abcp-details summary{padding:12px 0;font-size:12px;color:#e3ecf7}
+#albiruniPanel .abcp-details p{font-size:11px;line-height:1.6;color:#b3c9df;padding:0 0 5px}
+#albiruniPanel .abcp-scroll{border:1px solid #344b61;border-radius:8px;overflow:auto;max-height:370px;margin:7px 0 10px}
+#albiruniPanel .abcp-scroll table{white-space:nowrap;min-width:700px}
+#albiruniPanel .abcp-scroll th,#albiruniPanel .abcp-scroll td{font-size:11px;padding:9px}
+#albiruniPanel .abcp-raw{max-height:290px}
+#albiruniPanel .abcp-details ul{padding-left:22px;line-height:1.8;color:#bfd0e4;font-size:11px}
+#albiruniPanel .ab-classical-legacy{padding:1px 14px 12px;border:1px solid #364c63;border-radius:0;margin:0;color:#bfcada;background:#0b1320}
+#albiruniPanel .ab-classical-legacy>summary{font-size:12px;color:#c6d2e0;padding:14px 0}
+#albiruniPanel .ab-classical-legacy>p{font-size:11px;line-height:1.7;padding-bottom:10px}
+#albiruniPanel .ab-classical-legacy>.ab-header{padding:14px 10px}
+#albiruniPanel .ab-classical-legacy>.ab-body{padding:12px 9px}
+@media(max-width:900px){#albiruniPanel .abcp-inputs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){#albiruniPanel .abcp-head{padding:16px;gap:8px}#albiruniPanel .abcp-head h2{font-size:18px}
+#albiruniPanel .abcp-head .abcp-pill{display:none}#albiruniPanel .abcp-body{padding:13px}
+#albiruniPanel .abcp-inputs{grid-template-columns:repeat(2,minmax(0,1fr))}
+#albiruniPanel .abcp-inputs label:first-child{grid-column:1 / -1}
+#albiruniPanel .abcp-focus strong{font-size:22px}
+#albiruniPanel .abcp-time-grid strong{font-size:11px}
+#albiruniPanel .abcp-time-grid>div{padding:9px}
+#albiruniPanel .abcp-actions>button{flex:1}
+}

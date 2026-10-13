@@ -80,6 +80,22 @@ function mount(){
  }
  const ab=$('albiruniPanel');
  if(ab){
+  // New classical research is the first AL-BIRUNI screen. The former
+  // majority-vote model and EA feed remain archived but do NOT drive it.
+  if($('abClassicalPrimary')&&!$('abLegacyArchive')){
+   const header=[...ab.children].find(el=>el.classList.contains('ab-header'));
+   const legacyBody=[...ab.children].find(el=>el.classList.contains('ab-body'));
+   if(header&&legacyBody){
+    const archive=document.createElement('details');
+    archive.id='abLegacyArchive';archive.className='ab-classical-legacy';archive.open=false;
+    const summary=document.createElement('summary');
+    summary.textContent='Arsip metode lama · mayoritas aspek & feed EA lama';
+    const note=document.createElement('p');
+    note.textContent='Arsip penelitian lama: arah di sini bukan hasil mesin klasik baru dan bukan izin transaksi.';
+    header.parentNode.insertBefore(archive,header);
+    archive.append(summary,note,header,legacyBody);
+   }
+  }
   const body=ab.querySelector('.ab-body');
   const modes=ab.querySelector('.ab-period-modes');
   if(body&&modes){
