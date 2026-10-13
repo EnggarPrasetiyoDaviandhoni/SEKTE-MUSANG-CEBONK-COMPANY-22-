@@ -7,7 +7,7 @@
 const $=id=>document.getElementById(id);
 function groupChildren(parent,keepIds,sectionId,title,description){
  if(!parent||$(sectionId))return null;
- const nodes=[...parent.children].filter(node=>!keepIds.includes(node.id));
+ const nodes=[...parent.children].filter(node=>!keepIds.includes(node.id)&&!(sectionId==='simpleAstroDetails'&&node.classList.contains('metrics')));
  if(!nodes.length)return null;
  const box=document.createElement('details');
  box.id=sectionId;
