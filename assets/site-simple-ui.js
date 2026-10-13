@@ -30,7 +30,7 @@ function mount(){
  const nav=document.querySelector('.viewtabs');
  if(!nav)return;
  document.body.classList.add('cebonk-simple');
- const primary=['tabAstro','tabAlBiruni'];
+ const primary=['tabAstro','tabAlBiruni','tabAstroFollowTrend'];
  const more=document.createElement('button');
  more.id='simpleMore';
  more.className='simple-more';

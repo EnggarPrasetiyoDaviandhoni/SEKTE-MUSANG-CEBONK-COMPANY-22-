@@ -7,6 +7,7 @@ const ROOT=path.resolve(__dirname,'..');
 const tabs={
  tabAstro:'astroView',
  tabAlBiruni:'albiruniPanel',
+ tabAstroFollowTrend:'astroFollowTrendView',
  tabAstroNews:'astroNewsView',
  tabBazi:'baziView',
  tabTriple:'astroMonthlyView',
@@ -54,7 +55,7 @@ function main(){
   w.document.getElementById(id).click();
   assertOnly(w,id);
   assert.equal(w.location.hash,'#'+({
-   tabAstro:'astrology',tabAlBiruni:'al-biruni',tabAstroNews:'astrology-news',
+   tabAstro:'astrology',tabAlBiruni:'al-biruni',tabAstroFollowTrend:'astrodox-follow-trend',tabAstroNews:'astrology-news',
    tabBazi:'bazi-astrology',tabTriple:'momen-astrology',
    tabChineseCalendar:'kalender-cina',tabCombined:'combined-1',tabCombined2:'combined-2'
   })[id]);
@@ -69,9 +70,12 @@ function main(){
  const direct=build('#al-biruni');
  assertOnly(direct.window,'tabAlBiruni');
  direct.window.close();
+ const trend=build('#astrodox-follow-trend');
+ assertOnly(trend.window,'tabAstroFollowTrend');
+ trend.window.close();
  const deep=build('#bazi-astrology');
  assertOnly(deep.window,'tabBazi');
  deep.window.close();
- console.log('PASS: Al-Biruni and BaZi never share view, all 8 tabs, route hashes, broken legacy listeners.');
+ console.log('PASS: Al-Biruni and BaZi never share view, all 9 tabs including follow trend, route hashes, broken legacy listeners.');
 }
 main();
