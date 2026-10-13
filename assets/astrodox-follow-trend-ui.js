@@ -4,12 +4,12 @@
  */
 (function(root){
 'use strict';
-const C=root.CebonkCore,F=root.CebonkAstrodoxFollowTrend;
+const C=root.CebonkCore,F=root.CebonkAstrodoxFollowTrend,P=root.CebonkAstrodoxPlanetStrength;
 const panel=document.getElementById('astroFollowTrendView');
-if(!panel||!C||!F)return;
+if(!panel||!C||!F||!P)return;
 const esc=s=>String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>panel.querySelector('#'+id);
-let report=null,selectedDate=null,busy=false,cancelled=false,libraryPromise=null;
+let report=null,configuration=null,selectedDate=null,busy=false,cancelled=false,libraryPromise=null;
 const format=ms=>ms==null?'—':C.Time.dateISO(C.Time.wib(ms))+' '+C.Time.hm(C.Time.wib(ms))+' WIB';
 const hour=ms=>ms==null?'—':C.Time.hm(C.Time.wib(ms));
 panel.innerHTML=`
@@ -32,8 +32,23 @@ panel.innerHTML=`
   <p class="aft-note"><strong>KEPUTUSAN TRADING: WAIT.</strong> BUY/SELL di bawah iki arah <em>skor astrologi</em>, dudu tren harga XAUUSD sing wis teruji. Simulasi 06:00–24:00 WIB. Ora ngirim perintah EA.</p>
   <p id="aftStatus" class="aft-status" role="status" aria-live="polite">Pilih tanggal banjur tekan Hitung Follow Trend.</p>
   <div id="aftResult" hidden>
+   <section class="aft-planet-panel" aria-label="Konfigurasi planet dan aspek ASTRODOX">
+    <h3>KONFIGURASI PLANET · PERSENTASE BOBOT ASPEK</h3>
+    <div class="aft-planet-percent">
+     <div><small>BOBOT BUY</small><strong id="aftPlanetBuy" class="aft-buy">—</strong></div>
+     <div><small>BOBOT SELL</small><strong id="aftPlanetSell" class="aft-sell">—</strong></div>
+     <div><small>SELISIH BERSIH</small><strong id="aftPlanetNet">—</strong></div>
+    </div>
+    <p id="aftPlanetDirection" class="aft-planet-direction">—</p>
+    <p id="aftPlanetCoverage" class="aft-planet-explanation"></p>
+    <p class="aft-subnote">Persentase = porsi total <b>bobot aspek planet V1</b> positif/negatif, dihitung dari longitude, derajat aspek, orb, serta fase Applying/Exact/Separating. <b>Bukan persentase naik/turun harga, peluang profit, atau kekuatan absolut.</b> Zodiak ditampilkan sebagai posisi planet, bukan skor baru.</p>
+    <details class="aft-details">
+     <summary>Audit planet, zodiak, longitude, degrees &amp; aspek</summary>
+     <div class="aft-scroll"><table><thead><tr><th>Planet &amp; aspek</th><th>Posisi zodiak / longitude</th><th>Derajat aspek, orb, fase</th><th>Porsi bobot</th></tr></thead><tbody id="aftPlanetPairs"></tbody></table></div>
+    </details>
+   </section>
    <div class="aft-focus">
-    <div><small>DOMINASI HARIAN MODEL</small><strong id="aftDirection">—</strong><span id="aftShare">—</span></div>
+    <div><small>FOLLOW TREND · DOMINASI DURASI</small><strong id="aftDirection">—</strong><span id="aftShare">—</span></div>
     <div><small>KONDISI AKHIR RENTANG</small><strong id="aftEndState">—</strong><span id="aftReverse">—</span></div>
    </div>
    <div class="aft-times">
@@ -46,18 +61,19 @@ panel.innerHTML=`
    <details class="aft-details">
     <summary>Rincian window &amp; semua skor 5 menit</summary>
     <div class="aft-scroll"><table><thead><tr><th>Arah skor</th><th>AWAL WIB</th><th>INTI WIB</th><th>AKHIR WIB</th><th>Durasi</th></tr></thead><tbody id="aftWindows"></tbody></table></div>
-    <div class="aft-scroll aft-raw"><table><thead><tr><th>Jam WIB</th><th>Skor V1</th><th>Arah awal</th><th>Follow Trend</th><th>Alasan</th></tr></thead><tbody id="aftRows"></tbody></table></div>
+    <div class="aft-scroll aft-raw"><table><thead><tr><th>Jam WIB</th><th>Skor V1</th><th>Bobot BUY</th><th>Bobot SELL</th><th>BUY % aspek</th><th>SELL % aspek</th><th>Arah awal</th><th>Follow Trend</th><th>Alasan</th></tr></thead><tbody id="aftRows"></tbody></table></div>
     <button id="aftCSV" type="button">Unduh CSV riset</button>
    </details>
   </div>
   <details class="aft-method"><summary>Aturan versi Follow Trend</summary>
    <p>Rumus skor planet, ambang BUY/SELL +1,15/−1,15, dan grid 5 menit <strong>tidak diubah</strong>. Kandidat arah harus muncul berturut-turut 3, 6, atau 9 slot (dipilih). Perubahan arah sebelum terkonfirmasi menjadi WAIT; setelah jeda netral 15 menit, arah lama tidak dipertahankan. Perhitungan waktu memakai WIB UTC+7.</p>
-   <p>DOMINASI HARIAN adalah agregasi semua slot terkonfirmasi, dengan porsi minimal 55% dari menit directional; iki ringkasan seluruh hari, bukan informasi realtime sejak pagi. Data langit masa depan dapat dihitung, tetapi akurasi prediksi harga emas belum dibuktikan. Status untuk keputusan order tetap WAIT.</p>
+   <p>DOMINASI DURASI lan PERSENTASE KONFIGURASI PLANET iku loro ukuran berbeda. Persentase planet = jumlah kontribusi positif / (positif + absolut negatif) × 100%; SELL memakai absolut kontribusi negatif. Yen ora ana aspek sah utawa data ilang, tampil TIDAK TERSEDIA, ora diisi perkiraan. Longitudes lan posisi zodiak mung diperlihatke kanggo audit, ora oleh koefisien BUY/SELL tambahan.</p>
+   <p>Ringkasan tanggal lengkap bisa dipengaruhi posisi astronomi ing akhir dina; iki dudu sinyal sing sudah diketahui realtime. Akurasi prediksi emas belum dibuktikan. Keputusan eksekusi tetep WAIT.</p>
   </details>
  </div>`;
 $('aftDate').value=C.Time.today();
 const setStatus=(msg,bad=false)=>{$('aftStatus').textContent=msg;$('aftStatus').classList.toggle('aft-error',bad);};
-const invalidate=()=>{report=null;selectedDate=null;$('aftResult').hidden=true;setStatus('Setelan berubah. Hitung ulang ASTRODOX Follow Trend.');};
+const invalidate=()=>{report=null;configuration=null;selectedDate=null;$('aftResult').hidden=true;setStatus('Setelan berubah. Hitung ulang ASTRODOX Follow Trend.');};
 for(const id of ['aftDate','aftConfirm'])$(id).addEventListener('change',invalidate);
 function setBusy(v){
  busy=v;
@@ -68,8 +84,8 @@ function setBusy(v){
 function downloadCSV(){
  if(!report||!selectedDate)return;
  const quote=x=>'"'+String(x===null?'':x).replace(/"/g,'""')+'"';
- const header=['tanggal_wib','jam_wib','skor_astrodox_V1_BELUM_VALID','arah_mentah','follow_trend_model','alasan','keputusan_trading'];
- const lines=[header,...report.rows.map(r=>[selectedDate,hour(r.ms),r.score.toFixed(6),r.raw,r.state,r.reason,'WAIT'])];
+ const header=['tanggal_wib','jam_wib','skor_astrodox_V1_BELUM_VALID','bobot_positif_aspek','bobot_negatif_aspek','buy_pct_konfigurasi','sell_pct_konfigurasi','arah_mentah','follow_trend_model','alasan','keputusan_trading'];
+ const lines=[header,...report.rows.map((r,i)=>{const a=configuration?.perSlot[i];return [selectedDate,hour(r.ms),r.score.toFixed(6),a?.buyWeight??'',a?.sellWeight??'',a?.buyPct??'',a?.sellPct??'',r.raw,r.state,r.reason,'WAIT'];})];
  const text='\uFEFF'+lines.map(row=>row.map(quote).join(',')).join('\r\n')+'\r\n';
  const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'}));
  const a=document.createElement('a');a.href=url;a.download='ASTRODOX_FOLLOW_TREND_'+selectedDate+'.csv';
@@ -77,11 +93,30 @@ function downloadCSV(){
 }
 $('aftCSV').addEventListener('click',downloadCSV);
 function render(date,confirm){
- const x=report,window=x.focusWindow;
+ const x=report,window=x.focusWindow,p=configuration;
+ const percentage=n=>n==null?'—':n.toFixed(1)+'%';
+ $('aftPlanetBuy').textContent=p?.available?percentage(p.buyPct):'—';
+ $('aftPlanetSell').textContent=p?.available?percentage(p.sellPct):'—';
+ $('aftPlanetNet').textContent=p?.available?(p.netPct>0?'+':'')+percentage(p.netPct):'—';
+ $('aftPlanetDirection').textContent=p?.available?
+  'DOMINASI BOBOT ASPEK: '+p.direction:'KONFIGURASI PLANET: TIDAK TERSEDIA';
+ $('aftPlanetCoverage').textContent=p?.available?
+  p.aspects+' kontribusi aspek · '+p.coveredSlots+'/'+p.slots+' slot memiliki kontribusi ('+percentage(p.coveragePct)+
+  ') · total bobot terukur '+p.totalWeight.toFixed(3):
+  'Bobot tidak dihitung: '+(p?.reason||'DATA_TIDAK_TERSEDIA')+'. Persentase tidak direkayasa.';
+ const showLoc=(id,loc)=>loc?esc(id+' '+loc.sign+' '+loc.degreeInSign.toFixed(2)+
+  '° (longitude '+loc.longitude.toFixed(2)+'°)'):esc(id+' · longitude tidak tersedia');
+ $('aftPlanetPairs').innerHTML=p?.available?p.leadingAspects.map(a=>'<tr><td>'+
+  esc(a.id1+' / '+a.id2+' · '+a.aspect)+'</td><td>'+showLoc(a.id1,a.peak.planet1)+
+  ' / '+showLoc(a.id2,a.peak.planet2)+'</td><td>'+
+  esc(a.angle+'° · orb '+a.peak.orb.toFixed(3)+'° · '+a.peak.phase)+
+  '</td><td>'+percentage(a.contributionPct)+' · '+a.occurrences+' slot-aspek</td></tr>').join(''):
+  '<tr><td colspan="4">Data kontribusi planet/aspek belum tersedia. Tidak ada persentase asumsi.</td></tr>';
+
  const focus=$('aftDirection');focus.textContent=x.focus;
  focus.className=x.focus==='BUY'?'aft-buy':x.focus==='SELL'?'aft-sell':'aft-wait';
  $('aftShare').textContent=x.directionalShare==null?'Tidak ada arah terkonfirmasi':
-  'Porsi dominan '+(x.directionalShare*100).toFixed(1)+'% dari menit yang punya arah';
+  'Porsi durasi '+(x.directionalShare*100).toFixed(1)+'% dari menit directional (bukan kekuatan planet)';
  $('aftEndState').textContent=x.last.state;
  $('aftEndState').className=x.last.state==='BUY'?'aft-buy':x.last.state==='SELL'?'aft-sell':'aft-wait';
  $('aftReverse').textContent=x.reversals+' kali pergantian dominasi terkonfirmasi · akhir rentang, bukan sinyal live';
@@ -95,8 +130,10 @@ function render(date,confirm){
   '</td><td>'+esc(format(w.core))+'</td><td>'+esc(format(w.end))+
   '</td><td>'+w.minutes+' menit</td></tr>').join('')||
   '<tr><td colspan="5">Tidak ada arah yang lolos konfirmasi.</td></tr>';
- $('aftRows').innerHTML=x.rows.map(r=>'<tr><td>'+esc(hour(r.ms))+'</td><td>'+r.score.toFixed(3)+
-  '</td><td>'+esc(r.raw)+'</td><td>'+esc(r.state)+'</td><td>'+esc(r.reason)+'</td></tr>').join('');
+ $('aftRows').innerHTML=x.rows.map((r,i)=>{const a=p?.perSlot[i];return '<tr><td>'+esc(hour(r.ms))+'</td><td>'+r.score.toFixed(3)+
+  '</td><td>'+(a?a.buyWeight.toFixed(3):'—')+'</td><td>'+(a?a.sellWeight.toFixed(3):'—')+
+  '</td><td>'+percentage(a?.buyPct)+'</td><td>'+percentage(a?.sellPct)+
+  '</td><td>'+esc(r.raw)+'</td><td>'+esc(r.state)+'</td><td>'+esc(r.reason)+'</td></tr>';}).join('');
  $('aftResult').hidden=false;
 }
 function injectScript(url){
@@ -123,7 +160,7 @@ async function loadAstronomy(){
 async function run(){
  if(busy)return;
  const date=$('aftDate').value,confirm=Number($('aftConfirm').value);
- let engine=null;cancelled=false;report=null;selectedDate=null;
+ let engine=null;cancelled=false;report=null;configuration=null;selectedDate=null;
  $('aftResult').hidden=true;
  try{
   C.Time.parseDate(date);
@@ -138,11 +175,13 @@ async function run(){
   const next=F.calculate(samples,{confirmBars:confirm,graceBars:3,stepMinutes:C.CFG.step,
    buyThreshold:C.CFG.buy,sellThreshold:C.CFG.sell});
   if(cancelled)throw Error('Dibatalkan.');
-  selectedDate=date;report=next;
+  const strength=P.evaluate(samples);
+  if(cancelled)throw Error('Dibatalkan.');
+  selectedDate=date;report=next;configuration=strength;
   render(date,confirm);
   setStatus('Selesai: '+samples.length+' slot ASTRODOX V1. Arah Follow Trend hanya hipotesis; status trading tetap WAIT.');
  }catch(e){
-  report=null;selectedDate=null;
+  report=null;configuration=null;selectedDate=null;
   $('aftResult').hidden=true;
   setStatus((e&&e.message)||'Perhitungan gagal. Tidak ada sinyal pengganti.',true);
  }finally{
@@ -152,5 +191,5 @@ async function run(){
 }
 $('aftRun').addEventListener('click',run);
 $('aftCancel').addEventListener('click',()=>{cancelled=true;setStatus('Membatalkan penghitungan ASTRODOX…');});
-root.CebonkAstrodoxFollowTrendUI=Object.freeze({model:'PURE_ASTROLOGY_V1',version:'1.0.0'});
+root.CebonkAstrodoxFollowTrendUI=Object.freeze({model:'PURE_ASTROLOGY_V1',version:'1.1.0'});
 })(window);
