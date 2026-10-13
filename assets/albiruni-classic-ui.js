@@ -11,14 +11,14 @@ if(!anchor)return;
 const details=document.createElement('details');
 details.id='abClassicPanel';details.open=true;
 details.innerHTML=[
- '<summary>AL-BIRUNI ASLI · ASCENDANT, MARTABAT, PEMILIHAN WAKTU (§527)</summary>',
- '<p>Riset kitab asli: Ascendant, penguasa Ascendant, Bulan, penguasa tanda Bulan, Matahari (asosiasi emas §410), kontak benefic–malefic dan skor martabat. <strong>Tidak ada rumus BUY/SELL XAUUSD asli dari Al-Biruni.</strong></p>',
+ '<summary>AL-BIRUNI KLASIK · MARTABAT, KONDISI PLANET & WAKTU (§382–§527)</summary>',
+ '<p>Riset astrologi klasik: Ascendant, penguasanya, Bulan, Matahari (asosiasi simbolis emas §410), kontak benefic–malefic, martabat dan kondisi planet (retrograde, detriment, fall, kedekatan Matahari). <strong>Tidak ada rumus BUY/SELL XAUUSD asli dari Al-Biruni.</strong></p>',
  '<p><strong>Lokasi awal hanya contoh Jakarta.</strong> Ubah lintang/bujur sesuai lokasi yang hendak dihitung karena Ascendant bergantung pada lokasi.</p>',
  '<div class="ab-controls"><div><label for="abClassicLat">Lintang ° (selatan negatif)</label><input id="abClassicLat" type="number" value="-6.2000" min="-89.9" max="89.9" step="0.0001"></div>',
  '<div><label for="abClassicLon">Bujur ° (timur positif)</label><input id="abClassicLon" type="number" value="106.8167" min="-180" max="180" step="0.0001"></div></div>',
  '<button id="abClassicCalc" type="button">Hitung AL-BIRUNI KLASIK + bandingkan arah AUTO</button>',
  '<div id="abClassicResults" role="status" aria-live="polite">Hitung peta aspek dahulu, pilih hari & jam WIB, lalu hitung klasik.</div>',
- '<p>Kitab PDF: §410 hal.37, §440–453 hal.50–59, §489–494 hal.98–102, §527 hal.126. Martabat 5/4/3/2/1 dengan term Mesir dari tabel §453; versi Ptolemaios tidak digunakan. Metode ini tidak mengirim perintah ke EA.</p>'
+ '<p>Referensi: Al-Biruni §382, §410, §440–453, §493–494, §498–501, §512–513, §527. Martabat 5/4/3/2/1 memakai term Mesir §453. Pemeriksaan kondisi ini PARSIAL: rumah astrologi, besiegement, reception, dan pemilihan waktu klasik menyeluruh belum dihitung. Tidak ada perintah EA maupun prediksi harga tervalidasi dari panel ini.</p>'
 ].join('');
 anchor.parentNode.insertBefore(details,anchor);
 const output=details.querySelector('#abClassicResults');
@@ -46,11 +46,11 @@ const inspector=panel.querySelector('.ab-inspect');
 const finalCard=document.createElement('section');
 finalCard.id='abFinalDecision';
 finalCard.className='ab-final-decision';
-finalCard.setAttribute('aria-label','Keputusan final EA AL-BIRUNI');
-finalCard.innerHTML='<h3>AL-BIRUNI DIRECT v1.03 · MAYORITAS WEB → EA</h3>'+
+finalCard.setAttribute('aria-label','Arsip audit feed eksperimen EA AL-BIRUNI');
+finalCard.innerHTML='<h3>ARSIP AL-BIRUNI DIRECT v1.03 · TIDAK TERVERIFIKASI UNTUK TRADING</h3>'+
  '<div id="abFinalFeedStatus" role="status" aria-live="polite">Memuat status feed EA dari GitHub…</div>'+
  '<button id="abRefreshFeed" type="button" class="ab-small-button">Perbarui status EA</button>'+
- '<small>EA DIRECT v1.03 menggunakan arah mayoritas aspek yang sama dengan AUTO WEB. Filter waktu klasik §527 TIDAK menjadi veto di mode DIRECT; v1.02 KETAT tetap ada terpisah. Feed jadwal ini bukan bukti order broker atau jaminan profit.</small>';
+ '<small>PERINGATAN: BUY/SELL pada feed DIRECT adalah hipotesis lama yang tidak terbukti akurat terhadap harga XAUUSD. Keputusan website untuk trading: WAIT. Filter klasik §527 TIDAK menjadi veto di mode DIRECT lama. Mengubah halaman web TIDAK menghentikan EA pada MT5/VPS; matikan AutoTrading di tempat EA berjalan.</small>';
 if(inspector)inspector.parentNode.insertBefore(finalCard,inspector);
 let feed=null,feedError=null,feedLoading=true;
 const feedTarget=finalCard.querySelector('#abFinalFeedStatus');
@@ -97,7 +97,7 @@ function renderFinal(){
   (Math.abs(location.latitude-p.lat)>0.0001||Math.abs(location.longitude-p.lon)>0.0001);
  const candidate=feed.entry_epoch>0?C.stamp(feed.entry_epoch*1000):null;
  const expired=feed.entry_epoch>0&&Date.now()>feed.entry_epoch*1000+8*60000;
- feedTarget.innerHTML='<div class="ab-final-direction"><strong>EA DIRECT '+escape(dir)+'</strong>'+
+ feedTarget.innerHTML='<p class="ab-final-warning"><b>KEPUTUSAN WEBSITE: WAIT · BUKAN IZIN ENTRY.</b> Arah '+escape(dir)+' di bawah adalah ARSIP feed lama yang belum tervalidasi. Jangan gunakan sebagai sinyal live.</p>'+ '<div class="ab-final-direction"><strong>EA DIRECT '+escape(dir)+'</strong>'+
   '<span>'+escape(day)+' WIB · feed v1.03</span></div>'+
   '<div class="ab-ea-focus"><div><small>ARAH MAYORITAS HARIAN WEB</small><strong>'+
    escape(daily)+'</strong><span>Akumulasi suara: SELL '+dailySell+
@@ -180,11 +180,19 @@ button.addEventListener('click',async()=>{
   if(ticket!==version||signature(read())!==key||panel.querySelector('#abResults')?.hidden)return;
   const modernDay=['BUY','SELL'].includes(daily.direction)?daily.direction:'WAIT';
   const modernTime=['BUY','SELL'].includes(auto.direction)?auto.direction:'WAIT';
+  const conditions=new Map(election.conditions.rows.map(r=>[r.body,r]));
   const detailRows=election.dignities.rows.map(r=>{
-   const active=['domicile','exaltation','triplicity','face'].filter(k=>r.points[k]>0)
-     .map(k=>({domicile:'Rumah',exaltation:'Peninggian',triplicity:'Triplicity',face:'Face'})[k]+' +'+r.points[k]).join('; ')||'Tidak ada';
+   const active=['domicile','exaltation','term','triplicity','face'].filter(k=>r.points[k]>0)
+    .map(k=>({domicile:'Rumah',exaltation:'Peninggian',term:'Term Mesir',
+     triplicity:'Triplicity',face:'Face'})[k]+' +'+r.points[k]).join('; ')||'Tidak ada';
+   const d=conditions.get(r.body);
+   const motion=d.velocityDegPerDay===null?d.motion:d.motion+' ('+d.velocityDegPerDay.toFixed(3)+'°/hari)';
+   const solar=d.distanceFromSun===null?'—':d.solarCondition+' ('+d.distanceFromSun.toFixed(2)+'°)';
+   const factors=[...d.positives,...d.negatives].join(', ')||'Tidak ada faktor terdeteksi';
    return '<tr><td>'+escape(names[r.body])+'</td><td>'+escape(r.sign)+' '+r.signDegree.toFixed(2)+
-    '°</td><td>'+r.subtotal+'</td><td>'+escape(active)+'</td></tr>';
+    '°</td><td>'+r.subtotal+'</td><td>'+escape(active)+'</td><td>'+
+    escape(d.role)+'</td><td>'+escape(d.condition)+'</td><td>'+escape(motion)+
+    '</td><td>'+escape(solar)+'</td><td>'+escape(factors)+'</td></tr>';
   }).join('');
   const contacts=election.contacts.map(c=>'<li>'+escape(names[c.actor])+' ('+c.role+') → '+
     escape(c.target)+' · '+c.angle+'° · orb '+c.orb.toFixed(3)+'°</li>').join('');
@@ -193,9 +201,9 @@ button.addEventListener('click',async()=>{
    BELUM_ADA_KONTAK:'Belum ada kontak pada orb terpilih'};
   output.innerHTML=
    '<h3>AL-BIRUNI KLASIK · KAJIAN §527</h3>'+
-   '<p><strong>KUALITAS WAKTU AL-BIRUNI (§527):</strong> '+escape(timeQuality.status)+
+   '<p><strong>KUALITAS WAKTU AL-BIRUNI (§527, HEURISTIK PARSIAL):</strong> '+escape(timeQuality.status)+
     ' · '+escape(timeQuality.reason)+
-    '. '+(timeQuality.eligible?'LOLOS FILTER WAKTU':'EA HARUS WAIT JIKA DIAJUKAN SAAT INI')+
+    '. '+(timeQuality.eligible?'INDIKASI WAKTU MENDUKUNG (BUKAN IZIN ENTRY)':'KONDISI WAKTU BELUM MENDUKUNG · WAIT')+
     '. Status berasal dari heuristik penelitian, bukan rumus trading kitab.</p>'+
    '<p><strong>INDIKASI ASTROLOGI:</strong> '+escape(meanings[election.indication]||election.indication)+
     '. Bukan arah harga atau keputusan trading.</p>'+
@@ -214,12 +222,12 @@ button.addEventListener('click',async()=>{
     ' · <strong>Bulan ↔ Matahari:</strong> '+
     (election.moonGold?'aspek '+election.moonGold.angle+'°, orb '+election.moonGold.orb.toFixed(3)+'°':'tidak dekat')+'</p>'+
    '<p><strong>SKOR MARTABAT KLASIK · MESIR §453</strong> · martabat 5/4/3/2/1 dari tabel Egyptian Terms (§453).</p>'+
-   '<div class="ab-table-wrap"><table><thead><tr><th>Planet</th><th>Zodiak</th><th>Subtotal</th><th>Martabat</th></tr></thead>'+
+   '<div class="ab-table-wrap"><table><thead><tr><th>Planet</th><th>Zodiak</th><th>Subtotal</th><th>Martabat</th><th>Sifat §382</th><th>Kondisi</th><th>Gerak</th><th>Jarak Matahari</th><th>Faktor diagnostik</th></tr></thead>'+
     '<tbody>'+detailRows+'</tbody></table></div>'+
-   '<p>Perhitungan ASC tropis memakai pendekatan obliquity rata-rata dan sidereal time. Sistem term Mesir sudah dihitung; seluruh house dan prosedur electional lengkap belum tersedia. Ini penilaian parsial, bukan hasil final kitab.</p>'+
+   '<p><b>AUDIT §§498–513:</b> martabat/detriment/fall, kondisi dekat Matahari dan gerak planet dihitung. Ambang Cazimi ≤17′, Combust &lt;8,5°, Under Beams &lt;15° adalah pilihan konvensional eksplisit, bukan konstanta tunggal Al-Biruni. Rumah/angularitas (§499), planet dikepung (§500), reception, dan rangkaian aspek penerimaan belum dinilai. Status MENDUKUNG/TERTEKAN/CAMPURAN hanya diagnostik modern, tidak menetapkan arah emas.</p>'+
    '<h3>ARAH XAUUSD · AUTO EKSPERIMEN MODERN (DIPISAH DARI KITAB)</h3>'+
-   '<p><strong>LAYAK DIAJUKAN KE EA:</strong> '+escape(timeQuality.eligible?'HANYA JIKA FASE/ARAH JUGA VALID':'WAIT · KUALITAS WAKTU BELUM MENDUKUNG')+
-    '. Perhitungan entry nyata memakai dua pembacaan (pada entry dan lima menit sebelum exact), bukan hanya waktu pemeriksaan ini.</p>'+
+   '<p><strong>KEPUTUSAN TRADING WEBSITE: WAIT.</strong> Pemeriksaan waktu '+escape(timeQuality.eligible?'menunjukkan dukungan astrologis parsial':'tidak meloloskan hipotesis waktu')+
+    '. Tidak ada izin entry live dari penelitian ini, termasuk ketika status waktu MENGUNTUNGKAN.</p>'+
    '<p><strong>ARAH HARIAN:</strong> '+chip(modernDay)+' · <strong>ARAH JAM WIB:</strong> '+chip(modernTime)+
     (auto.direction==='KONFLIK'?' (KONFLIK)':'')+'. Belum tervalidasi sebagai prediksi harga.</p>'+
    '<div class="ab-period-times"><div><small>KANDIDAT</small><strong>'+escape(daily.entryWIB||'WAIT')+'</strong></div>'+

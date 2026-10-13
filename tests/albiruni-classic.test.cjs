@@ -79,4 +79,29 @@ assert.throws(()=>C.chart(fakeA,engine,0,{latitude:NaN,longitude:0}),/Lintang/);
 assert.throws(()=>C.chart(fakeA,engine,0,{latitude:0,longitude:NaN}),/Bujur/);
 assert.throws(()=>C.chart({...fakeA,SiderealTime:null},engine,0,{latitude:0,longitude:0}),/Ephemeris/);
 
+
+// Additional partial classical-condition audit assertions.
+const base={Sun:0,Moon:95,Mercury:5,Venus:335,Mars:185,Jupiter:210,Saturn:300};
+const cond=C.assessConditions(base,'day',{Mercury:-1.2,Venus:0.8,Mars:0.7,Jupiter:0.2,Saturn:0.1});
+assert.equal(cond.rows.length,7);
+assert.equal(cond.complete,false,'Classical electional assessment is necessarily partial');
+assert.equal(cond.validatedForMarkets,false);
+assert.equal(cond.houseStrength,'BELUM_DIHITUNG');
+assert.equal(cond.besiegement,'BELUM_DIHITUNG');
+const by=body=>cond.rows.find(r=>r.body===body);
+assert.equal(by('Mercury').solarCondition,'COMBUST');
+assert.equal(by('Mercury').motion,'RETROGRADE');
+assert.ok(by('Mercury').negatives.includes('RETROGRADE'));
+assert.equal(by('Venus').solarCondition,'CLEAR');
+assert.equal(by('Jupiter').role,'BENEFIC');
+assert.equal(by('Saturn').role,'MALEFIC');
+assert.equal(by('Sun').distanceFromSun,null);
+const cazimi=C.assessConditions({...base,Mercury:0.1},'day');
+assert.equal(cazimi.rows.find(r=>r.body==='Mercury').solarCondition,'CAZIMI');
+const beams=C.assessConditions({...base,Mercury:10},'day');
+assert.equal(beams.rows.find(r=>r.body==='Mercury').solarCondition,'UNDER_BEAMS');
+assert.equal(study.conditions.rows.length,7,'Real chart includes audit for all traditional planets');
+assert.equal(study.conditions.validatedForMarkets,false);
+assert.equal(study.tradingDirection,null);
+
 console.log('PASS: Al-Biruni Egyptian terms, Ascendant east-horizon geometry, sect and §527 partial electional contacts.');
