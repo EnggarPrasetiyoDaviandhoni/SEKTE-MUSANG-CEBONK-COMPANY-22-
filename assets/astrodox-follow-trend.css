@@ -1,0 +1,53 @@
+/* ASTRODOX FOLLOW TREND v1 — isolated mobile-first styles. */
+#astroFollowTrendView{--aft-ink:#eaf2fc;--aft-faint:#afbed3;--aft-line:#334a65;color:var(--aft-ink);background:linear-gradient(165deg,#152338,#0c1522);border:1px solid var(--aft-line);border-radius:15px;margin:0 0 18px;overflow:hidden}
+#astroFollowTrendView [hidden]{display:none!important}
+#astroFollowTrendView .aft-header{padding:18px 20px;display:flex;gap:12px;justify-content:space-between;align-items:start;border-bottom:1px solid var(--aft-line)}
+#astroFollowTrendView .aft-kicker{font-size:10px;font-weight:750;letter-spacing:1.4px;color:#edc576;margin-bottom:8px}
+#astroFollowTrendView h2{margin:0 0 6px;font-size:22px}
+#astroFollowTrendView .aft-header p{font-size:12px;line-height:1.55;color:var(--aft-faint);margin:0}
+#astroFollowTrendView .aft-type{font-size:10px;border:1px solid var(--aft-line);padding:6px 10px;border-radius:99px;white-space:nowrap;color:#a8d9df}
+#astroFollowTrendView .aft-body{padding:18px 20px}
+#astroFollowTrendView .aft-controls{display:grid;grid-template-columns:1fr 1fr auto auto;align-items:end;gap:10px;margin-bottom:15px}
+#astroFollowTrendView .aft-controls label{display:block;font-size:12px;color:var(--aft-faint)}
+#astroFollowTrendView :is(select,input){display:block;width:100%;margin-top:6px;min-height:44px;background:#101e30;border:1px solid #415675;color:var(--aft-ink);border-radius:9px;padding:8px 11px;min-width:0}
+#astroFollowTrendView button{font:inherit;font-size:12px;color:var(--aft-ink);min-height:44px;background:#1b2c42;border:1px solid #405672;border-radius:9px;padding:8px 12px;cursor:pointer}
+#astroFollowTrendView button.aft-primary{background:#ecc270;color:#152033;font-weight:750;border-color:#ecc270}
+#astroFollowTrendView button:disabled{opacity:.5;cursor:default}
+#astroFollowTrendView :is(button,input,select,summary):focus-visible{outline:2px solid #73dce3;outline-offset:2px}
+#astroFollowTrendView .aft-note{font-size:12px;line-height:1.6;padding:11px 13px;margin:4px 0 12px;background:#1d2b3d;border:1px solid #44576e;border-radius:9px;color:#d3ddec}
+#astroFollowTrendView .aft-note strong{color:#f1d096}
+#astroFollowTrendView .aft-status{font-size:12px;color:var(--aft-faint);min-height:20px;margin:10px 0 13px}
+#astroFollowTrendView .aft-error{color:#ffaaaa}
+#astroFollowTrendView .aft-focus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 10px}
+#astroFollowTrendView .aft-focus>div{border:1px solid #3e5470;background:#111e30;padding:15px;border-radius:11px;min-width:0}
+#astroFollowTrendView .aft-focus small,#astroFollowTrendView .aft-times small{font-size:10px;letter-spacing:.7px;color:var(--aft-faint);display:block}
+#astroFollowTrendView .aft-focus strong{font-size:26px;display:block;margin:6px 0}
+#astroFollowTrendView .aft-focus span{font-size:11px;color:var(--aft-faint);line-height:1.5;display:block}
+#astroFollowTrendView .aft-buy{color:#79dbae}
+#astroFollowTrendView .aft-sell{color:#ff9e9e}
+#astroFollowTrendView .aft-wait{color:#f1cb83}
+#astroFollowTrendView .aft-times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 12px}
+#astroFollowTrendView .aft-times>div{background:#101d2e;border:1px solid #344962;padding:13px;border-radius:9px;min-width:0}
+#astroFollowTrendView .aft-times strong{display:block;margin-top:6px;font-size:20px;font-variant-numeric:tabular-nums}
+#astroFollowTrendView .aft-breakdown,#astroFollowTrendView .aft-subnote{font-size:11px;line-height:1.65;margin:9px 0;color:#c3d0df}
+#astroFollowTrendView details{margin:15px 0 0;background:#132137;border:1px solid #3c5069;border-radius:10px;padding:1px 13px 12px}
+#astroFollowTrendView summary{font-size:13px;font-weight:750;padding:11px 0;cursor:pointer}
+#astroFollowTrendView .aft-scroll{overflow-x:auto;border:1px solid #324862;border-radius:8px;margin:8px 0;max-height:370px;overflow-y:auto}
+#astroFollowTrendView .aft-scroll table{width:100%;border-collapse:collapse;white-space:nowrap;min-width:480px;font-size:11px}
+#astroFollowTrendView .aft-scroll th,#astroFollowTrendView .aft-scroll td{padding:9px 11px;text-align:left;border-bottom:1px solid #253a50}
+#astroFollowTrendView .aft-scroll th{position:sticky;top:0;background:#15273d}
+#astroFollowTrendView .aft-raw{max-height:320px}
+#astroFollowTrendView .aft-method p{font-size:11px;line-height:1.65;color:var(--aft-faint);margin:5px 0 12px}
+@media(max-width:760px){
+ #astroFollowTrendView .aft-header{padding:14px;gap:8px}
+ #astroFollowTrendView .aft-header h2{font-size:19px}
+ #astroFollowTrendView .aft-type{display:none}
+ #astroFollowTrendView .aft-body{padding:13px}
+ #astroFollowTrendView .aft-controls{grid-template-columns:1fr 1fr}
+ #astroFollowTrendView .aft-controls #aftRun{grid-column:1/-1}
+ #astroFollowTrendView .aft-controls #aftCancel{grid-column:1/-1}
+ #astroFollowTrendView .aft-focus strong{font-size:22px}
+ #astroFollowTrendView .aft-times>div{padding:10px}
+ #astroFollowTrendView .aft-times strong{font-size:17px}
+}
+@media(max-width:380px){#astroFollowTrendView .aft-focus{grid-template-columns:1fr}#astroFollowTrendView .aft-times strong{font-size:15px}}
