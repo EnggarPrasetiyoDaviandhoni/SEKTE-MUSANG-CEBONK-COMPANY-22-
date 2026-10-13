@@ -11,14 +11,14 @@ if(!anchor)return;
 const details=document.createElement('details');
 details.id='abClassicPanel';details.open=true;
 details.innerHTML=[
- '<summary>AL-BIRUNI ASLI · ASCENDANT, MARTABAT, PEMILIHAN WAKTU (§527)</summary>',
- '<p>Riset kitab asli: Ascendant, penguasa Ascendant, Bulan, penguasa tanda Bulan, Matahari (asosiasi emas §410), kontak benefic–malefic dan skor martabat. <strong>Tidak ada rumus BUY/SELL XAUUSD asli dari Al-Biruni.</strong></p>',
+ '<summary>AL-BIRUNI KLASIK · MARTABAT, KONDISI PLANET & WAKTU (§382–§527)</summary>',
+ '<p>Riset astrologi klasik: Ascendant, penguasanya, Bulan, Matahari (asosiasi simbolis emas §410), kontak benefic–malefic, martabat dan kondisi planet (retrograde, detriment, fall, kedekatan Matahari). <strong>Tidak ada rumus BUY/SELL XAUUSD asli dari Al-Biruni.</strong></p>',
  '<p><strong>Lokasi awal hanya contoh Jakarta.</strong> Ubah lintang/bujur sesuai lokasi yang hendak dihitung karena Ascendant bergantung pada lokasi.</p>',
  '<div class="ab-controls"><div><label for="abClassicLat">Lintang ° (selatan negatif)</label><input id="abClassicLat" type="number" value="-6.2000" min="-89.9" max="89.9" step="0.0001"></div>',
  '<div><label for="abClassicLon">Bujur ° (timur positif)</label><input id="abClassicLon" type="number" value="106.8167" min="-180" max="180" step="0.0001"></div></div>',
  '<button id="abClassicCalc" type="button">Hitung AL-BIRUNI KLASIK + bandingkan arah AUTO</button>',
  '<div id="abClassicResults" role="status" aria-live="polite">Hitung peta aspek dahulu, pilih hari & jam WIB, lalu hitung klasik.</div>',
- '<p>Kitab PDF: §410 hal.37, §440–453 hal.50–59, §489–494 hal.98–102, §527 hal.126. Martabat 5/4/3/2/1 dengan term Mesir dari tabel §453; versi Ptolemaios tidak digunakan. Metode ini tidak mengirim perintah ke EA.</p>'
+ '<p>Referensi: Al-Biruni §382, §410, §440–453, §493–494, §498–501, §512–513, §527. Martabat 5/4/3/2/1 memakai term Mesir §453. Pemeriksaan kondisi ini PARSIAL: rumah astrologi, besiegement, reception, dan pemilihan waktu klasik menyeluruh belum dihitung. Tidak ada perintah EA maupun prediksi harga tervalidasi dari panel ini.</p>'
 ].join('');
 anchor.parentNode.insertBefore(details,anchor);
 const output=details.querySelector('#abClassicResults');
@@ -46,11 +46,11 @@ const inspector=panel.querySelector('.ab-inspect');
 const finalCard=document.createElement('section');
 finalCard.id='abFinalDecision';
 finalCard.className='ab-final-decision';
-finalCard.setAttribute('aria-label','Keputusan final EA AL-BIRUNI');
-finalCard.innerHTML='<h3>AL-BIRUNI DIRECT v1.03 · MAYORITAS WEB → EA</h3>'+
+finalCard.setAttribute('aria-label','Arsip audit feed eksperimen EA AL-BIRUNI');
+finalCard.innerHTML='<h3>ARSIP AL-BIRUNI DIRECT v1.03 · TIDAK TERVERIFIKASI UNTUK TRADING</h3>'+
  '<div id="abFinalFeedStatus" role="status" aria-live="polite">Memuat status feed EA dari GitHub…</div>'+
  '<button id="abRefreshFeed" type="button" class="ab-small-button">Perbarui status EA</button>'+
- '<small>EA DIRECT v1.03 menggunakan arah mayoritas aspek yang sama dengan AUTO WEB. Filter waktu klasik §527 TIDAK menjadi veto di mode DIRECT; v1.02 KETAT tetap ada terpisah. Feed jadwal ini bukan bukti order broker atau jaminan profit.</small>';
+ '<small>PERINGATAN: BUY/SELL pada feed DIRECT adalah hipotesis lama yang tidak terbukti akurat terhadap harga XAUUSD. Keputusan website untuk trading: WAIT. Filter klasik §527 TIDAK menjadi veto di mode DIRECT lama. Mengubah halaman web TIDAK menghentikan EA pada MT5/VPS; matikan AutoTrading di tempat EA berjalan.</small>';
 if(inspector)inspector.parentNode.insertBefore(finalCard,inspector);
 let feed=null,feedError=null,feedLoading=true;
 const feedTarget=finalCard.querySelector('#abFinalFeedStatus');
@@ -97,7 +97,7 @@ function renderFinal(){
   (Math.abs(location.latitude-p.lat)>0.0001||Math.abs(location.longitude-p.lon)>0.0001);
  const candidate=feed.entry_epoch>0?C.stamp(feed.entry_epoch*1000):null;
  const expired=feed.entry_epoch>0&&Date.now()>feed.entry_epoch*1000+8*60000;
- feedTarget.innerHTML='<div class="ab-final-direction"><strong>EA DIRECT '+escape(dir)+'</strong>'+
+ feedTarget.innerHTML='<p class="ab-final-warning"><b>KEPUTUSAN WEBSITE: WAIT · BUKAN IZIN ENTRY.</b> Arah '+escape(dir)+' di bawah adalah ARSIP feed lama yang belum tervalidasi. Jangan gunakan sebagai sinyal live.</p>'+ '<div class="ab-final-direction"><strong>EA DIRECT '+escape(dir)+'</strong>'+
   '<span>'+escape(day)+' WIB · feed v1.03</span></div>'+
   '<div class="ab-ea-focus"><div><small>ARAH MAYORITAS HARIAN WEB</small><strong>'+
    escape(daily)+'</strong><span>Akumulasi suara: SELL '+dailySell+
