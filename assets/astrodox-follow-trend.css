@@ -65,3 +65,5 @@
 #astroFollowTrendView .aft-planet-panel .aft-details{margin-top:8px}
 #astroFollowTrendView .aft-planet-panel table{min-width:640px}
 @media(max-width:600px){#astroFollowTrendView .aft-planet-panel{padding:11px}#astroFollowTrendView .aft-planet-percent{gap:5px}#astroFollowTrendView .aft-planet-percent>div{padding:9px 6px}#astroFollowTrendView .aft-planet-percent strong{font-size:20px}}
+
+#astroFollowTrendView .aft-planet-panel .aft-audit-label{font-size:11px;color:#d5e0ee;margin:13px 0 6px;font-weight:700}
