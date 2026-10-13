@@ -7,7 +7,7 @@
 const C=root.CebonkCore,F=root.CebonkAstrodoxFollowTrend;
 const panel=document.getElementById('astroFollowTrendView');
 if(!panel||!C||!F)return;
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;': '&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>panel.querySelector('#'+id);
 let report=null,selectedDate=null,busy=false,cancelled=false,libraryPromise=null;
 const format=ms=>ms==null?'—':C.Time.dateISO(C.Time.wib(ms))+' '+C.Time.hm(C.Time.wib(ms))+' WIB';
