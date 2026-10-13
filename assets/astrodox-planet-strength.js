@@ -22,7 +22,8 @@ function unavailable(message,slots){
   buyPct:null,sellPct:null,netPct:null,direction:'TIDAK_TERSEDIA',
   positiveWeight:null,negativeWeight:null,totalWeight:null,
   coveredSlots:0,coveragePct:slots?0:null,slots,aspects:0,
-  leadingAspects:Object.freeze([]),perSlot:Object.freeze([]),
+  leadingAspects:Object.freeze([]),planetRanking:Object.freeze([]),zodiacRanking:Object.freeze([]),
+  zodiacWeightCoveragePct:null,perSlot:Object.freeze([]),
   tradingDecision:'WAIT',validatedForXAUUSD:false});
 }
 function evaluate(samples){
@@ -31,7 +32,8 @@ function evaluate(samples){
  if(!samples.every(s=>s&&Number.isFinite(s.ms)&&Array.isArray(s.active)))
   return unavailable('DATA_ASPEK_V1_TIDAK_TERSEDIA',samples.length);
  let positive=0,negative=0,covered=0,n=0;
- const pairs=new Map(),perSlot=[];
+ const pairs=new Map(),planets=new Map(),signs=new Map(),perSlot=[];
+ let zodiacAccounted=0;
  for(const s of samples){
   let buy=0,sell=0,count=0;
   for(const a of s.active){
@@ -44,6 +46,21 @@ function evaluate(samples){
    if(a.impact===0)continue;
    if(a.impact>0)buy+=a.impact;else sell+=-a.impact;
    count++;n++;
+   // Each aspect has TWO equal planetary participants; split 50/50
+   // for attribution ONLY. This does NOT alter V1 score or BUY/SELL weights.
+   const half=Math.abs(a.impact)/2;
+   for(const id of [a.id1,a.id2]){
+    if(!planets.has(id))planets.set(id,{id,positiveWeight:0,negativeWeight:0});
+    const p=planets.get(id);
+    if(a.impact>0)p.positiveWeight+=half;else p.negativeWeight+=half;
+    const loc=locate(s.positions,id);
+    if(loc){
+     zodiacAccounted+=half;
+     if(!signs.has(loc.sign))signs.set(loc.sign,{sign:loc.sign,positiveWeight:0,negativeWeight:0});
+     const sign=signs.get(loc.sign);
+     if(a.impact>0)sign.positiveWeight+=half;else sign.negativeWeight+=half;
+    }
+   }
    const key=a.id1+'|'+a.id2+'|'+a.angle;
    let rec=pairs.get(key);
    if(!rec){
@@ -73,6 +90,13 @@ function evaluate(samples){
  if(total<=0)return unavailable('TIDAK_ADA_KONTRIBUSI_ASPEK_V1',samples.length);
  const direction=positive/total>=0.55?'BUY':
   negative/total>=0.55?'SELL':'CAMPURAN';
+ const byWeight=(a,b)=>b.totalWeight-a.totalWeight||String(a.id||a.sign).localeCompare(String(b.id||b.sign));
+ const attribution=map=>Object.freeze([...map.values()].map(v=>Object.freeze({
+  ...v,totalWeight:v.positiveWeight+v.negativeWeight,
+  contributionPct:pct(v.positiveWeight+v.negativeWeight,total)
+ })).sort(byWeight));
+ const planetRanking=attribution(planets);
+ const zodiacRanking=attribution(signs);
  const ranking=[...pairs.values()].map(x=>Object.freeze({
   id1:x.id1,id2:x.id2,aspect:x.aspect,angle:x.angle,
   positiveWeight:x.positiveWeight,negativeWeight:x.negativeWeight,
@@ -88,10 +112,11 @@ function evaluate(samples){
   coveredSlots:covered,coveragePct:pct(covered,samples.length),
   slots:samples.length,aspects:n,
   leadingAspects:Object.freeze(ranking.slice(0,7)),
+  planetRanking,zodiacRanking,zodiacWeightCoveragePct:pct(zodiacAccounted,total),
   perSlot:Object.freeze(perSlot),
   tradingDecision:'WAIT',validatedForXAUUSD:false,
   model:'RELATIVE_SIGNED_ASPECT_WEIGHT_COMPOSITION_V1',
-  note:'BUY % dan SELL % adalah PORSI bobot aspek ASTRODOX V1; tidak mengukur tingkat kepastian, profit, kekuatan harga, atau probabilitas. Zodiak/longitude adalah posisi planet, bukan skor zodiak baru.'});
+  note:'BUY % dan SELL % adalah PORSI bobot aspek ASTRODOX V1; bukan confidence atau kekuatan absolut. Kontribusi tiap aspek dibagi 50/50 hanya untuk rincian planet/zodiak; zodiak tidak memberi bobot arah baru. Tidak mengukur probabilitas harga.'});
 }
 const API=Object.freeze({VERSION,locate,evaluate});
 root.CebonkAstrodoxPlanetStrength=API;
