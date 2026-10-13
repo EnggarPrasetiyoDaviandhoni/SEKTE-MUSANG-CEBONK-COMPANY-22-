@@ -2,9 +2,9 @@ name: Al-Biruni panel checks
 on:
   push:
     branches: [main]
-    paths: ['assets/albiruni-*.js', 'assets/primbon-dagang*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/primbon-dagang.test.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'tests/astrodox-audit.test.cjs', 'assets/astrodox-audit.js', 'assets/site-tab-router.js', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
+    paths: ['assets/albiruni-*.js', 'assets/primbon-dagang*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/primbon-dagang.test.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'tests/astrodox-audit.test.cjs', 'assets/astrodox-audit.js', 'assets/site-tab-router.js', 'assets/site-simple-ui.js', 'assets/site-simple.css', 'tests/site-simple-ui.test.cjs', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
   pull_request:
-    paths: ['assets/albiruni-*.js', 'assets/primbon-dagang*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/primbon-dagang.test.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'tests/astrodox-audit.test.cjs', 'assets/astrodox-audit.js', 'assets/site-tab-router.js', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
+    paths: ['assets/albiruni-*.js', 'assets/primbon-dagang*.js', 'assets/albiruni.css', 'tests/albiruni*.cjs', 'tests/primbon-dagang.test.cjs', 'tests/albiruni-three-horizon.test.cjs', 'tests/site-tab-router.test.cjs', 'tests/astrodox-audit.test.cjs', 'assets/astrodox-audit.js', 'assets/site-tab-router.js', 'assets/site-simple-ui.js', 'assets/site-simple.css', 'tests/site-simple-ui.test.cjs', 'index.html', 'ALBIRUNI_PANEL.md', '.github/workflows/albiruni-tests.yml']
 permissions:
   contents: read
 jobs:
@@ -23,5 +23,6 @@ jobs:
       - run: node tests/primbon-dagang.test.cjs
       - run: node tests/albiruni-three-horizon.test.cjs
       - run: node tests/site-tab-router.test.cjs
+      - run: node tests/site-simple-ui.test.cjs
       - run: node tests/astrodox-audit.test.cjs
       - run: node tests/astro-weekly.test.cjs

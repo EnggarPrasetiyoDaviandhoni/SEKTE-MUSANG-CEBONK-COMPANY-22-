@@ -5,7 +5,7 @@ const candles=fs.readFileSync('assets/astro-candles.js','utf8');
 assert(index.includes('<script src="assets/astro-candles.js?v=1.0.0"></script>'),'Astrology candle loader missing');
 assert(index.includes('window.CEBONK_ASTRO_STATE=current;'),'legacy Astrology state assignment changed/missing');
 assert(index.includes("window.dispatchEvent(new Event('cebonk-astro-update'));"),'legacy Astrology update event changed/missing');
-assert(index.includes('ASTROLOGY XAUUSD / XAUUSDc · 10 benda langit + ASC/MC · Scanner 5 menit'),'legacy Astrology UI missing');
+assert(index.includes('Astrologi harian &amp; Al-Biruni')&&index.includes('id="astroView"')&&index.includes('id="dateInput"'), 'Astrology view and inputs must remain present after header simplification');
 assert(candles.includes('read-only'), 'summary must be read-only');
 for(const bad of ['OrderSend','trade.Buy','trade.Sell','fetch('])assert(!candles.includes(bad),'Astrology candle summary must not trade/fetch');
 console.log('PASS astrology candle integration',crypto.createHash('sha256').update(candles).digest('hex'));

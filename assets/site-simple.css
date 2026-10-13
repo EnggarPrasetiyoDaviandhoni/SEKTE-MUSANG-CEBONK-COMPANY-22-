@@ -1,0 +1,66 @@
+/* Simpler mobile-first reading layer. No changes to astronomy/EA computations. */
+.cebonk-simple .wrap{max-width:960px;padding-top:16px}
+.cebonk-simple .hero{padding:4px 0 13px;gap:12px}
+.cebonk-simple .hero h1{font-size:clamp(24px,4vw,32px);margin:5px 0}
+.cebonk-simple .hero p{font-size:12px;line-height:1.45}
+.cebonk-simple .hero .version{font-size:10px}
+.cebonk-simple .viewtabs{display:flex;flex-wrap:wrap;gap:7px;padding:8px}
+.cebonk-simple .viewtabs .viewtab{flex:1 1 170px;min-width:0;font-size:13px;min-height:42px}
+.cebonk-simple #tabAstro,.cebonk-simple #tabAlBiruni{order:1}
+.cebonk-simple .viewtabs .simple-more{order:2;flex:0 0 auto;min-height:42px;font-size:12px;padding:8px 12px;font-weight:650;color:#d1def0}
+.cebonk-simple .viewtabs .viewtab:not(#tabAstro):not(#tabAlBiruni){order:3;flex:1 1 160px}
+.cebonk-simple .viewtabs:not(.simple-nav-open) .viewtab:not(#tabAstro):not(#tabAlBiruni):not(.active){display:none!important}
+.cebonk-simple .clocks{padding:10px 2px 13px;gap:12px}
+.cebonk-simple .clocks .clock strong{font-size:24px}
+.cebonk-simple .clocks .bridge b{font-size:20px}
+.cebonk-simple .metrics{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.cebonk-simple .metric{padding:11px}
+.cebonk-simple .metric strong{font-size:19px}
+.cebonk-simple .controls{grid-template-columns:1fr 1fr auto}
+.cebonk-simple .controls .mode-control{grid-column:1/-1;grid-row:auto}
+.cebonk-simple .controls .run-control{grid-column:auto}
+.cebonk-simple .controls:not(.simple-settings-open) .mode-control{display:none!important}
+.cebonk-simple .controls .simple-inline-toggle{align-self:end}
+.cebonk-simple .simple-inline-toggle{min-height:40px;background:#111d2d!important;color:#d2e0f2;border:1px solid #445670;border-radius:8px;font-size:12px;padding:8px 10px}
+.cebonk-simple .simple-detail-group{margin:8px 0 16px;padding:0 13px 6px;border:1px solid #364963;border-radius:10px;overflow:hidden}
+.cebonk-simple .simple-detail-group>summary{font-size:13px;line-height:1.5;min-height:44px}
+.cebonk-simple .simple-detail-group .simple-detail-note{font-size:11px;color:#bac8da;margin:0 0 13px}
+.cebonk-simple #albiruniPanel .ab-header{padding:16px 18px 10px}
+.cebonk-simple #albiruniPanel .ab-body{padding:15px 18px}
+.cebonk-simple #albiruniPanel .ab-kicker{letter-spacing:1px}
+.cebonk-simple #albiruniPanel .ab-header h2{font-size:22px}
+.cebonk-simple #albiruniPanel .ab-period-modes{margin:0 0 11px}
+.cebonk-simple #albiruniPanel .ab-controls{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:11px}
+.cebonk-simple #albiruniPanel:not(.simple-ab-expanded) .ab-controls>div:nth-child(n+3),
+.cebonk-simple #albiruniPanel:not(.simple-ab-expanded) .ab-auto-config,
+.cebonk-simple #albiruniPanel:not(.simple-ab-expanded) :is(#abRunThree,#abPrev,#abNext,#abCSV,#abStudyCSV){display:none!important}
+.cebonk-simple #albiruniPanel .ab-actions{gap:7px;margin:11px 0 10px}
+.cebonk-simple #albiruniPanel .ab-actions #abRun{order:-3;flex:1 1 180px}
+.cebonk-simple #albiruniPanel .ab-actions #abToday{order:-2}
+.cebonk-simple #albiruniPanel .ab-actions #abCancel{order:-1}
+.cebonk-simple #albiruniPanel .ab-actions #simpleAlbiruniSettings{margin-left:auto}
+.cebonk-simple #albiruniPanel .ab-period-summary{padding:12px;margin:7px 0 11px}
+.cebonk-simple #albiruniPanel .ab-period-times{gap:6px;margin:10px 0}
+.cebonk-simple #albiruniPanel .ab-period-times>div{padding:9px}
+.cebonk-simple #albiruniPanel .ab-header .ab-lead{font-size:12px}
+.cebonk-simple .simple-wait-note{margin:0;padding:10px 12px;border:1px solid #52617a;border-radius:9px;background:#152235;font-size:12px;line-height:1.5;color:#d4dfed}
+.cebonk-simple .simple-wait-note strong{color:#f1cb82}
+@media(max-width:700px){
+ .cebonk-simple .wrap{padding:12px 11px 24px}
+ .cebonk-simple .hero{align-items:flex-start}
+ .cebonk-simple .hero h1{font-size:24px}
+ .cebonk-simple .viewtabs .viewtab{flex:1 1 125px;padding:7px;font-size:12px}
+ .cebonk-simple .viewtabs .simple-more{flex:1 1 100%;order:2}
+ .cebonk-simple .viewtabs .viewtab:not(#tabAstro):not(#tabAlBiruni){flex:1 1 130px}
+ .cebonk-simple .clocks .clock strong{font-size:21px}
+ .cebonk-simple .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cebonk-simple .controls{grid-template-columns:1fr 1fr}
+ .cebonk-simple .controls .run-control{grid-column:1/-1}
+ .cebonk-simple .controls #simpleAstroSettings{grid-column:1/-1}
+ .cebonk-simple #albiruniPanel .ab-header{padding:13px}
+ .cebonk-simple #albiruniPanel .ab-body{padding:13px}
+ .cebonk-simple #albiruniPanel .ab-header h2{font-size:20px}
+ .cebonk-simple #albiruniPanel .ab-tag{display:none}
+ .cebonk-simple #albiruniPanel .ab-period-times{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){.cebonk-simple *{scroll-behavior:auto!important}}
