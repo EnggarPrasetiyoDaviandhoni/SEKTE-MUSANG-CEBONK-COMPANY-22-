@@ -67,6 +67,48 @@ function position(body,longitude,sect){
   detriment:DOMICILE[(index+6)%12]===body,
   fall:EXALTATION[body] === ((index+6)%12)});
 }
+// Partial §§382, 494, 498–501, 512–513 condition diagnostics, never BUY/SELL.
+// Solar-distance thresholds are conventional explicit settings, not a single
+// unique formula attributed to Al-Biruni.
+const NATURAL_ROLE=Object.freeze({Sun:'KONTEKSTUAL',Moon:'KONTEKSTUAL',Mercury:'KONTEKSTUAL',
+ Venus:'BENEFIC',Mars:'MALEFIC',Jupiter:'BENEFIC',Saturn:'MALEFIC'});
+function assessConditions(longitudes,sect,velocities={}){
+ assert(longitudes&&typeof longitudes==='object','Posisi planet belum tersedia.');
+ const SUN=normalize(longitudes.Sun);
+ const out=BODIES.map(body=>{
+  const dignity=position(body,longitudes[body],sect);
+  const distanceFromSun=body==='Sun'?null:Math.abs(signed(dignity.longitude-SUN));
+  const solarCondition=body==='Sun'?'MATAHARI':
+   distanceFromSun<=17/60?'CAZIMI':
+   distanceFromSun<8.5?'COMBUST':
+   distanceFromSun<15?'UNDER_BEAMS':'CLEAR';
+  const velocity=velocities[body];
+  const motion=!Number.isFinite(velocity)?'TIDAK_TERSEDIA':
+   body==='Sun'||body==='Moon'?'DIRECT':
+   velocity< -0.01?'RETROGRADE':
+   Math.abs(velocity)<=0.01?'STATIONARY':'DIRECT';
+  const positives=[],negatives=[];
+  if(dignity.subtotal>0)positives.push('MARTABAT_ESENSIAL_'+dignity.subtotal);
+  if(dignity.detriment)negatives.push('DETRIMENT');
+  if(dignity.fall)negatives.push('FALL');
+  if(solarCondition==='COMBUST')negatives.push('COMBUST');
+  if(solarCondition==='UNDER_BEAMS')negatives.push('UNDER_BEAMS');
+  if(motion==='RETROGRADE')negatives.push('RETROGRADE');
+  if(motion==='STATIONARY')negatives.push('STATIONARY');
+  if(solarCondition==='CAZIMI')positives.push('CAZIMI');
+  const condition=positives.length&&negatives.length?'CAMPURAN':
+   negatives.length?'TERTEKAN':positives.length?'MENDUKUNG':'BELUM_DAPAT_DITENTUKAN';
+  return Object.freeze({body,role:NATURAL_ROLE[body],dignity:dignity.subtotal,
+   detriment:dignity.detriment,fall:dignity.fall,distanceFromSun,solarCondition,
+   motion,velocityDegPerDay:Number.isFinite(velocity)?velocity:null,
+   condition,positives:Object.freeze(positives),negatives:Object.freeze(negatives)});
+ });
+ return Object.freeze({model:'ALBIRUNI_CONDITIONS_PARTIAL_V1',validatedForMarkets:false,
+  complete:false,houseStrength:'BELUM_DIHITUNG',besiegement:'BELUM_DIHITUNG',
+  reception:'BELUM_DIHITUNG',rules:'MARTABAT_DEBILITY_SOLAR_DISTANCE_MOTION',
+  caveat:'Status adalah pemeriksaan parsial modern dari konsep Al-Biruni, bukan probabilitas atau sinyal BUY/SELL.',
+  rows:Object.freeze(out)});
+}
 function assess(longitudes,sect){
  assert(longitudes&&typeof longitudes==='object','Posisi planet belum tersedia.');
  const rows=BODIES.map(body=>position(body,longitudes[body],sect))
@@ -134,6 +176,11 @@ function chart(A,engine,ms,{latitude,longitude,orb=2}={}){
  const sect=altitude>=0?'day':'night';
  const longitudes=Object.fromEntries(BODIES.map(body=>[body,engine.longitude(body,ms)]));
  const dignities=assess(longitudes,sect);
+ // Signed ecliptic motion from a symmetric 12-hour interval.
+ const halfDay=6*3600000;
+ const velocities=Object.fromEntries(BODIES.map(body=>[body,
+  signed(engine.longitude(body,ms+halfDay)-engine.longitude(body,ms-halfDay))*2]));
+ const conditions=assessConditions(longitudes,sect,velocities);
  const risingRuler=DOMICILE[Math.floor(ascending/30)];
  const lunarRuler=DOMICILE[Math.floor(normalize(longitudes.Moon)/30)];
  // The source does not specify a XAUUSD indicator. Sun is included here
@@ -174,16 +221,16 @@ function chart(A,engine,ms,{latitude,longitude,orb=2}={}){
   lunarRuler,sunAltitudeDegrees:altitude,sect,
   twilightUncertain:Math.abs(altitude)<0.5,
   longitudes,significators,contacts,indication,moonAscRuler,moonGold,
-  beneficCount,maleficCount,dignities,
+  beneficCount,maleficCount,dignities,conditions,
   // Explicit missing steps of §527 and §453: no market direction at all.
   termSystem:'EGYPTIAN_§453',
   fullElectional:false,marketValidated:false,tradingDirection:null,
-  limitations:'Martabat 5/4/3/2/1 memakai Egyptian terms §453, bukan tabel Ptolemy. ASC tropikal aproksimasi dan siang/malam otomatis; seluruh house, occultation, konjungsi lintang, interpretasi electional lengkap belum diterapkan. Tidak ada rumus BUY/SELL XAUUSD dari kitab.',
+  limitations:'Martabat 5/4/3/2/1 memakai Egyptian terms §453, bukan tabel Ptolemy. ASC tropikal aproksimasi; kondisi planet adalah pemeriksaan parsial (martabat, debility, jarak Matahari, gerak), bukan seluruh §§498–513; rumah, besiegement, reception, dan electional lengkap belum dihitung. Tidak ada rumus BUY/SELL XAUUSD dari kitab.',
   sourcePages:'Al-Biruni Wright 1934 PDF pp.37, 50-59, 98-102, 126-127'
  });
 }
 
-const API=Object.freeze({BODIES,SIGNS,DOMICILE,EXALTATION,ELEMENT,TRIPLICITY,FACE_CYCLE,EGYPTIAN_TERMS,egyptianTerm,ASPECTS,BENEFICS,MALEFICS,normalize,position,assess,ascendant,meanObliquity,aspectBetween,chart});
+const API=Object.freeze({BODIES,SIGNS,DOMICILE,EXALTATION,ELEMENT,TRIPLICITY,FACE_CYCLE,EGYPTIAN_TERMS,egyptianTerm,NATURAL_ROLE,assessConditions,ASPECTS,BENEFICS,MALEFICS,normalize,position,assess,ascendant,meanObliquity,aspectBetween,chart});
 root.CebonkAlBiruniClassic=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
