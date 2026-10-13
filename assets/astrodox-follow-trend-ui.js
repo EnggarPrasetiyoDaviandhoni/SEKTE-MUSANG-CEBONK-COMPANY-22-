@@ -44,6 +44,12 @@ panel.innerHTML=`
     <p class="aft-subnote">Persentase = porsi total <b>bobot aspek planet V1</b> positif/negatif, dihitung dari longitude, derajat aspek, orb, serta fase Applying/Exact/Separating. <b>Bukan persentase naik/turun harga, peluang profit, atau kekuatan absolut.</b> Zodiak ditampilkan sebagai posisi planet, bukan skor baru.</p>
     <details class="aft-details">
      <summary>Audit planet, zodiak, longitude, degrees &amp; aspek</summary>
+     <p class="aft-audit-label">Kontribusi tiap planet (% dari total bobot konfigurasi)</p>
+     <div class="aft-scroll"><table><thead><tr><th>Planet</th><th>Bobot BUY</th><th>Bobot SELL</th><th>Porsi semua aspek</th></tr></thead><tbody id="aftPlanetRanking"></tbody></table></div>
+     <p class="aft-audit-label">Kontribusi posisi zodiak (% dari total bobot, tanpa bobot arah zodiak baru)</p>
+     <div class="aft-scroll"><table><thead><tr><th>Zodiak</th><th>Bobot BUY</th><th>Bobot SELL</th><th>Porsi semua aspek</th></tr></thead><tbody id="aftZodiacRanking"></tbody></table></div>
+     <p id="aftZodiacCoverage" class="aft-planet-explanation"></p>
+     <p class="aft-audit-label">Pasangan planet, longitude, sudut &amp; orb yang paling berkontribusi</p>
      <div class="aft-scroll"><table><thead><tr><th>Planet &amp; aspek</th><th>Posisi zodiak / longitude</th><th>Derajat aspek, orb, fase</th><th>Porsi bobot</th></tr></thead><tbody id="aftPlanetPairs"></tbody></table></div>
     </details>
    </section>
@@ -104,6 +110,16 @@ function render(date,confirm){
   p.aspects+' kontribusi aspek · '+p.coveredSlots+'/'+p.slots+' slot memiliki kontribusi ('+percentage(p.coveragePct)+
   ') · total bobot terukur '+p.totalWeight.toFixed(3):
   'Bobot tidak dihitung: '+(p?.reason||'DATA_TIDAK_TERSEDIA')+'. Persentase tidak direkayasa.';
+ const tableRow=(r,key)=>'<tr><td>'+esc(r[key])+'</td><td>'+r.positiveWeight.toFixed(3)+
+  '</td><td>'+r.negativeWeight.toFixed(3)+'</td><td>'+percentage(r.contributionPct)+'</td></tr>';
+ $('aftPlanetRanking').innerHTML=p?.available?p.planetRanking.map(x=>tableRow(x,'id')).join(''):
+  '<tr><td colspan="4">Tidak ada kontribusi planet terukur.</td></tr>';
+ $('aftZodiacRanking').innerHTML=p?.available&&p.zodiacRanking.length?
+  p.zodiacRanking.map(x=>tableRow(x,'sign')).join(''):
+  '<tr><td colspan="4">Tidak ada longitude planet yang tersedia untuk atribusi zodiak.</td></tr>';
+ $('aftZodiacCoverage').textContent=p?.available?
+  'Bentuk laporan: bobot tiap aspek dibagi 50% untuk masing-masing dari dua planet. Cakupan longitude untuk kelompok zodiak '+percentage(p.zodiacWeightCoveragePct)+'. Zodiak tidak menambah skor arah.':
+  'Tidak ada kontribusi zodiak terverifikasi.';
  const showLoc=(id,loc)=>loc?esc(id+' '+loc.sign+' '+loc.degreeInSign.toFixed(2)+
   '° (longitude '+loc.longitude.toFixed(2)+'°)'):esc(id+' · longitude tidak tersedia');
  $('aftPlanetPairs').innerHTML=p?.available?p.leadingAspects.map(a=>'<tr><td>'+
