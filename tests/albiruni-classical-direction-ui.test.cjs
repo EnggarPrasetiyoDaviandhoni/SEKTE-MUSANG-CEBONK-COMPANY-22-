@@ -11,7 +11,7 @@ assert.ok(html.includes('assets/albiruni-classical-direction.js?v=1.0.0'));
 assert.ok(html.includes('assets/albiruni-classical-direction-ui.js?v=1.0.0'));
 assert.ok(html.includes('assets/albiruni-classical-direction.css?v=1.0.0'));
 assert.ok(!/autoSignal|autoPeriodSummary|ASPECT_COUNT_MAJORITY|majority_direct_v3/.test(ui),'new classical UI does not call legacy majority engine');
-assert.ok(!/autoSignal|ASPECT_COUNT_MAJORITY/.test(core),'classical direction source must not vote on aspects');
+assert.ok(!/\bC\.autoSignal\s*\(|\bC\.autoPeriodSummary\s*\(|\bbuyCount\s*\+\s*sellCount\b/.test(core),'classical engine cannot invoke majority voting');
 const dom=new JSDOM('<body><main><nav class="viewtabs"><button type="button" class="viewtab active" id="tabAstro">ASTROLOGY</button><button type="button" class="viewtab" id="tabAlBiruni">AL-BIRUNI</button></nav>'+
  '<section id="albiruniPanel"><div class="ab-header">Legacy title</div><div class="ab-body"><div class="ab-period-modes"></div>'+
  '<div id="abResults"><div id="abPeriodSummary">Summary</div><div id="abPeriodDays">Days</div><div id="abEvents"></div></div>'+
