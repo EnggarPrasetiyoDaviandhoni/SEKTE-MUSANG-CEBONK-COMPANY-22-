@@ -242,3 +242,34 @@ state lama. Tes DOM bukan pengganti pemeriksaan tampilan pada browser nyata.
 
 Dependensi tes: `npm install --no-save --no-package-lock --ignore-scripts
 astronomy-engine@2.1.19 jsdom@26.1.0`.
+
+## Audit kondisi planet klasik dan pembatasan trading (14 Oktober 2026)
+
+Modul `assets/albiruni-classic.js` memperluas kajian klasik secara **parsial** dan
+**tidak memberi sinyal BUY/SELL**:
+
+- **§382:** sifat benefic Jupiter/Venus, malefic Mars/Saturnus, dan kontekstual
+  Matahari, Bulan, Merkurius; sifat ini bukan label arah pasar.
+- **§493–494, §453:** subtotal martabat 5/4/3/2/1, termasuk Egyptian terms, dengan
+  detriment dan fall dicatat terpisah. Komponen term sekarang tampil di tabel UI.
+- **§489–490 dan §§498–513:** jarak terhadap Matahari (cazimi/combust/under beams,
+  ambang konvensional dan tercantum di UI), serta gerak geosentrik langsung,
+  retrograde, atau dekat stasioner. Label diagnostik MENDUKUNG / TERTEKAN /
+  CAMPURAN bukan hasil kalkulasi probabilitas.
+- **BELUM diimplementasikan secara menyeluruh:** cusp rumah/angularitas §499,
+  pengepungan planet §500, reception, evaluasi kompleks keadaan Matahari dan
+  Bulan §513, dan keseluruhan electional §527. Nilainya tidak direkayasa.
+
+Tampilan UI menyatakan **KEPUTUSAN TRADING WEBSITE: WAIT** untuk seluruh hipotesis
+lama. Feed DIRECT tetap dapat dibaca sebagai **arsip untuk audit**, bukan
+rekomendasi transaksi atau indikator bahwa order sungguh dieksekusi.
+
+**Penting:** perubahan ini hanya menyentuh perhitungan dan UI situs.
+File EA MQL5 serta feed generator otomatis **tidak diubah**. Website tidak bisa
+menonaktifkan AutoTrading MT5 yang berjalan di komputer/VPS. Pengguna harus
+menonaktifkan EA di terminalnya sendiri sebelum audit sistem selesai.
+
+Referensi historiografis utama:
+[Al-Biruni, *The Book of Instruction in the Elements of the Art of Astrology*,
+R. Ramsay Wright (1934), reproduksi digital](https://www.skyscript.co.uk/albiruni_elements.html).
+Tidak ada klaim bahwa teori astrologi telah terbukti memprediksi XAUUSD.
