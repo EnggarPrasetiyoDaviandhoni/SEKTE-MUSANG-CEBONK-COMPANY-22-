@@ -8,6 +8,7 @@
 const TAB_TO_VIEW=Object.freeze({
  tabAstro:'astroView',
  tabAlBiruni:'albiruniPanel',
+ tabAstroFollowTrend:'astroFollowTrendView',
  tabAstrodoxAudit:'astrodoxAuditView',
  tabAstroNews:'astroNewsView',
  tabBazi:'baziView',
@@ -19,6 +20,7 @@ const TAB_TO_VIEW=Object.freeze({
 const ROUTE_TO_TAB=Object.freeze({
  astrology:'tabAstro',
  'al-biruni':'tabAlBiruni',
+ 'astrodox-follow-trend':'tabAstroFollowTrend',
  'astrodox-audit':'tabAstrodoxAudit',
  'astrology-news':'tabAstroNews',
  'bazi-astrology':'tabBazi',
@@ -32,6 +34,7 @@ const ROUTE_TO_TAB=Object.freeze({
 const TAB_TO_ROUTE=Object.freeze({
  tabAstro:'astrology',
  tabAlBiruni:'al-biruni',
+ tabAstroFollowTrend:'astrodox-follow-trend',
  tabAstrodoxAudit:'astrodox-audit',
  tabAstroNews:'astrology-news',
  tabBazi:'bazi-astrology',
