@@ -29,6 +29,15 @@ assert.equal(v.coveragePct,2/3*100);
 assert.equal(v.aspects,4,'ASC timing-only must be excluded despite enormous impact');
 assert.equal(v.slots,3);
 assert.equal(v.leadingAspects.length,2);
+assert.equal(v.planetRanking.length,4);
+assert.equal(v.zodiacRanking.length,4);
+assert.equal(v.zodiacWeightCoveragePct,100);
+assert.equal(v.planetRanking.reduce((sum,r)=>sum+r.totalWeight,0),7);
+assert.equal(v.zodiacRanking.reduce((sum,r)=>sum+r.totalWeight,0),7);
+assert.equal(v.planetRanking.find(r=>r.id==='Mars').negativeWeight,2);
+assert.equal(v.zodiacRanking.find(r=>r.sign==='Pisces').negativeWeight,2);
+assert.equal(v.zodiacRanking.find(r=>r.sign==='Taurus').positiveWeight,1.5);
+
 assert.equal(v.leadingAspects[0].id1,'Mars');
 assert.equal(v.leadingAspects[0].negativeWeight,4);
 assert.equal(v.leadingAspects[1].id1,'Venus');
@@ -48,6 +57,8 @@ const single=P.evaluate([{ms,active:[pair('Venus','Jupiter','Trine',120,1.7,0.00
 assert.equal(single.buyPct,100);
 assert.equal(single.totalWeight,0.001,'100% is RELATIVE composition, not large absolute strength');
 assert.equal(single.coveragePct,100);
+assert.equal(single.zodiacRanking.length,0,'no positions means no zodiac attribution');
+assert.equal(single.zodiacWeightCoveragePct,0,'unknown positions may not invent zodiac data');
 const none=P.evaluate([{ms,active:[]},{ms:ms+300000,active:[]}]);
 assert.equal(none.available,false);
 assert.equal(none.buyPct,null);
