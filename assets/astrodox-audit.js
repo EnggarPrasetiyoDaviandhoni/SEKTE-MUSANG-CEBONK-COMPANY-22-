@@ -58,6 +58,7 @@ function csv(report){
 }
 const api=Object.freeze({VERSION,WIB,NEW_YORK,format,isoDate,build,csv,eventPhase});
 root.CebonkAstrodoxAudit=api;
+if(typeof module!=='undefined'&&module.exports)module.exports=api;
 if(typeof document==='undefined')return;
 const C=root.CebonkAlBiruni;
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
