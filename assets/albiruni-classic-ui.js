@@ -201,7 +201,7 @@ button.addEventListener('click',async()=>{
    BELUM_ADA_KONTAK:'Belum ada kontak pada orb terpilih'};
   output.innerHTML=
    '<h3>AL-BIRUNI KLASIK · KAJIAN §527</h3>'+
-   '<p><strong>SCREENING KUALITAS WAKTU (§527, HEURISTIK PARSIAL):</strong> '+escape(timeQuality.status)+
+   '<p><strong>KUALITAS WAKTU AL-BIRUNI (§527, HEURISTIK PARSIAL):</strong> '+escape(timeQuality.status)+
     ' · '+escape(timeQuality.reason)+
     '. '+(timeQuality.eligible?'INDIKASI WAKTU MENDUKUNG (BUKAN IZIN ENTRY)':'KONDISI WAKTU BELUM MENDUKUNG · WAIT')+
     '. Status berasal dari heuristik penelitian, bukan rumus trading kitab.</p>'+
