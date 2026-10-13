@@ -71,7 +71,7 @@ function mount(){
  const panel=document.createElement('section');
  panel.id='astrodoxAuditView';panel.hidden=true;
  panel.setAttribute('aria-label','Audit sinyal ASTRODOX eksperimen');
- panel.innerHTML=String.raw\`
+ panel.innerHTML=String.raw`
  <section class="panel">
   <div class="head"><div><h2>ASTRODOX REV-01 · Audit astrologi XAUUSD</h2>
   <small>Panel terpisah. Mesin Al-Biruni dan ASTROLOGY lama tidak diubah.</small></div></div>
@@ -104,7 +104,7 @@ function mount(){
   <p>Ekspor CSV memiliki tiga kolom harga kosong untuk dicocokkan dengan data XAUUSD broker.
   Tanpa data harga, spread, biaya, serta pengujian out-of-sample tidak ada winrate atau rekomendasi eksekusi.
   Pasangan waktu di panel bersifat astrologis, bukan jam entry yang sudah valid.</p>
- </details>\`;
+ </details>`;
  main.insertBefore(panel,main.querySelector('footer'));
  const $=id=>panel.querySelector('#'+id);
  $('adDate').value=api.isoDate(Date.now());
