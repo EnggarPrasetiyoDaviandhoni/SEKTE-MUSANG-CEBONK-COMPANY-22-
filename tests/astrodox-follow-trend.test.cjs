@@ -46,8 +46,8 @@ for(let i=0;i<prefix.length;i++){
 assert.equal(F.rawDirection(1.15,1.15,-1.15),'BUY');
 assert.equal(F.rawDirection(-1.15,1.15,-1.15),'SELL');
 assert.equal(F.rawDirection(0,1.15,-1.15),'WAIT');
-assert.throws(()=>F.calculate(samples([2,NaN,2]),opts),/Skor/);
-assert.throws(()=>F.calculate(samples([2,null,2]),opts),/Skor/);
+assert.throws(()=>F.calculate(samples([2,NaN,2]),opts),/skor/i);
+assert.throws(()=>F.calculate(samples([2,null,2]),opts),/skor/i);
 assert.throws(()=>F.calculate([{ms:BASE,score:2},{ms:BASE+1000,score:2}],opts),/Urutan/);
 assert.throws(()=>F.calculate(samples([2,2]),{...opts,buyThreshold:0}),/Ambang/);
 assert.throws(()=>F.calculate(samples([2,2]),{...opts,confirmBars:0}),/Konfirmasi/);
