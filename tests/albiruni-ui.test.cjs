@@ -56,6 +56,7 @@ async function run(){
  assert.match($('abPrimbonEntry').textContent,/Rejeki/);
  assert.match($('abPrimbonEntry').textContent,/observasi tok/i);
  assert.match($('abFinalFeedStatus').textContent,/TIDAK DITERAPKAN/);
+ assert.match($('abFinalFeedStatus').textContent,/KEPUTUSAN WEBSITE: WAIT/,'unvalidated legacy feed must be fail-closed in website');
   assert.match($('abFinalFeedStatus').textContent,/ARAH MAYORITAS HARIAN WEB/);
   assert.match($('abFinalFeedStatus').textContent,/SELL 128 \/ BUY 30/);
   assert.match($('abFinalFeedStatus').textContent,/feed v1\.03/);
@@ -75,6 +76,9 @@ async function run(){
  assert.match($('abClassicResults').textContent,/INTI/);
  assert.match($('abClassicResults').textContent,/AKHIR/);
  assert.match($('abClassicResults').textContent,/Tidak ada rumus BUY\/SELL/);
+ assert.match($('abClassicResults').textContent,/Term Mesir/,'term must not be omitted from display');
+ assert.match($('abClassicResults').textContent,/AUDIT §§498–513/,'classical condition factors must render');
+ assert.match($('abClassicResults').textContent,/KEPUTUSAN TRADING WEBSITE: WAIT/,'classical positive election is never trading permission');
  assert.match($('abClassicResults').textContent,/ASCENDANT/);
  assert.match($('abClassicResults').textContent,/KONTAK BENEFIC/);
  assert.match($('abClassicResults').textContent,/KUALITAS WAKTU AL-BIRUNI/);
