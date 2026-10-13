@@ -52,7 +52,7 @@ host.innerHTML=`
     <summary>Rincian konfigurasi lan window AL-BIRUNI</summary>
     <div class="abcp-scroll"><table><thead><tr><th>Arah</th><th>AWAL WIB</th><th>INTI WIB</th><th>AKHIR WIB</th><th>Durasi</th><th>Jumlah bobot</th></tr></thead><tbody id="abClassicalWindows"></tbody></table></div>
     <div class="abcp-scroll abcp-raw"><table><thead><tr><th>Waktu WIB</th><th>Kondisi klasik</th><th>Model arah</th><th>Konfirmasi</th><th>Bobot baik</th><th>Bobot buruk</th><th>Alasan</th></tr></thead><tbody id="abClassicalRows"></tbody></table></div>
-    <button type="button" id="abClassicalCSV">Ekspor CSV riset</button>
+    <button type="button" id="abClassicalCSV" disabled>Ekspor CSV riset</button>
    </details>
    <details class="abcp-details">
     <summary>Detail martabat dan kontak planet pada INTI</summary>
@@ -67,6 +67,7 @@ host.innerHTML=`
   </details>
  </div>`;
 container.insertBefore(host,container.firstChild);
+container.setAttribute('aria-labelledby','abClassicalPrimaryTitle');
 const $=id=>host.querySelector('#'+id),WIB=420*60000,MIN=60000;
 const today=()=>new Date(Date.now()+WIB).toISOString().slice(0,10);
 $('abClassicalMainDate').value=today();
@@ -84,6 +85,7 @@ function read(){
 function signature(c){return JSON.stringify(c);}
 function invalidate(){
  token++;report=null;options=null;$('abClassicalMainResult').hidden=true;
+ $('abClassicalCSV').disabled=true;
  if(busy){$('abClassicalMainCancel').disabled=true;busy=false;}
  $('abClassicalMainRun').disabled=false;
  status('Setelan berubah. Hitung ulang penilaian AL-BIRUNI KLASIK.');
@@ -152,11 +154,13 @@ function render(model,c){
    ' / tekanan '+nice(f.harmful)+'</li>').join('')+'</ul>':
   '<p>Tidak ada rincian INTI untuk ditampilkan.</p>';
  $('abClassicalMainResult').hidden=false;
+ $('abClassicalCSV').disabled=false;
 }
 async function run(){
  if(busy)return;
  const c=read(),ticket=++token,key=signature(c);
  report=null;options=null;$('abClassicalMainResult').hidden=true;
+ $('abClassicalCSV').disabled=true;
  let engine=null;
  try{
   const period=C.period(c.date,c.mode);
@@ -172,8 +176,18 @@ async function run(){
   const scope=period.days.filter(d=>d.weekday>=1&&d.weekday<=5);
   const count=scope.length*1080/step,rows=[];let done=0;
   if(count===0){
-   status('Hari Sabtu/Minggu: pasar XAUUSD umumnya tutup. Kualitas entry: WAIT.');
-   $('abClassicalDirection').textContent='WAIT';return;
+   $('abClassicalDirection').textContent='WAIT';
+   $('abClassicalDirection').className='abcp-wait';
+   $('abClassicalQuality').textContent='PASAR TUTUP · tidak ada kandidat waktu';
+   for(const id of ['abClassicalStart','abClassicalCore','abClassicalEnd'])$(id).textContent='—';
+   $('abClassicalWeights').textContent='Tidak ada slot sesi Senin–Jumat untuk tanggal ini.';
+   $('abClassicalEvidence').textContent='Tidak ada perhitungan BUY/SELL untuk hari tanpa sesi perdagangan.';
+   $('abClassicalWindows').innerHTML='<tr><td colspan="6">Pasar tutup · WAIT</td></tr>';
+   $('abClassicalRows').innerHTML='<tr><td colspan="7">Pasar tutup · WAIT</td></tr>';
+   $('abClassicalFactors').textContent='Pasar tutup; tidak ada INTI.';
+   $('abClassicalMainResult').hidden=false;
+   status('Hari Sabtu/Minggu: XAUUSD umumnya tutup. Status model dan entry: WAIT.');
+   return;
   }
   for(const d of scope){
    for(let minute=360;minute<1440;minute+=step){
@@ -194,6 +208,7 @@ async function run(){
   status('Perhitungan selesai · '+done+' slot · model klasik parsial tanpa mayoritas aspek. Keputusan entry otomatis tetap WAIT.');
  }catch(e){if(ticket===token){
   report=null;options=null;$('abClassicalMainResult').hidden=true;
+  $('abClassicalCSV').disabled=true;
   status('Gagal: '+(e?.message||String(e))+'. Tidak ada hasil pengganti.',true);
  }}finally{if(engine)engine.clear();if(ticket===token)setBusy(false);}
 }
@@ -205,6 +220,7 @@ $('abClassicalMainCancel').addEventListener('click',()=>{
   'abClassicalMainLongitude','abClassicalMainOrb','abClassicalMainRun'])$(id).disabled=false;
  $('abClassicalMainCancel').disabled=true;
  report=null;options=null;$('abClassicalMainResult').hidden=true;
+ $('abClassicalCSV').disabled=true;
  status('Perhitungan dibatalkan. Status arah: WAIT.');
 });
 $('abClassicalCSV').addEventListener('click',()=>{
