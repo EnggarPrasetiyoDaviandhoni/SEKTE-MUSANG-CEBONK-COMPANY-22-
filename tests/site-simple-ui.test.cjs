@@ -6,7 +6,7 @@ const {JSDOM}=require('jsdom');
 const ROOT=path.resolve(__dirname,'..');
 const CODE=fs.readFileSync(path.join(ROOT,'assets/site-simple-ui.js'),'utf8');
 function make(extraActive=false){
- const tabs=['tabAstro','tabAlBiruni','tabAstroNews','tabBazi','tabCombined'];
+ const tabs=['tabAstro','tabAlBiruni','tabAstroFollowTrend','tabAstroNews','tabBazi','tabCombined'];
  const dom=new JSDOM('<body><main class="wrap">'+
   '<nav class="viewtabs">'+tabs.map(id=>'<button class="viewtab'+
   ((extraActive&&id==='tabBazi')||(!extraActive&&id==='tabAstro')?' active':'')+
@@ -43,6 +43,7 @@ function run(){
  const d=make(),w=d.window,$=id=>w.document.getElementById(id);
  assert.ok(w.document.body.classList.contains('cebonk-simple'));
  assert.equal($('simpleMore').getAttribute('aria-expanded'),'false');
+ assert.equal($('tabAstroFollowTrend').id,'tabAstroFollowTrend','pure ASTRODOX Follow Trend remains a primary navigation destination');
  assert.equal($('simpleAstroDetails').open,false);
  assert.equal($('simpleAlbiruniDetails').open,false);
  assert.equal($('abClassicPanel').open,false,'classical calculation is still available after expanding');
