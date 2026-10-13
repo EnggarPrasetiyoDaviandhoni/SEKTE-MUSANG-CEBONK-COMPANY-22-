@@ -58,7 +58,7 @@ function mount(){
 
  const astro=$('results');
  if(astro){
-  const advanced=groupChildren(astro,[''], 'simpleAstroDetails',
+  const advanced=groupChildren(astro,[], 'simpleAstroDetails',
    'Rincian astrologi & data 5 menit',
    'Timeline, tabel planet, ekspor dan pemeriksaan slot tetap tersedia di sini.');
   if(advanced)advanced.open=false;
