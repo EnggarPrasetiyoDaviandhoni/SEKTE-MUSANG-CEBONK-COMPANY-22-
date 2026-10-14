@@ -15,13 +15,15 @@ const wrapper=document.createElement('div');
 wrapper.className='panel sr-only';
 wrapper.id='srOnlyPanel';
 wrapper.innerHTML=[
- '<div class="head"><div><h2>SOLAR RETURN MURNI · FOLLOW TREND</h2>',
- '<small>Panel terpisah · COMEX Gold · astrologi tahunan → bias mingguan → fase 5 menit</small></div>',
- '<span class="sr-only-chip">RISET MURNI SR</span></div>',
+ '<div class="head"><div><h2>SOLAR RETURN MURNI · RISET ASPEK</h2>',
+ '<small>Panel mandiri · astronomi Solar Return · hipotesis arah, bukan tren harga</small></div>',
+ '<span class="sr-only-chip">BELUM VALIDASI HARGA GOLD</span></div>',
  '<div class="sr-only-body">',
  '<p class="sr-only-note">Solar Return = saat longitude Matahari kembali ke longitude Matahari chart dasar.',
  ' Dasar COMEX Gold 31 Desember 1974, pukul 12:00 EST <b>hanya asumsi jam</b>.',
  ' Jam perdagangan pertama tidak terverifikasi. Tidak menghitung ASC, MC, atau rumah astrologi.</p>',
+ '<p class="sr-only-note"><b>JANGAN PAKAI UNTUK ENTRY.</b> Panel ini tidak membaca tren harga XAUUSDc.',
+ ' Hasil BUY/SELL merupakan hipotesis astrologi saja. Tidak ada bukti winrate atau kemampuan mengikuti tren emas.</p>',
  '<div class="sr-only-controls">',
  '<label for="srOnlyDate">Tanggal analisis (WIB)<input id="srOnlyDate" type="date"',
  ' min="2020-01-01" max="2040-12-31" required></label>',
@@ -33,7 +35,7 @@ wrapper.innerHTML=[
  'Silakan pilih tanggal dan hitung Solar Return.</p>',
  '<div id="srOnlyOutput" hidden>',
  '<div class="sr-only-metrics">',
- '<div><small>Bias astrologi Senin–Jumat</small><strong id="srOnlyBias">—</strong></div>',
+ '<div><small>Hipotesis arah SR (bukan harga)</small><strong id="srOnlyBias">—</strong></div>',
  '<div><small>Hari inti menurut SR</small><strong id="srOnlyPeakDay">—</strong></div>',
  '<div><small>Keseimbangan aspek*</small><strong id="srOnlyBalance">—</strong></div>',
  '<div><small>Solar Return aktif</small><strong id="srOnlyAnnual">—</strong></div>',
@@ -43,9 +45,9 @@ wrapper.innerHTML=[
  '<div class="sr-only-scroller"><table><thead><tr><th>Tanggal WIB</th>',
  '<th>Bias astrologi SR</th><th>Skor relatif*</th><th>Jam aspek aktif</th>',
  '<th>Selaras bias minggu</th></tr></thead><tbody id="srOnlyDays"></tbody></table></div>',
- '<h3>AWAL · INTI · AKHIR pada tanggal terpilih</h3>',
+ '<h3>Aktivasi aspek dekat exact (BUKAN JAM ENTRY)</h3>',
  '<p class="sr-only-note">Window berasal dari kedekatan aspek natal Solar Return.',
- ' AWAL = mendekat, INTI = orb maksimal 0,12°, AKHIR = menjauh. Puncak teramati belum tentu exact.',
+ ' AWAL = mendekat, INTI = orb maksimal 0,012°, AKHIR = menjauh. Hanya aspek dengan pergerakan cukup cepat dan dekat exact; jendela riset maksimum 90 menit.',
  ' Jika tidak ada bukti selaras, status WAIT; tidak memaksa sinyal harian.</p>',
  '<div class="sr-only-scroller"><table><thead><tr><th>Awal (WIB)</th>',
  '<th>Puncak (WIB)</th><th>Akhir (WIB)</th><th>Bias SR</th>',
@@ -65,7 +67,7 @@ wrapper.innerHTML=[
  ' Jam dasar COMEX belum dipastikan; hasil bergantung pada asumsi ini.</p>',
  '<p>Tidak ada Astrology V1/V2, Al-Biruni, BaZi, EMA, BB, candle, harga,',
  ' API broker, order, atau auto-trade yang menentukan arah dalam modul ini.</p></details>',
- '<p class="sr-only-note"><b>MODE RISET / EA WAIT.</b> BUY dan SELL merupakan',
+ '<p class="sr-only-note"><b>MODE RISET / EA WAIT / BUKAN SINYAL TRADING.</b> BUY dan SELL merupakan',
  ' interpretasi astrologi Solar Return yang belum terbukti mengikuti tren harga emas nyata.',
  ' Untuk memastikan keselarasan dengan GOLD perlu validasi out-of-sample.',
  ' Tidak ada jaminan profit atau sinyal entry.</p>',
@@ -138,7 +140,7 @@ async function astronomy(){
 function render(){
  if(!result)return;
  const r=result,w=r.week;
- $('srOnlyBias').textContent=w.direction;
+ $('srOnlyBias').textContent=w.direction==='WAIT'?'WAIT':'HIPOTESIS '+w.direction;
  $('srOnlyPeakDay').textContent=w.peakDay||'WAIT';
  $('srOnlyBalance').textContent=num(w.score)+' (−1 sampai +1)';
  $('srOnlyAnnual').textContent=wib(r.activeReturn.ms);
@@ -146,15 +148,15 @@ function render(){
   ' · analisis sesi perdagangan Senin–Jumat; Sabtu–Minggu tidak dihitung dalam bias.'+
   ' Dukungan '+num(w.positive)+' / tekanan '+num(w.negative)+
   ' · '+w.agreement+' hari searah. '+
-  ' Ini bias astrologi SR, bukan pembacaan tren harga GOLD.';
+  ' Ini bias astrologi SR, bukan pembacaan tren harga GOLD. Tidak untuk entry.';
  $('srOnlyDays').innerHTML=w.days.map(d=>
   '<tr><td>'+esc(d.dateWIB)+'</td><td class="'+(d.direction==='BUY'?'buy':d.direction==='SELL'?'sell':'neutral')+'">'+
-  esc(d.direction)+'</td><td>'+num(d.score)+'</td><td>'+d.activeSlots+' / 24</td><td>'+
-  esc(d.direction===w.direction&&w.direction!=='WAIT'?d.direction:'WAIT')+'</td></tr>').join('');
+  esc(d.direction==='WAIT'?'WAIT':'Riset '+d.direction)+'</td><td>'+num(d.score)+'</td><td>'+d.activeSlots+' / 24</td><td>'+
+  esc(d.direction===w.direction&&w.direction!=='WAIT'?'Riset '+d.direction:'WAIT')+'</td></tr>').join('');
  const windows=r.windows.slice(0,20);
  $('srOnlyWindows').innerHTML=windows.length?windows.map(p=>
   '<tr><td>'+wib(p.start)+'</td><td>'+wib(p.core)+'</td>'+
-  '<td>'+wib(p.end)+'</td><td>'+esc(p.direction)+'</td><td>'+
+  '<td>'+wib(p.end)+'</td><td>'+esc('Riset '+p.direction)+'</td><td>'+
   esc(p.planet+' → SR '+p.target+' · '+p.aspect)+'</td><td>'+num(p.peakStrength)+'</td><td>'+esc(p.corePhase)+'</td></tr>'
  ).join(''):'<tr><td colspan="7">WAIT — tidak ada fase Solar Return yang memenuhi konfirmasi searah minggu.</td></tr>';
  $('srOnlyPlanets').innerHTML=r.activeReturn.bodies.map(p=>{
@@ -178,7 +180,7 @@ async function run(){
    ()=>token!==activeRun);
   if(token!==activeRun)return;
   result=output;render();
-  status('Selesai. Arah astrologi SR pekan ini: '+result.week.direction+'. Trading EA: WAIT.'+(result.weekday===0||result.weekday===6?' Akhir pekan: market tutup.':''));
+  status('Selesai. Hipotesis astrologi SR: '+result.week.direction+'. Trading EA: WAIT.'+(result.weekday===0||result.weekday===6?' Akhir pekan: market tutup.':''));
  }catch(e){if(token===activeRun)status(e.message||'Gagal menghitung.',true);}
  finally{if(token===activeRun)lock(false);}
 }
@@ -202,7 +204,7 @@ $('srOnlyJSON').addEventListener('click',()=>{
 $('srOnlyCSV').addEventListener('click',()=>{
  if(!result)return;
  const csv=[['UTC','WIB','SR_YEAR','WEEK_BIAS','LOCAL_BIAS','SCORE_SR',
-   'SIGNAL_SR','PHASE','PLANET','TARGET_SR','ASPECT','ORB','EA_DECISION']];
+   'RESEARCH_BIAS_NOT_ENTRY','PHASE','PLANET','TARGET_SR','ASPECT','ORB','EA_DECISION']];
  for(const r of result.rows)csv.push([
   r.utc,r.timeWIB,r.chartYear,r.weekBias,r.localBias,num(r.score),
   r.signal,r.phase,r.event?.planet||'',r.event?.target||'',
@@ -211,5 +213,5 @@ $('srOnlyCSV').addEventListener('click',()=>{
  download('SOLAR_RETURN_MURNI_'+result.dateWIB+'_M5.csv',
   csv.map(row=>row.map(q).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 });
-root.CebonkSolarReturnOnlyUI=Object.freeze({version:'3.0.0',viewId:'solarReturnOnlyView'});
+root.CebonkSolarReturnOnlyUI=Object.freeze({version:'3.1.0',viewId:'solarReturnOnlyView'});
 })(window);

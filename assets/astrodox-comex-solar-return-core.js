@@ -7,7 +7,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='2.0.0',MIN=60000,HOUR=3600000,DAY=86400000;
+const VERSION='2.0.1',MIN=60000,HOUR=3600000,DAY=86400000;
 const BIRTH_DATE='1974-12-31',FIRST_TRADE_REF='https://www.cmegroup.com/media-room/historical-first-trade-dates.html';
 const PLANETS=['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
 const EVENTS=Object.freeze([
@@ -142,7 +142,7 @@ function classify(score,activity,threshold=0.18){
  return score>0?'BUY':'SELL';
 }
 function weekBounds(C,dateStr){
- const day=C.Time.parseDate(dateStr),weekday=day.getUTCDay();
+ const day=new Date(C.Time.parseDate(dateStr)),weekday=day.getUTCDay();
  const mondayOffset=(weekday+6)%7;
  const start=C.Time.wibToUTC(dateStr,0)-mondayOffset*DAY;
  return Object.freeze({start,end:start+7*DAY,
