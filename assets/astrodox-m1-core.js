@@ -8,7 +8,7 @@
 'use strict';
 const C=root.CebonkCore;
 if(!C)return;
-const MINUTE=60000,VERSION='1.1.0';
+const MINUTE=60000,VERSION='1.2.0';
 const ELEMENTS=Object.freeze({
   Aries:'API',Leo:'API',Sagittarius:'API',
   Taurus:'TANAH',Virgo:'TANAH',Capricorn:'TANAH',
@@ -63,8 +63,10 @@ function meanLilith(ms){
  const perigee=83.3532465+T*(4069.0137287+T*(-0.01032+T*(-1/80053+T/18999000)));
  return Object.freeze({longitude:C.norm(perigee+180),method:'MEAN_APOGEE_APPROX_MEEUS_UT'});
 }
-function calculateLilithAspects(ms,planetPositions){
+function calculateLilithAspects(ms,planetPositions,speeds){
  const lil=meanLilith(ms),pos=new Map(planetPositions.map(x=>[x.id,x]));
+ const lilithRate=C.signed(meanLilith(ms+MINUTE).longitude-meanLilith(ms-MINUTE).longitude)/
+   (2*MINUTE)*86400000;
  const aspects=[];
  for(const p of C.CFG.planets){
   const lon=pos.get(p.id).longitude;
@@ -72,7 +74,7 @@ function calculateLilithAspects(ms,planetPositions){
    const g=C.aspectGeometry(lon,lil.longitude,a);
    if(g.orb>a.orb)continue;
    aspects.push({id1:p.id,id2:'Lilith',local:false,name:a.name,
-     angle:a.angle,orb:g.orb,phase:'APROKSIMASI',impact:0,
+     angle:a.angle,orb:g.orb,phase:C.phase(g.error,lilithRate-(speeds?.[p.id]||0)),impact:0,
      type:a.name==='Trine'||a.name==='Sextile'?'HARMONIS':
           a.name==='Square'||a.name==='Opposition'?'TEGANG':'KONJUNGSI',
      source:'MEAN_APOGEE_APPROX_NO_DIRECTION'});
@@ -138,7 +140,9 @@ function interpret(sample){
    orb:a.orb,phase:a.phase,impact:a.impact,
    type:a.name==='Trine'||a.name==='Sextile'?'HARMONIS':
         a.name==='Square'||a.name==='Opposition'?'TEGANG':'KONJUNGSI'
- })).concat(calculateLilithAspects(sample.ms,planetPositions)).sort((a,b)=>a.orb-b.orb);
+ })).concat(calculateLilithAspects(sample.ms,planetPositions,sample.speeds)).sort((a,b)=>a.orb-b.orb);
+ const lilithAspects=aspects.filter(a=>a.id2==='Lilith');
+ if(lilithAspects.length)hints.push(lilithAspects.length+' aspek Lilith Mean aktif (interpretasi, tanpa bobot arah)');
  const config=configScore(sample.active,positionsById);
  return {
   ms:sample.ms,state:sample.state,score:sample.score,
