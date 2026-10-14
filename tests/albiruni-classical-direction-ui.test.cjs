@@ -7,9 +7,9 @@ const ui=fs.readFileSync(path.join(ROOT,'assets/albiruni-classical-direction-ui.
 const shell=fs.readFileSync(path.join(ROOT,'assets/site-simple-ui.js'),'utf8');
 const core=fs.readFileSync(path.join(ROOT,'assets/albiruni-classical-direction.js'),'utf8');
 const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
-assert.ok(html.includes('assets/albiruni-classical-direction.js?v=1.0.0'));
-assert.ok(html.includes('assets/albiruni-classical-direction-ui.js?v=1.0.0'));
-assert.ok(html.includes('assets/albiruni-classical-direction.css?v=1.0.0'));
+assert.ok(!html.includes('assets/albiruni-classical-direction.js?v=1.0.0'),'Later classical module is archived, not mounted in original v1.5');
+assert.ok(!html.includes('assets/albiruni-classical-direction-ui.js?v=1.0.0'),'Later direction UI must not replace original Al-Biruni panel');
+assert.ok(!html.includes('assets/albiruni-classical-direction.css?v=1.0.0'),'Original Al-Biruni CSS is active instead');
 assert.ok(!/autoSignal|autoPeriodSummary|ASPECT_COUNT_MAJORITY|majority_direct_v3/.test(ui),'new classical UI does not call legacy majority engine');
 assert.ok(!/\bC\.autoSignal\s*\(|\bC\.autoPeriodSummary\s*\(|\bbuyCount\s*\+\s*sellCount\b/.test(core),'classical engine cannot invoke majority voting');
 const dom=new JSDOM('<body><main><nav class="viewtabs"><button type="button" class="viewtab active" id="tabAstro">ASTROLOGY</button><button type="button" class="viewtab" id="tabAlBiruni">AL-BIRUNI</button></nav>'+
@@ -87,17 +87,16 @@ const wait=()=>new Promise((resolve,reject)=>{
  assert.equal($('abClassicalMainResult').hidden,true,'stale results invalidated after edit');
  $('abClassicalMainOrb').value='2';
  $('abClassicalMainOrb').dispatchEvent(new w.Event('change'));
- // Simulate shell mounting afterwards. Legacy components must be archived
- // without hiding the new primary screen.
+ // Simulate shell mounting afterwards. Original v1.5 Al-Biruni must stay
+ // intact and not be auto-archived or hidden by the shared simple shell.
  w.eval(shell);
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
- assert.ok($('abLegacyArchive'),'legacy majority is now explicitly archived');
- assert.equal($('abLegacyArchive').open,false,'majority hidden by default');
- assert.ok(!$('abClassicalPrimary').closest('details'),'classical primary stays visible');
- assert.ok($('abResults').closest('#abLegacyArchive'),'legacy UI remains intact');
- assert.ok($('abClassicPanel').closest('#abLegacyArchive'),'previous classical diagnostics archived');
+ assert.equal($('abLegacyArchive'),null,'No archive may replace original Al-Biruni');
+ assert.ok(!$('abClassicalPrimary').closest('details'),'Separate classical research fixture remains mounted');
+ assert.equal($('abResults').closest('#abLegacyArchive'),null);
+ assert.equal($('abClassicPanel').closest('#abLegacyArchive'),null);
  assert.ok($('simpleMore'));
  assert.ok(!$('abClassicalPrimary').textContent.includes('CAMPURAN'));
  dom.window.close();
- console.log('PASS AL-BIRUNI CLASSICAL UI: standalone scan, BUY mapping, timeline, old majority isolated, archive closed, no legacy impact.');
+ console.log('PASS AL-BIRUNI CLASSICAL UI: standalone scan, BUY mapping, timeline, original Al-Biruni shell preserved, no legacy impact.');
 })().catch(err=>{console.error(err);dom.window.close();process.exitCode=1;});
