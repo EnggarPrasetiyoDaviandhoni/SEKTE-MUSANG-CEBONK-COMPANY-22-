@@ -12,7 +12,7 @@ const fmt=(n,d=1)=>n===null||!Number.isFinite(n)?'—':Number(n).toFixed(d);
 let busy=false,cancelled=false,report=null,baseline=null,date='',loadPromise=null,sequence=0;
 panel.innerHTML=`
  <div class="v2-header"><p class="v2-kicker">SEKTE MUSANG · CEBONK COMPANY 22</p>
-  <h2>ASTRODOX V2 · TIMING ASC/MC</h2>
+  <h2 id="v2Title">ASTRODOX V2 · TIMING ASC/MC</h2>
   <p>Model riset astrologi murni terpisah. Arah sifat planet ≠ tren harga emas. Square/Opposition dihitung sebagai intensitas, bukan SELL otomatis.</p></div>
  <div class="v2-controls">
   <label>Tanggal WIB<input id="v2Date" type="date" min="2020-01-01" max="2040-12-31"></label>
