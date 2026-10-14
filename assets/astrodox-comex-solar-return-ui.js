@@ -277,5 +277,5 @@ $('srcomexCSV').addEventListener('click',()=>{
   [header,...lines].map(x=>x.map(safe).join(',')).join('\r\n'),
   'text/csv;charset=utf-8');
 });
-root.CebonkComexSolarReturnUI=Object.freeze({version:'1.0.0',mode:'COMEX_SOLAR_RETURN_M1_RESEARCH'});
+root.CebonkComexSolarReturnUI=Object.freeze({version:'1.1.0',mode:'COMEX_SOLAR_RETURN_M1_RESEARCH'});
 })(window);
