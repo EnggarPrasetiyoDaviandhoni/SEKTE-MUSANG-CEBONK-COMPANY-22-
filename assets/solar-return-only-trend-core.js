@@ -128,19 +128,19 @@ async function analyze(C,SR,A,date,hourNY=12,onProgress=()=>{},isCancelled=()=>f
    await new Promise(done=>setTimeout(done,0));
   }
   const week=summarizeWeek(days),start=C.Time.wibToUTC(date,0);
-  const consumed=new Set();
+  const consumedPlanets=new Set();
   let confirmed=0,open=null,lastId=null;
   const weekday=new Date(Date.parse(date+'T00:00:00Z')).getUTCDay();
   for(let i=0;i<288;i++){
    must(!isCancelled(),'Perhitungan dibatalkan.');
    const ms=start+i*5*MIN,chart=returnAt(charts,ms);
    const info=scoreAt(engine.get(ms).positions,chart,engine.get(ms-5*MIN).positions);
-   // A single planetary aspect can open at most one short window each day.
+   // Each planet can open at most one short research window per date, even if multiple chart aspects overlap.
    if(open&&ms>=open.start+TIMING.maxWindowMinutes*MIN){
-    consumed.add(open.eventId);windows.push(Object.freeze(open));
+    consumedPlanets.add(open.planet);windows.push(Object.freeze(open));
     open=null;confirmed=0;lastId=null;
    }
-   const leading=info.events.find(e=>e.timingEligible&&!consumed.has(e.id)&&
+   const leading=info.events.find(e=>e.timingEligible&&!consumedPlanets.has(e.planet)&&
      Math.sign(e.contribution)===(week.direction==='BUY'?1:-1))||null;
    const matching=weekday>=1&&weekday<=5&&week.direction!=='WAIT'&&
      info.direction===week.direction&&leading!==null&&leading.strength>=0.08;
@@ -157,7 +157,7 @@ async function analyze(C,SR,A,date,hourNY=12,onProgress=()=>{},isCancelled=()=>f
     tradeDecision:'WAIT'});
    rows.push(row);
    if(researchBias==='WAIT'){
-    if(open){consumed.add(open.eventId);windows.push(Object.freeze(open));open=null;}
+    if(open){consumedPlanets.add(open.planet);windows.push(Object.freeze(open));open=null;}
    }else if(open&&open.eventId===event.id){
     open.end=ms+5*MIN;
     if(event.strength>open.peakStrength){
@@ -165,7 +165,7 @@ async function analyze(C,SR,A,date,hourNY=12,onProgress=()=>{},isCancelled=()=>f
      open.corePhase=event.phase;open.aspect=event.aspect;
     }
    }else{
-    if(open){consumed.add(open.eventId);windows.push(Object.freeze(open));}
+    if(open){consumedPlanets.add(open.planet);windows.push(Object.freeze(open));}
     open={eventId:event.id,start:ms,end:ms+5*MIN,core:ms,
      corePhase:event.phase,planet:event.planet,target:event.target,
      aspect:event.aspect,direction:researchBias,
