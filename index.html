@@ -162,6 +162,10 @@ function wibToUTC(iso,minute){
  assert(Number.isInteger(minute)&&minute>=0&&minute<=1440,'Jam WIB tidak valid.');
  return parseDate(iso)+(minute-CFG.wibOffset)*MIN;
 }
+function utcToUTC(iso,minute){
+ assert(Number.isInteger(minute)&&minute>=0&&minute<=1440,'Jam UTC tidak valid.');
+ return parseDate(iso)+minute*MIN;
+}
 function lastWeekday(y,monthIndex,weekday){
  const d=new Date(Date.UTC(y,monthIndex+1,0));
  return d.getUTCDate()-(d.getUTCDay()-weekday+7)%7;
@@ -181,9 +185,9 @@ function luxorOffset(ms,mode='AUTO'){
  const b=cairoBounds(y);
  return ms>=b.start&&ms<b.end?180:120;
 }
-const Time=Object.freeze({parts,dateISO,hm,hms,offsetLabel,parseDate,wibToUTC,cairoBounds,luxorOffset,
- wib:ms=>parts(ms,CFG.wibOffset),luxor:(ms,mode)=>parts(ms,luxorOffset(ms,mode)),
- today:()=>dateISO(parts(Date.now(),CFG.wibOffset))
+const Time=Object.freeze({parts,dateISO,hm,hms,offsetLabel,parseDate,wibToUTC,utcToUTC,cairoBounds,luxorOffset,
+ wib:ms=>parts(ms,CFG.wibOffset),utc:ms=>parts(ms,0),luxor:(ms,mode)=>parts(ms,luxorOffset(ms,mode)),
+ today:()=>dateISO(parts(Date.now(),CFG.wibOffset)),todayUTC:()=>dateISO(parts(Date.now(),0))
 });
 function anglesFromSidereal(lstDeg,obliquityDeg,latitude){
  assert([lstDeg,obliquityDeg,latitude].every(Number.isFinite),'Sudut astronomi tidak valid.');
@@ -295,9 +299,11 @@ function createEngine(A){
  }
  return Object.freeze({get,clear:()=>cache.clear(),cacheSize:()=>cache.size});
 }
-async function scan(engine,iso,startMinute,modelEnabled,onProgress=()=>{},cancelled=()=>false){
+async function scan(engine,iso,startMinute,modelEnabled,onProgress=()=>{},cancelled=()=>false,timeBasis='WIB'){
  assert(startMinute===0||startMinute===360,'Window scan tidak valid.');
- const start=wibToUTC(iso,startMinute),end=wibToUTC(iso,1440),step=CFG.step*MIN;
+ assert(timeBasis==='WIB'||timeBasis==='UTC','Basis waktu tidak valid.');
+ const conversion=timeBasis==='UTC'?utcToUTC:wibToUTC;
+ const start=conversion(iso,startMinute),end=conversion(iso,1440),step=CFG.step*MIN;
  const n=(end-start)/step;engine.clear();
  // One cached ephemeris snapshot per grid point, including phase edge samples.
  for(let i=-1;i<=n;i++){
