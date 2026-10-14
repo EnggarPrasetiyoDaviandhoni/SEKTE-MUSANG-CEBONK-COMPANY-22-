@@ -12,7 +12,6 @@ const clock=ms=>C.Time.hm(C.Time.wib(ms));
 const fmt=n=>Number.isFinite(n)?n.toFixed(2):'—';
 const pct=n=>Number.isFinite(n)?n.toFixed(0)+'%':'—';
 const directionClass=x=>x==='BUY'?'buy':x==='SELL'?'sell':'neutral';
-const fullDate=()=>C.Time.dateISO(C.Time.wib(Date.now()));
 let busy=false,cancelled=false,libPromise=null,report=null,chosen=-1,calculationId=0,viewRows=[];
 const section=document.createElement('section');
 section.className='panel astrom1';
@@ -177,8 +176,15 @@ function render(x){
  viewRows=x.minutes===1440?x.rows.filter(r=>C.Time.wib(r.ms).hour===hour):x.rows;
  if(viewRows.length!==60)throw Error('Rentang tampilan M1 bukan 60 menit.');
  renderSummary(viewRows);
+ const day=x.summary;
+ const fw=day?.focusWindow;
+ const dayLabel=fw?
+   ' · AWAL '+clock(Date.parse(fw.startUTC))+' · INTI '+clock(Date.parse(fw.coreUTC))+
+   ' · AKHIR '+clock(Date.parse(fw.endUTC)):' · tanpa window dominan';
  el('astrom1DayMeta').textContent=x.minutes===1440?
-   'SCAN HARIAN '+x.date+' WIB: 1.440 menit lengkap. Menampilkan '+pad(hour)+':00–'+pad(hour+1)+':00 · pilih jam untuk melihat bagian lain.':
+   'SCAN HARIAN '+x.date+' WIB · dominasi V2: '+day.v2DailyDominance+
+   ' (BUY '+day.v2Counts.BUY+'m / SELL '+day.v2Counts.SELL+'m / NETRAL '+day.v2Counts.NEUTRAL+'m)'+
+   dayLabel+'. Menampilkan '+pad(hour)+':00–'+pad(hour+1)+':00 · ubah jam untuk melihat 60 menit lain.':
    'SCAN PER JAM '+x.date+' WIB: '+pad(x.hour)+':00–'+pad(x.hour+1)+':00 · 60 menit.';
  el('astrom1Rows').innerHTML=viewRows.map((r,i)=>
    '<tr data-minute="'+i+'"><td class="mono">'+clock(r.ms)+'–'+clock(r.ms+60000)+'</td>'+
@@ -306,5 +312,5 @@ el('astrom1CSV').addEventListener('click',()=>{
   'text/csv;charset=utf-8');
  setStatus('CSV '+report.rows.length+' menit berhasil dibuat. Semua sinyal masih riset.');
 });
-root.CebonkAstrodoxM1UI=Object.freeze({version:'1.1.0',mode:'M1_DAILY_RESEARCH_PLUS_EXPORT'});
+root.CebonkAstrodoxM1UI=Object.freeze({version:'1.2.0',mode:'M1_DAILY_RESEARCH_PLUS_EXPORT'});
 })(window);
