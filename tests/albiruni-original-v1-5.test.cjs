@@ -7,6 +7,29 @@ const path=require('node:path');
 const {JSDOM}=require('jsdom');
 const C=require('../assets/albiruni-original-v1-5-core.js');
 const ROOT=path.join(__dirname,'..');
+const crypto=require('node:crypto');
+for(const [pathName,expected] of [
+ ['assets/albiruni-original-v1-5-core.js','0a558d3f3e6b0fdf4d8d1ffb52c519f90f6865fc'],
+ ['assets/albiruni-original-v1-5-ui.js','3797e6952b61782fa0e5b29553b1cd1a7c89b915'],
+ ['assets/albiruni-original-v1-5.css','2bf27c463ca920573df5c0d57af8c4c732752c4e']
+]){
+ const bytes=fs.readFileSync(path.join(ROOT,pathName));
+ const sha=crypto.createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
+ assert.equal(sha,expected,'Original 11 October 2026 Al-Biruni snapshot changed: '+pathName);
+}
+const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+assert.match(html,/src="assets\/albiruni-original-v1-5-core\.js\?v=1\.5\.0-restored-20261014"/);
+assert.match(html,/src="assets\/albiruni-original-v1-5-ui\.js\?v=1\.5\.0-restored-20261014"/);
+assert.match(html,/href="assets\/albiruni-original-v1-5\.css\?v=1\.5\.0-restored-20261014"/);
+assert.doesNotMatch(html,/src="assets\/albiruni-classic-ui\.js/);
+assert.doesNotMatch(html,/src="assets\/albiruni-classical-direction-ui\.js/);
+assert.doesNotMatch(html,/src="assets\/primbon-dagang-ui\.js/);
+assert.match(html,/src="assets\/solar-return-only-trend-core\.js\?v=3\.2\.0"/);
+const simple=fs.readFileSync(path.join(ROOT,'assets/site-simple-ui.js'),'utf8');
+const simpleCSS=fs.readFileSync(path.join(ROOT,'assets/site-simple.css'),'utf8');
+assert.doesNotMatch(simple,/const ab=\$\('albiruniPanel'\)/);
+assert.doesNotMatch(simpleCSS,/#albiruniPanel/);
+
 async function until(fn,name){
  for(let i=0;i<500;i++){if(fn())return;await new Promise(r=>setTimeout(r,5));}
  throw Error('Timeout: '+name);
