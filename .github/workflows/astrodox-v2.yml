@@ -1,0 +1,29 @@
+name: ASTRODOX V2 isolated checks
+on:
+  pull_request:
+    paths:
+      - 'assets/astrodox-v2*'
+      - 'assets/astrodox-follow-trend-core.js'
+      - 'assets/site-tab-router.js'
+      - 'index.html'
+      - 'tests/astrodox-v2.test.cjs'
+      - '.github/workflows/astrodox-v2.yml'
+  push:
+    branches: ['feature/astrodox-v2-astro-timing']
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: V2 and unchanged V1 core tests
+        run: |
+          node --check assets/astrodox-v2-core.js
+          node --check assets/astrodox-v2-ui.js
+          node tests/astrodox-v2.test.cjs
+          node tests/astrodox-follow-trend.test.cjs
+          node tests/astrodox-planet-strength.test.cjs
