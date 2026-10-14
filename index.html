@@ -32,6 +32,7 @@
 <link rel="stylesheet" href="assets/albiruni-classical-direction.css?v=1.0.0">
 <link rel="stylesheet" href="assets/site-simple.css?v=1.0.0">
 <link rel="stylesheet" href="assets/astrodox-follow-trend.css?v=1.1.0">
+<link rel="stylesheet" href="assets/astrodox-v2.css?v=2.0.0">
 </head>
 <body>
 <main class="wrap">
@@ -43,6 +44,7 @@
  <button class="viewtab active" id="tabAstro" type="button">ASTROLOGI</button>
  <button class="viewtab" id="tabAlBiruni" type="button" aria-controls="albiruniPanel" aria-selected="false">AL-BIRUNI</button>
  <button class="viewtab" id="tabAstroFollowTrend" type="button" aria-controls="astroFollowTrendView" aria-selected="false">ASTRODOX FOLLOW TREND</button>
+ <button class="viewtab" id="tabAstroV2" type="button" aria-controls="astroV2View" aria-selected="false">ASTRODOX V2</button>
 </nav>
 <div id="astroView">
 <section class="clocks" aria-label="Jam sekarang, bukan tanggal hasil scan">
@@ -100,6 +102,7 @@
 </div>
 <section id="albiruniPanel" aria-labelledby="abTitle" hidden></section>
 <section id="astroFollowTrendView" aria-labelledby="aftTitle" hidden></section>
+<section id="astroV2View" aria-labelledby="v2Title" hidden></section>
 <section id="combinedView" hidden></section>
 <section id="combined2View" hidden></section>
 <footer><span>CEBONK XAUUSD · ASTROLOGY + FIBO MUSANG + COMBINED</span><span>Riset, bukan jaminan hasil trading.</span></footer>
@@ -493,6 +496,8 @@ $('dateInput').value=T.today();clock();setInterval(clock,1000);run();
 <script src="assets/astrodox-follow-trend-core.js?v=1.0.0"></script>
 <script src="assets/astrodox-planet-strength.js?v=1.0.0"></script>
 <script src="assets/astrodox-follow-trend-ui.js?v=1.1.0"></script>
+<script src="assets/astrodox-v2-core.js?v=2.0.0"></script>
+<script src="assets/astrodox-v2-ui.js?v=2.0.0"></script>
 <script src="assets/astro-weekly-core.js?v=1.0.0"></script>
 <script src="assets/astro-weekly-ui.js?v=1.0.0"></script>
 <script src="assets/astro-news-v1.js?v=1.0.0"></script>
