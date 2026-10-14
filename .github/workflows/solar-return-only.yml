@@ -1,0 +1,27 @@
+name: Solar Return Only V3 tests
+on:
+  push:
+    paths:
+      - 'assets/solar-return-only-trend-*.js'
+      - 'assets/site-tab-router.js'
+      - 'index.html'
+      - 'tests/solar-return-only-trend.test.cjs'
+      - '.github/workflows/solar-return-only.yml'
+  pull_request:
+    paths:
+      - 'assets/solar-return-only-trend-*.js'
+      - 'assets/site-tab-router.js'
+      - 'index.html'
+      - 'tests/solar-return-only-trend.test.cjs'
+      - '.github/workflows/solar-return-only.yml'
+  workflow_dispatch:
+jobs:
+  solar-return-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Solar Return independent core and panel tests
+        run: node tests/solar-return-only-trend.test.cjs
