@@ -1,9 +1,9 @@
 /* COMEX Solar Return dashboard — stand-alone research panel, no order execution. */
 (function(root){
 'use strict';
-const C=root.CebonkCore,M=root.CebonkAstrodoxM1,SR=root.CebonkComexSolarReturn;
+const C=root.CebonkCore,SR=root.CebonkComexSolarReturn;
 const container=document.getElementById('astroView');
-if(!container||!C||!M||!SR||document.getElementById('comexSrPanel'))return;
+if(!container||!C||!SR||document.getElementById('comexSrPanel'))return;
 const $=id=>document.getElementById(id),pad=x=>String(x).padStart(2,'0');
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clock=ms=>C.Time.hm(C.Time.wib(ms));
@@ -15,7 +15,7 @@ const panel=document.createElement('section');
 panel.className='panel srcomex-panel';
 panel.id='comexSrPanel';
 panel.innerHTML=[
- '<div class="head"><div><h2>SOLAR RETURN COMEX GOLD · M1</h2>',
+ '<div class="head"><div><h2>SOLAR RETURN MURNI · FOLLOW TREND MINGGUAN</h2>',
  '<small>Gold Futures COMEX · chart dasar 31 Desember 1974 · riset astrologi tahunan</small></div>',
  '<span class="srcomex-chip">SOLAR RETURN</span></div>',
  '<div class="srcomex-body">',
@@ -25,13 +25,13 @@ panel.innerHTML=[
  '<div class="srcomex-controls">',
  '<label for="srcomexHour">Asumsi jam chart dasar · New York EST',
  '<select id="srcomexHour"></select></label>',
- '<button id="srcomexRun" class="primary" type="button">Hitung Solar Return + M1 Sehari</button>',
+ '<button id="srcomexRun" class="primary" type="button">Hitung Tren SR 7 Hari + M1</button>',
  '<button id="srcomexCancel" type="button" disabled>Batalkan</button>',
  '</div>',
  '<p class="srcomex-note">Tanggal analisis mengikuti kalender ASTROLOGI di atas.',
  ' Transit M1 dihitung terhadap posisi planet dalam chart Solar Return tahunan.',
  ' Label <b>HARMONIS / TEGANG / TRANSISI</b> menunjukkan jenis aspek, bukan probabilitas naik/turun GOLD.',
- ' SR Polarity BUY/SELL adalah hipotesis berbasis konfirmasi tren skor astrologi, BUKAN pembacaan arah emas nyata.',
+ ' Follow trend Solar Return mengunci bias astrologi mingguan, bukan tren harga emas nyata.',
  ' Keputusan trading EA tetap WAIT.</p>',
  '<p id="srcomexStatus" class="srcomex-status" role="status" aria-live="polite">',
  'Pilih tanggal dan jam referensi, kemudian tekan Hitung Solar Return.</p>',
@@ -51,7 +51,7 @@ panel.innerHTML=[
  '</div>',
  '<div class="srcomex-scroll"><table><thead><tr>',
  '<th>Jam WIB</th><th>SR tahun</th><th>Event dominan</th><th>Jenis</th>',
- '<th>Orb</th><th>Fase</th><th>Kekuatan relatif</th><th>Astro V2*</th><th>SR Polarity*</th><th>Keputusan EA</th>',
+ '<th>Orb</th><th>Fase SR</th><th>Kekuatan relatif</th><th>Bias SR Mingguan</th><th>SR Follow Trend*</th><th>Keputusan EA</th>',
  '</tr></thead><tbody id="srcomexMinuteRows"></tbody></table></div>',
  '<div id="srcomexMinuteDetail" class="srcomex-detail">Pilih satu menit untuk rincian.</div>',
  '<details class="srcomex-details">',
@@ -65,9 +65,9 @@ panel.innerHTML=[
  '</thead><tbody id="srcomexEventRows"></tbody></table></div></details>',
  '<p class="srcomex-note"><b>Status: RISET, WAIT.</b>',
  ' Solar Return sendiri tidak membuktikan sinyal BUY/SELL harian atau keuntungan XAUUSD.',
- ' Polarity BUY/SELL hanya arah skor Astrology yang selaras dengan event Solar Return dan belum divalidasi.',
+ ' BUY/SELL adalah bias astrologi dari aspek chart Solar Return, belum tervalidasi.',
  ' Peristiwa exact dan puncak window dapat diketahui secara astronomis, tetapi arah harga perlu backtest terpisah.',
- ' *Astro V2 adalah model eksperimen lain, bukan hasil Solar Return.</p>',
+ ' *Tidak menggunakan Astro V2 atau indikator teknikal pada perhitungan Solar Return.</p>',
  '</div></div>'
 ].join('');
 const css=document.createElement('style');
@@ -123,7 +123,7 @@ function lock(value){
  $('srcomexRun').disabled=value;
  $('srcomexHour').disabled=value;
  $('srcomexCancel').disabled=!value;
- $('srcomexRun').textContent=value?'Menghitung Solar Return…':'Hitung Solar Return + M1 Sehari';
+ $('srcomexRun').textContent=value?'Menghitung Solar Return…':'Hitung Tren SR 7 Hari + M1';
 }
 function reset(){
  cancelled=true;runId++;result=null;$('srcomexResults').hidden=true;
@@ -145,9 +145,9 @@ function showMinute(i){
   ' · Orb '+deg(e?.orb)+' · Fase '+escapeHTML(e?.phase||'—')+
   ' · Kekuatan relatif '+pct(e?.strength)+
   '. Ini bukan peluang gerak harga.</p>'+
-  '<p class="srcomex-note">Astrology V2 (terpisah): '+escapeHTML(row.astroV2)+
-  ' · Solar Return Polarity: <b>'+escapeHTML(row.eventPolarity)+
-  '</b> ('+escapeHTML(row.polarityReason)+') · keputusan GOLD/EA: <b>WAIT</b>.'+
+  '<p class="srcomex-note">Bias mingguan SR: '+escapeHTML(row.weekBias)+
+  ' · Aktivasi SR mengikuti tren: <b>'+escapeHTML(row.eventPolarity)+
+  '</b> · fase '+escapeHTML(row.phase)+' ('+escapeHTML(row.polarityReason)+') · keputusan GOLD/EA: <b>WAIT</b>.'+
   ' Event tambahan: '+
   (row.topFour.slice(1).map(x=>escapeHTML(x.pair+' '+x.aspect+' (orb '+x.orb.toFixed(3)+'°)')).join(' | ')||'Tidak ada')+'</p>';
  for(const tr of $('srcomexMinuteRows').querySelectorAll('tr[data-min]'))
@@ -166,8 +166,8 @@ function renderHour(){
    '<td>'+row.returnYear+'</td>'+
    '<td>'+escapeHTML(e?.pair||'—')+' '+escapeHTML(e?.aspect||'')+'</td>'+
    '<td>'+escapeHTML(row.eventType)+'</td><td>'+deg(e?.orb)+'</td>'+
-   '<td>'+escapeHTML(e?.phase||'—')+'</td><td>'+pct(e?.strength)+'</td>'+
-   '<td>'+escapeHTML(row.astroV2)+'</td>'+
+   '<td>'+escapeHTML(row.phase)+'</td><td>'+pct(e?.strength)+'</td>'+
+   '<td>'+escapeHTML(row.weekBias)+'</td>'+
    '<td class="'+(row.eventPolarity==='BUY'?'buy':row.eventPolarity==='SELL'?'sell':'neutral')+'">'+
    escapeHTML(row.eventPolarity)+'</td><td>WAIT</td></tr>';
  }).join('');
@@ -181,15 +181,13 @@ function render(){
  $('srcomexLast').textContent=fullTime(start.ms);
  $('srcomexNext').textContent=after?fullTime(after.ms):'—';
  $('srcomexEventCount').textContent=String(result.eventList.length);
- $('srcomexSummary').textContent='Tanggal '+result.dateWIB+
-   ' WIB · Transit M1 1.440 menit · harmonis '+result.counts.HARMONIS+
-   ', tegang '+result.counts.TEGANG+', transisi '+result.counts.TRANSISI+
-   ', tanpa event '+result.counts.NONE+'.'+
-   ' Polarity riset BUY '+result.polarityCounts.BUY+'m / SELL '+
-   result.polarityCounts.SELL+'m / WAIT '+result.polarityCounts.WAIT+'m.'+
-   (result.rolloverDuringDay?' Solar Return baru terjadi dalam hari ini.':'')+
-   ' Jam dasar '+pad(result.baseline.hourNY)+':00 EST adalah asumsi.';
- const names=C.CFG.planets.map(x=>x.id);
+ $('srcomexSummary').textContent='Pekan '+result.weekly.startWIB+'–'+result.weekly.endWIB+
+   ' · arah SR dominan '+result.weekly.direction+' · skor relatif '+result.weekly.score.toFixed(3)+
+   ' (bukan peluang profit). '+result.weekly.days.map(d=>d.dateWIB+': '+d.bias).join(' | ')+
+   ' · Aktivasi tanggal '+result.dateWIB+': BUY '+result.polarityCounts.BUY+
+   'm, SELL '+result.polarityCounts.SELL+'m, WAIT '+result.polarityCounts.WAIT+
+   'm. Jam dasar COMEX '+pad(result.baseline.hourNY)+':00 EST masih asumsi.';
+  const names=C.CFG.planets.map(x=>x.id);
  $('srcomexBodies').innerHTML=start.bodies.map(b=>{
   const n=b.longitude,sign=C.CFG.zodiac[Math.floor(n/30)];
   return '<tr><td>'+escapeHTML(b.id)+'</td><td>'+deg(n)+'</td>'+
@@ -234,8 +232,8 @@ async function run(){
   status('Memuat ephemeris dan mencari Solar Return tahunan…');
   const A=await loadAstronomy();
   if(cancelled||token!==runId)return;
-  const out=await SR.analyzeDay(C,M,A,d,h,
-   p=>status('Solar Return COMEX + Transit M1 '+p+'%'),
+  const out=await SR.analyzeDay(C,A,d,h,
+   p=>status('Solar Return · tren mingguan + fase M1 '+p+'%'),
    ()=>cancelled||token!==runId);
   if(cancelled||token!==runId)return;
   if(d!==$('dateInput')?.value||h!==Number($('srcomexHour').value))return;
@@ -265,11 +263,11 @@ $('srcomexJSON').addEventListener('click',()=>{
 });
 $('srcomexCSV').addEventListener('click',()=>{
  if(!result)return;
- const header=['UTC','WIB','SR_YEAR','EVENT_TYPE','EVENT','ASPECT','ORB','PHASE','STRENGTH','ASTRO_V2','SR_POLARITY_RESEARCH','SR_POLARITY_REASON','TRADING_DECISION'];
+ const header=['UTC','WIB','SR_YEAR','EVENT_TYPE','EVENT','ASPECT','ORB','PHASE','STRENGTH','WEEK_SR_BIAS','SR_TREND_RESEARCH','SR_POLARITY_REASON','TRADING_DECISION'];
  const lines=result.rows.map(r=>{
   const e=r.topEvent;
   return [r.utc,clock(r.ms),r.returnYear,r.eventType,e?.pair||'',
-    e?.aspect||'',e?.orb??'',e?.phase||'',e?.strength??'',r.astroV2,
+    e?.aspect||'',e?.orb??'',e?.phase||'',e?.strength??'',r.weekBias,
     r.eventPolarity,r.polarityReason,'WAIT'];
  });
  const safe=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
@@ -277,5 +275,5 @@ $('srcomexCSV').addEventListener('click',()=>{
   [header,...lines].map(x=>x.map(safe).join(',')).join('\r\n'),
   'text/csv;charset=utf-8');
 });
-root.CebonkComexSolarReturnUI=Object.freeze({version:'1.1.0',mode:'COMEX_SOLAR_RETURN_M1_RESEARCH'});
+root.CebonkComexSolarReturnUI=Object.freeze({version:'2.0.0',mode:'COMEX_SOLAR_RETURN_PURE_WEEKLY_TREND'});
 })(window);

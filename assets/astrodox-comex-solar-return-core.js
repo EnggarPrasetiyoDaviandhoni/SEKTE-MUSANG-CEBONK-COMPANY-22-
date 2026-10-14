@@ -1,4 +1,4 @@
-/* CEBONK COMEX GOLD SOLAR RETURN v1.0.0
+/* CEBONK COMEX GOLD SOLAR RETURN v2.0.0
  * Historical COMEX gold futures inception 1974-12-31 is supported by CME.
  * Actual first-trade clock time is undocumented here. Default 12:00 EST is
  * an explicit RESEARCH ASSUMPTION, NOT a verified market birth time.
@@ -7,7 +7,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='1.1.0',MIN=60000,HOUR=3600000,DAY=86400000;
+const VERSION='2.0.0',MIN=60000,HOUR=3600000,DAY=86400000;
 const BIRTH_DATE='1974-12-31',FIRST_TRADE_REF='https://www.cmegroup.com/media-room/historical-first-trade-dates.html';
 const PLANETS=['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
 const EVENTS=Object.freeze([
@@ -120,136 +120,166 @@ function activeReturn(returns,ms){
  must(eligible.length>0,'Chart Solar Return aktif tidak tersedia.');
  return eligible[eligible.length-1];
 }
-async function analyzeDay(C,M,A,dateStr,hourNY=12,onProgress=()=>{},cancelled=()=>false){
- const charts=getReturns(C,A,dateStr,hourNY);
- must(!cancelled(),'Perhitungan Solar Return dibatalkan.');
- const dayEngine=C.createEngine(A);
- let day;
+
+/* ARAH ASTROLOGI SR: skema riset khusus aspek transit -> chart Solar Return.
+ * TIDAK membaca Astrology V1/V2, harga, indikator, atau arah tren XAUUSD.
+ * Trine/sextile ditafsirkan mendukung, square/opposition menekan;
+ * conjunction netral. Ini bukan kaidah pembuktian arah harga emas.
+ */
+function polarityOf(events){
+ let positive=0,negative=0;
+ for(const e of events){
+  const weight=Math.pow(e.strength,2);
+  if(e.eventType==='HARMONIS')positive+=weight;
+  if(e.eventType==='TEGANG')negative+=weight;
+ }
+ const activity=positive+negative;
+ return Object.freeze({positive,negative,activity,
+  score:activity>0?(positive-negative)/activity:0});
+}
+function classify(score,activity,threshold=0.18){
+ if(activity<=0||Math.abs(score)<threshold)return 'WAIT';
+ return score>0?'BUY':'SELL';
+}
+function weekBounds(C,dateStr){
+ const day=C.Time.parseDate(dateStr),weekday=day.getUTCDay();
+ const mondayOffset=(weekday+6)%7;
+ const start=C.Time.wibToUTC(dateStr,0)-mondayOffset*DAY;
+ return Object.freeze({start,end:start+7*DAY,
+  startWIB:new Date(start+7*HOUR).toISOString().slice(0,10),
+  endWIB:new Date(start+7*DAY-MIN+7*HOUR).toISOString().slice(0,10)});
+}
+async function analyzeWeek(C,A,charts,dateStr,onProgress=()=>{},cancelled=()=>false){
+ const bounds=weekBounds(C,dateStr),eng=C.createEngine(A);
+ let positive=0,negative=0,activeHours=0,samples=0;
+ const days=[];
  try{
-  day=await M.calculateDay(dayEngine,dateStr,
-   p=>onProgress(Math.round(p*0.75)),cancelled);
- }finally{dayEngine.clear();}
- const polarityEngine=root.CebonkEventPolarityM1;
- must(polarityEngine&&typeof polarityEngine.compute==='function',
-  'Mesin Event Polarity M1 tidak tersedia.');
- // Existing causal V2 astrology-score filter is an independent research input.
- // Solar Return aspects are a second, distinct event gate; NOT gold D1 trend.
- const astroPolarity=polarityEngine.compute(day.rows,{
-  trendMinutes:15,confirmMinutes:2
- }).rows;
- // Separate daily engine is cleared inside M.calculateDay's per-hour loop;
- // still clean below using an independent engine for previous-minute lookup.
- must(!cancelled(),'Perhitungan Solar Return dibatalkan.');
- const eng=C.createEngine(A),rows=[];
- let prev=null,prevSolarEvent=null,pending='WAIT',pendingBars=0,
-  previousPolarityEvent=null;
- try{
-  for(let i=0;i<day.rows.length;i++){
-   must(!cancelled(),'Perhitungan Solar Return dibatalkan.');
-   const r=day.rows[i],target=activeReturn(charts.returns,r.ms);
-   const positions=eng.get(r.ms).positions;
-   let previousPositions=prev?.positions;
-   if(!prev||prev.ms!==r.ms-MIN)previousPositions=eng.get(r.ms-MIN).positions;
-   const events=eventsAt(positions,target,previousPositions);
-   const top=events[0]||null;
-   const trendEvent=top&&top.strength>=0.50?top:null;
-   const currentEventId=trendEvent?.eventId||null;
-   const fresh=!!currentEventId&&currentEventId!==prevSolarEvent;
-   prevSolarEvent=currentEventId;
-   const astro=astroPolarity[i];
-   let candidate='WAIT',polarityReason='NO_CONFIRMED_SOLAR_EVENT';
-   if(trendEvent){
-    if(trendEvent.eventType==='HARMONIS'&&astro.polarity!=='WAIT'&&
-       astro.astroTrendStreak>=2){
-      candidate=astro.polarity;
-      polarityReason='SR_HARMONIS_DAN_ASTRO_M1_SEARAH';
-    }else if(trendEvent.eventType==='TEGANG'&&astro.polarity!=='WAIT'&&
-             astro.reason==='EVENT_REVERSAL_DENGAN_PERGANTIAN_TREN_ASTRO'){
-      candidate=astro.polarity;
-      polarityReason='SR_TEGANG_DAN_REVERSAL_ASTRO_M1_TERKONFIRMASI';
-    }else{
-      polarityReason=trendEvent.eventType==='TEGANG'?
-       'SR_TEGANG_MENUNGGU_REVERSAL_ASTRO':
-       'SR_TIDAK_MEMBERI_ARAH_KONFIRMASI';
-    }
+  for(let d=0;d<7;d++){
+   let dailyPositive=0,dailyNegative=0;
+   for(let h=0;h<24;h++){
+    must(!cancelled(),'Analisis Solar Return dibatalkan.');
+    const ms=bounds.start+(d*24+h)*HOUR;
+    const chart=activeReturn(charts.returns,ms);
+    const score=polarityOf(eventsAt(eng.get(ms).positions,chart));
+    dailyPositive+=score.positive;dailyNegative+=score.negative;
+    if(score.activity>0)activeHours++;
+    samples++;
    }
-   if(candidate!=='WAIT'&&candidate===pending&&
-      previousPolarityEvent===currentEventId)pendingBars++;
-   else{pending=candidate;pendingBars=candidate==='WAIT'?0:1;}
-   previousPolarityEvent=currentEventId;
-   const solarPolarity=candidate!=='WAIT'&&pendingBars>=2?candidate:'WAIT';
-   rows.push({
-     ms:r.ms,utc:new Date(r.ms).toISOString(),
-     returnYear:target.year,returnUTC:target.utc,
-     astroV1:r.state,astroV2:r.configState,astroV2Score:r.configScore,
-     eventType:top?.eventType||'NONE',
-     topEvent:top,topFour:events,eventStrength:top?.strength||0,
-     newEvent:fresh,
-     astroTrend:astro.astroTrend,astroPolarity:astro.polarity,
-     eventPolarity:solarPolarity,polarityReason,
-     solarPolarityCandidate:candidate,
-     // BUY/SELL labels are unvalidated ASTRO SCORE direction hypotheses.
-     tradeDecision:'WAIT'
-   });
-   prev={ms:r.ms,positions};
+   positive+=dailyPositive;negative+=dailyNegative;
+   const activity=dailyPositive+dailyNegative;
+   const dayScore=activity?(dailyPositive-dailyNegative)/activity:0;
+   days.push(Object.freeze({
+    dateWIB:new Date(bounds.start+d*DAY+7*HOUR).toISOString().slice(0,10),
+    bias:classify(dayScore,activity),score:dayScore,activity}));
+   onProgress(Math.round((d+1)/7*25));
+   await new Promise(done=>setTimeout(done,0));
+  }
+ }finally{eng.clear();}
+ const activity=positive+negative;
+ const score=activity?(positive-negative)/activity:0;
+ // Hanya chart Solar Return dan aspek transitnya. Tidak dipaksa ada entry.
+ const direction=classify(score,activity,0.18);
+ return Object.freeze({...bounds,positive,negative,activity,score,
+  direction,activeHours,samples,days,
+  meaning:'Bias simbolik Solar Return mingguan, BUKAN tren harga XAUUSD.'});
+}
+function phaseOf(event){
+ if(!event)return 'TIDAK ADA';
+ if(event.orb<=0.20)return 'INTI';
+ if(event.phase==='APPLYING')return 'AWAL';
+ if(event.phase==='SEPARATING')return 'AKHIR';
+ return 'TRANSISI';
+}
+async function analyzeDay(C,A,dateStr,hourNY=12,onProgress=()=>{},cancelled=()=>false){
+ const charts=getReturns(C,A,dateStr,hourNY);
+ must(!cancelled(),'Analisis Solar Return dibatalkan.');
+ const weekly=await analyzeWeek(C,A,charts,dateStr,onProgress,cancelled);
+ const startMS=C.Time.wibToUTC(dateStr,0);
+ const eng=C.createEngine(A),rows=[];
+ let prev=null,prevId=null,streak=0;
+ const counts={HARMONIS:0,TEGANG:0,TRANSISI:0,NONE:0};
+ const polarityCounts={BUY:0,SELL:0,WAIT:0},eventList=[];
+ try{
+  for(let i=0;i<1440;i++){
+   must(!cancelled(),'Analisis Solar Return dibatalkan.');
+   const ms=startMS+i*MIN,target=activeReturn(charts.returns,ms);
+   const positions=eng.get(ms).positions;
+   const previousPositions=prev?.ms===ms-MIN?prev.positions:eng.get(ms-MIN).positions;
+   const events=eventsAt(positions,target,previousPositions),top=events[0]||null;
+   const polarity=polarityOf(events);
+   const local=classify(polarity.score,polarity.activity,0.18);
+   const eventDirection=top?.eventType==='HARMONIS'?'BUY':
+    top?.eventType==='TEGANG'?'SELL':'WAIT';
+   // Near-exact SR activation is required; reject constant all-day bias.
+   const match=weekly.direction!=='WAIT'&&weekly.direction===local&&
+    eventDirection===weekly.direction&&top!==null&&top.orb<=0.50;
+   streak=match?streak+1:0;
+   const trend=match&&streak>=3?weekly.direction:'WAIT';
+   const phase=trend==='WAIT'?'TIDAK ADA':phaseOf(top);
+   const isNew=!!top&&top.eventId!==prevId;
+   prevId=top?.eventId||null;
+   const row={
+    ms,utc:new Date(ms).toISOString(),returnYear:target.year,returnUTC:target.utc,
+    eventType:top?.eventType||'NONE',topEvent:top,topFour:events,
+    eventStrength:top?.strength||0,newEvent:isNew,
+    weekBias:weekly.direction,weekScore:weekly.score,localScore:polarity.score,
+    eventPolarity:trend,polarityReason:trend==='WAIT'?
+     (weekly.direction==='WAIT'?'TANPA_BIAS_MINGGUAN':'BELUM_SELARAS_SR_MINGGUAN'):
+     'SELARAS_SR_MINGGUAN_DAN_AKTIVASI_ASPEK',
+    phase,tradeDecision:'WAIT'
+   };
+   rows.push(row);counts[row.eventType]++;polarityCounts[trend]++;
+   if(isNew&&top)eventList.push({utc:row.utc,
+    wib:C.Time.hm(C.Time.wib(ms)),returnYear:target.year,
+    type:row.eventType,pair:top.pair,aspect:top.aspect,
+    orb:top.orb,strength:top.strength});
+   prev={ms,positions};
    if(i%40===39){
-     onProgress(75+Math.round((i+1)/1440*25));
-     await new Promise(done=>setTimeout(done,0));
+    onProgress(25+Math.round((i+1)/1440*75));
+    await new Promise(done=>setTimeout(done,0));
    }
   }
  }finally{eng.clear();}
- must(rows.length===1440,'Data transit M1 tidak lengkap.');
- const counts={HARMONIS:0,TEGANG:0,TRANSISI:0,NONE:0};
- const polarityCounts={BUY:0,SELL:0,WAIT:0};
- const eventList=[];
- for(const row of rows){
-  counts[row.eventType]++;
-  polarityCounts[row.eventPolarity]++;
-  if(row.newEvent&&row.topEvent)eventList.push({
-   utc:row.utc,wib:C.Time.hm(C.Time.wib(row.ms)),returnYear:row.returnYear,
-   type:row.eventType,pair:row.topEvent.pair,aspect:row.topEvent.aspect,
-   orb:row.topEvent.orb,strength:row.topEvent.strength
-  });
- }
- const start=activeReturn(charts.returns,rows[0].ms);
- const end=activeReturn(charts.returns,rows[rows.length-1].ms);
+ must(rows.length===1440,'Data SR M1 tidak lengkap.');
+ const first=activeReturn(charts.returns,rows[0].ms);
+ const last=activeReturn(charts.returns,rows[rows.length-1].ms);
  return Object.freeze({
-  version:VERSION,model:'COMEX_SOLAR_RETURN_M1_RESEARCH',
-  dateWIB:dateStr,baseline:charts,activeAtStart:start,
-  activeAtEnd:end,rolloverDuringDay:start.year!==end.year,
+  version:VERSION,model:'COMEX_SOLAR_RETURN_PURE_WEEKLY_TREND_RESEARCH',
+  dateWIB:dateStr,baseline:charts,weekly,activeAtStart:first,activeAtEnd:last,
+  rolloverDuringDay:first.year!==last.year,
   rows,counts,polarityCounts,eventList,minutes:rows.length,
   validatedForXAUUSD:false,tradeDecision:'WAIT',
-  note:'Solar Return shows annual geocentric Sun longitude recurrence. BUY/SELL polarity is a separate unvalidated Astrology-score hypothesis, never a market trend or trading instruction.'
+  note:'Follow trend bermakna konsistensi bias astrologi mingguan terhadap aspek transit chart Solar Return. Tidak memakai V1/V2, indikator teknikal, ataupun harga emas. Bukan tren pasar terbukti.'
  });
 }
 function exportResearch(result){
- must(result&&result.minutes===1440,'Ekspor perlu 1.440 menit.');
+ must(result&&result.minutes===1440,'Ekspor memerlukan data 1.440 menit.');
  return {
-  schema:'CEBONK_COMEX_SOLAR_RETURN_M1_RESEARCH_V1',
+  schema:'CEBONK_COMEX_SOLAR_RETURN_PURE_WEEKLY_TREND_V2',
   dateWIB:result.dateWIB,timezone:'Asia/Jakarta',
   generatedAtUTC:new Date().toISOString(),
-  baseline:result.baseline,
-  polarityCounts:result.polarityCounts,
-  eventPolarityMethod:'CONFIRMED_V2_ASTRO_SCORE_CONDITIONAL_ON_SOLAR_RETURN_EVENT',
+  baseline:result.baseline,weekly:result.weekly,
+  eventPolarityMethod:'PURE_SR_CHART_PLUS_SR_TRANSIT_ASPECTS_HEURISTIC',
   activeSolarReturnStart:result.activeAtStart.utc,
   activeSolarReturnEnd:result.activeAtEnd.utc,
   events:result.eventList,
-  assumptions:'COMEX 1974-12-31, unverified natal hour 12:00 EST by default',
+  assumptions:result.baseline.assumption,
   allowAutoTrade:false,validatedForXAUUSD:false,tradeDecision:'WAIT',
   rows:result.rows.map(r=>({
-   utc:r.utc,returnYear:r.returnYear,astroV2:r.astroV2,astroV2Score:r.astroV2Score,
+   utc:r.utc,returnYear:r.returnYear,
+   weekBias:r.weekBias,localSRScore:r.localScore,
+   srTrendResearch:r.eventPolarity,phase:r.phase,
    eventType:r.eventType,eventStrength:r.eventStrength,
-   astroTrend:r.astroTrend,solarEventPolarity:r.eventPolarity,
-   polarityReason:r.polarityReason,
    event:r.topEvent?{
-     pair:r.topEvent.pair,aspect:r.topEvent.aspect,
-     orb:r.topEvent.orb,phase:r.topEvent.phase
-   }:null,tradeDecision:'WAIT'
+    pair:r.topEvent.pair,aspect:r.topEvent.aspect,
+    orb:r.topEvent.orb,phase:r.topEvent.phase}:null,
+   tradeDecision:'WAIT'
   }))
  };
 }
 const API=Object.freeze({VERSION,BIRTH_DATE,FIRST_TRADE_REF,PLANETS,EVENTS,
- natalUTC,solarLongitude,solarReturn,getReturns,aspectOrb,eventsAt,analyzeDay,exportResearch});
+ natalUTC,solarLongitude,solarReturn,getReturns,aspectOrb,eventsAt,activeReturn,
+ polarityOf,classify,weekBounds,analyzeWeek,phaseOf,analyzeDay,exportResearch});
 root.CebonkComexSolarReturn=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
