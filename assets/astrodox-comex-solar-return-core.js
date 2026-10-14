@@ -208,8 +208,11 @@ async function analyzeDay(C,A,dateStr,hourNY=12,onProgress=()=>{},cancelled=()=>
    const events=eventsAt(positions,target,previousPositions),top=events[0]||null;
    const polarity=polarityOf(events);
    const local=classify(polarity.score,polarity.activity,0.18);
+   const eventDirection=top?.eventType==='HARMONIS'?'BUY':
+    top?.eventType==='TEGANG'?'SELL':'WAIT';
+   // Near-exact SR activation is required; reject constant all-day bias.
    const match=weekly.direction!=='WAIT'&&weekly.direction===local&&
-    top!==null&&top.strength>=0.35;
+    eventDirection===weekly.direction&&top!==null&&top.orb<=0.50;
    streak=match?streak+1:0;
    const trend=match&&streak>=3?weekly.direction:'WAIT';
    const phase=trend==='WAIT'?'TIDAK ADA':phaseOf(top);
