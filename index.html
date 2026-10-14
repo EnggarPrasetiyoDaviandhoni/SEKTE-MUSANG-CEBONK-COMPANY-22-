@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<meta name="description" content="CEBONK XAUUSD dashboard: Astrology Luxor→WIB 5M dan riset M1 per menit, dengan rincian planet, zodiak dan aspek.">
+<meta name="description" content="CEBONK XAUUSD dashboard: Astrology UTC+0 5M dan riset M1 per menit, dengan rincian planet, zodiak dan aspek.">
 <title>CEBONK ASTRODOX · XAUUSD</title>
 <style>
 :root{--bg:#080e17;--panel:#101a28;--panel2:#142134;--line:#26364c;--text:#e8eff8;--muted:#9eafc5;--accent:#f0c16c;--cyan:#70d7dc;--buy:#83dfb3;--sell:#ff9b9b;--amber:#f1c779}
@@ -36,7 +36,7 @@
 <body>
 <main class="wrap">
 <header class="hero">
- <div><div class="eyebrow">SEKTE MUSANG · CEBONK COMPANY 22</div><h1>ASTRODOX <span style="color:var(--cyan)">·</span> XAUUSD</h1><p>Astrologi harian &amp; Al-Biruni · WIB · Mode riset, belum tervalidasi untuk entry</p></div>
+ <div><div class="eyebrow">SEKTE MUSANG · CEBONK COMPANY 22</div><h1>ASTRODOX <span style="color:var(--cyan)">·</span> XAUUSD</h1><p>Astrologi harian UTC+0 &amp; Al-Biruni independen · Mode riset, belum tervalidasi untuk entry</p></div>
  <span class="version">v2.7 / SR HARIAN + MINGGUAN · RISET</span>
 </header>
 <nav class="viewtabs" aria-label="Mode analisis">
@@ -49,13 +49,13 @@
 <section class="clocks" aria-label="Jam sekarang, bukan tanggal hasil scan">
  <div class="clock"><label>Jam Luxor sekarang <span id="liveLuxorOffset"></span></label><strong id="clockLuxor">—</strong><small id="clockLuxorDate">—</small></div>
  <div class="bridge"><b>→</b><span id="clockDifference">—</span></div>
- <div class="clock"><label>Jam WIB sekarang · UTC+7</label><strong id="clockWib">—</strong><small id="clockWibDate">—</small></div>
+ <div class="clock"><label>Jam UTC sekarang · UTC+0</label><strong id="clockWib">—</strong><small id="clockWibDate">—</small></div>
 </section>
 <section class="panel">
  <div class="controls">
-  <div><label for="dateInput">Tanggal jadwal (WIB)</label><input id="dateInput" type="date" min="2020-01-01" max="2040-12-31" required></div>
+  <div><label for="dateInput">Tanggal jadwal (UTC)</label><input id="dateInput" type="date" min="2020-01-01" max="2040-12-31" required></div>
   <div class="mode-control"><label for="tzMode">Acuan jam Luxor</label><select id="tzMode"><option value="AUTO">Otomatis DST · Africa/Cairo (UTC+2 / +3)</option><option value="FIXED3">UTC+3 tetap · acuan web contoh, tanpa DST</option></select></div>
-  <div><label for="startMinute">Rentang scan WIB</label><select id="startMinute"><option value="360">06:00 – 00:00 (+1 hari)</option><option value="0">00:00 – 00:00 (+1 hari)</option></select></div>
+  <div><label for="startMinute">Rentang scan UTC</label><select id="startMinute"><option value="360">06:00 – 00:00 (+1 hari)</option><option value="0">00:00 – 00:00 (+1 hari)</option></select></div>
   <div class="run-control"><button class="primary" id="runBtn" type="button">Hitung 5 menit</button></div>
  </div>
  <div class="control-footer"><label class="check"><input id="modelEnabled" type="checkbox"><span>Tampilkan BUY/SELL <strong>model eksperimen V1</strong></span></label><button class="ghost" id="todayBtn" type="button">Hari ini</button></div>
@@ -66,9 +66,9 @@
 <section id="results" data-stale="false">
  <div class="metrics">
   <div class="metric"><span class="label">Window skor V1 (bukan arah harga)*</span><strong id="dominant" class="neutral">—</strong><small id="duration">Model eksperimen, bukan pasar live</small></div>
-  <div class="metric"><span class="label">Awal window (WIB)</span><strong id="entryStart">—</strong><small id="entryStartLuxor">—</small></div>
-  <div class="metric"><span class="label">Inti / skor puncak (WIB)</span><strong id="entryCore">—</strong><small id="entryCoreLuxor">—</small></div>
-  <div class="metric"><span class="label">Akhir window (WIB)</span><strong id="entryEnd">—</strong><small id="entryEndLuxor">—</small></div>
+  <div class="metric"><span class="label">Awal window (UTC)</span><strong id="entryStart">—</strong><small id="entryStartLuxor">—</small></div>
+  <div class="metric"><span class="label">Inti / skor puncak (UTC)</span><strong id="entryCore">—</strong><small id="entryCoreLuxor">—</small></div>
+  <div class="metric"><span class="label">Akhir window (UTC)</span><strong id="entryEnd">—</strong><small id="entryEndLuxor">—</small></div>
  </div>
  <section class="panel">
   <div class="head"><div><h2>Timeline ringkas</h2><small id="rangeLabel">Interval berurutan dengan label sama digabung, tanpa membuang slot.</small></div><div class="actions"><button id="copyBtn" type="button" disabled>Salin ringkasan</button><button id="csvBtn" type="button" disabled>Unduh CSV 5M</button></div></div>
@@ -78,8 +78,8 @@
  <section class="panel">
   <div class="head"><div><h2>Periksa satu slot 5 menit</h2><small>Koordinat Luxor: 25.6872° LU · 32.6396° BT. Bukan lokasi perangkat.</small></div></div>
   <div class="inspect">
-   <div class="inspect-top"><p id="inspectStamp">Pilih waktu setelah scan.</p><div class="stepper"><button id="prevSlot" type="button" aria-label="Mundur lima menit" disabled>−5m</button><select id="slotSelect" aria-label="Slot waktu WIB" disabled><option>—</option></select><button id="nextSlot" type="button" aria-label="Maju lima menit" disabled>+5m</button></div></div>
-   <div class="inspect-grid"><div class="inspect-tile"><span class="label">Waktu Luxor</span><strong id="sampleLuxor">—</strong><small id="sampleLuxorDate">—</small></div><div class="inspect-tile"><span class="label">Waktu WIB</span><strong id="sampleWib">—</strong><small id="sampleWibDate">—</small></div><div class="inspect-tile"><span class="label">Status model / skor</span><strong id="sampleState">—</strong><small id="sampleScore">Bukan ukuran probabilitas</small></div></div>
+   <div class="inspect-top"><p id="inspectStamp">Pilih waktu setelah scan.</p><div class="stepper"><button id="prevSlot" type="button" aria-label="Mundur lima menit" disabled>−5m</button><select id="slotSelect" aria-label="Slot waktu UTC" disabled><option>—</option></select><button id="nextSlot" type="button" aria-label="Maju lima menit" disabled>+5m</button></div></div>
+   <div class="inspect-grid"><div class="inspect-tile"><span class="label">Waktu Luxor</span><strong id="sampleLuxor">—</strong><small id="sampleLuxorDate">—</small></div><div class="inspect-tile"><span class="label">Waktu UTC</span><strong id="sampleWib">—</strong><small id="sampleWibDate">—</small></div><div class="inspect-tile"><span class="label">Status model / skor</span><strong id="sampleState">—</strong><small id="sampleScore">Bukan ukuran probabilitas</small></div></div>
   </div>
   <div class="head"><h3>Aspek aktif pada slot dipilih</h3><div class="tabs"><select id="aspectFilter" aria-label="Filter aspek"><option value="ALL">Semua aspek</option><option value="LOCAL">Planet ↔ ASC/MC Luxor</option><option value="PLANET">Antarplanet</option></select><small id="aspectCount">—</small></div></div>
   <div class="scroller"><table><thead><tr><th>Pasangan</th><th>Aspek</th><th>Orb −5m</th><th>Orb kini</th><th>Orb +5m</th><th>Fase*</th><th>Kontribusi model</th></tr></thead><tbody id="aspectBody"><tr><td colspan="7">—</td></tr></tbody></table></div>
@@ -90,11 +90,11 @@
  </section>
  <section class="panel">
   <div class="head"><div><h2>Seluruh data 5 menit</h2><small id="rawCount">Tidak ada pemotongan baris; klik baris untuk memeriksa ephemeris.</small></div></div>
-  <div class="scroller raw"><table><thead><tr><th>WIB</th><th>Luxor · offset</th><th>Model V1</th><th>Skor*</th><th>ASC Luxor</th><th>MC Luxor</th><th>Aspek lokasi aktif</th></tr></thead><tbody id="rawBody"><tr><td colspan="7">—</td></tr></tbody></table></div>
+  <div class="scroller raw"><table><thead><tr><th>UTC</th><th>Luxor · offset</th><th>Model V1</th><th>Skor*</th><th>ASC Luxor</th><th>MC Luxor</th><th>Aspek lokasi aktif</th></tr></thead><tbody id="rawBody"><tr><td colspan="7">—</td></tr></tbody></table></div>
  </section>
 </section>
 <div id="manualCopyBox" class="panel" hidden><div class="head"><h2>Salin teks secara manual</h2></div><textarea id="manualCopy" readonly aria-label="Ringkasan untuk disalin"></textarea></div>
-<details><summary>Cara baca & batasan versi ini</summary><p>Tanggal input selalu tanggal jadwal WIB. Setiap slot diubah menjadi satu timestamp UTC; posisi planet dan ASC/MC dihitung pada timestamp yang sama, lalu ditampilkan dalam WIB dan jam Luxor. Mengganti mode jam Luxor tidak mengubah posisi langit pada timestamp UTC yang sama.</p><p>Mode otomatis mengikuti aturan Africa/Cairo: UTC+2 atau UTC+3 menurut tanggal. Versi ini menyertakan snapshot aturan IANA yang diperiksa 3 Oktober 2026 untuk rentang 2020–2040, sehingga tidak bergantung pada database zona waktu Android yang mungkin lama. Aturan tahun mendatang dapat berubah; aplikasi harus diperbarui bila aturan resmi berubah. Mode UTC+3 tetap hanya untuk menyamai konvensi waktu pada web contoh, bukan selalu jam sipil Luxor.</p><p>Model arah masih formula eksperimen V1. Tidak ada backtest, data harga, persen confidence, rule Astrodox tervalidasi, atau kepastian profit. Tidak ada order MT5 maupun sinyal Telegram otomatis. Sebutan “inti” hanya skor absolut tertinggi di dalam window terpanjang. Menonaktifkan model menampilkan DATA, bukan memaksa BUY/SELL.</p><p>Belum mencakup Nodes, Chiron, Lilith, rumah astrologi lengkap, atau asteroid. Angka dari layanan lain dapat berbeda bila memakai sidereal, topocentric, mean ecliptic, koordinat, orb, atau acuan waktu berbeda.</p><p>Butuh internet untuk memuat Astronomy Engine sekali setiap pembukaan bila belum tersedia di cache. File dapat dipublikasikan sebagai <code>index.html</code>. Tidak memuat font, gambar, akun, API key, atau tracker eksternal.</p></details>
+<details><summary>Cara baca & batasan versi ini</summary><p>Tanggal input pada tab ASTROLOGI menggunakan UTC+0. Setiap slot 5 menit dihitung langsung pada tanggal UTC; ASC/MC tetap memakai koordinat Luxor. Jam Luxor hanya referensi lokasi. Mengganti mode jam Luxor tidak mengubah posisi langit pada timestamp UTC yang sama.</p><p>Mode otomatis mengikuti aturan Africa/Cairo: UTC+2 atau UTC+3 menurut tanggal. Versi ini menyertakan snapshot aturan IANA yang diperiksa 3 Oktober 2026 untuk rentang 2020–2040, sehingga tidak bergantung pada database zona waktu Android yang mungkin lama. Aturan tahun mendatang dapat berubah; aplikasi harus diperbarui bila aturan resmi berubah. Mode UTC+3 tetap hanya untuk menyamai konvensi waktu pada web contoh, bukan selalu jam sipil Luxor.</p><p>Model arah masih formula eksperimen V1. Tidak ada backtest, data harga, persen confidence, rule Astrodox tervalidasi, atau kepastian profit. Tidak ada order MT5 maupun sinyal Telegram otomatis. Sebutan “inti” hanya skor absolut tertinggi di dalam window terpanjang. Menonaktifkan model menampilkan DATA, bukan memaksa BUY/SELL.</p><p>Belum mencakup Nodes, Chiron, Lilith, rumah astrologi lengkap, atau asteroid. Angka dari layanan lain dapat berbeda bila memakai sidereal, topocentric, mean ecliptic, koordinat, orb, atau acuan waktu berbeda.</p><p>Butuh internet untuk memuat Astronomy Engine sekali setiap pembukaan bila belum tersedia di cache. File dapat dipublikasikan sebagai <code>index.html</code>. Tidak memuat font, gambar, akun, API key, atau tracker eksternal.</p></details>
 <details><summary>Aturan model V1 yang dipakai (terbuka, belum tervalidasi)</summary><p>Hanya aspek antarplanet masuk ke penjumlahan skor. BUY bila skor ≥ 1.15; SELL bila skor ≤ −1.15; di antaranya NEUTRAL atau TRANSITION bila perubahan skor antarslot ≥ 0.55. Bobot berikut diwarisi dari prototype, bukan hasil riset XAUUSD.</p><pre id="modelRules"></pre></details>
 <details><summary>Sumber perhitungan & informasi teknis</summary><p><a href="https://github.com/cosinekitty/astronomy/tree/v2.1.19/source/js" target="_blank" rel="noopener noreferrer">Astronomy Engine 2.1.19 — dokumentasi & lisensi MIT</a>. Konversi geocentric EQJ → ECT, true obliquity dan sidereal time digunakan konsisten untuk ASC/MC.</p><p><a href="https://data.iana.org/time-zones/tzdb/africa" target="_blank" rel="noopener noreferrer">IANA tzdb — aturan Africa/Cairo</a>. Koordinat konfigurasi mengikuti titik acuan Luxor dari <a href="https://kusnuzon.github.io/fx-project/tools/fx-tools/AstroCycleFX.html" target="_blank" rel="noopener noreferrer">web contoh</a>; aplikasi ini bukan salinan atau implementasi resmi Astrodox.</p><p>SSOT: satu CFG. Modul terpisah: waktu, geometri ASC/MC, ephemeris, aspek, model eksperimen, dan tampilan. Tidak ada fallback posisi planet rekaan bila library gagal.</p></details>
 
@@ -116,7 +116,7 @@
 'use strict';
 const freeze = o => { Object.values(o).forEach(v => {if(v && typeof v==='object' && !Object.isFrozen(v)) freeze(v);}); return Object.freeze(o); };
 const CFG=freeze({
- version:'2.0.0', step:5, yearMin:2020, yearMax:2040, wibOffset:420,
+ version:'2.0.1-utc-tab', step:5, yearMin:2020, yearMax:2040, wibOffset:420,
  luxor:{name:'Luxor, Mesir',lat:25.6872,lon:32.6396,zone:'Africa/Cairo'},
  timezoneSnapshot:'2026-10-03',
  planets:[
@@ -162,6 +162,10 @@ function wibToUTC(iso,minute){
  assert(Number.isInteger(minute)&&minute>=0&&minute<=1440,'Jam WIB tidak valid.');
  return parseDate(iso)+(minute-CFG.wibOffset)*MIN;
 }
+function utcToUTC(iso,minute){
+ assert(Number.isInteger(minute)&&minute>=0&&minute<=1440,'Jam UTC tidak valid.');
+ return parseDate(iso)+minute*MIN;
+}
 function lastWeekday(y,monthIndex,weekday){
  const d=new Date(Date.UTC(y,monthIndex+1,0));
  return d.getUTCDate()-(d.getUTCDay()-weekday+7)%7;
@@ -181,9 +185,9 @@ function luxorOffset(ms,mode='AUTO'){
  const b=cairoBounds(y);
  return ms>=b.start&&ms<b.end?180:120;
 }
-const Time=Object.freeze({parts,dateISO,hm,hms,offsetLabel,parseDate,wibToUTC,cairoBounds,luxorOffset,
- wib:ms=>parts(ms,CFG.wibOffset),luxor:(ms,mode)=>parts(ms,luxorOffset(ms,mode)),
- today:()=>dateISO(parts(Date.now(),CFG.wibOffset))
+const Time=Object.freeze({parts,dateISO,hm,hms,offsetLabel,parseDate,wibToUTC,utcToUTC,cairoBounds,luxorOffset,
+ wib:ms=>parts(ms,CFG.wibOffset),utc:ms=>parts(ms,0),luxor:(ms,mode)=>parts(ms,luxorOffset(ms,mode)),
+ today:()=>dateISO(parts(Date.now(),CFG.wibOffset)),todayUTC:()=>dateISO(parts(Date.now(),0))
 });
 function anglesFromSidereal(lstDeg,obliquityDeg,latitude){
  assert([lstDeg,obliquityDeg,latitude].every(Number.isFinite),'Sudut astronomi tidak valid.');
@@ -295,9 +299,11 @@ function createEngine(A){
  }
  return Object.freeze({get,clear:()=>cache.clear(),cacheSize:()=>cache.size});
 }
-async function scan(engine,iso,startMinute,modelEnabled,onProgress=()=>{},cancelled=()=>false){
+async function scan(engine,iso,startMinute,modelEnabled,onProgress=()=>{},cancelled=()=>false,timeBasis='WIB'){
  assert(startMinute===0||startMinute===360,'Window scan tidak valid.');
- const start=wibToUTC(iso,startMinute),end=wibToUTC(iso,1440),step=CFG.step*MIN;
+ assert(timeBasis==='WIB'||timeBasis==='UTC','Basis waktu tidak valid.');
+ const conversion=timeBasis==='UTC'?utcToUTC:wibToUTC;
+ const start=conversion(iso,startMinute),end=conversion(iso,1440),step=CFG.step*MIN;
  const n=(end-start)/step;engine.clear();
  // One cached ephemeris snapshot per grid point, including phase edge samples.
  for(let i=-1;i<=n;i++){
@@ -329,16 +335,16 @@ let engine=null,libPromise=null,current=null,index=0,busy=false;
 function error(msg){$('errorBox').hidden=!msg;$('errorBox').textContent=msg||'';}
 function status(msg){$('statusText').textContent=msg;}
 function luxorText(ms,mode){const p=T.luxor(ms,mode);return `${T.dateISO(p)} ${T.hm(p)} ${T.offsetLabel(p.offset)}`;}
-function wibText(ms){const p=T.wib(ms);return `${T.dateISO(p)} ${T.hm(p)} WIB`;}
-function shortWib(ms,base){const p=T.wib(ms);return T.hm(p)+(T.dateISO(p)!==base?' (+1 hari)':'');}
+function utcText(ms){const p=T.utc(ms);return `${T.dateISO(p)} ${T.hm(p)} UTC`;}
+function shortUTC(ms,base){const p=T.utc(ms);return T.hm(p)+(T.dateISO(p)!==base?' (+1 hari)':'');}
 function zodiac(lon){const degrees=Math.round((C.norm(lon)%30)*60);let zi=Math.floor(C.norm(lon)/30);if(degrees===1800) zi=(zi+1)%12;return `${CFG.zodiac[zi]} ${String(Math.floor(degrees/60)%30).padStart(2,'0')}°${String(degrees%60).padStart(2,'0')}′`;}
 function badge(s){return `<span class="badge ${s.toLowerCase()}">${s==='DATA'?'DATA ASTRO':s}</span>`;}
 function clock(){
- const now=Date.now(),mode=$('tzMode').value,w=T.wib(now),l=T.luxor(now,mode);
+ const now=Date.now(),mode=$('tzMode').value,w=T.utc(now),l=T.luxor(now,mode);
  $('clockWib').textContent=T.hms(w);$('clockWibDate').textContent=T.dateISO(w);
  $('clockLuxor').textContent=T.hms(l);$('clockLuxorDate').textContent=T.dateISO(l)+(mode==='FIXED3'?' · acuan tetap':' · sipil');
  $('liveLuxorOffset').textContent='· '+T.offsetLabel(l.offset);
- $('clockDifference').textContent=`WIB +${(CFG.wibOffset-l.offset)/60} jam`;
+ $('clockDifference').textContent=`Luxor ${T.offsetLabel(l.offset)} · UTC+0`;
 }
 function markStale(){
  if(busy) return;
@@ -390,17 +396,17 @@ function kpi(){
  }
  $('dominant').textContent='V1 '+g.state+' · RISET';$('dominant').className='neutral';
  $('duration').textContent=`${(g.end-g.start)/60000} menit · skor hipotesis, bukan arah GOLD`;
- [['entryStart',g.start],['entryCore',g.best.ms],['entryEnd',g.end]].forEach(([id,t])=>{$(id).textContent=shortWib(t,base);$(id+'Luxor').textContent=luxorText(t,mode);});
+ [['entryStart',g.start],['entryCore',g.best.ms],['entryEnd',g.end]].forEach(([id,t])=>{$(id).textContent=shortUTC(t,base);$(id+'Luxor').textContent=luxorText(t,mode);});
 }
 function timeline(){
  const {groups,mode,iso}=current;
- $('rangeLabel').textContent=`Tanggal WIB ${iso} · ${modeName(mode)} · ${current.samples.length} slot`;
+ $('rangeLabel').textContent=`Tanggal UTC ${iso} · ${modeName(mode)} · ${current.samples.length} slot`;
  $('timeline').innerHTML=groups.map(g=>{
   const reason=g.best.active.filter(a=>!a.local).sort((a,b)=>Math.abs(b.impact)-Math.abs(a.impact))[0];
   const explanation=reason?`${reason.id1} — ${reason.id2} · ${reason.name} · orb ${fmt(reason.orb)}°`:'Tidak ada aspek planet dalam orb.';
   const avg=g.samples.length?g.sum/g.samples.length:0;
-  const boundary=(g.start===current.samples[0].ms?'Awal pada batas scan. ':'')+(g.end===T.wibToUTC(iso,1440)?'Akhir pada batas scan.':'');
-  return `<div class="timeline-row"><div class="timeline-time">${shortWib(g.start,iso)} – ${shortWib(g.end,iso)}<small>Luxor: ${esc(luxorText(g.start,mode))}<br>s.d. ${esc(luxorText(g.end,mode))}</small></div><div>${badge(g.state)}<small>${(g.end-g.start)/60000} menit</small></div><div class="timeline-info"><b>${esc(explanation)}</b><small>${current.model?`Rata-rata skor ${fmt(avg)} · Puncak ${fmt(g.best.score)}. `:'Model arah OFF. '}${esc(boundary)}</small></div></div>`;
+  const boundary=(g.start===current.samples[0].ms?'Awal pada batas scan. ':'')+(g.end===T.utcToUTC(iso,1440)?'Akhir pada batas scan.':'');
+  return `<div class="timeline-row"><div class="timeline-time">${shortUTC(g.start,iso)} – ${shortUTC(g.end,iso)}<small>Luxor: ${esc(luxorText(g.start,mode))}<br>s.d. ${esc(luxorText(g.end,mode))}</small></div><div>${badge(g.state)}<small>${(g.end-g.start)/60000} menit</small></div><div class="timeline-info"><b>${esc(explanation)}</b><small>${current.model?`Rata-rata skor ${fmt(avg)} · Puncak ${fmt(g.best.score)}. `:'Model arah OFF. '}${esc(boundary)}</small></div></div>`;
  }).join('');
 }
 function rawRows(){
@@ -409,16 +415,16 @@ function rawRows(){
  $('rawBody').innerHTML=samples.map((s,i)=>{
   const l=T.luxor(s.ms,mode),local=s.active.filter(a=>a.local);
   const list=local.slice(0,2).map(a=>`${a.id1}–${a.id2} ${a.angle}° (${fmt(a.orb)}°)`).join(' · ');
-  return `<tr data-index="${i}" ${i===index?'class="selected"':''}><td class="mono">${T.hm(T.wib(s.ms))}</td><td class="mono">${T.hm(l)} <small>${T.offsetLabel(l.offset)}</small></td><td>${badge(s.state)}</td><td class="mono">${s.score===null?'—':fmt(s.score)}</td><td class="mono">${fmt(s.positions.ASC.lon,3)}°</td><td class="mono">${fmt(s.positions.MC.lon,3)}°</td><td>${esc(list||'—')}${local.length>2?` · +${local.length-2} aspek`:''}</td></tr>`;
+  return `<tr data-index="${i}" ${i===index?'class="selected"':''}><td class="mono">${T.hm(T.utc(s.ms))}</td><td class="mono">${T.hm(l)} <small>${T.offsetLabel(l.offset)}</small></td><td>${badge(s.state)}</td><td class="mono">${s.score===null?'—':fmt(s.score)}</td><td class="mono">${fmt(s.positions.ASC.lon,3)}°</td><td class="mono">${fmt(s.positions.MC.lon,3)}°</td><td>${esc(list||'—')}${local.length>2?` · +${local.length-2} aspek`:''}</td></tr>`;
  }).join('');
 }
 function selected(){
  if(!current) return;
- const s=current.samples[index],mode=current.mode,w=T.wib(s.ms),l=T.luxor(s.ms,mode);
+ const s=current.samples[index],mode=current.mode,w=T.utc(s.ms),l=T.luxor(s.ms,mode);
  $('slotSelect').value=String(index);$('prevSlot').disabled=index===0;$('nextSlot').disabled=index===current.samples.length-1;
  $('inspectStamp').textContent=`Timestamp tunggal: ${new Date(s.ms).toISOString().replace('.000Z',' UTC')}`;
  $('sampleLuxor').textContent=T.hm(l)+' '+T.offsetLabel(l.offset);$('sampleLuxorDate').textContent=T.dateISO(l)+' · '+modeName(mode);
- $('sampleWib').textContent=T.hm(w)+' WIB';$('sampleWibDate').textContent=T.dateISO(w)+' · UTC+7';
+ $('sampleWib').textContent=T.hm(w)+' UTC';$('sampleWibDate').textContent=T.dateISO(w)+' · UTC+0';
  $('sampleState').innerHTML=badge(s.state);$('sampleScore').textContent=s.score===null?'Model arah dimatikan':`Skor ${fmt(s.score)} · bukan confidence`;
  const filter=$('aspectFilter').value,aspects=s.active.filter(a=>filter==='ALL'||(filter==='LOCAL'?a.local:!a.local));
  $('aspectCount').textContent=`${aspects.length} / ${s.active.length} aspek aktif`;
@@ -432,9 +438,9 @@ function selected(){
 function render(){
  kpi();timeline();
  const {samples}=current,now=Date.now();
- const target=current.iso===T.today()?now:T.wibToUTC(current.iso,720);
+ const target=current.iso===T.todayUTC()?now:T.utcToUTC(current.iso,720);
  index=Math.max(0,Math.min(samples.length-1,Math.floor((target-samples[0].ms)/(CFG.step*60000))));
- $('slotSelect').innerHTML=samples.map((s,i)=>`<option value="${i}">${T.hm(T.wib(s.ms))} WIB</option>`).join('');
+ $('slotSelect').innerHTML=samples.map((s,i)=>`<option value="${i}">${T.hm(T.utc(s.ms))} UTC</option>`).join('');
  $('slotSelect').disabled=false;rawRows();selected();
  $('copyBtn').disabled=false;$('csvBtn').disabled=false;
 }
@@ -447,34 +453,34 @@ async function run(){
  clearResults();$('results').dataset.stale='false';setBusy(true);$('progress').value=0;status('Memuat mesin astronomi…');
  try{
   await loadLibrary();
-  const samples=await C.scan(engine,iso,start,model,p=>{$('progress').value=p;status(`Menghitung posisi & aspek 5 menit · ${p}%`);});
+  const samples=await C.scan(engine,iso,start,model,p=>{$('progress').value=p;status(`Menghitung posisi & aspek 5 menit · ${p}%`);},()=>false,'UTC');
   current={iso,mode,start,model,samples,groups:C.segments(samples)};render();
   window.CEBONK_ASTRO_STATE=current;
   window.dispatchEvent(new Event('cebonk-astro-update'));
   const offsets=[...new Set(samples.map(s=>T.luxorOffset(s.ms,mode)))].map(T.offsetLabel).join(' / ');
-  status(`${samples.length} slot selesai · Luxor ${offsets} → WIB UTC+7 · koordinat Luxor aktif · model ${model?'EKSPERIMEN':'OFF'}`);
+  status(`${samples.length} slot selesai · Luxor ${offsets} → UTC+0 · koordinat Luxor aktif · model ${model?'EKSPERIMEN':'OFF'}`);
  }catch(e){clearResults();error(e.message||String(e));status('Perhitungan gagal — tidak ada sinyal yang diterbitkan.');}
  finally{setBusy(false);}
 }
 function summary(){
- const lines=['SEKTE MUSANG — CEBONK COMPANY 22','ASTROLOGY XAUUSD / XAUUSDc • Luxor → WIB • v2.0',`Tanggal jadwal WIB: ${current.iso}`,`Lokasi: ${CFG.luxor.lat} N, ${CFG.luxor.lon} E | ${modeName(current.mode)}`,'MODEL EKSPERIMEN, BELUM TERVALIDASI. Bukan instruksi entry.',''];
- current.groups.forEach(g=>{lines.push(`${wibText(g.start)} → ${wibText(g.end)} | ${g.state} | ${(g.end-g.start)/60000} menit`);lines.push(`Luxor: ${luxorText(g.start,current.mode)} → ${luxorText(g.end,current.mode)}`);});
+ const lines=['SEKTE MUSANG — CEBONK COMPANY 22','ASTROLOGY XAUUSD / XAUUSDc • UTC+0 • v2.1',`Tanggal jadwal UTC: ${current.iso}`,`Lokasi: ${CFG.luxor.lat} N, ${CFG.luxor.lon} E | ${modeName(current.mode)}`,'MODEL EKSPERIMEN, BELUM TERVALIDASI. Bukan instruksi entry.',''];
+ current.groups.forEach(g=>{lines.push(`${utcText(g.start)} → ${utcText(g.end)} | ${g.state} | ${(g.end-g.start)/60000} menit`);lines.push(`Luxor: ${luxorText(g.start,current.mode)} → ${luxorText(g.end,current.mode)}`);});
  lines.push('','Grid 5 menit. Awal/akhir pada batas scan bukan konfirmasi sinyal/expired.','Skor bukan confidence/win rate. ASC/MC hanya data timing.');return lines.join('\n');
 }
 function exportCSV(){
  if(!current||$('results').dataset.stale==='true') return;
  const ids=[...CFG.planets.map(p=>p.id),...CFG.angles];
- const header=['UTC','date_WIB','time_WIB','date_Luxor','time_Luxor','Luxor_offset_minutes','Luxor_mode','model_state_UNVALIDATED','score_NOT_probability',...ids.flatMap(id=>[id+'_lon_deg',id+'_declination_deg',id+'_speed_deg_day']),'active_aspects'];
+ const header=['UTC','date_UTC','time_UTC','date_Luxor','time_Luxor','Luxor_offset_minutes','Luxor_mode','model_state_UNVALIDATED','score_NOT_probability',...ids.flatMap(id=>[id+'_lon_deg',id+'_declination_deg',id+'_speed_deg_day']),'active_aspects'];
  const quote=x=>'"'+String(x===null?'':x).replace(/"/g,'""')+'"';
  const rows=current.samples.map(s=>{
-  const w=T.wib(s.ms),l=T.luxor(s.ms,current.mode);
+  const w=T.utc(s.ms),l=T.luxor(s.ms,current.mode);
   return [new Date(s.ms).toISOString(),T.dateISO(w),T.hm(w),T.dateISO(l),T.hm(l),l.offset,current.mode,s.state,s.score===null?'':s.score.toFixed(6),...ids.flatMap(id=>[s.positions[id].lon.toFixed(6),s.positions[id].dec.toFixed(6),s.speeds[id].toFixed(6)]),s.active.map(a=>`${a.id1}/${a.id2} ${a.angle}deg orb=${a.orb.toFixed(4)} ${a.phase} ${a.local?'TIMING_ONLY':'EXPERIMENT'}`).join(' | ')];
  });
  const blob=new Blob(['\uFEFF'+[header,...rows].map(row=>row.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
- const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`CEBONK_LUXOR_WIB_5M_${current.iso}_${current.mode}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`CEBONK_ASTRO_UTC_5M_${current.iso}_${current.mode}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 $('runBtn').addEventListener('click',run);
-$('todayBtn').addEventListener('click',()=>{$('dateInput').value=T.today();run();});
+$('todayBtn').addEventListener('click',()=>{$('dateInput').value=T.todayUTC();run();});
 for(const id of ['dateInput','tzMode','startMinute','modelEnabled']) $(id).addEventListener('change',markStale);
 $('slotSelect').addEventListener('change',()=>{if(current){index=Number($('slotSelect').value);selected();}});
 $('prevSlot').addEventListener('click',()=>{if(current&&index>0){index--;selected();}});
@@ -488,7 +494,7 @@ $('copyBtn').addEventListener('click',async()=>{
 });
 $('csvBtn').addEventListener('click',exportCSV);
 $('modelRules').textContent=JSON.stringify({planetWeights:CFG.planets,aspects:CFG.aspects,buyThreshold:CFG.buy,sellThreshold:CFG.sell,phaseBoost:{EXACT:1.25,APPLYING:1.10,SEPARATING:0.90},ASC_MC:'TIMING_ONLY — zero directional contribution',formula:'polarity × aspectWeight × (abs(nature1)+abs(nature2)+0.8)/2 × (weight1+weight2)/2 × max(0,1-orb/maxOrb) × phaseBoost'},null,2);
-$('dateInput').value=T.today();clock();setInterval(clock,1000);run();
+$('dateInput').value=T.todayUTC();clock();setInterval(clock,1000);run();
 })();
 
 </script>
