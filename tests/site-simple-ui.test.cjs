@@ -45,17 +45,18 @@ function run(){
  assert.equal($('simpleMore').getAttribute('aria-expanded'),'false');
  assert.equal($('tabAstroFollowTrend').id,'tabAstroFollowTrend','pure ASTRODOX Follow Trend remains a primary navigation destination');
  assert.equal($('simpleAstroDetails').open,false);
- assert.equal($('simpleAlbiruniDetails').open,false);
- assert.equal($('abClassicPanel').open,false,'classical calculation is still available after expanding');
+ assert.equal($('simpleAlbiruniDetails'),null,'Original Al-Biruni must not be folded into simplified archive');
+ assert.equal($('simpleAlbiruniSettings'),null,'Original Al-Biruni controls must remain directly visible');
+ assert.equal($('simpleAbNotice'),null,'Do not inject additional model into the restored panel');
+ assert.equal($('abClassicPanel').open,true,'Shell must not mutate existing Al-Biruni panels');
  assert.equal($('testMetrics').parentElement.id,'results','headline timing remains visible');
  assert.equal($('timeline').closest('details').id,'simpleAstroDetails');
  assert.equal($('copyBtn').closest('details').id,'simpleAstroDetails');
  assert.equal($('sampleData').closest('details').id,'simpleAstroDetails');
- assert.equal($('abPeriodSummary').parentElement.id,'abResults','headline Al-Biruni report stays visible');
- assert.equal($('abPeriodDays').closest('details').id,'simpleAlbiruniDetails');
- assert.equal($('abFinalDecision').closest('details').id,'simpleAlbiruniDetails','legacy feed stays accessible as archive');
- assert.equal($('abEvents').closest('details').id,'simpleAlbiruniDetails');
- assert.match($('simpleAbNotice').textContent,/STATUS TRADING: WAIT/);
+ assert.equal($('abPeriodSummary').parentElement.id,'abResults','Al-Biruni summary remains in its original section');
+ assert.equal($('abPeriodDays').closest('details'),null,'Original Al-Biruni daily section stays expanded');
+ assert.equal($('abFinalDecision').closest('details'),null,'No new legacy archive wrappers');
+ assert.equal($('abEvents').closest('details'),null,'Events remain directly visible');
  $('simpleMore').click();
  assert.equal($('simpleMore').getAttribute('aria-expanded'),'true');
  assert.ok(w.document.querySelector('.viewtabs').classList.contains('simple-nav-open'));
@@ -63,11 +64,6 @@ function run(){
  assert.equal($('simpleMore').getAttribute('aria-expanded'),'false');
  $('tabBazi').click();
  assert.equal($('simpleMore').getAttribute('aria-expanded'),'true','secondary modules remain visible after navigation');
- $('simpleAlbiruniSettings').click();
- assert.equal($('simpleAlbiruniSettings').getAttribute('aria-expanded'),'true');
- assert.ok($('albiruniPanel').classList.contains('simple-ab-expanded'));
- $('simpleAlbiruniSettings').click();
- assert.ok(!$('albiruniPanel').classList.contains('simple-ab-expanded'));
  $('simpleAstroSettings').click();
  assert.ok($('tzMode').closest('.controls').classList.contains('simple-settings-open'));
  let clicks=0;
@@ -81,6 +77,6 @@ function run(){
  assert.equal(deep.window.document.getElementById('simpleMore').getAttribute('aria-expanded'),'true',
   'secondary deep link stays discoverable');
  deep.window.close();
- console.log('PASS: simplified shell preserves tabs, details, calculation controls, archives and deep links.');
+ console.log('PASS: simplified shell preserves other tabs without modifying original Al-Biruni panel.');
 }
 run();
