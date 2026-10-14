@@ -129,7 +129,8 @@ async function analyze(C,SR,A,date,hourNY=12,onProgress=()=>{},isCancelled=()=>f
    const info=scoreAt(engine.get(ms).positions,chart,engine.get(ms-5*MIN).positions);
    const candidates=info.events.filter(e=>Math.sign(e.contribution)===(week.direction==='BUY'?1:-1));
    const leading=candidates[0]||null;
-   const matching=week.direction!=='WAIT'&&info.direction===week.direction&&
+   const tradeDay=new Date(Date.parse(date+'T00:00:00Z')).getUTCDay();
+   const matching=tradeDay>=1&&tradeDay<=5&&week.direction!=='WAIT'&&info.direction===week.direction&&
      leading&&leading.strength>=0.08;
    confirmed=matching?confirmed+1:0;
    const signal=confirmed>=2?week.direction:'WAIT';
