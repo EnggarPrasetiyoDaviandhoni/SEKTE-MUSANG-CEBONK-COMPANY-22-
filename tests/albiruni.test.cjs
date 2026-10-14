@@ -295,7 +295,7 @@ async function run(){
  assert.match(baziNav,/tabAlBiruni/);
  assert.match(baziNav,/al-biruni/);
 
- for(const f of ['albiruni-core.js','albiruni-ui.js','albiruni.css'])assert.ok(html.includes(f));
+ for(const f of ['albiruni-original-v1-5-core.js','albiruni-original-v1-5-ui.js','albiruni-original-v1-5.css'])assert.ok(html.includes(f),'Restored original resource '+f+' must be active');
  for(const f of ['albiruni-core.js','albiruni-ui.js'])assert.doesNotMatch(fs.readFileSync(path.join(ROOT,'assets',f),'utf8'),/CebonkCore|CEBONK_ASTRO_STATE|cebonk-astro-update|legacyImpact|classify\(/,'no dependency on legacy direction engine');
  console.log('Al-Biruni calculations: calendar, roots, orb edges, stations, retrograde, manual conflict, CSV and independent lunar phase check passed.');
 }
