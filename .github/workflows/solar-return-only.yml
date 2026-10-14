@@ -1,18 +1,22 @@
-name: Solar Return Only V3 tests
+name: Solar Return V3.1 regression and real ephemeris
 on:
   push:
     paths:
       - 'assets/solar-return-only-trend-*.js'
+      - 'assets/astrodox-comex-solar-return-core.js'
       - 'assets/site-tab-router.js'
       - 'index.html'
       - 'tests/solar-return-only-trend.test.cjs'
+      - 'tests/solar-return-ephemeris-smoke.test.cjs'
       - '.github/workflows/solar-return-only.yml'
   pull_request:
     paths:
       - 'assets/solar-return-only-trend-*.js'
+      - 'assets/astrodox-comex-solar-return-core.js'
       - 'assets/site-tab-router.js'
       - 'index.html'
       - 'tests/solar-return-only-trend.test.cjs'
+      - 'tests/solar-return-ephemeris-smoke.test.cjs'
       - '.github/workflows/solar-return-only.yml'
   workflow_dispatch:
 jobs:
@@ -23,5 +27,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Solar Return independent core and panel tests
+      - name: Install pinned astronomical ephemeris library for live computation test
+        run: npm install --no-save --no-package-lock --ignore-scripts astronomy-engine@2.1.19
+      - name: Solar Return logic and regression checks
         run: node tests/solar-return-only-trend.test.cjs
+      - name: Real planetary positions and Solar Return calculation smoke test
+        run: node tests/solar-return-ephemeris-smoke.test.cjs
