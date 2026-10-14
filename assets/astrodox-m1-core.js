@@ -186,6 +186,45 @@ async function calculateHour(engine,date,hour,onProgress=()=>{},cancelled=()=>fa
   tradingDecision:'WAIT'});
 }
 
+
+function dailySummary(rows){
+ must(Array.isArray(rows)&&rows.length===1440,'Data harian M1 belum lengkap.');
+ const v1={BUY:0,SELL:0,NEUTRAL:0,TRANSITION:0};
+ const v2={BUY:0,SELL:0,NEUTRAL:0};
+ for(const x of rows){v1[x.state]=(v1[x.state]||0)+1;v2[x.configState]=(v2[x.configState]||0)+1;}
+ const dominant=v2.BUY>v2.SELL&&v2.BUY>v2.NEUTRAL?'BUY':
+                v2.SELL>v2.BUY&&v2.SELL>v2.NEUTRAL?'SELL':'WAIT';
+ const windows=[];
+ for(const x of rows){
+  const direction=x.configState;
+  if(direction==='NEUTRAL')continue;
+  let last=windows[windows.length-1];
+  if(!last||last.direction!==direction||last.endUTCms!==x.ms){
+   last={direction,startUTCms:x.ms,coreUTCms:x.ms,endUTCms:x.ms+MINUTE,
+     durationMinutes:1,peakAbsScore:Math.abs(x.configScore)};
+   windows.push(last);
+  }else{
+   last.endUTCms=x.ms+MINUTE;last.durationMinutes++;
+   if(Math.abs(x.configScore)>last.peakAbsScore){
+    last.coreUTCms=x.ms;last.peakAbsScore=Math.abs(x.configScore);
+   }
+  }
+ }
+ const primary=windows.filter(x=>x.direction===dominant)
+   .sort((a,b)=>b.durationMinutes-a.durationMinutes||b.peakAbsScore-a.peakAbsScore)[0];
+ return Object.freeze({
+  v1Counts:v1,v2Counts:v2,
+  v2DailyDominance:dominant,
+  v2DailyNetSum:rows.reduce((n,x)=>n+x.configScore,0),
+  focusWindow:primary?{
+   direction:primary.direction,startUTC:new Date(primary.startUTCms).toISOString(),
+   coreUTC:new Date(primary.coreUTCms).toISOString(),
+   endUTC:new Date(primary.endUTCms).toISOString(),
+   durationMinutes:primary.durationMinutes
+  }:null,
+  interpretation:'Dominasi konfigurasi sepanjang 24 jam, bukan prediksi arah harga atau jadwal entry teruji'
+ });
+}
 /* 1,440 independently sampled minutes for one WIB calendar date.
  * 24 hourly chunks reduce retained ephemeris cache on low-memory phones.
  */
@@ -205,6 +244,7 @@ async function calculateDay(engine,date,onProgress=()=>{},cancelled=()=>false){
  onProgress(100);
  return Object.freeze({version:VERSION,mode:'ASTRODOX_M1_DAY_RESEARCH',
     date,hour:null,stepMinutes:1,minutes:1440,rows,
+    summary:dailySummary(rows),
     model:'V1_PLUS_SEPARATE_EXPERIMENTAL_CONFIG_V2',
     planetInterpretation:'V2_EXPLICIT_UNVALIDATED_WEIGHTING',
     directionValidated:false,tradingDecision:'WAIT'});
@@ -220,6 +260,7 @@ function exportEAResearchFeed(result){
   scores:'EXPERIMENTAL_UNVALIDATED_ASTROLOGY_DIRECTION',
   allowAutoTrade:false,tradeDecision:'WAIT',
   note:'Bukan sinyal trading otomatis. EA hanya boleh membaca jadwal sebagai bahan uji.',
+  dailySummary:result.summary||dailySummary(result.rows),
   v2Assumptions:V2_ASSUMPTIONS,
   rows:result.rows.map(x=>({
     utc:new Date(x.ms).toISOString(),wib:C.Time.hm(C.Time.wib(x.ms)),
@@ -232,7 +273,7 @@ function exportEAResearchFeed(result){
   }))
  };
 }
-const API=Object.freeze({VERSION,ELEMENTS,ELEMENT_INFO,ROLES,zodiac,interpret,calculateHour,calculateDay,meanLilith,exportEAResearchFeed,V2_ASSUMPTIONS});
+const API=Object.freeze({VERSION,ELEMENTS,ELEMENT_INFO,ROLES,zodiac,interpret,calculateHour,calculateDay,meanLilith,exportEAResearchFeed,dailySummary,V2_ASSUMPTIONS});
 root.CebonkAstrodoxM1=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
