@@ -7,9 +7,9 @@ const ui=fs.readFileSync(path.join(ROOT,'assets/albiruni-classical-direction-ui.
 const shell=fs.readFileSync(path.join(ROOT,'assets/site-simple-ui.js'),'utf8');
 const core=fs.readFileSync(path.join(ROOT,'assets/albiruni-classical-direction.js'),'utf8');
 const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
-assert.ok(html.includes('assets/albiruni-classical-direction.js?v=1.0.0'));
-assert.ok(html.includes('assets/albiruni-classical-direction-ui.js?v=1.0.0'));
-assert.ok(html.includes('assets/albiruni-classical-direction.css?v=1.0.0'));
+assert.ok(!html.includes('assets/albiruni-classical-direction.js?v=1.0.0'),'Later classical module is archived, not mounted in original v1.5');
+assert.ok(!html.includes('assets/albiruni-classical-direction-ui.js?v=1.0.0'),'Later direction UI must not replace original Al-Biruni panel');
+assert.ok(!html.includes('assets/albiruni-classical-direction.css?v=1.0.0'),'Original Al-Biruni CSS is active instead');
 assert.ok(!/autoSignal|autoPeriodSummary|ASPECT_COUNT_MAJORITY|majority_direct_v3/.test(ui),'new classical UI does not call legacy majority engine');
 assert.ok(!/\bC\.autoSignal\s*\(|\bC\.autoPeriodSummary\s*\(|\bbuyCount\s*\+\s*sellCount\b/.test(core),'classical engine cannot invoke majority voting');
 const dom=new JSDOM('<body><main><nav class="viewtabs"><button type="button" class="viewtab active" id="tabAstro">ASTROLOGY</button><button type="button" class="viewtab" id="tabAlBiruni">AL-BIRUNI</button></nav>'+
