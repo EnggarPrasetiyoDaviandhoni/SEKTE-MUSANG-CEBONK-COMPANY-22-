@@ -37,15 +37,15 @@
 <main class="wrap">
 <header class="hero">
  <div><div class="eyebrow">SEKTE MUSANG · CEBONK COMPANY 22</div><h1>ASTRODOX <span style="color:var(--cyan)">·</span> XAUUSD</h1><p>Astrologi harian &amp; Al-Biruni · WIB · Mode riset, belum tervalidasi untuk entry</p></div>
- <span class="version">v2.5 / SOLAR RETURN MURNI · FOLLOW TREND</span>
+ <span class="version">v2.6 / RISET ASTROLOGI · BUKAN SINYAL TRADING</span>
 </header>
 <nav class="viewtabs" aria-label="Mode analisis">
- <button class="viewtab active" id="tabAstro" type="button">ASTROLOGI</button>
+ <button class="viewtab" id="tabAstro" type="button">ASTROLOGI</button>
  <button class="viewtab" id="tabAlBiruni" type="button" aria-controls="albiruniPanel" aria-selected="false">AL-BIRUNI</button>
  <button class="viewtab" id="tabAstroFollowTrend" type="button" aria-controls="astroFollowTrendView" aria-selected="false">ASTRODOX FOLLOW TREND</button>
- <button class="viewtab" id="tabSolarReturnOnly" type="button" aria-controls="solarReturnOnlyView" aria-selected="false">SOLAR RETURN MURNI</button>
+ <button class="viewtab active" id="tabSolarReturnOnly" type="button" aria-controls="solarReturnOnlyView" aria-selected="false">SOLAR RETURN MURNI</button>
 </nav>
-<div id="astroView">
+<div id="astroView" hidden>
 <section class="clocks" aria-label="Jam sekarang, bukan tanggal hasil scan">
  <div class="clock"><label>Jam Luxor sekarang <span id="liveLuxorOffset"></span></label><strong id="clockLuxor">—</strong><small id="clockLuxorDate">—</small></div>
  <div class="bridge"><b>→</b><span id="clockDifference">—</span></div>
@@ -58,14 +58,14 @@
   <div><label for="startMinute">Rentang scan WIB</label><select id="startMinute"><option value="360">06:00 – 00:00 (+1 hari)</option><option value="0">00:00 – 00:00 (+1 hari)</option></select></div>
   <div class="run-control"><button class="primary" id="runBtn" type="button">Hitung 5 menit</button></div>
  </div>
- <div class="control-footer"><label class="check"><input id="modelEnabled" type="checkbox" checked><span>Tampilkan BUY/SELL <strong>model eksperimen V1</strong></span></label><button class="ghost" id="todayBtn" type="button">Hari ini</button></div>
+ <div class="control-footer"><label class="check"><input id="modelEnabled" type="checkbox"><span>Tampilkan BUY/SELL <strong>model eksperimen V1</strong></span></label><button class="ghost" id="todayBtn" type="button">Hari ini</button></div>
 </section>
-<div class="note"><strong>Data astronomi dan arah harga itu berbeda.</strong><p>BUY/SELL di sini berasal dari bobot eksperimen V1, <b>belum divalidasi terhadap harga XAUUSD</b>. ASC/MC menambah data aspek lokasi Luxor; tidak diberi bobot arah rekaan. Skor bukan confidence, win rate, atau instruksi entry.</p></div>
+<div class="note"><strong>PERINGATAN: ASTROLOGI V1 BUKAN ARAH HARGA GOLD. Jangan gunakan label BUY/SELL di halaman ini untuk entry nyata.</strong><p>BUY/SELL di sini berasal dari bobot eksperimen V1, <b>belum divalidasi terhadap harga XAUUSD</b>. ASC/MC menambah data aspek lokasi Luxor; tidak diberi bobot arah rekaan. Skor bukan confidence, win rate, atau instruksi entry.</p></div>
 <div id="errorBox" class="error" role="alert" hidden></div>
 <div class="statusline" role="status" aria-live="polite"><progress id="progress" max="100" value="0" hidden></progress><span id="statusText">Memuat Astronomy Engine…</span></div>
 <section id="results" data-stale="false">
  <div class="metrics">
-  <div class="metric"><span class="label">Window arah terpanjang*</span><strong id="dominant" class="neutral">—</strong><small id="duration">Model eksperimen, bukan pasar live</small></div>
+  <div class="metric"><span class="label">Window skor V1 (bukan arah harga)*</span><strong id="dominant" class="neutral">—</strong><small id="duration">Model eksperimen, bukan pasar live</small></div>
   <div class="metric"><span class="label">Awal window (WIB)</span><strong id="entryStart">—</strong><small id="entryStartLuxor">—</small></div>
   <div class="metric"><span class="label">Inti / skor puncak (WIB)</span><strong id="entryCore">—</strong><small id="entryCoreLuxor">—</small></div>
   <div class="metric"><span class="label">Akhir window (WIB)</span><strong id="entryEnd">—</strong><small id="entryEndLuxor">—</small></div>
@@ -101,7 +101,7 @@
 </div>
 <section id="albiruniPanel" aria-labelledby="abTitle" hidden></section>
 <section id="astroFollowTrendView" aria-labelledby="aftTitle" hidden></section>
-<section id="solarReturnOnlyView" aria-label="Solar Return murni follow trend" hidden></section>
+<section id="solarReturnOnlyView" aria-label="Solar Return murni untuk riset astrologi, tidak tervalidasi sebagai tren harga"></section>
 <section id="combinedView" hidden></section>
 <section id="combined2View" hidden></section>
 <footer><span>CEBONK XAUUSD · ASTROLOGY + FIBO MUSANG + COMBINED</span><span>Riset, bukan jaminan hasil trading.</span></footer>
@@ -388,8 +388,8 @@ function kpi(){
   $('duration').textContent=current.model?'Tidak ada window BUY/SELL pada model ini':'Model arah dimatikan';
   for(const id of ['entryStart','entryCore','entryEnd','entryStartLuxor','entryCoreLuxor','entryEndLuxor']) $(id).textContent='—';return;
  }
- $('dominant').textContent=g.state;$('dominant').className=g.state.toLowerCase();
- $('duration').textContent=`${(g.end-g.start)/60000} menit · skor, bukan probabilitas`;
+ $('dominant').textContent='V1 '+g.state+' · RISET';$('dominant').className='neutral';
+ $('duration').textContent=`${(g.end-g.start)/60000} menit · skor hipotesis, bukan arah GOLD`;
  [['entryStart',g.start],['entryCore',g.best.ms],['entryEnd',g.end]].forEach(([id,t])=>{$(id).textContent=shortWib(t,base);$(id+'Luxor').textContent=luxorText(t,mode);});
 }
 function timeline(){
@@ -503,10 +503,10 @@ $('dateInput').value=T.today();clock();setInterval(clock,1000);run();
 <script src="assets/astrodox-m1-ui.js?v=1.2.0"></script>
 <script src="assets/astrodox-event-polarity-m1.js?v=1.0.0"></script>
 <script src="assets/astrodox-event-polarity-m1-ui.js?v=1.0.0"></script>
-<script src="assets/astrodox-comex-solar-return-core.js?v=2.0.0"></script>
-<script src="assets/astrodox-comex-solar-return-ui.js?v=2.0.0"></script>
-<script src="assets/solar-return-only-trend-core.js?v=3.0.0"></script>
-<script src="assets/solar-return-only-trend-ui.js?v=3.0.0"></script>
+<script src="assets/astrodox-comex-solar-return-core.js?v=2.0.1"></script>
+<!-- Panel Solar Return v2 lama dinonaktifkan. Akses hanya panel mandiri V3. -->
+<script src="assets/solar-return-only-trend-core.js?v=3.1.0"></script>
+<script src="assets/solar-return-only-trend-ui.js?v=3.1.0"></script>
 <script src="assets/astro-daily-brief.js?v=1.0.0"></script>
 <script src="assets/bazi-core.js?v=1.0.0"></script>
 <script src="assets/bazi-ui.js?v=1.6.0"></script>
