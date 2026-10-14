@@ -6,7 +6,8 @@
  */
 (function(root){
 'use strict';
-const VERSION='3.0.0',MIN=60000,HOUR=60*MIN,DAY=24*HOUR;
+const VERSION='3.1.0',MIN=60000,HOUR=60*MIN,DAY=24*HOUR;
+const TIMING=Object.freeze({maxOrb:0.06,minOrbMovement5m:0.00075,maxMinutesFromExact:90,maxWindowMinutes:90});
 const BODIES=Object.freeze({
  Venus:{nature:1,weight:1.0},Jupiter:{nature:1,weight:1.15},
  Mars:{nature:-1,weight:0.95},Saturn:{nature:-1,weight:1.15}
@@ -53,8 +54,12 @@ function scoreAt(positions,chart,previousPositions){
     const orb=orbOf(p,lon,aspect.angle);
     if(orb>aspect.orb)continue;
     const prevOrb=Number.isFinite(prev)?orbOf(prev,lon,aspect.angle):null;
-    const phase=orb<=0.12?'INTI':prevOrb===null?'TRANSISI':
+    const phase=orb<=0.012?'INTI':prevOrb===null?'TRANSISI':
       orb+0.000001<prevOrb?'AWAL':orb>prevOrb+0.000001?'AKHIR':'TRANSISI';
+    const movement=prevOrb===null?0:Math.abs(orb-prevOrb);
+    const minutesFromExact=movement>0?5*orb/movement:null;
+    const timingEligible=movement>=TIMING.minOrbMovement5m&&
+      orb<=TIMING.maxOrb&&minutesFromExact<=TIMING.maxMinutesFromExact;
     const closeness=1-orb/aspect.orb;
     const strength=closeness*closeness*nature.weight*weight*aspect.weight;
     const signed=nature.nature*strength;
@@ -62,7 +67,8 @@ function scoreAt(positions,chart,previousPositions){
      id:id+'|'+target+'|'+aspect.name+'|'+chart.year,
      planet:id,target,aspect:aspect.name,orb,phase,
      nature:nature.nature===1?'MENGUNTUNGKAN':'MERUGIKAN',
-     contribution:signed,strength,chartYear:chart.year
+     contribution:signed,strength,chartYear:chart.year,
+     timingEligible,minutesFromExact
     }));
    }
   }
@@ -122,37 +128,48 @@ async function analyze(C,SR,A,date,hourNY=12,onProgress=()=>{},isCancelled=()=>f
    await new Promise(done=>setTimeout(done,0));
   }
   const week=summarizeWeek(days),start=C.Time.wibToUTC(date,0);
+  const consumed=new Set();
   let confirmed=0,open=null,lastId=null;
+  const weekday=new Date(Date.parse(date+'T00:00:00Z')).getUTCDay();
   for(let i=0;i<288;i++){
    must(!isCancelled(),'Perhitungan dibatalkan.');
    const ms=start+i*5*MIN,chart=returnAt(charts,ms);
    const info=scoreAt(engine.get(ms).positions,chart,engine.get(ms-5*MIN).positions);
-   const candidates=info.events.filter(e=>Math.sign(e.contribution)===(week.direction==='BUY'?1:-1));
-   const leading=candidates[0]||null;
-   const tradeDay=new Date(Date.parse(date+'T00:00:00Z')).getUTCDay();
-   const matching=tradeDay>=1&&tradeDay<=5&&week.direction!=='WAIT'&&info.direction===week.direction&&
-     leading&&leading.strength>=0.08;
-   confirmed=matching?confirmed+1:0;
-   const signal=confirmed>=2?week.direction:'WAIT';
-   const event=signal!=='WAIT'?leading:null;
+   // A single planetary aspect can open at most one short window each day.
+   if(open&&ms>=open.start+TIMING.maxWindowMinutes*MIN){
+    consumed.add(open.eventId);windows.push(Object.freeze(open));
+    open=null;confirmed=0;lastId=null;
+   }
+   const leading=info.events.find(e=>e.timingEligible&&!consumed.has(e.id)&&
+     Math.sign(e.contribution)===(week.direction==='BUY'?1:-1))||null;
+   const matching=weekday>=1&&weekday<=5&&week.direction!=='WAIT'&&
+     info.direction===week.direction&&leading!==null&&leading.strength>=0.08;
+   confirmed=matching?(lastId===leading.id?confirmed+1:1):0;
+   lastId=matching?leading.id:null;
+   const researchBias=confirmed>=2?week.direction:'WAIT';
+   const event=researchBias!=='WAIT'?leading:null;
    const row=Object.freeze({ms,utc:new Date(ms).toISOString(),timeWIB:timeWIB(ms),
     chartYear:chart.year,weekBias:week.direction,localBias:info.direction,
-    score:info.score,activity:info.activity,signal,
-    phase:signal==='WAIT'?'WAIT':event.phase,event,
+    score:info.score,activity:info.activity,signal:researchBias,
+    phase:event?event.phase:'WAIT',event,
     reason:week.direction==='WAIT'?'BIAS_MINGGUAN_TIDAK_KUKUH':
-      signal==='WAIT'?'AKTIVASI_SR_TIDAK_SEARAH':'SR_MINGGUAN_DAN_ASPEK_SEARAH'});
+      researchBias==='WAIT'?'TIDAK_ADA_EVENT_EXACT_CUKUP_CEPAT':'HANYA_TIMING_ASTRONOMI',
+    tradeDecision:'WAIT'});
    rows.push(row);
-   if(signal==='WAIT'){if(open){windows.push(Object.freeze(open));open=null;}lastId=null;}
-   else if(open&&lastId===event.id){
+   if(researchBias==='WAIT'){
+    if(open){consumed.add(open.eventId);windows.push(Object.freeze(open));open=null;}
+   }else if(open&&open.eventId===event.id){
     open.end=ms+5*MIN;
-    if(event.strength>open.peakStrength){open.peakStrength=event.strength;open.core=ms;
-      open.corePhase=event.phase;open.aspect=event.aspect;}
+    if(event.strength>open.peakStrength){
+     open.peakStrength=event.strength;open.core=ms;
+     open.corePhase=event.phase;open.aspect=event.aspect;
+    }
    }else{
-    if(open)windows.push(Object.freeze(open));
-    open={start:ms,end:ms+5*MIN,core:ms,corePhase:event.phase,
-     planet:event.planet,target:event.target,aspect:event.aspect,
-     direction:signal,peakStrength:event.strength,chartYear:chart.year};
-    lastId=event.id;
+    if(open){consumed.add(open.eventId);windows.push(Object.freeze(open));}
+    open={eventId:event.id,start:ms,end:ms+5*MIN,core:ms,
+     corePhase:event.phase,planet:event.planet,target:event.target,
+     aspect:event.aspect,direction:researchBias,
+     peakStrength:event.strength,chartYear:chart.year};
    }
    if(i%24===23){
     onProgress(45+Math.round((i+1)/288*55));
@@ -164,21 +181,21 @@ async function analyze(C,SR,A,date,hourNY=12,onProgress=()=>{},isCancelled=()=>f
   return Object.freeze({version:VERSION,dateWIB:date,week:week,bounds,
    baseline:charts,activeReturn:active,rows,windows:windows.sort((a,b)=>
     b.peakStrength-a.peakStrength),
-   sampleMinutes:5,weekday:new Date(Date.parse(date+'T00:00:00Z')).getUTCDay(),
+   sampleMinutes:5,weekday,timingLimits:TIMING,
    allowAutoTrade:false,validatedForXAUUSD:false,tradeDecision:'WAIT',
-   disclaimer:'Arah adalah bias simbolik astrologi murni; bukan tren harga aktual atau akurasi terbukti.'});
+   disclaimer:'Hanya riset astrologi Solar Return. Tidak membaca arah harga GOLD. Aktivasi bukan sinyal entry, bukan rekomendasi trading, dan akurasi tidak teruji.'});
  }finally{engine.clear();}
 }
 function exportResearch(r){
  must(r&&r.version===VERSION,'Hasil SR v3.0 tidak tersedia.');
- return {schema:'CEBONK_SOLAR_RETURN_ONLY_TREND_RESEARCH_V3',
+ return {schema:'CEBONK_SOLAR_RETURN_ONLY_RESEARCH_V3_1',
   dateWIB:r.dateWIB,week:r.week,bounds:r.bounds,
   reference:{natalUTC:r.baseline.natalUTC,hourNY:r.baseline.hourNY,
    assumedClock:true,activeSolarReturnUTC:r.activeReturn.utc},
-  windows:r.windows,rows:r.rows,allowAutoTrade:false,
+  windows:r.windows,rows:r.rows.map(({signal,...r})=>({...r,researchBias:signal})),allowAutoTrade:false,
   validatedForXAUUSD:false,tradeDecision:'WAIT',disclaimer:r.disclaimer};
 }
-const api=Object.freeze({VERSION,BODIES,TARGETS,ASPECTS,separation,orbOf,scoreAt,
+const api=Object.freeze({VERSION,BODIES,TARGETS,ASPECTS,TIMING,separation,orbOf,scoreAt,
  classify,weekWindow,returnAt,summarizeWeek,analyze,exportResearch,dateWIB,timeWIB});
 root.CebonkSolarReturnOnly=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
