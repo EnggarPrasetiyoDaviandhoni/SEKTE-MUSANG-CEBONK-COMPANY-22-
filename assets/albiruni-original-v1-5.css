@@ -1,0 +1,156 @@
+/* Every selector is confined to the independent Al-Biruni panel. */
+#albiruniPanel{--ab-gold:#f0c16c;--ab-muted:#9eafc5;--ab-cyan:#70d7dc;background:linear-gradient(145deg,#182337,#0d1725 65%);border:1px solid #43516a;border-radius:18px;margin:0 0 22px;overflow:hidden;box-shadow:0 12px 35px #0004;color:#e8eff8}
+#albiruniPanel [hidden]{display:none!important}
+#albiruniPanel .ab-header{display:flex;justify-content:space-between;gap:20px;align-items:start;padding:24px 24px 18px;border-bottom:1px solid #2b3b53}
+#albiruniPanel .ab-kicker{color:var(--ab-gold);font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:9px}
+#albiruniPanel h2{font-size:25px;line-height:1.2;margin:0 0 9px;letter-spacing:.1px}
+#albiruniPanel p{margin:0;line-height:1.6}
+#albiruniPanel .ab-lead{color:var(--ab-muted);max-width:680px;font-size:13px}
+#albiruniPanel .ab-tag{flex-shrink:0;color:var(--ab-cyan);background:#132e39;border:1px solid #28515b;border-radius:99px;font-size:10px;font-weight:800;padding:7px 11px;letter-spacing:.6px;white-space:nowrap}
+#albiruniPanel .ab-body{padding:20px 24px 24px}
+#albiruniPanel .ab-controls{display:grid;grid-template-columns:1.05fr 1.2fr 1.25fr .75fr;gap:12px;align-items:end}
+#albiruniPanel label{display:block;font-size:11px;color:var(--ab-muted);margin-bottom:6px}
+#albiruniPanel input,#albiruniPanel select{width:100%;min-width:0;background:#0b1422;border:1px solid #35445c;border-radius:9px;color:#e8eff8;padding:10px;font:inherit;font-size:13px;min-height:42px;color-scheme:dark}
+#albiruniPanel button{font:inherit;font-size:12px;padding:10px 14px;border-radius:9px;background:#1a2a40;border:1px solid #35445c;color:#e8eff8;cursor:pointer;min-height:40px}
+#albiruniPanel button:disabled{opacity:.5;cursor:default}
+#albiruniPanel button:hover:not(:disabled){border-color:var(--ab-cyan)}
+#albiruniPanel :is(button,input,select,a,summary):focus-visible{outline:2px solid var(--ab-cyan);outline-offset:3px}
+#albiruniPanel .ab-primary{background:var(--ab-gold);color:#172033;border-color:var(--ab-gold);font-weight:800}
+#albiruniPanel .ab-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 16px}
+#albiruniPanel .ab-actions .ab-next{margin-left:auto}
+#albiruniPanel .ab-status{font-size:12px;color:var(--ab-muted);display:flex;gap:10px;align-items:center;min-height:26px;line-height:1.6}
+#albiruniPanel .ab-status.ab-error{color:#ffacac}
+#albiruniPanel progress{width:85px;height:6px;flex-shrink:0;accent-color:var(--ab-cyan)}
+#albiruniPanel .ab-results{margin-top:18px}
+#albiruniPanel .ab-metrics{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+#albiruniPanel .ab-metric{padding:14px 16px;border:1px solid #30415a;border-radius:11px;background:#0c1726}
+#albiruniPanel .ab-metric span{display:block;font-size:10px;color:var(--ab-muted);text-transform:uppercase;letter-spacing:.9px}
+#albiruniPanel .ab-metric strong{display:block;font-size:22px;line-height:1.25;margin:8px 0 5px}
+#albiruniPanel .ab-metric small{font-size:11px;color:var(--ab-muted);line-height:1.6;display:block}
+#albiruniPanel h3{font-size:14px;margin:0}
+#albiruniPanel .ab-section-title{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:11px}
+#albiruniPanel .ab-section-title small{font-size:11px;color:var(--ab-muted)}
+#albiruniPanel .ab-calendar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:19px}
+#albiruniPanel .ab-calendar.ab-month{grid-template-columns:repeat(7,minmax(0,1fr))}
+#albiruniPanel .ab-calendar.ab-day{grid-template-columns:minmax(0,1fr)}
+#albiruniPanel .ab-day-card{padding:12px;text-align:left;background:#0f1b2c;display:block;min-height:109px}
+#albiruniPanel .ab-day-card[aria-pressed=true]{border-color:var(--ab-gold);background:#243046}
+#albiruniPanel .ab-day-card.ab-weekend{opacity:.7}
+#albiruniPanel .ab-day-card strong{display:block;font-size:19px;margin:5px 0 9px;color:#e8eff8}
+#albiruniPanel .ab-day-card span{display:block;font-size:10px;color:var(--ab-muted)}
+#albiruniPanel .ab-day-card .ab-count{color:var(--ab-cyan);font-size:11px;margin-bottom:4px}
+#albiruniPanel .ab-date-title{color:var(--ab-gold);font-size:13px;margin:0 0 10px}
+#albiruniPanel .ab-table-wrap{overflow-x:auto;border:1px solid #2d3e55;border-radius:10px;margin-bottom:17px}
+#albiruniPanel table{width:100%;border-collapse:collapse;font-size:12px;min-width:780px}
+#albiruniPanel th{color:var(--ab-muted);font-weight:600;text-align:left;font-size:10px;letter-spacing:.45px;text-transform:uppercase;background:#152136;padding:12px;white-space:nowrap;border-bottom:1px solid #2d3e55}
+#albiruniPanel td{padding:12px;border-bottom:1px solid #26354a;vertical-align:top;line-height:1.6}
+#albiruniPanel tr:last-child td{border-bottom:0}
+#albiruniPanel td small{display:block;font-size:10px;color:var(--ab-muted);line-height:1.5;margin-top:3px;max-width:190px}
+#albiruniPanel .ab-empty{padding:18px;color:var(--ab-muted);font-size:12px;line-height:1.7}
+#albiruniPanel .ab-chip{display:inline-block;border:1px solid #35475e;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:800;white-space:nowrap}
+#albiruniPanel .ab-buy{color:#83dfb3;border-color:#2c6050;background:#102b24}
+#albiruniPanel .ab-sell{color:#ffacac;border-color:#6c3d4a;background:#301c28}
+#albiruniPanel .ab-conflict{color:#f1c779;border-color:#67583b;background:#2c271b}
+#albiruniPanel .ab-neutral{color:var(--ab-muted)}
+#albiruniPanel .ab-inspect{display:grid;grid-template-columns:130px 1fr;gap:14px;align-items:center;padding:15px;border:1px solid #30415a;border-radius:10px;background:#0c1726;margin-bottom:14px}
+#albiruniPanel .ab-inspect strong{display:block;font-size:13px;margin-bottom:4px}
+#albiruniPanel .ab-inspect small{display:block;color:var(--ab-muted);font-size:11px;line-height:1.6}
+#albiruniPanel .ab-active{font-size:11px;color:var(--ab-muted);line-height:1.8;margin-top:7px}
+#albiruniPanel .ab-footnote{font-size:11px;color:var(--ab-muted);line-height:1.7}
+#albiruniPanel details{padding:14px 0 0;margin:16px 0 0;border:0;border-top:1px solid #30415a;background:transparent;border-radius:0}
+#albiruniPanel summary{font-size:12px;font-weight:700;cursor:pointer;color:#d6e2f2}
+#albiruniPanel details p{font-size:12px;color:var(--ab-muted);margin:11px 0;line-height:1.8}
+#albiruniPanel .ab-rules{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:12px 0}
+#albiruniPanel a{color:var(--ab-cyan);text-decoration:underline;text-underline-offset:3px}
+#albiruniPanel .ab-small-button{min-height:32px;font-size:11px;padding:5px 10px}
+@media(max-width:700px){
+ #albiruniPanel .ab-header{padding:18px;flex-direction:column;gap:11px}
+ #albiruniPanel .ab-body{padding:16px 18px 20px}
+ #albiruniPanel h2{font-size:22px}
+ #albiruniPanel .ab-controls{grid-template-columns:1fr 1fr}
+ #albiruniPanel .ab-metrics{grid-template-columns:1fr}
+ #albiruniPanel .ab-metric strong{font-size:20px}
+ #albiruniPanel .ab-calendar{grid-template-columns:repeat(5,minmax(110px,1fr));overflow-x:auto;padding-bottom:6px}
+ #albiruniPanel .ab-calendar.ab-month{grid-template-columns:repeat(7,minmax(80px,1fr))}
+ #albiruniPanel .ab-calendar.ab-day{grid-template-columns:1fr}
+ #albiruniPanel .ab-day-card{padding:10px}
+ #albiruniPanel .ab-rules{grid-template-columns:1fr 1fr}
+ #albiruniPanel .ab-inspect{grid-template-columns:110px 1fr;gap:10px}
+}
+
+/* Al-Biruni v1.2: panel-local AUTO experiment controls and sampled windows. */
+#albiruniPanel .ab-auto-config{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:13px 14px;margin:12px 0;border:1px solid #4e5c70;background:#111e30;border-radius:11px}
+#albiruniPanel .ab-auto-config label{margin:0;font-size:12px;font-weight:700}
+#albiruniPanel .ab-auto-config select{width:min(420px,100%);max-width:100%}
+#albiruniPanel .ab-auto-warning{flex-basis:100%;font-size:11px;line-height:1.5;color:#eccb99}
+#albiruniPanel .ab-auto-status{padding:14px 16px;border:1px solid #49607b;background:#101e31;border-radius:10px;margin:10px 0 18px}
+#albiruniPanel .ab-auto-status b{font-size:15px}
+#albiruniPanel .ab-auto-status p{margin:8px 0;font-size:12px}
+#albiruniPanel .ab-auto-status small{font-size:11px;color:#adbdd2}
+#albiruniPanel .ab-auto-times{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0}
+#albiruniPanel .ab-auto-times span{font-size:11px;border:1px solid #4f5c6d;padding:7px;border-radius:7px;flex:1 1 155px}
+#albiruniPanel .ab-auto-windows{margin:10px 0 20px;border:1px solid #40526a;padding:13px;border-radius:9px;max-height:370px;overflow:auto}
+#albiruniPanel .ab-auto-windows h4{font-size:13px;margin:0 0 9px}
+#albiruniPanel .ab-auto-windows>small{font-size:10px;color:#adbdd2}
+#albiruniPanel .ab-auto-win{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 3px;border-bottom:1px solid #344456;font-size:12px}
+#albiruniPanel .ab-auto-win>span{flex:1 1 260px}
+#albiruniPanel .ab-auto-win button{min-height:32px;padding:6px 10px;font-size:11px}
+@media(max-width:700px){#albiruniPanel .ab-auto-config select{width:100%}#albiruniPanel .ab-auto-win>span{flex-basis:100%}}
+
+/* Al-Biruni v1.3: dedicated navigation and responsive daily / weekly / monthly reports. */
+#tabAlBiruni.active{background:#1e3249;color:#f0c16c;box-shadow:inset 0 0 0 1px #876c3b}
+#albiruniPanel .ab-period-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:0 0 17px}
+#albiruniPanel .ab-period-modes button{font-size:12px;font-weight:850;letter-spacing:.7px;min-width:0}
+#albiruniPanel .ab-period-modes button.active{color:#132033;background:#f0c16c;border-color:#f0c16c}
+#albiruniPanel .ab-period-summary{margin:0 0 14px;border:1px solid #506887;background:#122238;border-radius:12px;padding:16px}
+#albiruniPanel .ab-period-summary h3{font-size:14px;margin:0 0 8px;letter-spacing:.2px}
+#albiruniPanel .ab-period-sub{font-size:11px!important;color:#b9c9dd!important;line-height:1.65!important;margin:8px 0!important}
+#albiruniPanel .ab-period-focus{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}
+#albiruniPanel .ab-period-focus>span:first-child{font-size:12px}
+#albiruniPanel .ab-period-focus small{flex-basis:100%;color:#b9c9dd;font-size:11px}
+#albiruniPanel .ab-period-times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:15px 0}
+#albiruniPanel .ab-period-times>div{min-width:0;background:#0b1725;border:1px solid #39516e;border-radius:9px;padding:12px}
+#albiruniPanel .ab-period-times small{display:block;font-size:10px;color:#b9c9dd;letter-spacing:1px}
+#albiruniPanel .ab-period-times strong{display:block;font-variant-numeric:tabular-nums;font-size:15px;margin-top:6px;overflow-wrap:anywhere}
+#albiruniPanel .ab-period-days{border:1px solid #344760;padding:14px;border-radius:12px;margin-bottom:20px}
+#albiruniPanel .ab-period-days>h3{margin-bottom:12px;font-size:13px}
+#albiruniPanel .ab-period-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#albiruniPanel .ab-period-day{text-align:left;min-width:0;display:flex;flex-direction:column;gap:7px;align-items:flex-start;background:#101e31}
+#albiruniPanel .ab-period-day small{font-size:10px;color:#aebfd5}
+#albiruniPanel .ab-period-day span{font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+#albiruniPanel .ab-period-day strong{font-size:11px;color:#f1c779}
+#albiruniPanel .ab-period-day:focus-visible{outline:2px solid #70d7dc}
+@media(max-width:760px){
+ #albiruniPanel .ab-period-modes{gap:5px}
+ #albiruniPanel .ab-period-modes button{font-size:11px;letter-spacing:0;padding:10px 4px}
+ #albiruniPanel .ab-period-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ #albiruniPanel .ab-period-times>div{padding:9px}
+ #albiruniPanel .ab-period-times strong{font-size:13px}
+ #albiruniPanel .ab-period-summary{padding:12px}
+ #albiruniPanel .ab-period-days{padding:10px}
+}
+@media(max-width:360px){#albiruniPanel .ab-period-grid{grid-template-columns:1fr}}
+
+/* v1.5 — Three INDEPENDENT Al-Biruni trading-horizon research cards (not trade signals) */
+#albiruniPanel .ab-three-result{margin:12px 0 24px;padding:15px;border:1px solid #516986;border-radius:12px;background:rgba(10,25,42,.84)}
+#albiruniPanel .ab-three-result>h3{font-size:15px;margin:1px 0 6px;color:#f0c16c;letter-spacing:.4px}
+#albiruniPanel .ab-three-intro{font-size:11px;color:#b7cbe0;line-height:1.65;margin:0 0 14px}
+#albiruniPanel .ab-three-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#albiruniPanel .ab-three-card{min-width:0;padding:13px 12px;background:#101c2e;border:1px solid #3e536e;border-radius:11px;overflow-wrap:anywhere}
+#albiruniPanel .ab-three-card header{display:flex;justify-content:space-between;align-items:center;gap:9px;margin-bottom:12px}
+#albiruniPanel .ab-three-card h4{font-size:13px;color:#f2d6a3;letter-spacing:.5px;margin:0}
+#albiruniPanel .ab-three-card header small{color:#a7c0d8;font-size:10px;letter-spacing:.6px}
+#albiruniPanel .ab-three-direction .ab-chip{font-size:13px}
+#albiruniPanel .ab-three-range{font-size:10px;color:#b7cbe0;line-height:1.6}
+#albiruniPanel .ab-three-entry{display:flex;flex-direction:column;gap:6px;padding:12px;background:#14273c;border:1px solid #4c6f85;border-radius:9px;margin:10px 0 12px}
+#albiruniPanel .ab-three-entry small{font-size:10px;letter-spacing:.4px;color:#a9c9de}
+#albiruniPanel .ab-three-entry strong{font-size:16px;color:#f3d38e;font-variant-numeric:tabular-nums;line-height:1.4}
+#albiruniPanel .ab-three-entry span{font-size:10px;color:#c7d5e3}
+#albiruniPanel .ab-three-times{display:flex;flex-direction:column;gap:6px}
+#albiruniPanel .ab-three-times div{display:flex;flex-direction:column;gap:3px;background:#0b1727;border:1px solid #304860;padding:8px;border-radius:7px}
+#albiruniPanel .ab-three-times small{font-size:10px;color:#aec4d8}
+#albiruniPanel .ab-three-times b{font-size:12px;font-variant-numeric:tabular-nums;color:#e5eff9;font-weight:650}
+#albiruniPanel .ab-three-aspect{font-size:11px;color:#d7e5f3;line-height:1.6;margin:12px 0}
+#albiruniPanel .ab-three-muted{font-size:10px;color:#a6bed6;line-height:1.5}
+@media(max-width:900px){#albiruniPanel .ab-three-cards{grid-template-columns:1fr}#albiruniPanel .ab-three-card{padding:14px}#albiruniPanel .ab-three-times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}#albiruniPanel .ab-three-times b{font-size:11px}}
+@media(max-width:450px){#albiruniPanel .ab-three-result{padding:11px}#albiruniPanel .ab-three-times{grid-template-columns:1fr}#albiruniPanel .ab-three-entry strong{font-size:15px}}
