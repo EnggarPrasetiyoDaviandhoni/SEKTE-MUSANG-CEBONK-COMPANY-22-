@@ -7,7 +7,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='1.0.0',MIN=60000,HOUR=3600000,DAY=86400000;
+const VERSION='1.1.0',MIN=60000,HOUR=3600000,DAY=86400000;
 const BIRTH_DATE='1974-12-31',FIRST_TRADE_REF='https://www.cmegroup.com/media-room/historical-first-trade-dates.html';
 const PLANETS=['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
 const EVENTS=Object.freeze([
