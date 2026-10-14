@@ -123,13 +123,26 @@ function activeReturn(returns,ms){
 async function analyzeDay(C,M,A,dateStr,hourNY=12,onProgress=()=>{},cancelled=()=>false){
  const charts=getReturns(C,A,dateStr,hourNY);
  must(!cancelled(),'Perhitungan Solar Return dibatalkan.');
- const day=await M.calculateDay(C.createEngine(A),dateStr,
-  p=>onProgress(Math.round(p*0.75)),cancelled);
+ const dayEngine=C.createEngine(A);
+ let day;
+ try{
+  day=await M.calculateDay(dayEngine,dateStr,
+   p=>onProgress(Math.round(p*0.75)),cancelled);
+ }finally{dayEngine.clear();}
+ const polarityEngine=root.CebonkEventPolarityM1;
+ must(polarityEngine&&typeof polarityEngine.compute==='function',
+  'Mesin Event Polarity M1 tidak tersedia.');
+ // Existing causal V2 astrology-score filter is an independent research input.
+ // Solar Return aspects are a second, distinct event gate; NOT gold D1 trend.
+ const astroPolarity=polarityEngine.compute(day.rows,{
+  trendMinutes:15,confirmMinutes:2
+ }).rows;
  // Separate daily engine is cleared inside M.calculateDay's per-hour loop;
  // still clean below using an independent engine for previous-minute lookup.
  must(!cancelled(),'Perhitungan Solar Return dibatalkan.');
- const eng=C.createEngine(A),rows=[],recent=new Map();
- let prev=null;
+ const eng=C.createEngine(A),rows=[];
+ let prev=null,prevSolarEvent=null,pending='WAIT',pendingBars=0,
+  previousPolarityEvent=null;
  try{
   for(let i=0;i<day.rows.length;i++){
    must(!cancelled(),'Perhitungan Solar Return dibatalkan.');
@@ -140,12 +153,31 @@ async function analyzeDay(C,M,A,dateStr,hourNY=12,onProgress=()=>{},cancelled=()
    const events=eventsAt(positions,target,previousPositions);
    const top=events[0]||null;
    const trendEvent=top&&top.strength>=0.50?top:null;
-   let fresh=false;
+   const currentEventId=trendEvent?.eventId||null;
+   const fresh=!!currentEventId&&currentEventId!==prevSolarEvent;
+   prevSolarEvent=currentEventId;
+   const astro=astroPolarity[i];
+   let candidate='WAIT',polarityReason='NO_CONFIRMED_SOLAR_EVENT';
    if(trendEvent){
-    const last=recent.get(trendEvent.eventId);
-    fresh=last===undefined||r.ms-last>60*MIN;
-    if(fresh)recent.set(trendEvent.eventId,r.ms);
+    if(trendEvent.eventType==='HARMONIS'&&astro.polarity!=='WAIT'&&
+       astro.astroTrendStreak>=2){
+      candidate=astro.polarity;
+      polarityReason='SR_HARMONIS_DAN_ASTRO_M1_SEARAH';
+    }else if(trendEvent.eventType==='TEGANG'&&astro.polarity!=='WAIT'&&
+             astro.reason==='EVENT_REVERSAL_DENGAN_PERGANTIAN_TREN_ASTRO'){
+      candidate=astro.polarity;
+      polarityReason='SR_TEGANG_DAN_REVERSAL_ASTRO_M1_TERKONFIRMASI';
+    }else{
+      polarityReason=trendEvent.eventType==='TEGANG'?
+       'SR_TEGANG_MENUNGGU_REVERSAL_ASTRO':
+       'SR_TIDAK_MEMBERI_ARAH_KONFIRMASI';
+    }
    }
+   if(candidate!=='WAIT'&&candidate===pending&&
+      previousPolarityEvent===currentEventId)pendingBars++;
+   else{pending=candidate;pendingBars=candidate==='WAIT'?0:1;}
+   previousPolarityEvent=currentEventId;
+   const solarPolarity=candidate!=='WAIT'&&pendingBars>=2?candidate:'WAIT';
    rows.push({
      ms:r.ms,utc:new Date(r.ms).toISOString(),
      returnYear:target.year,returnUTC:target.utc,
@@ -153,7 +185,10 @@ async function analyzeDay(C,M,A,dateStr,hourNY=12,onProgress=()=>{},cancelled=()
      eventType:top?.eventType||'NONE',
      topEvent:top,topFour:events,eventStrength:top?.strength||0,
      newEvent:fresh,
-     eventPolarity:'WAIT', // no unvalidated BUY/SELL inferred from aspect color
+     astroTrend:astro.astroTrend,astroPolarity:astro.polarity,
+     eventPolarity:solarPolarity,polarityReason,
+     solarPolarityCandidate:candidate,
+     // BUY/SELL labels are unvalidated ASTRO SCORE direction hypotheses.
      tradeDecision:'WAIT'
    });
    prev={ms:r.ms,positions};
@@ -165,9 +200,11 @@ async function analyzeDay(C,M,A,dateStr,hourNY=12,onProgress=()=>{},cancelled=()
  }finally{eng.clear();}
  must(rows.length===1440,'Data transit M1 tidak lengkap.');
  const counts={HARMONIS:0,TEGANG:0,TRANSISI:0,NONE:0};
+ const polarityCounts={BUY:0,SELL:0,WAIT:0};
  const eventList=[];
  for(const row of rows){
   counts[row.eventType]++;
+  polarityCounts[row.eventPolarity]++;
   if(row.newEvent&&row.topEvent)eventList.push({
    utc:row.utc,wib:C.Time.hm(C.Time.wib(row.ms)),returnYear:row.returnYear,
    type:row.eventType,pair:row.topEvent.pair,aspect:row.topEvent.aspect,
@@ -180,9 +217,9 @@ async function analyzeDay(C,M,A,dateStr,hourNY=12,onProgress=()=>{},cancelled=()
   version:VERSION,model:'COMEX_SOLAR_RETURN_M1_RESEARCH',
   dateWIB:dateStr,baseline:charts,activeAtStart:start,
   activeAtEnd:end,rolloverDuringDay:start.year!==end.year,
-  rows,counts,eventList,minutes:rows.length,
+  rows,counts,polarityCounts,eventList,minutes:rows.length,
   validatedForXAUUSD:false,tradeDecision:'WAIT',
-  note:'Solar Return shows annual geocentric Sun longitude recurrence. Event strengths are orbital distances, not BUY/SELL probability.'
+  note:'Solar Return shows annual geocentric Sun longitude recurrence. BUY/SELL polarity is a separate unvalidated Astrology-score hypothesis, never a market trend or trading instruction.'
  });
 }
 function exportResearch(result){
@@ -192,6 +229,8 @@ function exportResearch(result){
   dateWIB:result.dateWIB,timezone:'Asia/Jakarta',
   generatedAtUTC:new Date().toISOString(),
   baseline:result.baseline,
+  polarityCounts:result.polarityCounts,
+  eventPolarityMethod:'CONFIRMED_V2_ASTRO_SCORE_CONDITIONAL_ON_SOLAR_RETURN_EVENT',
   activeSolarReturnStart:result.activeAtStart.utc,
   activeSolarReturnEnd:result.activeAtEnd.utc,
   events:result.eventList,
@@ -200,6 +239,8 @@ function exportResearch(result){
   rows:result.rows.map(r=>({
    utc:r.utc,returnYear:r.returnYear,astroV2:r.astroV2,astroV2Score:r.astroV2Score,
    eventType:r.eventType,eventStrength:r.eventStrength,
+   astroTrend:r.astroTrend,solarEventPolarity:r.eventPolarity,
+   polarityReason:r.polarityReason,
    event:r.topEvent?{
      pair:r.topEvent.pair,aspect:r.topEvent.aspect,
      orb:r.topEvent.orb,phase:r.topEvent.phase
