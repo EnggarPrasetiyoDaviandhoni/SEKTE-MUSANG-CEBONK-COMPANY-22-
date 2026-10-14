@@ -13,7 +13,7 @@ const fmt=n=>Number.isFinite(n)?n.toFixed(2):'—';
 const pct=n=>Number.isFinite(n)?n.toFixed(0)+'%':'—';
 const directionClass=x=>x==='BUY'?'buy':x==='SELL'?'sell':'neutral';
 const fullDate=()=>C.Time.dateISO(C.Time.wib(Date.now()));
-let busy=false,cancelled=false,libPromise=null,report=null,chosen=-1,calculationId=0;
+let busy=false,cancelled=false,libPromise=null,report=null,chosen=-1,calculationId=0,viewRows=[];
 const section=document.createElement('section');
 section.className='panel astrom1';
 section.id='astroM1Panel';
@@ -23,6 +23,8 @@ section.innerHTML=[
  '<span class="astrom1-chip">60 slot per jam</span></div>',
  '<div class="astrom1-body">',
  '<div class="astrom1-controls">',
+ '<label for="astrom1Scope">Rentang hitung</label>',
+ '<select id="astrom1Scope"><option value="HOUR">1 jam / 60 M1</option><option value="DAY">Sehari / 1.440 M1</option></select>',
  '<label for="astrom1Hour">Jam WIB</label>',
  '<select id="astrom1Hour" aria-label="Jam M1 WIB">',
  ...Array.from({length:24},(_,h)=>'<option value="'+h+'">'+hourString(h)+'–'+hourString((h+1)%24)+'</option>'),
@@ -30,22 +32,25 @@ section.innerHTML=[
  '<button id="astrom1Prev" type="button" aria-label="Jam sebelumnya">◀</button>',
  '<button id="astrom1Next" type="button" aria-label="Jam berikutnya">▶</button>',
  '<button id="astrom1Run" class="primary" type="button">Hitung M1</button>',
+ '<button id="astrom1JSON" type="button" disabled>Ekspor JSON EA (riset)</button>',
+ '<button id="astrom1CSV" type="button" disabled>Ekspor CSV</button>',
  '</div>',
  '<p class="astrom1-note">Tanggal mengikuti kalender ASTRODOX di atas. Perhitungan asli setiap menit, bukan interpolasi M5. ',
  '<b>BUY/SELL = arah skor aspek V1, bukan prediksi harga teruji.</b> ',
- 'Peran planet dan unsur zodiak mengikuti panduan gambar sebagai interpretasi, bukan bobot arah tambahan. Keputusan trading: WAIT.</p>',
+ 'V2 memberi faktor riset eksplisit pada peran planet dan unsur zodiak; bukan model teruji. Lilith Mean dihitung pendekatan Meeus tanpa bobot arah. Keputusan trading: WAIT.</p>',
  '<div class="astrom1-status" id="astrom1Status" role="status" aria-live="polite">Pilih jam lalu tekan Hitung M1.</div>',
  '<div id="astrom1Result" hidden>',
+ '<p id="astrom1DayMeta" class="astrom1-small"></p>',
  '<div class="astrom1-summary">',
  '<div><small>Dominasi model per jam</small><strong id="astrom1Dominant">—</strong></div>',
  '<div><small>BUY / SELL / lainnya</small><strong id="astrom1Counts">—</strong></div>',
  '<div><small>Awal · inti · akhir dominan</small><strong id="astrom1Window">—</strong></div>',
  '</div>',
  '<div class="astrom1-scroller"><table><thead><tr><th>Jam WIB</th><th>Model V1</th>',
- '<th>BUY % aspek</th><th>SELL % aspek</th><th>Skor</th><th>Elemen utama</th></tr></thead>',
+ '<th>BUY % V1</th><th>SELL % V1</th><th>Skor V1</th><th>Arah V2</th><th>Skor V2</th><th>Elemen utama</th></tr></thead>',
  '<tbody id="astrom1Rows"></tbody></table></div>',
  '<p class="astrom1-small">Klik menit untuk melihat 10 planet, longitude, zodiak, unsur dan aspek. Persentase ialah porsi bobot positif/negatif, ',
- 'bukan peluang naik/turun XAUUSD. AWAL/INTI/AKHIR adalah ringkasan retrospektif jam terpilih, bukan waktu entry tervalidasi.</p>',
+ 'bukan peluang naik/turun XAUUSD. V2 = skor konfigurasi tambahan, bukan konfirmasi harga. AWAL/INTI/AKHIR retrospektif, bukan waktu entry tervalidasi.</p>',
  '<div id="astrom1Details" class="astrom1-details" hidden>',
  '<h3 id="astrom1DetailTitle">Rincian menit</h3>',
  '<div class="astrom1-overview" id="astrom1Overview"></div>',
@@ -89,19 +94,20 @@ document.head.append(style);
 const results=el('results');
 if(results&&results.parentElement===astro)astro.insertBefore(section,results);
 else astro.append(section);
-const inputHour=el('astrom1Hour');
+const inputHour=el('astrom1Hour'),inputScope=el('astrom1Scope');
 inputHour.value=String(C.Time.wib(Date.now()).hour);
 function setStatus(t,isError){
  const x=el('astrom1Status');x.textContent=t;x.style.color=isError?'var(--sell)':'var(--cyan)';
 }
 function reset(){
- cancelled=true;calculationId++;report=null;chosen=-1;
+ cancelled=true;calculationId++;report=null;chosen=-1;viewRows=[];
+ el('astrom1JSON').disabled=true;el('astrom1CSV').disabled=true;
  el('astrom1Result').hidden=true;el('astrom1Details').hidden=true;
  if(!busy)setStatus('Parameter berubah. Tekan Hitung M1 untuk menghitung ulang.');
 }
 function lock(value){
  busy=value;
- for(const id of ['astrom1Run','astrom1Hour','astrom1Prev','astrom1Next'])el(id).disabled=value;
+ for(const id of ['astrom1Run','astrom1Hour','astrom1Prev','astrom1Next','astrom1Scope'])el(id).disabled=value;
  el('astrom1Run').textContent=value?'Menghitung…':'Hitung M1';
 }
 function groupWindows(rows){
@@ -133,17 +139,20 @@ function renderSummary(rows){
     'Tidak ada window '+winner+' yang dominan';
 }
 function selectMinute(index){
- if(!report||index<0||index>=report.rows.length)return;
+ if(!report||index<0||index>=viewRows.length)return;
  chosen=index;
- const r=report.rows[index];
+ const r=viewRows[index];
  el('astrom1Details').hidden=false;
  el('astrom1DetailTitle').textContent='Rincian M1 · '+clock(r.ms)+'–'+clock(r.ms+60000)+' WIB';
  const elements=Object.entries(r.zodiacCounts).map(([e,n])=>e+' '+n+'/10').join(' · ');
  el('astrom1Overview').innerHTML=[
   '<span>Status <b class="'+directionClass(r.state)+'">'+esc(r.state)+'</b></span>',
   '<span>Skor V1 <b>'+fmt(r.score)+'</b></span>',
-  '<span>BUY '+pct(r.buyPct)+' · SELL '+pct(r.sellPct)+'</span>',
-  '<span>Unsur: '+esc(elements)+'</span>',
+  '<span>V1 BUY '+pct(r.buyPct)+' · SELL '+pct(r.sellPct)+'</span>',
+  '<span>V2 <b class="'+directionClass(r.configState)+'">'+esc(r.configState)+'</b> · skor '+fmt(r.configScore)+'</span>',
+  '<span>V2 BUY '+pct(r.configBuyPct)+' · SELL '+pct(r.configSellPct)+'</span>',
+  '<span>Unsur 10 planet: '+esc(elements)+'</span>',
+  '<span>Mean Lilith: '+fmt(r.lilith.longitude)+'° ('+esc(r.lilithMethod)+')</span>',
   '<span>Dominasi elemen: '+esc(r.prominentElement)+'</span>'
  ].join('');
  el('astrom1Planets').innerHTML=r.planetPositions.map(p=>
@@ -159,19 +168,30 @@ function selectMinute(index){
  ).join(''):'<tr><td colspan="5">Tidak ada aspek aktif dalam orb model V1.</td></tr>';
  el('astrom1Hints').textContent=
    'Interpretasi gambar: '+r.elementMeaning+'. '+(r.hints.length?r.hints.join(' · ')+'. ':'')+
-   'Peran planet dan elemen tidak menentukan BUY/SELL; posisi Black Moon Lilith belum dihitung. Angka di tabel hanya eksperimen V1.';
+   'Peran planet dan elemen memengaruhi skor V2 sesuai faktor hipotesis; V1 tetap asli. Mean Black Moon Lilith dihitung, tanpa pengaruh arah. Semua angka V1/V2 belum divalidasi terhadap harga XAUUSD.';
  for(const node of el('astrom1Rows').querySelectorAll('tr[data-minute]'))node.classList.toggle('astrom1-picked',Number(node.dataset.minute)===index);
 }
 function render(x){
  report=x;chosen=-1;
- renderSummary(x.rows);
- el('astrom1Rows').innerHTML=x.rows.map((r,i)=>
+ const hour=Number(inputHour.value);
+ viewRows=x.minutes===1440?x.rows.filter(r=>C.Time.wib(r.ms).hour===hour):x.rows;
+ if(viewRows.length!==60)throw Error('Rentang tampilan M1 bukan 60 menit.');
+ renderSummary(viewRows);
+ el('astrom1DayMeta').textContent=x.minutes===1440?
+   'SCAN HARIAN '+x.date+' WIB: 1.440 menit lengkap. Menampilkan '+pad(hour)+':00–'+pad(hour+1)+':00 · pilih jam untuk melihat bagian lain.':
+   'SCAN PER JAM '+x.date+' WIB: '+pad(x.hour)+':00–'+pad(x.hour+1)+':00 · 60 menit.';
+ el('astrom1Rows').innerHTML=viewRows.map((r,i)=>
    '<tr data-minute="'+i+'"><td class="mono">'+clock(r.ms)+'–'+clock(r.ms+60000)+'</td>'+
    '<td class="'+directionClass(r.state)+'"><b>'+esc(r.state)+'</b></td>'+
    '<td class="buy">'+pct(r.buyPct)+'</td><td class="sell">'+pct(r.sellPct)+'</td>'+
-   '<td class="mono">'+fmt(r.score)+'</td><td>'+esc(r.prominentElement)+'</td></tr>'
+   '<td class="mono">'+fmt(r.score)+'</td>'+
+   '<td class="'+directionClass(r.configState)+'">'+esc(r.configState)+'</td>'+
+   '<td class="mono">'+fmt(r.configScore)+'</td>'+
+   '<td>'+esc(r.prominentElement)+'</td></tr>'
  ).join('');
  el('astrom1Result').hidden=false;
+ el('astrom1CSV').disabled=false;
+ el('astrom1JSON').disabled=x.minutes!==1440;
  selectMinute(0);
 }
 function script(url){
@@ -198,8 +218,9 @@ async function loadLibrary(){
 }
 async function run(){
  if(busy)return;
- const date=el('dateInput')?.value,hour=Number(inputHour.value),ticket=++calculationId;
- cancelled=false;report=null;el('astrom1Result').hidden=true;
+ const date=el('dateInput')?.value,hour=Number(inputHour.value),scope=inputScope.value,ticket=++calculationId;
+ cancelled=false;report=null;viewRows=[];el('astrom1Result').hidden=true;
+ el('astrom1JSON').disabled=true;el('astrom1CSV').disabled=true;
  let engine=null;
  lock(true);
  try{
@@ -208,13 +229,15 @@ async function run(){
    const A=await loadLibrary();
    if(cancelled||ticket!==calculationId)return;
    engine=C.createEngine(A);
-   const data=await M.calculateHour(engine,date,hour,
-     p=>setStatus('Menghitung posisi planet M1 '+p+'% · '+pad(hour)+':00–'+pad(hour+1)+':00 WIB'),
-     ()=>cancelled||ticket!==calculationId);
+   const data=scope==='DAY'?
+     await M.calculateDay(engine,date,
+       p=>setStatus('Menghitung 1.440 M1 · '+p+'%'),()=>cancelled||ticket!==calculationId):
+     await M.calculateHour(engine,date,hour,
+       p=>setStatus('Menghitung 60 M1 · '+p+'%'),()=>cancelled||ticket!==calculationId);
    if(cancelled||ticket!==calculationId)return;
-   if(el('dateInput')?.value!==date||Number(inputHour.value)!==hour)return;
+   if(el('dateInput')?.value!==date||inputScope.value!==scope||(scope==='HOUR'&&Number(inputHour.value)!==hour))return;
    render(data);
-   setStatus('Selesai · '+data.rows.length+' menit dihitung asli · '+date+' '+pad(hour)+':00–'+pad(hour+1)+':00 WIB.');
+   setStatus('Selesai · '+data.rows.length+' menit dihitung asli · '+date+' WIB · tidak ada izin entry otomatis.');
  }catch(e){
    if(!cancelled&&ticket===calculationId)setStatus((e&&e.message)||'Perhitungan M1 gagal.',true);
  }finally{
@@ -226,12 +249,15 @@ function changeHour(d){
  if(busy)return;
  const h=Number(inputHour.value)+d;
  if(h<0||h>23)return;
- inputHour.value=String(h);reset();run();
+ inputHour.value=String(h);
+ if(report&&report.minutes===1440){render(report);return;}
+ reset();run();
 }
 el('astrom1Run').addEventListener('click',run);
 el('astrom1Prev').addEventListener('click',()=>changeHour(-1));
 el('astrom1Next').addEventListener('click',()=>changeHour(1));
-inputHour.addEventListener('change',reset);
+inputHour.addEventListener('change',()=>{if(report&&report.minutes===1440)render(report);else reset();});
+inputScope.addEventListener('change',reset);
 el('astrom1Rows').addEventListener('click',e=>{
  const tr=e.target.closest('tr[data-minute]');
  if(tr)selectMinute(Number(tr.dataset.minute));
@@ -244,5 +270,41 @@ root.addEventListener('cebonk-astro-update',()=>{
  if(report.date!==el('dateInput')?.value){reset();return;}
  // Read-only M1: a legacy 5M rescan never overwrites its ephemeris.
 });
-root.CebonkAstrodoxM1UI=Object.freeze({version:'1.0.0',mode:'M1_SEPARATE_RESEARCH'});
+
+function saveText(filename,content,type){
+ const blob=new Blob([content],{type});
+ const url=URL.createObjectURL(blob);
+ try{
+   const a=document.createElement('a');a.href=url;a.download=filename;
+   document.body.append(a);a.click();a.remove();
+ }finally{setTimeout(()=>URL.revokeObjectURL(url),1500);}
+}
+function csvEscape(value){
+ const str=value===null||value===undefined?'':String(value);
+ return '"'+str.replace(/"/g,'""')+'"';
+}
+el('astrom1JSON').addEventListener('click',()=>{
+ if(!report||report.minutes!==1440)return;
+ try{
+   const feed=M.exportEAResearchFeed(report);
+   saveText('CEBONK_ASTRODOX_M1_'+feed.dateWIB+'_RESEARCH.json',
+      JSON.stringify(feed,null,2),'application/json');
+   setStatus('JSON 1.440 menit tersedia untuk audit dan simulasi EA; auto-trade sengaja OFF.');
+ }catch(e){setStatus(e.message,true);}
+});
+el('astrom1CSV').addEventListener('click',()=>{
+ if(!report)return;
+ const header=['UTC','WIB','V1_STATUS','V1_SCORE','V2_STATUS','V2_SCORE',
+   'V1_BUY_PCT','V1_SELL_PCT','V2_BUY_PCT','V2_SELL_PCT','ELEMEN','LILITH_MEAN_LON','TRADE_STATUS'];
+ const records=report.rows.map(r=>[
+    new Date(r.ms).toISOString(),clock(r.ms),r.state,r.score.toFixed(6),
+    r.configState,r.configScore.toFixed(6),r.buyPct,r.sellPct,
+    r.configBuyPct,r.configSellPct,r.prominentElement,r.lilith.longitude.toFixed(6),'WAIT'
+  ]);
+ saveText('CEBONK_ASTRODOX_M1_'+report.date+'_'+report.minutes+'MIN_RESEARCH.csv',
+  [header,...records].map(row=>row.map(csvEscape).join(',')).join('\r\n'),
+  'text/csv;charset=utf-8');
+ setStatus('CSV '+report.rows.length+' menit berhasil dibuat. Semua sinyal masih riset.');
+});
+root.CebonkAstrodoxM1UI=Object.freeze({version:'1.1.0',mode:'M1_DAILY_RESEARCH_PLUS_EXPORT'});
 })(window);
