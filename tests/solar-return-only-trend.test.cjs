@@ -47,6 +47,19 @@ assert.equal(F.summarizeWeek(days).direction,'BUY');
 const mixed=days.map((d,i)=>i===2?{...d,positive:0,negative:0,
  score:0,direction:'WAIT',activity:0}:d);
 assert.equal(F.summarizeWeek(mixed).direction,'WAIT');
+const example=F.dayContext(F.summarizeWeek(days),'2026-10-15');
+assert.equal(example.daily,'BUY');
+assert.equal(example.weekly,'BUY');
+assert.equal(example.relation,'SEARAH');
+const sellDay=F.dayContext(F.summarizeWeek(days),'2026-10-16');
+assert.equal(sellDay.daily,'BUY');
+assert.equal(sellDay.weekly,'BUY');
+assert.equal(sellDay.tradeDecision,'WAIT');
+const opposing=F.dayContext({...F.summarizeWeek(days),direction:'SELL'},'2026-10-16');
+assert.equal(opposing.daily,'BUY');
+assert.equal(opposing.weekly,'SELL');
+assert.equal(opposing.relation,'BERLAWANAN');
+assert.equal(opposing.priceTrendValidated,false);
 assert.throws(()=>F.summarizeWeek(days.slice(1)),/Senin sampai Jumat/);
 
 const SR={getReturns(){return {
@@ -69,7 +82,7 @@ async function testIntegration(){
  assert.equal(exportData.allowAutoTrade,false);
  assert.equal(exportData.tradeDecision,'WAIT');
  assert.equal(exportData.validatedForXAUUSD,false);
- assert.equal(exportData.schema,'CEBONK_SOLAR_RETURN_ONLY_RESEARCH_V3_1');
+ assert.equal(exportData.schema,'CEBONK_SOLAR_RETURN_ONLY_RESEARCH_V3_2');
  assert.ok(exportData.rows.every(r=>r.tradeDecision==='WAIT'));
  assert.ok(exportData.rows.every(r=>!Object.hasOwn(r,'signal')),
   'EA exports must not contain an actionable signal field');
@@ -87,10 +100,12 @@ async function testIntegration(){
   'Old broken panel must not be mounted');
  assert.ok(!html.includes('id="modelEnabled" type="checkbox" checked'),
   'Legacy V1 should not expose BUY/SELL by default');
- assert.ok(html.includes('solar-return-only-trend-core.js?v=3.1.0'));
- assert.ok(html.includes('solar-return-only-trend-ui.js?v=3.1.0'));
+ assert.ok(html.includes('solar-return-only-trend-core.js?v=3.2.0'));
+ assert.ok(html.includes('solar-return-only-trend-ui.js?v=3.2.0'));
  assert.ok(router.includes("tabSolarReturnOnly:'solarReturnOnlyView'"));
  assert.ok(router.includes("'solar-return-only':'tabSolarReturnOnly'"));
+ assert.ok(ui.includes('id="srOnlyWeekBias"'));
+ assert.ok(ui.includes('F.dayContext(w,r.dateWIB)'));
  assert.ok(!ui.includes('CebonkAstrodoxM1'),'Mode SR tak boleh membaca Astro V2');
  assert.ok(!ui.includes('CebonkEventPolarityM1'),'Mode SR tak boleh membaca EventPolarity');
  new Function(ui);
