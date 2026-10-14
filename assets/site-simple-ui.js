@@ -78,56 +78,8 @@ function mount(){
    button.textContent=opened?'Tutup pengaturan ▴':'Pengaturan jam lanjut ▾';
   });
  }
- const ab=$('albiruniPanel');
- if(ab){
-  // New classical research is the first AL-BIRUNI screen. The former
-  // majority-vote model and EA feed remain archived but do NOT drive it.
-  if($('abClassicalPrimary')&&!$('abLegacyArchive')){
-   const header=[...ab.children].find(el=>el.classList.contains('ab-header'));
-   const legacyBody=[...ab.children].find(el=>el.classList.contains('ab-body'));
-   if(header&&legacyBody){
-    const archive=document.createElement('details');
-    archive.id='abLegacyArchive';archive.className='ab-classical-legacy';archive.open=false;
-    const summary=document.createElement('summary');
-    summary.textContent='Arsip metode lama · mayoritas aspek & feed EA lama';
-    const note=document.createElement('p');
-    note.textContent='Arsip penelitian lama: arah di sini bukan hasil mesin klasik baru dan bukan izin transaksi.';
-    header.parentNode.insertBefore(archive,header);
-    archive.append(summary,note,header,legacyBody);
-   }
-  }
-  const body=ab.querySelector('.ab-body');
-  const modes=ab.querySelector('.ab-period-modes');
-  if(body&&modes){
-   const notice=document.createElement('p');
-   notice.id='simpleAbNotice';notice.className='simple-wait-note';
-   notice.innerHTML='<strong>STATUS TRADING: WAIT.</strong> Arah BUY/SELL mayoritas aspek adalah hipotesis, bukan sinyal XAUUSD yang teruji.';
-   modes.insertAdjacentElement('afterend',notice);
-  }
-  const abResults=$('abResults');
-  if(abResults){
-   const detail=groupChildren(abResults,['abPeriodSummary'],
-    'simpleAlbiruniDetails','Rincian aspek, kalender & arsip EA',
-    'Data lengkap, jam, tabel aspek dan status feed eksperimen lama.');
-   if(detail)detail.open=false;
-  }
-  const classic=$('abClassicPanel');
-  if(classic)classic.open=false;
-  const actions=ab.querySelector('.ab-actions');
-  if(actions){
-   const b=document.createElement('button');
-   b.id='simpleAlbiruniSettings';b.type='button';
-   b.textContent='Opsi lainnya ▾';
-   b.setAttribute('aria-expanded','false');
-   b.className='simple-inline-toggle';
-   actions.append(b);
-   b.addEventListener('click',()=>{
-    const expanded=ab.classList.toggle('simple-ab-expanded');
-    b.setAttribute('aria-expanded',String(expanded));
-    b.textContent=expanded?'Tutup opsi ▴':'Opsi lainnya ▾';
-   });
-  }
- }
+ // Restore original Al-Biruni v1.5 unchanged: no automatic archival,
+ // collapsed periods, hidden actions or injected alternate model.
  root.CebonkSimpleUi=Object.freeze({version:'1.0',mount});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});
