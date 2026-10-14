@@ -24,6 +24,7 @@ jobs:
       - run: node tests/albiruni-ui.test.cjs
       - run: node tests/primbon-dagang.test.cjs
       - run: node tests/albiruni-three-horizon.test.cjs
+      - run: node tests/albiruni-original-v1-5.test.cjs
       - run: node tests/site-tab-router.test.cjs
       - run: node tests/site-simple-ui.test.cjs
       - run: node tests/astrodox-audit.test.cjs
