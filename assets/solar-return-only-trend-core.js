@@ -23,7 +23,7 @@ const must=(cond,msg)=>{if(!cond)throw Error(msg);};
 const norm=n=>((n%360)+360)%360;
 const separation=(a,b)=>Math.abs(norm(a-b+180)-180);
 const orbOf=(a,b,angle)=>Math.abs(separation(a,b)-angle);
-const classify=(score,activity,min=0.22)=>activity>0&&Math.abs(score)>=min?(score>0?'BUY':'SELL'):'WAIT';
+const classify=(score,activity,min=0.22)=>activity>=0.10&&Math.abs(score)>=min?(score>0?'BUY':'SELL'):'WAIT';
 function dateWIB(ms){return new Date(ms+7*HOUR).toISOString().slice(0,10);}
 function timeWIB(ms){return new Date(ms+7*HOUR).toISOString().slice(11,16);}
 function weekWindow(C,date){
@@ -113,7 +113,7 @@ async function analyze(C,SR,A,date,hourNY=12,onProgress=()=>{},isCancelled=()=>f
     const current=engine.get(ms).positions;
     const data=scoreAt(current,chart,engine.get(ms-5*MIN).positions);
     positive+=data.positive;negative+=data.negative;
-    if(data.activity>0)activeSlots++;
+    if(data.activity>=0.03)activeSlots++;
    }
    const activity=positive+negative,score=activity?(positive-negative)/activity:0;
    days.push(Object.freeze({dateWIB:dateWIB(dayStart),positive,negative,
