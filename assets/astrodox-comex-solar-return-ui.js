@@ -51,7 +51,7 @@ panel.innerHTML=[
  '</div>',
  '<div class="srcomex-scroll"><table><thead><tr>',
  '<th>Jam WIB</th><th>SR tahun</th><th>Event dominan</th><th>Jenis</th>',
- '<th>Orb</th><th>Fase</th><th>Kekuatan relatif</th><th>Bias SR Mingguan</th><th>SR Follow Trend*</th><th>Keputusan EA</th>',
+ '<th>Orb</th><th>Fase SR</th><th>Kekuatan relatif</th><th>Bias SR Mingguan</th><th>SR Follow Trend*</th><th>Keputusan EA</th>',
  '</tr></thead><tbody id="srcomexMinuteRows"></tbody></table></div>',
  '<div id="srcomexMinuteDetail" class="srcomex-detail">Pilih satu menit untuk rincian.</div>',
  '<details class="srcomex-details">',
@@ -166,7 +166,7 @@ function renderHour(){
    '<td>'+row.returnYear+'</td>'+
    '<td>'+escapeHTML(e?.pair||'—')+' '+escapeHTML(e?.aspect||'')+'</td>'+
    '<td>'+escapeHTML(row.eventType)+'</td><td>'+deg(e?.orb)+'</td>'+
-   '<td>'+escapeHTML(e?.phase||'—')+'</td><td>'+pct(e?.strength)+'</td>'+
+   '<td>'+escapeHTML(row.phase)+'</td><td>'+pct(e?.strength)+'</td>'+
    '<td>'+escapeHTML(row.weekBias)+'</td>'+
    '<td class="'+(row.eventPolarity==='BUY'?'buy':row.eventPolarity==='SELL'?'sell':'neutral')+'">'+
    escapeHTML(row.eventPolarity)+'</td><td>WAIT</td></tr>';
