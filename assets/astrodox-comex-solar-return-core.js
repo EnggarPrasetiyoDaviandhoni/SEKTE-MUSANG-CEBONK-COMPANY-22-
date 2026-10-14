@@ -35,7 +35,7 @@ function solarLongitude(A,ms){
  return norm(lon);
 }
 function solarReturn(A,year,target){
- must(Number.isInteger(year)&&year>=2020&&year<=2041,'Tahun Solar Return di luar cakupan.');
+ must(Number.isInteger(year)&&year>=2019&&year<=2041,'Tahun Solar Return di luar cakupan.');
  must(Number.isFinite(target),'Longitude dasar COMEX tidak tersedia.');
  // Root bracket covers the preceding and following days around Dec 31.
  const begin=Date.UTC(year,11,26,0),end=Date.UTC(year+1,0,6,0);
