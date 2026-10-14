@@ -47,15 +47,15 @@ assert.equal(F.summarizeWeek(days).direction,'BUY');
 const mixed=days.map((d,i)=>i===2?{...d,positive:0,negative:0,
  score:0,direction:'WAIT',activity:0}:d);
 assert.equal(F.summarizeWeek(mixed).direction,'WAIT');
-const example=F.dayContext(F.summarizeWeek(days),'2026-10-15');
+const example=F.dayContext(F.summarizeWeek(days),'2026-10-14');
 assert.equal(example.daily,'BUY');
 assert.equal(example.weekly,'BUY');
 assert.equal(example.relation,'SEARAH');
 const sellDay=F.dayContext(F.summarizeWeek(days),'2026-10-16');
-assert.equal(sellDay.daily,'BUY');
+assert.equal(sellDay.daily,'SELL');
 assert.equal(sellDay.weekly,'BUY');
 assert.equal(sellDay.tradeDecision,'WAIT');
-const opposing=F.dayContext({...F.summarizeWeek(days),direction:'SELL'},'2026-10-16');
+const opposing=F.dayContext({...F.summarizeWeek(days),direction:'SELL'},'2026-10-14');
 assert.equal(opposing.daily,'BUY');
 assert.equal(opposing.weekly,'SELL');
 assert.equal(opposing.relation,'BERLAWANAN');
