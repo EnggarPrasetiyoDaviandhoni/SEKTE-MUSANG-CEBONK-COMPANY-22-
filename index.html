@@ -43,6 +43,7 @@
  <button class="viewtab active" id="tabAstro" type="button">ASTROLOGI</button>
  <button class="viewtab" id="tabAlBiruni" type="button" aria-controls="albiruniPanel" aria-selected="false">AL-BIRUNI</button>
  <button class="viewtab" id="tabAstroFollowTrend" type="button" aria-controls="astroFollowTrendView" aria-selected="false">ASTRODOX FOLLOW TREND</button>
+ <button class="viewtab" id="tabSolarReturnOnly" type="button" aria-controls="solarReturnOnlyView" aria-selected="false">SOLAR RETURN MURNI</button>
 </nav>
 <div id="astroView">
 <section class="clocks" aria-label="Jam sekarang, bukan tanggal hasil scan">
@@ -100,6 +101,7 @@
 </div>
 <section id="albiruniPanel" aria-labelledby="abTitle" hidden></section>
 <section id="astroFollowTrendView" aria-labelledby="aftTitle" hidden></section>
+<section id="solarReturnOnlyView" aria-label="Solar Return murni follow trend" hidden></section>
 <section id="combinedView" hidden></section>
 <section id="combined2View" hidden></section>
 <footer><span>CEBONK XAUUSD · ASTROLOGY + FIBO MUSANG + COMBINED</span><span>Riset, bukan jaminan hasil trading.</span></footer>
@@ -503,6 +505,8 @@ $('dateInput').value=T.today();clock();setInterval(clock,1000);run();
 <script src="assets/astrodox-event-polarity-m1-ui.js?v=1.0.0"></script>
 <script src="assets/astrodox-comex-solar-return-core.js?v=2.0.0"></script>
 <script src="assets/astrodox-comex-solar-return-ui.js?v=2.0.0"></script>
+<script src="assets/solar-return-only-trend-core.js?v=3.0.0"></script>
+<script src="assets/solar-return-only-trend-ui.js?v=3.0.0"></script>
 <script src="assets/astro-daily-brief.js?v=1.0.0"></script>
 <script src="assets/bazi-core.js?v=1.0.0"></script>
 <script src="assets/bazi-ui.js?v=1.6.0"></script>
