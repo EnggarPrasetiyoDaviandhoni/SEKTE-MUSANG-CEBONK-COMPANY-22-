@@ -31,7 +31,8 @@ panel.innerHTML=[
  '<p class="srcomex-note">Tanggal analisis mengikuti kalender ASTROLOGI di atas.',
  ' Transit M1 dihitung terhadap posisi planet dalam chart Solar Return tahunan.',
  ' Label <b>HARMONIS / TEGANG / TRANSISI</b> menunjukkan jenis aspek, bukan probabilitas naik/turun GOLD.',
- ' BUY/SELL V2 ditampilkan sebagai konteks terpisah yang belum teruji; sinyal Solar Return tetap WAIT.</p>',
+ ' SR Polarity BUY/SELL adalah hipotesis berbasis konfirmasi tren skor astrologi, BUKAN pembacaan arah emas nyata.',
+ ' Keputusan trading EA tetap WAIT.</p>',
  '<p id="srcomexStatus" class="srcomex-status" role="status" aria-live="polite">',
  'Pilih tanggal dan jam referensi, kemudian tekan Hitung Solar Return.</p>',
  '<div id="srcomexResults" hidden>',
@@ -50,7 +51,7 @@ panel.innerHTML=[
  '</div>',
  '<div class="srcomex-scroll"><table><thead><tr>',
  '<th>Jam WIB</th><th>SR tahun</th><th>Event dominan</th><th>Jenis</th>',
- '<th>Orb</th><th>Fase</th><th>Kekuatan relatif</th><th>Astro V2*</th><th>Polarity GOLD</th>',
+ '<th>Orb</th><th>Fase</th><th>Kekuatan relatif</th><th>Astro V2*</th><th>SR Polarity*</th><th>Keputusan EA</th>',
  '</tr></thead><tbody id="srcomexMinuteRows"></tbody></table></div>',
  '<div id="srcomexMinuteDetail" class="srcomex-detail">Pilih satu menit untuk rincian.</div>',
  '<details class="srcomex-details">',
@@ -64,6 +65,7 @@ panel.innerHTML=[
  '</thead><tbody id="srcomexEventRows"></tbody></table></div></details>',
  '<p class="srcomex-note"><b>Status: RISET, WAIT.</b>',
  ' Solar Return sendiri tidak membuktikan sinyal BUY/SELL harian atau keuntungan XAUUSD.',
+ ' Polarity BUY/SELL hanya arah skor Astrology yang selaras dengan event Solar Return dan belum divalidasi.',
  ' Peristiwa exact dan puncak window dapat diketahui secara astronomis, tetapi arah harga perlu backtest terpisah.',
  ' *Astro V2 adalah model eksperimen lain, bukan hasil Solar Return.</p>',
  '</div></div>'
@@ -144,7 +146,9 @@ function showMinute(i){
   ' · Kekuatan relatif '+pct(e?.strength)+
   '. Ini bukan peluang gerak harga.</p>'+
   '<p class="srcomex-note">Astrology V2 (terpisah): '+escapeHTML(row.astroV2)+
-  ' · Solar Return GOLD: <b>WAIT</b>. Event tambahan: '+
+  ' · Solar Return Polarity: <b>'+escapeHTML(row.eventPolarity)+
+  '</b> ('+escapeHTML(row.polarityReason)+') · keputusan GOLD/EA: <b>WAIT</b>.'+
+  ' Event tambahan: '+
   (row.topFour.slice(1).map(x=>escapeHTML(x.pair+' '+x.aspect+' (orb '+x.orb.toFixed(3)+'°)')).join(' | ')||'Tidak ada')+'</p>';
  for(const tr of $('srcomexMinuteRows').querySelectorAll('tr[data-min]'))
   tr.classList.toggle('srcomex-selected',Number(tr.dataset.min)===i);
@@ -163,7 +167,9 @@ function renderHour(){
    '<td>'+escapeHTML(e?.pair||'—')+' '+escapeHTML(e?.aspect||'')+'</td>'+
    '<td>'+escapeHTML(row.eventType)+'</td><td>'+deg(e?.orb)+'</td>'+
    '<td>'+escapeHTML(e?.phase||'—')+'</td><td>'+pct(e?.strength)+'</td>'+
-   '<td>'+escapeHTML(row.astroV2)+'</td><td>WAIT</td></tr>';
+   '<td>'+escapeHTML(row.astroV2)+'</td>'+
+   '<td class="'+(row.eventPolarity==='BUY'?'buy':row.eventPolarity==='SELL'?'sell':'neutral')+'">'+
+   escapeHTML(row.eventPolarity)+'</td><td>WAIT</td></tr>';
  }).join('');
  if(indices.length)showMinute(indices[0]);
 }
@@ -179,6 +185,8 @@ function render(){
    ' WIB · Transit M1 1.440 menit · harmonis '+result.counts.HARMONIS+
    ', tegang '+result.counts.TEGANG+', transisi '+result.counts.TRANSISI+
    ', tanpa event '+result.counts.NONE+'.'+
+   ' Polarity riset BUY '+result.polarityCounts.BUY+'m / SELL '+
+   result.polarityCounts.SELL+'m / WAIT '+result.polarityCounts.WAIT+'m.'+
    (result.rolloverDuringDay?' Solar Return baru terjadi dalam hari ini.':'')+
    ' Jam dasar '+pad(result.baseline.hourNY)+':00 EST adalah asumsi.';
  const names=C.CFG.planets.map(x=>x.id);
@@ -257,11 +265,12 @@ $('srcomexJSON').addEventListener('click',()=>{
 });
 $('srcomexCSV').addEventListener('click',()=>{
  if(!result)return;
- const header=['UTC','WIB','SR_YEAR','EVENT_TYPE','EVENT','ASPECT','ORB','PHASE','STRENGTH','ASTRO_V2','TRADING_DECISION'];
+ const header=['UTC','WIB','SR_YEAR','EVENT_TYPE','EVENT','ASPECT','ORB','PHASE','STRENGTH','ASTRO_V2','SR_POLARITY_RESEARCH','SR_POLARITY_REASON','TRADING_DECISION'];
  const lines=result.rows.map(r=>{
   const e=r.topEvent;
   return [r.utc,clock(r.ms),r.returnYear,r.eventType,e?.pair||'',
-    e?.aspect||'',e?.orb??'',e?.phase||'',e?.strength??'',r.astroV2,'WAIT'];
+    e?.aspect||'',e?.orb??'',e?.phase||'',e?.strength??'',r.astroV2,
+    r.eventPolarity,r.polarityReason,'WAIT'];
  });
  const safe=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
  save('CEBONK_COMEX_SOLAR_RETURN_'+result.dateWIB+'_1440M1.csv',
