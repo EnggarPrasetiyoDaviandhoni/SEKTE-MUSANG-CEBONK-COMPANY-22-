@@ -6,7 +6,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='3.1.0',MIN=60000,HOUR=60*MIN,DAY=24*HOUR;
+const VERSION='3.2.0',MIN=60000,HOUR=60*MIN,DAY=24*HOUR;
 const TIMING=Object.freeze({maxOrb:0.06,minOrbMovement5m:0.00075,maxMinutesFromExact:90,maxWindowMinutes:90});
 const BODIES=Object.freeze({
  Venus:{nature:1,weight:1.0},Jupiter:{nature:1,weight:1.15},
@@ -100,6 +100,18 @@ function summarizeWeek(days){
   method:'BENEFIC_VENUS_JUPITER_VS_MALEFIC_MARS_SATURN_TO_SR_SUN_MOON_VENUS_JUPITER',
   isPriceTrend:false,isValidated:false});
 }
+function dayContext(week,date){
+ must(week&&Array.isArray(week.days)&&typeof week.direction==='string',
+  'Ringkasan Solar Return mingguan tidak valid.');
+ must(/^\d{4}-\d{2}-\d{2}$/.test(date),'Tanggal yang diminta tidak valid.');
+ const day=week.days.find(d=>d.dateWIB===date)||null;
+ const daily=day?.direction||'WAIT',weekly=week.direction;
+ const relation=!day?'AKHIR_PEKAN':daily==='WAIT'||weekly==='WAIT'?
+  'BELUM_KUKUH':daily===weekly?'SEARAH':'BERLAWANAN';
+ return Object.freeze({dateWIB:date,daily,weekly,relation,
+  dailyScore:day?.score??null,weekScore:week.score,
+  tradeDecision:'WAIT',priceTrendValidated:false});
+}
 async function analyze(C,SR,A,date,hourNY=12,onProgress=()=>{},isCancelled=()=>false){
  must(C&&C.Time&&typeof C.createEngine==='function','CebonkCore tidak tersedia.');
  must(SR&&typeof SR.getReturns==='function','Solar Return core tidak tersedia.');
@@ -188,15 +200,15 @@ async function analyze(C,SR,A,date,hourNY=12,onProgress=()=>{},isCancelled=()=>f
 }
 function exportResearch(r){
  must(r&&r.version===VERSION,'Hasil SR v3.0 tidak tersedia.');
- return {schema:'CEBONK_SOLAR_RETURN_ONLY_RESEARCH_V3_1',
-  dateWIB:r.dateWIB,week:r.week,bounds:r.bounds,
+ return {schema:'CEBONK_SOLAR_RETURN_ONLY_RESEARCH_V3_2',
+  dateWIB:r.dateWIB,week:r.week,bounds:r.bounds,dayContext:dayContext(r.week,r.dateWIB),
   reference:{natalUTC:r.baseline.natalUTC,hourNY:r.baseline.hourNY,
    assumedClock:true,activeSolarReturnUTC:r.activeReturn.utc},
   windows:r.windows,rows:r.rows.map(({signal,...r})=>({...r,researchBias:signal})),allowAutoTrade:false,
   validatedForXAUUSD:false,tradeDecision:'WAIT',disclaimer:r.disclaimer};
 }
 const api=Object.freeze({VERSION,BODIES,TARGETS,ASPECTS,TIMING,separation,orbOf,scoreAt,
- classify,weekWindow,returnAt,summarizeWeek,analyze,exportResearch,dateWIB,timeWIB});
+ classify,weekWindow,returnAt,summarizeWeek,dayContext,analyze,exportResearch,dateWIB,timeWIB});
 root.CebonkSolarReturnOnly=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

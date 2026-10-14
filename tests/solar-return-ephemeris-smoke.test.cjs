@@ -57,6 +57,22 @@ async function main(){
   'No planet should generate an all-day 5-minute timing window');
  assert.ok(r.rows.every(x=>x.tradeDecision==='WAIT'));
  assert.equal(F.exportResearch(r).validatedForXAUUSD,false);
+ // Reproduce the user's 2030-10-14 screenshot with its 21:00 EST birth-hour assumption.
+ const future=await F.analyze(C,SR,A,'2030-10-14',21);
+ const context=F.dayContext(future.week,'2030-10-14');
+ assert.equal(context.daily,'BUY','14 October 2030 daily should not be masked');
+ assert.equal(context.weekly,'SELL','Weekly 3 SELL days outweigh two BUY days');
+ assert.equal(context.relation,'BERLAWANAN');
+ assert.deepEqual(future.week.days.map(d=>d.direction),
+  ['BUY','BUY','SELL','SELL','SELL']);
+ assert.ok(Math.abs(future.week.score-(-0.336))<0.02,
+  'Score should reproduce 2030 screenshot under 21:00 EST');
+ assert.equal(context.tradeDecision,'WAIT');
+ const later=await F.analyze(C,SR,A,'2030-10-28',21);
+ assert.equal(later.week.direction,'BUY',
+  '2030 also contains BUY weeks; must not be all-SELL');
+ console.log('2030 verified:',context,'days:',future.week.days.map(d=>d.direction),
+  'score:',future.week.score,'28 Oct week:',later.week.direction);
  console.log('PASS: REAL ephemeris, solar longitude return, week date, 288 M5 slots, timing cap, no trading claims');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
