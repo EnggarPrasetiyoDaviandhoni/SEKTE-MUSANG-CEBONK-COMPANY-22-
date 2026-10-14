@@ -45,11 +45,11 @@ wrapper.innerHTML=[
  '<th>Selaras bias minggu</th></tr></thead><tbody id="srOnlyDays"></tbody></table></div>',
  '<h3>AWAL · INTI · AKHIR pada tanggal terpilih</h3>',
  '<p class="sr-only-note">Window berasal dari kedekatan aspek natal Solar Return.',
- ' AWAL = mendekat, INTI = orb terdekat, AKHIR = menjauh.',
+ ' AWAL = mendekat, INTI = orb maksimal 0,12°, AKHIR = menjauh. Puncak teramati belum tentu exact.',
  ' Jika tidak ada bukti selaras, status WAIT; tidak memaksa sinyal harian.</p>',
  '<div class="sr-only-scroller"><table><thead><tr><th>Awal (WIB)</th>',
- '<th>Inti (WIB)</th><th>Akhir (WIB)</th><th>Bias SR</th>',
- '<th>Aspek aktif</th><th>Kekuatan*</th></tr></thead><tbody id="srOnlyWindows"></tbody></table></div>',
+ '<th>Puncak (WIB)</th><th>Akhir (WIB)</th><th>Bias SR</th>',
+ '<th>Aspek aktif</th><th>Kekuatan*</th><th>Fase puncak</th></tr></thead><tbody id="srOnlyWindows"></tbody></table></div>',
  '<div class="sr-only-actions"><button id="srOnlyJSON" type="button">Ekspor JSON</button>',
  '<button id="srOnlyCSV" type="button">Ekspor CSV 5 menit</button></div>',
  '<details><summary>Posisi planet chart Solar Return aktif</summary>',
@@ -155,8 +155,8 @@ function render(){
  $('srOnlyWindows').innerHTML=windows.length?windows.map(p=>
   '<tr><td>'+wib(p.start)+'</td><td>'+wib(p.core)+'</td>'+
   '<td>'+wib(p.end)+'</td><td>'+esc(p.direction)+'</td><td>'+
-  esc(p.planet+' → SR '+p.target+' · '+p.aspect)+'</td><td>'+num(p.peakStrength)+'</td></tr>'
- ).join(''):'<tr><td colspan="6">WAIT — tidak ada fase Solar Return yang memenuhi konfirmasi searah minggu.</td></tr>';
+  esc(p.planet+' → SR '+p.target+' · '+p.aspect)+'</td><td>'+num(p.peakStrength)+'</td><td>'+esc(p.corePhase)+'</td></tr>'
+ ).join(''):'<tr><td colspan="7">WAIT — tidak ada fase Solar Return yang memenuhi konfirmasi searah minggu.</td></tr>';
  $('srOnlyPlanets').innerHTML=r.activeReturn.bodies.map(p=>{
   const zodiac=C.CFG.zodiac[Math.floor(p.longitude/30)];
   return '<tr><td>'+esc(p.id)+'</td><td>'+deg(p.longitude)+'</td><td>'+
@@ -178,7 +178,7 @@ async function run(){
    ()=>token!==activeRun);
   if(token!==activeRun)return;
   result=output;render();
-  status('Selesai. Arah astrologi SR pekan ini: '+result.week.direction+'. Trading EA: WAIT.');
+  status('Selesai. Arah astrologi SR pekan ini: '+result.week.direction+'. Trading EA: WAIT.'+(result.weekday===0||result.weekday===6?' Akhir pekan: market tutup.':''));
  }catch(e){if(token===activeRun)status(e.message||'Gagal menghitung.',true);}
  finally{if(token===activeRun)lock(false);}
 }
