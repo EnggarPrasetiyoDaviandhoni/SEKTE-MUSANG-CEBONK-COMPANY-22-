@@ -40,12 +40,12 @@
  <span class="version">v2.7 / SR HARIAN + MINGGUAN · RISET</span>
 </header>
 <nav class="viewtabs" aria-label="Mode analisis">
- <button class="viewtab" id="tabAstro" type="button">ASTROLOGI</button>
+ <button class="viewtab active" id="tabAstro" type="button">ASTROLOGI</button>
  <button class="viewtab" id="tabAlBiruni" type="button" aria-controls="albiruniPanel" aria-selected="false">AL-BIRUNI</button>
  <button class="viewtab" id="tabAstroFollowTrend" type="button" aria-controls="astroFollowTrendView" aria-selected="false">ASTRODOX FOLLOW TREND</button>
- <button class="viewtab active" id="tabSolarReturnOnly" type="button" aria-controls="solarReturnOnlyView" aria-selected="false">SOLAR RETURN MURNI</button>
+ <button class="viewtab" id="tabSolarReturnOnly" type="button" aria-controls="solarReturnOnlyView" aria-selected="false">SOLAR RETURN MURNI</button>
 </nav>
-<div id="astroView" hidden>
+<div id="astroView">
 <section class="clocks" aria-label="Jam sekarang, bukan tanggal hasil scan">
  <div class="clock"><label>Jam Luxor sekarang <span id="liveLuxorOffset"></span></label><strong id="clockLuxor">—</strong><small id="clockLuxorDate">—</small></div>
  <div class="bridge"><b>→</b><span id="clockDifference">—</span></div>
@@ -101,7 +101,7 @@
 </div>
 <section id="albiruniPanel" aria-labelledby="abTitle" hidden></section>
 <section id="astroFollowTrendView" aria-labelledby="aftTitle" hidden></section>
-<section id="solarReturnOnlyView" aria-label="Solar Return murni untuk riset astrologi, tidak tervalidasi sebagai tren harga"></section>
+<section id="solarReturnOnlyView" aria-label="Solar Return murni untuk riset astrologi, tidak tervalidasi sebagai tren harga" hidden></section>
 <section id="combinedView" hidden></section>
 <section id="combined2View" hidden></section>
 <footer><span>CEBONK XAUUSD · ASTROLOGY + FIBO MUSANG + COMBINED</span><span>Riset, bukan jaminan hasil trading.</span></footer>

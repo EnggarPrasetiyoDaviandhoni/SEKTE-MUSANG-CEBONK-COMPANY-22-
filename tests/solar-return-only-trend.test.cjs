@@ -95,7 +95,10 @@ async function testIntegration(){
  const ui=fs.readFileSync(path.join(ROOT,'assets/solar-return-only-trend-ui.js'),'utf8');
  assert.ok(html.includes('id="tabSolarReturnOnly"'));
  assert.ok(html.includes('id="solarReturnOnlyView"'));
- assert.ok(html.includes('id="astroView" hidden'));
+ assert.ok(html.includes('id="tabAstro" type="button"')||html.includes('id="tabAstro"'), 'ASTROLOGI tab preserved');
+ assert.ok(html.includes('id="tabAlBiruni"'), 'Al-Biruni tab preserved');
+ assert.ok(html.includes('id="solarReturnOnlyView" aria-label="Solar Return murni untuk riset astrologi, tidak tervalidasi sebagai tren harga" hidden'), 'Solar Return no longer hijacks homepage');
+ assert.ok(html.includes('<div id="astroView">'), 'Homepage must show original ASTROLOGI tab');
  assert.ok(!html.includes('src="assets/astrodox-comex-solar-return-ui.js'),
   'Old broken panel must not be mounted');
  assert.ok(!html.includes('id="modelEnabled" type="checkbox" checked'),
