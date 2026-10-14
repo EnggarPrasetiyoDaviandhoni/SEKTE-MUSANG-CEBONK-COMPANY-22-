@@ -4,6 +4,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 const ROOT=path.resolve(__dirname,'..');
 const F=require('../assets/solar-return-only-trend-core.js');
+const OldSR=require('../assets/astrodox-comex-solar-return-core.js');
+const STEP=5*60000,TARGET=Date.parse('2026-10-14T03:00:00Z');
 
 const chart={year:2025,ms:Date.UTC(2025,11,31),utc:'2025-12-31T00:00:00.000Z',
  bodies:['Sun','Moon','Venus','Jupiter'].map((id,i)=>({id,longitude:i*30}))};
@@ -26,11 +28,17 @@ const C={Time:{
  },
  wibToUTC(d,mins){return Date.parse(d+'T00:00:00Z')+(mins-420)*60000;}
 },createEngine(){
- return {get(){return {positions:point(0,145,245,245)};},clear(){}};
+ return {get(ms){return {positions:point((ms-TARGET)/STEP*0.003,145,245,245)};},clear(){}};
 }};
 const week=F.weekWindow(C,'2026-10-14');
 assert.equal(week.startWIB,'2026-10-12');
 assert.equal(week.endWIB,'2026-10-18');
+assert.equal(OldSR.weekBounds(C,'2026-10-14').startWIB,'2026-10-12',
+ 'Bug day.getUTCDay is not a function must never return');
+const stationary=F.scoreAt(point(0,145,245,245),chart,point(0,145,245,245));
+assert.ok(stationary.events.every(e=>!e.timingEligible),'Stationary aspect never qualifies as 5m timing');
+const close=F.scoreAt(point(0.015,145,245,245),chart,point(0.018,145,245,245));
+assert.ok(close.events.some(e=>e.timingEligible),'Moving, near-exact aspect can qualify');
 
 const days=Array.from({length:5},(_,i)=>({
  dateWIB:'2026-10-'+(12+i),positive:i<3?1:0,negative:i>=3?.2:0,
@@ -50,13 +58,21 @@ async function testIntegration(){
  assert.equal(result.week.direction,'BUY');
  assert.equal(result.rows.length,288);
  assert.equal(result.rows[0].signal,'WAIT','Konfirmasi harus butuh 2 candle M5');
- assert.equal(result.rows[1].signal,'BUY');
- assert.equal(result.windows.length,1);
+ assert.ok(result.rows.some(r=>r.signal==='BUY'),'Near-exact moving event must appear');
+ assert.ok(result.rows.filter(r=>r.signal==='BUY').length<=18,
+  'Single planetary event must not produce all-day 5m bias');
+ assert.equal(result.windows.length,1,'One event ID can open once per day');
+ assert.ok(result.windows[0].end-result.windows[0].start<=90*60000,
+  'Each window capped at 90m');
  assert.ok(result.windows[0].end>result.windows[0].start);
  const exportData=F.exportResearch(result);
  assert.equal(exportData.allowAutoTrade,false);
  assert.equal(exportData.tradeDecision,'WAIT');
  assert.equal(exportData.validatedForXAUUSD,false);
+ assert.equal(exportData.schema,'CEBONK_SOLAR_RETURN_ONLY_RESEARCH_V3_1');
+ assert.ok(exportData.rows.every(r=>r.tradeDecision==='WAIT'));
+ assert.ok(exportData.rows.every(r=>!Object.hasOwn(r,'signal')),
+  'EA exports must not contain an actionable signal field');
  const saturday=await F.analyze(C,SR,{},'2026-10-17');
  assert.ok(saturday.rows.every(r=>r.signal==='WAIT'),'Weekend wajib WAIT');
  await assert.rejects(F.analyze(C,SR,{},'2026-10-14',12,()=>{},()=>true),/dibatalkan/);
@@ -66,13 +82,18 @@ async function testIntegration(){
  const ui=fs.readFileSync(path.join(ROOT,'assets/solar-return-only-trend-ui.js'),'utf8');
  assert.ok(html.includes('id="tabSolarReturnOnly"'));
  assert.ok(html.includes('id="solarReturnOnlyView"'));
- assert.ok(html.includes('solar-return-only-trend-core.js?v=3.0.0'));
- assert.ok(html.includes('solar-return-only-trend-ui.js?v=3.0.0'));
+ assert.ok(html.includes('id="astroView" hidden'));
+ assert.ok(!html.includes('src="assets/astrodox-comex-solar-return-ui.js'),
+  'Old broken panel must not be mounted');
+ assert.ok(!html.includes('id="modelEnabled" type="checkbox" checked'),
+  'Legacy V1 should not expose BUY/SELL by default');
+ assert.ok(html.includes('solar-return-only-trend-core.js?v=3.1.0'));
+ assert.ok(html.includes('solar-return-only-trend-ui.js?v=3.1.0'));
  assert.ok(router.includes("tabSolarReturnOnly:'solarReturnOnlyView'"));
  assert.ok(router.includes("'solar-return-only':'tabSolarReturnOnly'"));
  assert.ok(!ui.includes('CebonkAstrodoxM1'),'Mode SR tak boleh membaca Astro V2');
  assert.ok(!ui.includes('CebonkEventPolarityM1'),'Mode SR tak boleh membaca EventPolarity');
  new Function(ui);
- console.log('PASS: Solar Return only V3 — direction, confirmation, weekdays, exports, cancellation, isolated tab');
+ console.log('PASS: Solar Return v3.1 safety — direction, confirmation, weekdays, exports, cancellation, isolated tab');
 }
 testIntegration().catch(e=>{console.error(e);process.exitCode=1;});
