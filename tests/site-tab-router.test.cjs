@@ -48,7 +48,7 @@ function main(){
  const doc=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
  assert.ok(doc.includes('<section id="albiruniPanel" aria-labelledby="abTitle" hidden>'));
  assert.ok(doc.indexOf('<section id="albiruniPanel"')>doc.indexOf('</div>\n<section id="albiruniPanel"'));
- assert.ok(doc.indexOf('assets/site-tab-router.js?v=1.0.0')>doc.indexOf('assets/albiruni-ui.js?'));
+ assert.ok(doc.indexOf('assets/site-tab-router.js?v=1.0.0')>doc.indexOf('assets/albiruni-original-v1-5-ui.js?'));
  const dom=build(),w=dom.window;
  assertOnly(w,'tabAstro');
  for(const id of Object.keys(tabs)){
