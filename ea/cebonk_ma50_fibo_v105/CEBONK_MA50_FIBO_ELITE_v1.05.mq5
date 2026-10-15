@@ -465,7 +465,9 @@ void Reconcile(ulong id)
          dir*(tp-open)/MathAbs(open-sl)<MinimumRR)
       {
          pilot=false;Button();Print("FILL_HALT: unsafe realized SL/TP; closing ",ticket);
-         if(!tr.PositionClose(ticket))Print("EMERGENCY_CLOSE_FAILED ",GetLastError());
+         if(!AllowRealAccount && AccountInfoInteger(ACCOUNT_TRADE_MODE)==ACCOUNT_TRADE_MODE_REAL)
+            Print("REAL_GUARD: no auto-close without explicit permission");
+         else if(!tr.PositionClose(ticket))Print("EMERGENCY_CLOSE_FAILED ",GetLastError());
       }
       return;
    }
@@ -532,7 +534,9 @@ void AuditPositions()
       {
          pilot=false;Button();
          PrintFormat("FILL_HALT position=%I64u risk=%f sum=%f",ticket,risk,sum);
-         if(!tr.PositionClose(ticket))Print("EMERGENCY_CLOSE_FAILED ",tr.ResultRetcodeDescription());
+         if(!AllowRealAccount && AccountInfoInteger(ACCOUNT_TRADE_MODE)==ACCOUNT_TRADE_MODE_REAL)
+            Print("REAL_GUARD: no auto-close without explicit permission");
+         else if(!tr.PositionClose(ticket))Print("EMERGENCY_CLOSE_FAILED ",tr.ResultRetcodeDescription());
          return;
       }
    }
