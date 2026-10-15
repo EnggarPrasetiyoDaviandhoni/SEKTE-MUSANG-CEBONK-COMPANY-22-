@@ -437,7 +437,7 @@ string Encode(string s)
    }
    return out;
 }
-void Alert(string msg)
+void NotifyTrade(string msg)
 {
    Print(msg);
    if(PushEnabled)SendNotification(msg);
@@ -503,7 +503,7 @@ void OnTradeTransaction(const MqlTradeTransaction &x,
          break;
       }
    }
-   Alert(StringFormat("SEKTE MUSANG TEORY CEBONK COMPANY 22\n%s %s @ %s\nTF H1/M15/M5 | FIBO ELITE%s",
+   NotifyTrade(StringFormat("SEKTE MUSANG TEORY CEBONK COMPANY 22\n%s %s @ %s\nTF H1/M15/M5 | FIBO ELITE%s",
          action,_Symbol,DoubleToString(p,_Digits),details));
 }
 // Post-fill verification also runs on subsequent ticks, covering delayed position updates.
