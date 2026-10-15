@@ -8,7 +8,7 @@
   "core_epoch": 1792097860,
   "end_epoch": 1792112563,
   "valid_until_epoch": 1792112563,
-  "published_epoch": 1792100519,
+  "published_epoch": 1792107484,
   "aspect": "Moon/Jupiter Trine 120deg orb 1.820deg",
   "phase": "APPLYING",
   "buy_aspects": 2,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "BUY"
   },
-  "generated_at_utc": "2026-10-15T21:41:59.000Z",
+  "generated_at_utc": "2026-10-15T23:38:04.000Z",
   "candidate_entry_wib": "2026-10-16 00:15:00 WIB",
   "start_wib": "2026-10-16 00:00:00 WIB",
   "core_wib": "2026-10-16 03:57:40 WIB",
