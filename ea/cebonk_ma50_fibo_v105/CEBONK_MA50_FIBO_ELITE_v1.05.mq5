@@ -245,7 +245,7 @@ bool Pivot(int s,int dir)
 bool CBLevel(int dir,double &level)
 {
    int newest=-1,older=-1;
-   for(int s=PivotDepth+2;s<=CBLookback;s++)
+   for(int s=PivotDepth+2;s<=CBLookbackM5;s++)
    {
       if(!Pivot(s,dir))continue;
       MqlRates b; if(!Bar(PERIOD_M5,s,b))return false;
