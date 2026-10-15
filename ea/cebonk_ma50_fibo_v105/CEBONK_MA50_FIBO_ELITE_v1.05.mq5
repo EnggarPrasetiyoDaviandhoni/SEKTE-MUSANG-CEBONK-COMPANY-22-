@@ -492,11 +492,54 @@ void OnTradeTransaction(const MqlTradeTransaction &x,
    string action=side==DEAL_ENTRY_IN?
         (HistoryDealGetInteger(x.deal,DEAL_TYPE)==DEAL_TYPE_BUY?"BUY":"SELL"):
         (HistoryDealGetInteger(x.deal,DEAL_REASON)==DEAL_REASON_TP?"TAKE PROFIT":"STOP LOSS");
-   Alert(StringFormat("SEKTE MUSANG TEORY CEBONK COMPANY 22\n%s %s @ %s\nTF H1/M15/M5 | FIBO ELITE",
-         action,_Symbol,DoubleToString(p,_Digits)));
+   string details="";
+   if(side==DEAL_ENTRY_IN)
+   {
+      for(int i=PositionsTotal()-1;i>=0;i--)
+      {
+         if(PositionGetTicket(i)==0||PositionGetInteger(POSITION_IDENTIFIER)!=id)continue;
+         details=StringFormat("\nSL: %s | TP: %s",DoubleToString(PositionGetDouble(POSITION_SL),_Digits),
+                              DoubleToString(PositionGetDouble(POSITION_TP),_Digits));
+         break;
+      }
+   }
+   Alert(StringFormat("SEKTE MUSANG TEORY CEBONK COMPANY 22\n%s %s @ %s\nTF H1/M15/M5 | FIBO ELITE%s",
+         action,_Symbol,DoubleToString(p,_Digits),details));
+}
+// Post-fill verification also runs on subsequent ticks, covering delayed position updates.
+void AuditPositions()
+{
+   double equity=AccountInfoDouble(ACCOUNT_EQUITY),sum=0.0;
+   for(int i=PositionsTotal()-1;i>=0;i--)
+   {
+      ulong ticket=PositionGetTicket(i);
+      if(ticket==0||PositionGetString(POSITION_SYMBOL)!=_Symbol||
+         (ulong)PositionGetInteger(POSITION_MAGIC)!=Magic)continue;
+      int dir=PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_BUY?1:-1;
+      double open=PositionGetDouble(POSITION_PRICE_OPEN);
+      double sl=PositionGetDouble(POSITION_SL),tp=PositionGetDouble(POSITION_TP);
+      double volume=PositionGetDouble(POSITION_VOLUME),risk=0;
+      bool invalid=sl<=0||tp<=0||dir*(open-sl)<=0||
+                   dir*(tp-open)<MinimumRR*MathAbs(open-sl)||
+                   !CashRisk(dir,volume,open,sl,risk)||
+                   risk>equity*MaxRiskPerOrderPct/100.0;
+      if(!invalid)
+      {
+         sum+=risk;
+         invalid=(sum>equity*MaxOpenRiskPct/100.0);
+      }
+      if(invalid)
+      {
+         pilot=false;Button();
+         PrintFormat("FILL_HALT position=%I64u risk=%f sum=%f",ticket,risk,sum);
+         if(!tr.PositionClose(ticket))Print("EMERGENCY_CLOSE_FAILED ",tr.ResultRetcodeDescription());
+         return;
+      }
+   }
 }
 void OnTick()
 {
+   AuditPositions();
    datetime bar=iTime(_Symbol,PERIOD_M5,1);
    if(bar<=0)return;
    // Sideways invalidates armed setups, regardless of BUY/SELL.
@@ -588,6 +631,8 @@ int OnInit()
    tr.SetAsyncMode(false);
    pilot=StartAutopilot;
    if(!AllowRealAccount&&AccountInfoInteger(ACCOUNT_TRADE_MODE)==ACCOUNT_TRADE_MODE_REAL)pilot=false;
+   if(MQLInfoInteger(MQL_TESTER))
+   {GlobalVariableDel(GV("phase"));GlobalVariableDel(GV("claim"));}
    Restore();
    lastBar=iTime(_Symbol,PERIOD_M5,1);
    Button();
