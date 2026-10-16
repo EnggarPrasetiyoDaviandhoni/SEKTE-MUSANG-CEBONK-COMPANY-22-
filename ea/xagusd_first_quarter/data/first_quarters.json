@@ -1,8 +1,79 @@
 {
   "model": "CEBONK_XAG_FIRST_QUARTER_V1",
-  "status": "PENDING",
+  "status": "READY",
   "source_engine": "astronomy-engine@2.1.19",
-  "generated_epoch": 0,
-  "expires_epoch": 0,
-  "first_quarters": []
+  "generated_epoch": 1792154046,
+  "expires_epoch": 1792499646,
+  "first_quarters": [
+    {
+      "phase_epoch": 1792339999,
+      "utc_date": "2026-10-18",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1794916107,
+      "utc_date": "2026-11-17",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1797486195,
+      "utc_date": "2026-12-17",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1800045305,
+      "utc_date": "2027-01-15",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1802591942,
+      "utc_date": "2027-02-14",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1805127944,
+      "utc_date": "2027-03-15",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1807657033,
+      "utc_date": "2027-04-13",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1810183468,
+      "utc_date": "2027-05-13",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1812711403,
+      "utc_date": "2027-06-11",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1815244777,
+      "utc_date": "2027-07-10",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1817787288,
+      "utc_date": "2027-08-09",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1820341917,
+      "utc_date": "2027-09-07",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1822909683,
+      "utc_date": "2027-10-07",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1825488040,
+      "utc_date": "2027-11-06",
+      "moon_phase": "FIRST_QUARTER"
+    }
+  ]
 }
