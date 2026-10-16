@@ -1,4 +1,4 @@
-/* Kalender Fase Bulan CEBONK v1.2 — Luxor fixed GMT+3, WIB GMT+7 comparison. */
+/* Kalender Fase Bulan CEBONK v1.3 — GMT server MT5 proxy auto and WIB. */
 (function(root){
 'use strict';
 const DAY=86400000;
@@ -12,15 +12,15 @@ const FULL=new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'long',year:'num
 const HHMM=new Intl.DateTimeFormat('id-ID',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'UTC'});
 const $=id=>document.getElementById(id);
 const WIB=420;
-const zoneOffset=180; // Luxor fixed reference, GMT+3 as requested. No DST switching.
+const Broker=root.CebonkMt5BrokerTime; if(!Broker)throw Error('Modul broker MT5 belum termuat');
 let year,month,selected,enginePromise=null,loaded=false;
-const zoneName=()=>'Luxor GMT+3';
+const zoneName=date=>Broker.label(date);
 const localClock=(date,offset)=>new Date(date.getTime()+offset*60000);
 const localParts=(date,offset)=>{const d=localClock(date,offset);return {y:d.getUTCFullYear(),m:d.getUTCMonth(),day:d.getUTCDate()};};
-const localInstant=(y,m,day,hour,minute=0,offset=zoneOffset)=>new Date(Date.UTC(y,m,day,hour,minute)-offset*60000);
-const localDate=(date,offset)=>FULL.format(localClock(date,offset));
-const localTime=(date,offset)=>HHMM.format(localClock(date,offset));
-const stamp=date=>localDate(date,zoneOffset)+' · '+localTime(date,zoneOffset)+' '+zoneName()+
+const localInstant=(y,m,day,hour,minute=0)=>new Date(Broker.wallToUtc(y,m,day,hour,minute));
+const localDate=(date,offset=Broker.offsetAt(date))=>FULL.format(localClock(date,offset));
+const localTime=(date,offset=Broker.offsetAt(date))=>HHMM.format(localClock(date,offset));
+const stamp=date=>localDate(date)+' · '+localTime(date)+' broker '+zoneName(date)+
   ' / '+localDate(date,WIB)+' · '+localTime(date,WIB)+' WIB';
 function script(url){
  return new Promise((resolve,reject)=>{
@@ -74,9 +74,9 @@ function selectDay(A,y,m,day,event){
  const illuminationEarly=Math.round(A.Illumination(A.Body.Moon,dEarly).phase_fraction*100);
  const phase=nameForAngle(angle);
  const eventText=event?' Momen utama: '+NAMES[event.quarter]+' pada '+stamp(event.date)+'.':'';
- $('moonSelectedDetail').textContent=localDate(d,zoneOffset)+': '+phase.icon+' '+phase.name+
-  ' · cahaya Bulan '+illuminationEarly+'% pukul 02.00 '+zoneName()+' ('+
-  localTime(dEarly,WIB)+' WIB), dan '+illumination+'% pukul 12.00 '+zoneName()+'.'+eventText;
+ $('moonSelectedDetail').textContent=localDate(d)+': '+phase.icon+' '+phase.name+
+  ' · cahaya Bulan '+illuminationEarly+'% pukul 02.00 broker '+zoneName(dEarly)+' ('+
+  localTime(dEarly,WIB)+' WIB), dan '+illumination+'% pukul 12.00 broker '+zoneName(d)+'.'+eventText;
 }
 async function render(){
  const status=$('moonStatus'),prev=$('moonPrev'),next=$('moonNext');
@@ -86,7 +86,8 @@ async function render(){
  try{
   const A=await astronomy();
   const events=eventsFor(A,year,month);
-  const byDay=new Map(events.map(e=>[localParts(e.date,zoneOffset).day,e]));
+  $('moonTimeBasis').textContent='Mode '+Broker.modeLabel()+'; waktu momen ikut GMT pada tanggalnya. WIB GMT+7 sebagai pembanding.';
+  const byDay=new Map(events.map(e=>[Broker.civil(e.date).day,e]));
   const count=new Date(Date.UTC(year,month+1,0)).getUTCDate();
   const first=(new Date(Date.UTC(year,month,1)).getUTCDay()+6)%7;
   $('moonMonth').textContent=MONTH.format(new Date(Date.UTC(year,month,1)));
@@ -99,7 +100,7 @@ async function render(){
    const pct=Math.round(A.Illumination(A.Body.Moon,midday).phase_fraction*100);
    const e=byDay.get(day);
    const cell=document.createElement('button');cell.type='button';cell.className='moon-day';
-   const civilToday=localParts(today,zoneOffset);
+   const civilToday=localParts(today,Broker.offsetAt(today));
    if(civilToday.y===year&&civilToday.m===month&&civilToday.day===day)cell.classList.add('moon-today');
    if(e)cell.classList.add('moon-major');
    cell.dataset.day=String(day);
@@ -121,11 +122,11 @@ async function render(){
   });
   const q=A.SearchMoonQuarter(new Date());
   $('moonNextEvent').textContent='Momen selanjutnya: '+NAMES[q.quarter]+' — '+stamp(q.time.date)+'.';
-  const civilToday=localParts(today,zoneOffset);
+  const civilToday=localParts(today,Broker.offsetAt(today));
   const current=civilToday.y===year&&civilToday.m===month?civilToday.day:1;
   const target=selected&&selected<=count?selected:current;
   selectDay(A,year,month,target,byDay.get(target));
-  status.textContent='Tanggal kalender Luxor GMT+3 tetap, dengan pembanding WIB GMT+7 (+4 jam). Fase utama ditandai titik emas.';
+  status.textContent='Tanggal kalender mengikuti '+Broker.modeLabel()+'. WIB tetap GMT+7; fase utama ditandai titik emas.';
   loaded=true;
  }catch(e){
   status.textContent='Perhitungan tidak tersedia: '+(e&&e.message?e.message:String(e));
@@ -145,9 +146,9 @@ function shift(delta){
 function mount(){
  const view=$('moonCalendarView');if(!view||view.dataset.mounted)return;
  view.dataset.mounted='1';
- const now=localParts(new Date(),zoneOffset);year=now.y;month=now.m;
+ const now=localParts(new Date(),Broker.offsetAt(Date.now()));year=now.y;month=now.m;
  view.innerHTML='<div class="head"><div><h2 id="moonCalendarTitle">KALENDER FASE BULAN</h2><small>Tanggal sesuai zona utama · WIB sebagai pembanding</small></div></div>'+
- '<div class="moon-content"><div class="moon-zone"><strong>Acuan kalender: Luxor GMT+3</strong><small>Pembanding: WIB GMT+7 (selisih +4 jam). Tanggal utama mengikuti GMT+3 tetap, bukan zona sipil Mesir otomatis.</small></div>'+
+ '<div class="moon-content"><div class="moon-zone"><strong>Acuan kalender: GMT server broker MT5 (perkiraan AUTO)</strong><small id="moonTimeBasis">GMT+2/GMT+3 mengikuti DST New York; WIB GMT+7 tetap. Belum tersambung langsung ke server MT5.</small></div>'+
  '<div class="moon-toolbar"><button id="moonPrev" type="button" aria-label="Bulan sebelumnya">←</button><strong id="moonMonth">—</strong><button id="moonNext" type="button" aria-label="Bulan berikutnya">→</button><button id="moonToday" type="button">Bulan ini</button></div>'+
  '<p id="moonStatus" role="status" aria-live="polite">Memuat kalender…</p>'+
  '<div class="moon-weekdays" aria-hidden="true">'+WEEK.map(x=>'<span>'+x+'</span>').join('')+'</div>'+
@@ -155,10 +156,11 @@ function mount(){
  '<p id="moonSelectedDetail" class="moon-detail">Pilih tanggal untuk rincian.</p>'+
  '<h3>Empat momen utama</h3><ul id="moonEvents" class="moon-events"></ul>'+
  '<p id="moonNextEvent" class="moon-detail"></p>'+
- '<p class="moon-caveat">Fase dihitung dengan Astronomy Engine 2.1.19 berdasarkan posisi geosentris Bulan–Matahari. Persentase harian dalam kotak tanggal dihitung pukul 12.00 zona terpilih; rincian tanggal juga menunjukkan persentase pukul 02.00. Tanggal momen tepat mengikuti zona terpilih, WIB ditampilkan sebagai pembanding. Persentase terang bukan kekuatan BUY/SELL atau petunjuk entry XAUUSD.</p></div>';
+ '<p class="moon-caveat">Fase dihitung dengan Astronomy Engine 2.1.19 berdasarkan posisi geosentris Bulan–Matahari. Persentase harian dalam kotak tanggal dihitung pukul 12.00 jam broker estimasi; rincian tanggal juga menunjukkan pukul 02.00. Tanggal momen mengikuti DST New York (GMT+2/+3), WIB pembanding. Persentase terang bukan kekuatan BUY/SELL atau petunjuk entry XAUUSD.</p></div>';
  $('moonPrev').addEventListener('click',()=>shift(-1));
  $('moonNext').addEventListener('click',()=>shift(1));
- $('moonToday').addEventListener('click',()=>{const d=localParts(new Date(),zoneOffset);year=d.y;month=d.m;selected=d.day;render();});
+ $('moonToday').addEventListener('click',()=>{const d=localParts(new Date(),Broker.offsetAt(Date.now()));year=d.y;month=d.m;selected=d.day;render();});
+ root.addEventListener('cebonk-mt5-clock-change',()=>{if(loaded)render();});
  const nav=$('tabMoonCalendar');
  if(nav)nav.addEventListener('click',()=>{if(!loaded)render();});
  if(root.location&&root.location.hash==='#kalender-fase-bulan')render();
