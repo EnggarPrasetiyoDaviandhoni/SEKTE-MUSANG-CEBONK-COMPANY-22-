@@ -1,0 +1,35 @@
+/* CEBONK daily swing: independent responsive panel. */
+#dailySwingView{max-width:1000px;margin-inline:auto}
+.swing-inner{padding:15px}
+.swing-controls{display:grid;grid-template-columns:1.3fr 1fr 1.2fr;gap:12px;align-items:end;margin-bottom:12px}
+.swing-controls label{font-size:12px;color:var(--muted);display:block}
+.swing-controls select,.swing-controls input{display:block;width:100%;margin-top:6px;min-height:43px}
+.swing-buttons{display:flex;gap:8px;grid-column:1/3}
+.swing-buttons button{flex:1;min-height:40px;font-size:12px}
+#swingCalc{width:100%;min-height:43px}
+.swing-explainer{font-size:12px;line-height:1.6;color:var(--muted);margin:12px 0}
+#swingProgress{width:100%;height:7px;accent-color:var(--cyan);margin:4px 0}
+#swingStatus{font-size:12px;color:var(--cyan);line-height:1.5;margin:11px 0}
+#swingStatus.swing-error{color:var(--sell)}
+.swing-overview{padding:16px;border:1px solid var(--line);background:#0c1827;border-radius:10px;margin:14px 0}
+.swing-direction{display:inline-flex;font-size:23px;font-weight:800;letter-spacing:.1px;margin-bottom:6px}
+.swing-buy .swing-signal,.swing-direction.swing-buy{color:var(--buy)}
+.swing-sell .swing-signal,.swing-direction.swing-sell{color:var(--sell)}
+.swing-wait .swing-signal,.swing-direction.swing-wait{color:var(--amber)}
+#swingPeriod{font-size:13px;font-weight:650}
+.swing-overview p{font-size:12px;color:var(--muted);margin:5px 0 0}
+.swing-best{padding:15px;border:1px solid #8f7641;background:#242116;border-radius:10px;margin:13px 0}
+.swing-best span{display:block;color:var(--accent);font-size:11px;font-weight:750;letter-spacing:.6px}
+.swing-best strong{display:block;font-size:21px;margin:5px 0}
+#swingBestMoon{font-size:17px;font-weight:700}
+.swing-best p{font-size:12px;color:var(--text);margin:8px 0}
+.swing-best small{font-size:11px;color:var(--muted)}
+.swing-scroll{overflow-x:auto;max-width:100%;border:1px solid var(--line);border-radius:9px;margin:14px 0}
+.swing-scroll table{min-width:670px;white-space:normal}
+.swing-scroll th,.swing-scroll td{padding:12px 11px}
+.swing-scroll td small{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+.swing-scroll .swing-top{background:#292617}
+.swing-scroll .swing-signal{font-weight:800}
+#swingCopy{width:100%;min-height:43px}
+.swing-warning{padding:12px 14px;background:#262117;border:1px solid #5c4b2f;border-radius:9px;color:#eed7a4;font-size:11px;line-height:1.6;margin-top:14px}
+@media(max-width:750px){.swing-inner{padding:11px}.swing-controls{grid-template-columns:1fr 1fr;gap:9px}.swing-controls label:first-child,.swing-controls label:nth-child(3),.swing-buttons,#swingCalc{grid-column:1/-1}.swing-buttons{display:grid;grid-template-columns:1fr 1fr}.swing-direction{font-size:21px}.swing-best strong{font-size:19px}}
