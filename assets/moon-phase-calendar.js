@@ -1,4 +1,4 @@
-/* Kalender Fase Bulan CEBONK v1.0 — independent astronomical information, UTC only. */
+/* Kalender Fase Bulan CEBONK v1.1 — astronomical instants, displayed by selected GMT offset and WIB. */
 (function(root){
 'use strict';
 const DAY=86400000;
@@ -11,9 +11,16 @@ const MONTH=new Intl.DateTimeFormat('id-ID',{month:'long',year:'numeric',timeZon
 const FULL=new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
 const HHMM=new Intl.DateTimeFormat('id-ID',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'UTC'});
 const $=id=>document.getElementById(id);
-let year,month,selected,enginePromise=null,loaded=false;
-const pad=n=>String(n).padStart(2,'0');
-const stamp=d=>FULL.format(d)+' · '+HHMM.format(d)+' UTC';
+const WIB=420;
+let year,month,selected,enginePromise=null,loaded=false,zoneOffset=-180;
+const zoneName=()=>zoneOffset===-180?'GMT−3':'GMT+3';
+const localClock=(date,offset)=>new Date(date.getTime()+offset*60000);
+const localParts=(date,offset)=>{const d=localClock(date,offset);return {y:d.getUTCFullYear(),m:d.getUTCMonth(),day:d.getUTCDate()};};
+const localInstant=(y,m,day,hour,minute=0,offset=zoneOffset)=>new Date(Date.UTC(y,m,day,hour,minute)-offset*60000);
+const localDate=(date,offset)=>FULL.format(localClock(date,offset));
+const localTime=(date,offset)=>HHMM.format(localClock(date,offset));
+const stamp=date=>localDate(date,zoneOffset)+' · '+localTime(date,zoneOffset)+' '+zoneName()+
+  ' / '+localDate(date,WIB)+' · '+localTime(date,WIB)+' WIB';
 function script(url){
  return new Promise((resolve,reject)=>{
   const s=document.createElement('script');s.src=url;s.async=true;
@@ -40,7 +47,7 @@ function nameForAngle(deg){
 }
 function within(y,m){return y>=2020&&(y<2040||(y===2040&&m<=11));}
 function eventsFor(A,y,m){
- const start=Date.UTC(y,m,1),end=Date.UTC(y,m+1,1);
+ const start=localInstant(y,m,1,0).getTime(),end=localInstant(y,m+1,1,0).getTime();
  let q=A.SearchMoonQuarter(new Date(start-10*DAY));
  const out=[];
  for(let i=0;i<10;i++){
@@ -59,14 +66,16 @@ function selectDay(A,y,m,day,event){
   b.classList.toggle('moon-selected',active);
   b.setAttribute('aria-pressed',String(active));
  });
- const d=new Date(Date.UTC(y,m,day,12));
+ const d=localInstant(y,m,day,12);
+ const dEarly=localInstant(y,m,day,2);
  const angle=A.MoonPhase(d);
  const illumination=Math.round(A.Illumination(A.Body.Moon,d).phase_fraction*100);
+ const illuminationEarly=Math.round(A.Illumination(A.Body.Moon,dEarly).phase_fraction*100);
  const phase=nameForAngle(angle);
- const date=new Date(Date.UTC(y,m,day));
- const eventText=event?' Momen utama: '+NAMES[event.quarter]+' pada '+HHMM.format(event.date)+' UTC.':'';
- $('moonSelectedDetail').textContent=FULL.format(date)+': '+phase.icon+' '+phase.name+
-  ' · bagian terang '+illumination+'% (pukul 12:00 UTC).'+eventText;
+ const eventText=event?' Momen utama: '+NAMES[event.quarter]+' pada '+stamp(event.date)+'.':'';
+ $('moonSelectedDetail').textContent=localDate(d,zoneOffset)+': '+phase.icon+' '+phase.name+
+  ' · cahaya Bulan '+illuminationEarly+'% pukul 02.00 '+zoneName()+' ('+
+  localTime(dEarly,WIB)+' WIB), dan '+illumination+'% pukul 12.00 '+zoneName()+'.'+eventText;
 }
 async function render(){
  const status=$('moonStatus'),prev=$('moonPrev'),next=$('moonNext');
@@ -76,7 +85,7 @@ async function render(){
  try{
   const A=await astronomy();
   const events=eventsFor(A,year,month);
-  const byDay=new Map(events.map(e=>[e.date.getUTCDate(),e]));
+  const byDay=new Map(events.map(e=>[localParts(e.date,zoneOffset).day,e]));
   const count=new Date(Date.UTC(year,month+1,0)).getUTCDate();
   const first=(new Date(Date.UTC(year,month,1)).getUTCDay()+6)%7;
   $('moonMonth').textContent=MONTH.format(new Date(Date.UTC(year,month,1)));
@@ -84,12 +93,13 @@ async function render(){
   for(let n=0;n<first;n++){const blank=document.createElement('span');blank.className='moon-blank';grid.append(blank);}
   const today=new Date();
   for(let day=1;day<=count;day++){
-   const midday=new Date(Date.UTC(year,month,day,12));
+   const midday=localInstant(year,month,day,12);
    const phase=nameForAngle(A.MoonPhase(midday));
    const pct=Math.round(A.Illumination(A.Body.Moon,midday).phase_fraction*100);
    const e=byDay.get(day);
    const cell=document.createElement('button');cell.type='button';cell.className='moon-day';
-   if(today.getUTCFullYear()===year&&today.getUTCMonth()===month&&today.getUTCDate()===day)cell.classList.add('moon-today');
+   const civilToday=localParts(today,zoneOffset);
+   if(civilToday.y===year&&civilToday.m===month&&civilToday.day===day)cell.classList.add('moon-today');
    if(e)cell.classList.add('moon-major');
    cell.dataset.day=String(day);
    cell.setAttribute('aria-label',day+' '+MONTH.format(midday)+', '+(e?NAMES[e.quarter]:phase.name)+', terang '+pct+' persen');
@@ -110,17 +120,18 @@ async function render(){
   });
   const q=A.SearchMoonQuarter(new Date());
   $('moonNextEvent').textContent='Momen selanjutnya: '+NAMES[q.quarter]+' — '+stamp(q.time.date)+'.';
-  const current=today.getUTCFullYear()===year&&today.getUTCMonth()===month?today.getUTCDate():1;
+  const civilToday=localParts(today,zoneOffset);
+  const current=civilToday.y===year&&civilToday.m===month?civilToday.day:1;
   const target=selected&&selected<=count?selected:current;
   selectDay(A,year,month,target,byDay.get(target));
-  status.textContent='Data astronomi · UTC+0 · fase utama ditandai titik emas.';
+  status.textContent='Tanggal kalender mengikuti '+zoneName()+', waktu pembanding WIB. Fase utama ditandai titik emas.';
   loaded=true;
  }catch(e){
   status.textContent='Perhitungan tidak tersedia: '+(e&&e.message?e.message:String(e));
   $('moonDays').replaceChildren();$('moonEvents').replaceChildren();
   $('moonNextEvent').textContent='Tidak ada data pengganti yang dibuat-buat.';
  }finally{
-  prev.disabled=!within(year,month-1<0?11:month-1)||year===2020&&month===0;
+  prev.disabled=year===2020&&month===0;
   next.disabled=year===2040&&month===11;
  }
 }
@@ -133,19 +144,22 @@ function shift(delta){
 function mount(){
  const view=$('moonCalendarView');if(!view||view.dataset.mounted)return;
  view.dataset.mounted='1';
- const now=new Date();year=now.getUTCFullYear();month=now.getUTCMonth();
- view.innerHTML='<div class="head"><div><h2 id="moonCalendarTitle">KALENDER FASE BULAN</h2><small>Kalender astronomi mandiri · seluruh jam UTC+0</small></div></div>'+
- '<div class="moon-content"><div class="moon-toolbar"><button id="moonPrev" type="button" aria-label="Bulan sebelumnya">←</button><strong id="moonMonth">—</strong><button id="moonNext" type="button" aria-label="Bulan berikutnya">→</button><button id="moonToday" type="button">Bulan ini</button></div>'+
+ const now=localParts(new Date(),zoneOffset);year=now.y;month=now.m;
+ view.innerHTML='<div class="head"><div><h2 id="moonCalendarTitle">KALENDER FASE BULAN</h2><small>Tanggal sesuai zona utama · WIB sebagai pembanding</small></div></div>'+
+ '<div class="moon-content"><div class="moon-zone"><label for="moonZone">Acuan tanggal dan jam kalender</label><select id="moonZone" aria-label="Zona waktu kalender"><option value="-180">GMT−3 (sesuai permintaan)</option><option value="180">GMT+3 (opsi jam broker)</option></select><small>Setiap momen utama juga menampilkan konversi WIB (GMT+7). Tanggal mengikuti zona yang dipilih.</small></div>'+
+ '<div class="moon-toolbar"><button id="moonPrev" type="button" aria-label="Bulan sebelumnya">←</button><strong id="moonMonth">—</strong><button id="moonNext" type="button" aria-label="Bulan berikutnya">→</button><button id="moonToday" type="button">Bulan ini</button></div>'+
  '<p id="moonStatus" role="status" aria-live="polite">Memuat kalender…</p>'+
  '<div class="moon-weekdays" aria-hidden="true">'+WEEK.map(x=>'<span>'+x+'</span>').join('')+'</div>'+
  '<div id="moonDays" class="moon-days" role="group" aria-label="Tanggal dan fase bulan"></div>'+
  '<p id="moonSelectedDetail" class="moon-detail">Pilih tanggal untuk rincian.</p>'+
  '<h3>Empat momen utama</h3><ul id="moonEvents" class="moon-events"></ul>'+
  '<p id="moonNextEvent" class="moon-detail"></p>'+
- '<p class="moon-caveat">Fase dihitung dengan Astronomy Engine 2.1.19 berdasarkan posisi geosentris Bulan–Matahari. Persentase terang dihitung pukul 12:00 UTC setiap tanggal; waktu fase utama dihitung lebih presisi. Bukan prediksi harga XAUUSD, arah BUY/SELL, atau petunjuk entry.</p></div>';
+ '<p class="moon-caveat">Fase dihitung dengan Astronomy Engine 2.1.19 berdasarkan posisi geosentris Bulan–Matahari. Persentase harian dalam kotak tanggal dihitung pukul 12.00 zona terpilih; rincian tanggal juga menunjukkan persentase pukul 02.00. Tanggal momen tepat mengikuti zona terpilih, WIB ditampilkan sebagai pembanding. Persentase terang bukan kekuatan BUY/SELL atau petunjuk entry XAUUSD.</p></div>';
+ $('moonZone').value=String(zoneOffset);
+ $('moonZone').addEventListener('change',e=>{zoneOffset=Number(e.target.value);selected=null;render();});
  $('moonPrev').addEventListener('click',()=>shift(-1));
  $('moonNext').addEventListener('click',()=>shift(1));
- $('moonToday').addEventListener('click',()=>{const d=new Date();year=d.getUTCFullYear();month=d.getUTCMonth();selected=d.getUTCDate();render();});
+ $('moonToday').addEventListener('click',()=>{const d=localParts(new Date(),zoneOffset);year=d.y;month=d.m;selected=d.day;render();});
  const nav=$('tabMoonCalendar');
  if(nav)nav.addEventListener('click',()=>{if(!loaded)render();});
  if(root.location&&root.location.hash==='#kalender-fase-bulan')render();
