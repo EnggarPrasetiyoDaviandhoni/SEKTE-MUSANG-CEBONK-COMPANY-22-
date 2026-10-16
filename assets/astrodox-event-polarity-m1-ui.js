@@ -9,6 +9,7 @@ if(!astro||!C||!M||!P||document.getElementById('epmPanel'))return;
 const $=id=>document.getElementById(id);
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clock=ms=>C.Time.hm(C.Time.wib(ms));
+const broker=ms=>{const B=root.CebonkMt5BrokerTime;if(!B)return 'GMT broker belum tersedia';const p=B.civil(ms);return String(p.day).padStart(2,'0')+'/'+String(p.month).padStart(2,'0')+' '+String(p.hour).padStart(2,'0')+':'+String(p.minute).padStart(2,'0')+' GMT+'+(p.offset/60);};
 const date=()=>document.getElementById('dateInput')?.value;
 const fmt=n=>Number.isFinite(n)?n.toFixed(3):'—';
 const pct=n=>Number.isFinite(n)?Math.round(n*100)+'%':'—';
@@ -136,7 +137,7 @@ function showMinute(index){
  const current=$('epmMinuteRows').querySelectorAll('tr[data-row]');
  for(const tr of current)tr.classList.toggle('epm-picked',Number(tr.dataset.row)===index);
  $('epmDetail').innerHTML=
-  '<b>'+clock(r.ms)+' WIB · '+escapeHTML(r.eventPair||'Tidak ada event aktif')+'</b>'+
+  '<b>'+clock(r.ms)+' WIB · '+escapeHTML(broker(r.ms))+' broker MT5 · '+escapeHTML(r.eventPair||'Tidak ada event aktif')+'</b>'+
   '<p class="epm-note">Event '+escapeHTML(r.eventName||'—')+
   ' · '+escapeHTML(r.eventType)+' · '+escapeHTML(r.phase||'—')+
   ' · orb '+fmt(r.orb)+'° · kekuatan relatif '+pct(r.eventStrength)+
@@ -156,7 +157,7 @@ function renderHour(){
  }
  const sectionRows=idx.map(i=>{
   const r=report.rows[i],decision=r.guardedPolarity;
-  return '<tr data-row="'+i+'"><td>'+clock(r.ms)+'</td>'+
+  return '<tr data-row="'+i+'"><td>'+clock(r.ms)+'<small style="display:block">'+escapeHTML(broker(r.ms))+' MT5</small></td>'+
    '<td class="'+color(r.astroTrend)+'">'+escapeHTML(r.astroTrend)+'</td>'+
    '<td class="'+color(decision)+'"><strong>'+escapeHTML(decision)+'</strong></td>'+
    '<td>'+escapeHTML(r.eventType)+'</td><td>'+fmt(r.orb)+'°</td>'+
@@ -185,7 +186,7 @@ function refresh(){
      ', AKHIR '+clock(Date.parse(fw.akhirUTC))+' (retrospektif).':'');
  const events=report.rows.filter(r=>r.entryEvent);
  $('epmEventRows').innerHTML=events.length?events.map(r=>
-  '<tr><td>'+clock(r.ms)+'</td><td class="'+color(r.guardedPolarity)+'">'+
+  '<tr><td>'+clock(r.ms)+'<small style="display:block">'+escapeHTML(broker(r.ms))+' MT5</small></td><td class="'+color(r.guardedPolarity)+'">'+
   escapeHTML(r.guardedPolarity)+'</td><td>'+escapeHTML(r.eventPair||'—')+'</td>'+
   '<td>'+escapeHTML(r.eventType)+'</td><td>'+fmt(r.orb)+'°</td></tr>'
  ).join(''):'<tr><td colspan="5">Tidak ada event yang lolos. Jangan memaksa transaksi.</td></tr>';
@@ -239,6 +240,7 @@ async function run(){
   engine?.clear();lock(false);
  }
 }
+root.addEventListener('cebonk-mt5-clock-change',()=>{if(scan&&raw&&!busy)refresh();});
 function saveFile(filename,body,mime){
  const url=URL.createObjectURL(new Blob([body],{type:mime}));
  try{
