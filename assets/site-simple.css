@@ -6,10 +6,10 @@
 .cebonk-simple .hero .version{font-size:10px}
 .cebonk-simple .viewtabs{display:flex;flex-wrap:wrap;gap:7px;padding:8px}
 .cebonk-simple .viewtabs .viewtab{flex:1 1 170px;min-width:0;font-size:13px;min-height:42px}
-.cebonk-simple #tabAstro,.cebonk-simple #tabAlBiruni,.cebonk-simple #tabAstroFollowTrend{order:1}
+.cebonk-simple #tabAstro,.cebonk-simple #tabAlBiruni,.cebonk-simple #tabAstroFollowTrend,.cebonk-simple #tabMoonCalendar{order:1}
 .cebonk-simple .viewtabs .simple-more{order:2;flex:0 0 auto;min-height:42px;font-size:12px;padding:8px 12px;font-weight:650;color:#d1def0}
-.cebonk-simple .viewtabs .viewtab:not(#tabAstro):not(#tabAlBiruni):not(#tabAstroFollowTrend){order:3;flex:1 1 160px}
-.cebonk-simple .viewtabs:not(.simple-nav-open) .viewtab:not(#tabAstro):not(#tabAlBiruni):not(#tabAstroFollowTrend):not(.active){display:none!important}
+.cebonk-simple .viewtabs .viewtab:not(#tabAstro):not(#tabAlBiruni):not(#tabAstroFollowTrend):not(#tabMoonCalendar){order:3;flex:1 1 160px}
+.cebonk-simple .viewtabs:not(.simple-nav-open) .viewtab:not(#tabAstro):not(#tabAlBiruni):not(#tabAstroFollowTrend):not(#tabMoonCalendar):not(.active){display:none!important}
 .cebonk-simple .clocks{padding:10px 2px 13px;gap:12px}
 .cebonk-simple .clocks .clock strong{font-size:24px}
 .cebonk-simple .clocks .bridge b{font-size:20px}
@@ -34,7 +34,7 @@
  .cebonk-simple .hero h1{font-size:24px}
  .cebonk-simple .viewtabs .viewtab{flex:1 1 125px;padding:7px;font-size:12px}
  .cebonk-simple .viewtabs .simple-more{flex:1 1 100%;order:2}
- .cebonk-simple .viewtabs .viewtab:not(#tabAstro):not(#tabAlBiruni):not(#tabAstroFollowTrend){flex:1 1 130px}
+ .cebonk-simple .viewtabs .viewtab:not(#tabAstro):not(#tabAlBiruni):not(#tabAstroFollowTrend):not(#tabMoonCalendar){flex:1 1 130px}
  .cebonk-simple .clocks .clock strong{font-size:21px}
  .cebonk-simple .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
  .cebonk-simple .controls{grid-template-columns:1fr 1fr}
