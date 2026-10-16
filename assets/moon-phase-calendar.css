@@ -1,6 +1,9 @@
 /* Independent lunar calendar. Respects existing site theme. */
 .moon-calendar-panel{max-width:960px;margin-inline:auto}
 .moon-content{padding:16px}
+.moon-zone{padding:12px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;margin-bottom:14px}
+.moon-zone strong{display:block;font-size:13px}
+.moon-zone small{display:block;font-size:11px;color:var(--muted);margin-top:4px}
 .moon-toolbar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
 .moon-toolbar strong{font-size:19px;min-width:175px;text-align:center;text-transform:capitalize}
 .moon-toolbar button{min-height:38px;padding:6px 11px}
