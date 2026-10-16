@@ -1,4 +1,4 @@
-/* ASTRODOX M1 — isolated mobile-first interface. No legacy score mutations. */
+/* ASTRODOX M1 — timestamps WIB plus estimated MT5 GMT2 GMT3 clock. Scores unchanged. */
 (function(root){
 'use strict';
 const C=root.CebonkCore,M=root.CebonkAstrodoxM1;
@@ -9,6 +9,7 @@ const el=(id)=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 const hourString=h=>pad(h)+':00';
 const clock=ms=>C.Time.hm(C.Time.wib(ms));
+const broker=ms=>{const B=root.CebonkMt5BrokerTime;if(!B)return 'Broker GMT belum tersedia';const p=B.civil(ms);return pad(p.day)+'/'+pad(p.month)+' '+pad(p.hour)+':'+pad(p.minute)+' GMT+'+(p.offset/60);};
 const fmt=n=>Number.isFinite(n)?n.toFixed(2):'—';
 const pct=n=>Number.isFinite(n)?n.toFixed(0)+'%':'—';
 const directionClass=x=>x==='BUY'?'buy':x==='SELL'?'sell':'neutral';
@@ -142,7 +143,7 @@ function selectMinute(index){
  chosen=index;
  const r=viewRows[index];
  el('astrom1Details').hidden=false;
- el('astrom1DetailTitle').textContent='Rincian M1 · '+clock(r.ms)+'–'+clock(r.ms+60000)+' WIB';
+ el('astrom1DetailTitle').textContent='Rincian M1 · '+clock(r.ms)+'–'+clock(r.ms+60000)+' WIB | Broker MT5 '+broker(r.ms);
  const elements=Object.entries(r.zodiacCounts).map(([e,n])=>e+' '+n+'/10').join(' · ');
  el('astrom1Overview').innerHTML=[
   '<span>Status <b class="'+directionClass(r.state)+'">'+esc(r.state)+'</b></span>',
@@ -187,7 +188,7 @@ function render(x){
    dayLabel+'. Menampilkan '+pad(hour)+':00–'+pad(hour+1)+':00 · ubah jam untuk melihat 60 menit lain.':
    'SCAN PER JAM '+x.date+' WIB: '+pad(x.hour)+':00–'+pad(x.hour+1)+':00 · 60 menit.';
  el('astrom1Rows').innerHTML=viewRows.map((r,i)=>
-   '<tr data-minute="'+i+'"><td class="mono">'+clock(r.ms)+'–'+clock(r.ms+60000)+'</td>'+
+   '<tr data-minute="'+i+'"><td class="mono">'+clock(r.ms)+'–'+clock(r.ms+60000)+'<small style="display:block">'+esc(broker(r.ms))+' MT5</small></td>'+
    '<td class="'+directionClass(r.state)+'"><b>'+esc(r.state)+'</b></td>'+
    '<td class="buy">'+pct(r.buyPct)+'</td><td class="sell">'+pct(r.sellPct)+'</td>'+
    '<td class="mono">'+fmt(r.score)+'</td>'+
@@ -271,6 +272,7 @@ el('astrom1Rows').addEventListener('click',e=>{
 for(const id of ['dateInput','tzMode','modelEnabled']){
  el(id)?.addEventListener('change',reset);
 }
+root.addEventListener('cebonk-mt5-clock-change',()=>{if(report&&!busy)render(report);});
 root.addEventListener('cebonk-astro-update',()=>{
  if(!report)return;
  if(report.date!==el('dateInput')?.value){reset();return;}
