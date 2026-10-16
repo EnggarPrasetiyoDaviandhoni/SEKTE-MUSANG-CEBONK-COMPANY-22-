@@ -1,0 +1,26 @@
+/* Independent lunar calendar. Respects existing site theme. */
+.moon-calendar-panel{max-width:960px;margin-inline:auto}
+.moon-content{padding:16px}
+.moon-toolbar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.moon-toolbar strong{font-size:19px;min-width:175px;text-align:center;text-transform:capitalize}
+.moon-toolbar button{min-height:38px;padding:6px 11px}
+#moonStatus{font-size:12px;color:var(--muted);min-height:18px}
+.moon-weekdays,.moon-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.moon-weekdays{margin:16px 0 8px;text-align:center;color:var(--muted);font-size:12px;font-weight:700}
+.moon-day{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;min-height:96px;padding:8px 2px;background:#111d2d;border:1px solid #28394f;border-radius:10px}
+.moon-day:hover{border-color:var(--cyan);background:#17283a}
+.moon-day-number{font-weight:750;font-size:13px;line-height:16px}
+.moon-day-icon{font-size:25px;line-height:30px}
+.moon-day small{font-size:11px;color:var(--muted);line-height:14px}
+.moon-day.moon-today{border-color:var(--cyan)}
+.moon-day.moon-major{background:#282418;border-color:#8c7440}
+.moon-day.moon-selected{outline:2px solid var(--accent);outline-offset:1px}
+.moon-event-dot{position:absolute;right:5px;top:4px;font-size:9px;color:var(--accent)}
+.moon-detail{margin:14px 0;padding:11px 13px;border-radius:9px;background:var(--panel2);font-size:13px}
+.moon-content h3{font-size:15px;margin:20px 0 10px}
+.moon-events{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.moon-events li{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);padding:12px;border-radius:9px;font-size:12px}
+.moon-events strong{font-size:13px}
+.moon-events span{color:var(--muted);font-variant-numeric:tabular-nums}
+.moon-caveat{color:var(--muted);font-size:11px;line-height:1.55;margin:16px 0 0}
+@media(max-width:650px){.moon-content{padding:11px}.moon-weekdays,.moon-days{gap:3px}.moon-day{min-height:79px;padding:7px 1px;border-radius:7px}.moon-day-icon{font-size:20px;line-height:26px}.moon-day-number{font-size:11px}.moon-day small{font-size:10px}.moon-event-dot{right:2px;top:2px}.moon-events{grid-template-columns:1fr}.moon-toolbar{gap:7px}.moon-toolbar strong{min-width:145px;font-size:16px}}
