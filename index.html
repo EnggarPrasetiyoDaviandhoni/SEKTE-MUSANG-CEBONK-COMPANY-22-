@@ -341,7 +341,7 @@ const modeName=()=>'Luxor GMT+3 tetap';
 let engine=null,libPromise=null,current=null,index=0,busy=false;
 function error(msg){$('errorBox').hidden=!msg;$('errorBox').textContent=msg||'';}
 function status(msg){$('statusText').textContent=msg;}
-function luxorText(ms,mode){const p=T.luxor(ms,mode);return `${T.dateISO(p)} ${T.hm(p)} ${T.offsetLabel(p.offset)}`;}
+function luxorText(ms,mode){const p=T.luxor(ms,mode);return `${T.dateISO(p)} ${T.hm(p)} GMT+3`;}
 function wibText(ms){const p=T.wib(ms);return `${T.dateISO(p)} ${T.hm(p)} WIB`;}
 function shortLuxor(ms,base){const p=T.luxor(ms,'FIXED3');return T.hm(p)+(T.dateISO(p)!==base?' ('+T.dateISO(p)+')':'');}
 function zodiac(lon){const degrees=Math.round((C.norm(lon)%30)*60);let zi=Math.floor(C.norm(lon)/30);if(degrees===1800) zi=(zi+1)%12;return `${CFG.zodiac[zi]} ${String(Math.floor(degrees/60)%30).padStart(2,'0')}°${String(degrees%60).padStart(2,'0')}′`;}
@@ -430,7 +430,7 @@ function selected(){
  const s=current.samples[index],mode=current.mode,w=T.wib(s.ms),l=T.luxor(s.ms,mode);
  $('slotSelect').value=String(index);$('prevSlot').disabled=index===0;$('nextSlot').disabled=index===current.samples.length-1;
  $('inspectStamp').textContent=`Waktu: ${luxorText(s.ms,mode)} / ${wibText(s.ms)}`;
- $('sampleLuxor').textContent=T.hm(l)+' '+T.offsetLabel(l.offset);$('sampleLuxorDate').textContent=T.dateISO(l)+' · '+modeName(mode);
+ $('sampleLuxor').textContent=T.hm(l)+' GMT+3';$('sampleLuxorDate').textContent=T.dateISO(l)+' · '+modeName(mode);
  $('sampleWib').textContent=T.hm(w)+' WIB';$('sampleWibDate').textContent=T.dateISO(w)+' · GMT+7';
  $('sampleState').innerHTML=badge(s.state);$('sampleScore').textContent=s.score===null?'Model arah dimatikan':`Skor ${fmt(s.score)} · bukan confidence`;
  const filter=$('aspectFilter').value,aspects=s.active.filter(a=>filter==='ALL'||(filter==='LOCAL'?a.local:!a.local));
