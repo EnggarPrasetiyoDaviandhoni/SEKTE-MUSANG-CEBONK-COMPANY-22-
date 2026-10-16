@@ -27,3 +27,31 @@
 .moon-events span{color:var(--muted);font-variant-numeric:tabular-nums}
 .moon-caveat{color:var(--muted);font-size:11px;line-height:1.55;margin:16px 0 0}
 @media(max-width:650px){.moon-content{padding:11px}.moon-weekdays,.moon-days{gap:3px}.moon-day{min-height:79px;padding:7px 1px;border-radius:7px}.moon-day-icon{font-size:20px;line-height:26px}.moon-day-number{font-size:11px}.moon-day small{font-size:10px}.moon-event-dot{right:2px;top:2px}.moon-events{grid-template-columns:1fr}.moon-toolbar{gap:7px}.moon-toolbar strong{min-width:145px;font-size:16px}}
+
+/* Full month table & first-quarter saving BUY schedule. */
+.moon-saving-month{margin-top:22px;padding-top:3px;border-top:1px solid var(--line)}
+.moon-saving-month h3{font-size:16px;line-height:1.5}
+.moon-saving-intro{font-size:12px;color:var(--muted);line-height:1.6}
+.moon-saving-settings{display:grid;grid-template-columns:1.1fr 1fr .9fr;gap:10px;margin:12px 0}
+.moon-saving-settings label{display:block;font-size:11px;color:var(--muted);font-weight:650}
+.moon-saving-settings input,.moon-saving-settings select{display:block;width:100%;min-width:0;min-height:40px;margin-top:6px;padding:6px 8px}
+.moon-saving-disclaimer{font-size:11px;line-height:1.6;color:var(--muted);margin:12px 0}
+.moon-saving-next{font-size:12px;line-height:1.6;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+.moon-saving-plans{display:grid;gap:9px;margin:13px 0}
+.moon-saving-plan{padding:12px;background:#212217;border:1px solid #80713d;border-radius:9px;font-size:12px;line-height:1.55}
+.moon-saving-plan strong{font-size:13px;display:block}
+.moon-saving-plan p{font-weight:650;margin:6px 0}
+.moon-saving-plan small{color:var(--muted);font-size:11px}
+.moon-saving-tag{display:inline-block;font-size:10px;letter-spacing:.3px;font-weight:800;border:1px solid #7e6c35;border-radius:5px;padding:3px 6px;margin-top:7px}
+.moon-saving-meta,#moonSavingMonthStatus{font-size:11px;color:var(--muted);line-height:1.6}
+.moon-saving-scroll{overflow:auto;max-width:100%;border:1px solid var(--line);border-radius:9px;margin:12px 0}
+.moon-saving-scroll table{width:100%;min-width:820px;border-collapse:collapse;white-space:normal;font-size:12px}
+.moon-saving-scroll th,.moon-saving-scroll td{padding:10px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.moon-saving-scroll th{font-size:11px;background:#1b2938;font-weight:750}
+.moon-saving-scroll td:first-child{white-space:nowrap}
+.moon-saving-scroll td small{display:block;font-size:10px;color:var(--muted);margin-top:4px}
+.moon-saving-scroll tbody tr.moon-saving-quarter{background:#232819}
+.moon-saving-scroll tbody tr.moon-saving-buy{box-shadow:inset 4px 0 #bfa75a}
+#moonSavingCopy{min-height:42px;width:100%}
+.moon-saving-risk{font-size:11px;line-height:1.6;padding:11px 13px;border:1px solid #775c34;border-radius:9px;background:#262116;color:#eacfa4;margin-top:13px}
+@media(max-width:650px){.moon-saving-settings{grid-template-columns:1fr 1fr}.moon-saving-settings label:first-child{grid-column:1/-1}.moon-saving-scroll table{min-width:720px}.moon-saving-plan{padding:10px}}
