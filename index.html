@@ -31,6 +31,7 @@
 <link rel="stylesheet" href="assets/albiruni-original-v1-5.css?v=1.5.0-restored-20261014">
 
 <link rel="stylesheet" href="assets/site-simple.css?v=1.0.0">
+<link rel="stylesheet" href="assets/moon-phase-calendar.css?v=1.0.0">
 <link rel="stylesheet" href="assets/astrodox-follow-trend.css?v=1.1.0">
 </head>
 <body>
@@ -44,6 +45,7 @@
  <button class="viewtab" id="tabAlBiruni" type="button" aria-controls="albiruniPanel" aria-selected="false">ASTROLOGY AL-BIRUNI</button>
  <button class="viewtab" id="tabAstroFollowTrend" type="button" aria-controls="astroFollowTrendView" aria-selected="false">ASTRODOX FOLLOW TREND</button>
  <button class="viewtab" id="tabSolarReturnOnly" type="button" aria-controls="solarReturnOnlyView" aria-selected="false">SOLAR RETURN MURNI</button>
+ <button class="viewtab" id="tabMoonCalendar" type="button" aria-controls="moonCalendarView" aria-selected="false">KALENDER FASE BULAN</button>
 </nav>
 <div id="astroView">
 <section class="clocks" aria-label="Jam sekarang, bukan tanggal hasil scan">
@@ -102,6 +104,7 @@
 <section id="albiruniPanel" aria-labelledby="abTitle" hidden></section>
 <section id="astroFollowTrendView" aria-labelledby="aftTitle" hidden></section>
 <section id="solarReturnOnlyView" aria-label="Solar Return murni untuk riset astrologi, tidak tervalidasi sebagai tren harga" hidden></section>
+<section id="moonCalendarView" class="panel moon-calendar-panel" aria-label="Kalender fase Bulan UTC" hidden></section>
 <section id="combinedView" hidden></section>
 <section id="combined2View" hidden></section>
 <footer><span>CEBONK XAUUSD · ASTROLOGY + FIBO MUSANG + COMBINED</span><span>Riset, bukan jaminan hasil trading.</span></footer>
@@ -538,6 +541,7 @@ $('dateInput').value=T.todayUTC();clock();setInterval(clock,1000);run();
  
 
 
+<script src="assets/moon-phase-calendar.js?v=1.0.0"></script>
 <script src="assets/astrodox-audit.js?v=1.0.0"></script>
  <script src="assets/site-tab-router.js?v=1.0.0"></script>
 <script src="assets/site-simple-ui.js?v=1.0.0"></script>
