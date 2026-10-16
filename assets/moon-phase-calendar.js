@@ -1,4 +1,4 @@
-/* Kalender Fase Bulan CEBONK v1.3 — GMT server MT5 proxy auto and WIB. */
+/* Kalender Fase Bulan CEBONK v1.4 — full month phase details and XAGUSD first-quarter panel. */
 (function(root){
 'use strict';
 const DAY=86400000;
@@ -128,6 +128,12 @@ async function render(){
   selectDay(A,year,month,target,byDay.get(target));
   status.textContent='Tanggal kalender mengikuti '+Broker.modeLabel()+'. WIB tetap GMT+7; fase utama ditandai titik emas.';
   loaded=true;
+  // Publish actual computed phases to the independent XAGUSD saving month view.
+  // Never let an optional child panel interrupt the original phase calendar.
+  root.CebonkMoonMonthSnapshot={year,month,events};
+  try{root.dispatchEvent(new CustomEvent('cebonk-moon-calendar-updated',{detail:root.CebonkMoonMonthSnapshot}));}
+  catch(error){console.warn('Monthly saving add-on unavailable:',error);}
+
  }catch(e){
   status.textContent='Perhitungan tidak tersedia: '+(e&&e.message?e.message:String(e));
   $('moonDays').replaceChildren();$('moonEvents').replaceChildren();
