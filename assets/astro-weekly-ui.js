@@ -1,4 +1,4 @@
-/* CEBONK weekly Astrology UI v1.0: Monday-Friday WIB, model only. */
+/* CEBONK weekly Astrology UI v1.1: WIB research, MT5 broker clock conversion. */
 (function(root){
 'use strict';
 const Core=root.CebonkCore,Week=root.CebonkAstroWeekly;
@@ -8,6 +8,7 @@ const T=Core.Time,MIN=60000;
 let running=false,seq=0,activeResult=null,activeMode='AUTO';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clock=ms=>{const p=T.wib(ms);return T.dateISO(p)+' '+T.hm(p)+' WIB';};
+const broker=ms=>{const B=root.CebonkMt5BrokerTime;if(!B)return 'GMT broker belum tersedia';const p=B.civil(ms);return T.dateISO({year:p.year,month:p.month,day:p.day})+' '+T.hm(p)+' GMT+'+(p.offset/60)+' (estimasi MT5)';};
 const luxor=(ms,mode)=>{const p=T.luxor(ms,mode);return T.dateISO(p)+' '+T.hm(p)+' '+T.offsetLabel(p.offset);};
 function label(d){return d==='BUY'?'BULLISH':d==='SELL'?'BEARISH':d==='TIDAK ADA ARAH'?'TIDAK ADA ARAH':'CAMPURAN';}
 function style(d){return d==='BUY'?'buy':d==='SELL'?'sell':'transition';}
@@ -18,7 +19,7 @@ function dateShift(date,delta){return new Date(Date.parse(date+'T00:00:00Z')+del
 function dateToWeek(date){return Week.monday(date);}
 function formatBest(g){
  if(!g)return 'Tidak ada window memenuhi minimum 30 menit.';
- return '<b class="'+style(g.direction)+'">'+esc(label(g.direction))+'</b> · '+esc(clock(g.start))+' → '+esc(clock(g.end))+' · inti '+esc(clock(g.core))+' · '+g.minutes+' menit';
+ return '<b class="'+style(g.direction)+'">'+esc(label(g.direction))+'</b> · '+esc(clock(g.start))+' → '+esc(clock(g.end))+' · inti '+esc(clock(g.core))+' · broker '+esc(broker(g.core))+' · '+g.minutes+' menit';
 }
 function render(result,mode,monday){
  activeResult=result;activeMode=mode;
@@ -34,14 +35,14 @@ function render(result,mode,monday){
   $('awStart').textContent=clock(x.start);
   $('awCore').textContent=clock(x.core);
   $('awEnd').textContent=clock(x.end);
-  $('awLuxor').textContent='Luxor '+luxor(x.start,mode)+' → '+luxor(x.end,mode);
+  $('awLuxor').textContent='Luxor '+luxor(x.start,mode)+' → '+luxor(x.end,mode)+' | Broker MT5 '+broker(x.start)+' → '+broker(x.end);
   $('awCandidate').hidden=false;$('awNone').hidden=true;
  }else{
   $('awCandidate').hidden=true;$('awNone').hidden=false;
   $('awNone').textContent=result.direction==='CAMPURAN'?'Dominasi mingguan campuran; tidak ada kandidat entry utama.':'Tidak ada kandidat window dominan yang memenuhi minimal 30 menit.';
  }
  $('awDays').innerHTML=result.days.map(x=>'<tr><td>'+x.weekday+'<small>'+x.date+'</small></td><td class="'+style(x.dominant)+'">'+esc(label(x.dominant))+'</td><td>'+x.buyMinutes+' / '+x.sellMinutes+' menit</td><td>'+formatBest(x.best)+'</td></tr>').join('');
- $('awTop').innerHTML=result.candidates.map((g,i)=>'<tr><td>'+(i+1)+'</td><td>'+g.weekday+', '+g.date+'</td><td class="'+style(g.direction)+'">'+label(g.direction)+'</td><td>'+esc(clock(g.start))+'</td><td>'+esc(clock(g.core))+'</td><td>'+esc(clock(g.end))+'</td><td>'+g.minutes+' menit</td></tr>').join('')||'<tr><td colspan="7">Tidak ada kandidat searah dominasi mingguan yang memenuhi syarat.</td></tr>';
+ $('awTop').innerHTML=result.candidates.map((g,i)=>'<tr><td>'+(i+1)+'</td><td>'+g.weekday+', '+g.date+'</td><td class="'+style(g.direction)+'">'+label(g.direction)+'</td><td>'+esc(clock(g.start))+'<small>'+esc(broker(g.start))+'</small></td><td>'+esc(clock(g.core))+'<small>'+esc(broker(g.core))+'</small></td><td>'+esc(clock(g.end))+'<small>'+esc(broker(g.end))+'</small></td><td>'+g.minutes+' menit</td></tr>').join('')||'<tr><td colspan="7">Tidak ada kandidat searah dominasi mingguan yang memenuhi syarat.</td></tr>';
  $('awCopy').disabled=false;$('awExportEA').disabled=!(result.candidates.length&&['BUY','SELL'].includes(result.direction));
 }
 let loading=null;
@@ -104,9 +105,9 @@ function exportEA(){
 function copy(){
  if(!activeResult)return;
  const r=activeResult,from=$('awDate').value,head=[
-  'SEKTE MUSANG · CEBONK COMPANY 22','ASTROLOGY MINGGUAN (MODEL EKSPERIMEN)','WIB '+from+' s.d. '+dateShift(from,4),'Dominan: '+label(r.direction),'BUY '+r.buyMinutes+' menit | SELL '+r.sellMinutes+' menit'
+  'SEKTE MUSANG · CEBONK COMPANY 22','ASTROLOGY MINGGUAN (MODEL EKSPERIMEN)','WIB '+from+' s.d. '+dateShift(from,4)+' | GMT server MT5 perkiraan NY-DST','Dominan: '+label(r.direction),'BUY '+r.buyMinutes+' menit | SELL '+r.sellMinutes+' menit'
  ];
- if(r.best)head.push('Kandidat entry model: '+r.best.weekday+' '+r.best.date,'Mulai: '+clock(r.best.start),'Inti: '+clock(r.best.core),'Akhir: '+clock(r.best.end));
+ if(r.best)head.push('Kandidat entry model: '+r.best.weekday+' '+r.best.date,'Mulai: '+clock(r.best.start),'Inti: '+clock(r.best.core),'Akhir: '+clock(r.best.end),'Mulai MT5: '+broker(r.best.start),'Inti MT5: '+broker(r.best.core),'Akhir MT5: '+broker(r.best.end));
  else head.push('Tidak ada kandidat mingguan yang memenuhi syarat.');
  for(const d of r.days)head.push(d.weekday+' '+d.date+' '+label(d.dominant)+' '+d.buyMinutes+'/'+d.sellMinutes+' menit');
  head.push('Bukan prediksi teruji, probabilitas, atau anjuran transaksi. Model arah sama untuk XAUUSD dan XAGUSD.');
@@ -140,6 +141,7 @@ function mount(){
  $('awDate').addEventListener('change',()=>{try{$('awDate').value=dateToWeek($('awDate').value);}catch(e){}invalidate();});
  $('tzMode')?.addEventListener('change',invalidate);
  $('awCancel').addEventListener('click',()=>{seq++;buttons(false);$('awProgress').hidden=true;status('Perhitungan dibatalkan. Tidak ada kandidat yang diterbitkan.');});
+ root.addEventListener('cebonk-mt5-clock-change',()=>{if(activeResult&&!running)render(activeResult,activeMode,$('awDate').value);});
  $('awCopy').addEventListener('click',copy);
  $('awExportEA').addEventListener('click',exportEA);
 }
