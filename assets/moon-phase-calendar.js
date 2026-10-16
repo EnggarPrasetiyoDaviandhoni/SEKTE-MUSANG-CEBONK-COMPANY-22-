@@ -1,4 +1,4 @@
-/* Kalender Fase Bulan CEBONK v1.1 — astronomical instants, displayed by selected GMT offset and WIB. */
+/* Kalender Fase Bulan CEBONK v1.2 — Luxor fixed GMT+3, WIB GMT+7 comparison. */
 (function(root){
 'use strict';
 const DAY=86400000;
@@ -12,8 +12,9 @@ const FULL=new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'long',year:'num
 const HHMM=new Intl.DateTimeFormat('id-ID',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'UTC'});
 const $=id=>document.getElementById(id);
 const WIB=420;
-let year,month,selected,enginePromise=null,loaded=false,zoneOffset=-180;
-const zoneName=()=>zoneOffset===-180?'GMT−3':'GMT+3';
+const zoneOffset=180; // Luxor fixed reference, GMT+3 as requested. No DST switching.
+let year,month,selected,enginePromise=null,loaded=false;
+const zoneName=()=>'Luxor GMT+3';
 const localClock=(date,offset)=>new Date(date.getTime()+offset*60000);
 const localParts=(date,offset)=>{const d=localClock(date,offset);return {y:d.getUTCFullYear(),m:d.getUTCMonth(),day:d.getUTCDate()};};
 const localInstant=(y,m,day,hour,minute=0,offset=zoneOffset)=>new Date(Date.UTC(y,m,day,hour,minute)-offset*60000);
@@ -124,7 +125,7 @@ async function render(){
   const current=civilToday.y===year&&civilToday.m===month?civilToday.day:1;
   const target=selected&&selected<=count?selected:current;
   selectDay(A,year,month,target,byDay.get(target));
-  status.textContent='Tanggal kalender mengikuti '+zoneName()+', waktu pembanding WIB. Fase utama ditandai titik emas.';
+  status.textContent='Tanggal kalender Luxor GMT+3 tetap, dengan pembanding WIB GMT+7 (+4 jam). Fase utama ditandai titik emas.';
   loaded=true;
  }catch(e){
   status.textContent='Perhitungan tidak tersedia: '+(e&&e.message?e.message:String(e));
@@ -146,7 +147,7 @@ function mount(){
  view.dataset.mounted='1';
  const now=localParts(new Date(),zoneOffset);year=now.y;month=now.m;
  view.innerHTML='<div class="head"><div><h2 id="moonCalendarTitle">KALENDER FASE BULAN</h2><small>Tanggal sesuai zona utama · WIB sebagai pembanding</small></div></div>'+
- '<div class="moon-content"><div class="moon-zone"><label for="moonZone">Acuan tanggal dan jam kalender</label><select id="moonZone" aria-label="Zona waktu kalender"><option value="-180">GMT−3 (sesuai permintaan)</option><option value="180">GMT+3 (opsi jam broker)</option></select><small>Setiap momen utama juga menampilkan konversi WIB (GMT+7). Tanggal mengikuti zona yang dipilih.</small></div>'+
+ '<div class="moon-content"><div class="moon-zone"><strong>Acuan kalender: Luxor GMT+3</strong><small>Pembanding: WIB GMT+7 (selisih +4 jam). Tanggal utama mengikuti GMT+3 tetap, bukan zona sipil Mesir otomatis.</small></div>'+
  '<div class="moon-toolbar"><button id="moonPrev" type="button" aria-label="Bulan sebelumnya">←</button><strong id="moonMonth">—</strong><button id="moonNext" type="button" aria-label="Bulan berikutnya">→</button><button id="moonToday" type="button">Bulan ini</button></div>'+
  '<p id="moonStatus" role="status" aria-live="polite">Memuat kalender…</p>'+
  '<div class="moon-weekdays" aria-hidden="true">'+WEEK.map(x=>'<span>'+x+'</span>').join('')+'</div>'+
@@ -155,8 +156,6 @@ function mount(){
  '<h3>Empat momen utama</h3><ul id="moonEvents" class="moon-events"></ul>'+
  '<p id="moonNextEvent" class="moon-detail"></p>'+
  '<p class="moon-caveat">Fase dihitung dengan Astronomy Engine 2.1.19 berdasarkan posisi geosentris Bulan–Matahari. Persentase harian dalam kotak tanggal dihitung pukul 12.00 zona terpilih; rincian tanggal juga menunjukkan persentase pukul 02.00. Tanggal momen tepat mengikuti zona terpilih, WIB ditampilkan sebagai pembanding. Persentase terang bukan kekuatan BUY/SELL atau petunjuk entry XAUUSD.</p></div>';
- $('moonZone').value=String(zoneOffset);
- $('moonZone').addEventListener('change',e=>{zoneOffset=Number(e.target.value);selected=null;render();});
  $('moonPrev').addEventListener('click',()=>shift(-1));
  $('moonNext').addEventListener('click',()=>shift(1));
  $('moonToday').addEventListener('click',()=>{const d=localParts(new Date(),zoneOffset);year=d.y;month=d.m;selected=d.day;render();});
