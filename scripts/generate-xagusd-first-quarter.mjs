@@ -4,7 +4,9 @@
  * Time values are UTC Unix seconds, never WIB/broker clocks.
  * The EA uses actual symbol sessions; the website cannot know NOZAX hours.
  */
-import Astronomy from 'astronomy-engine';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
+const Astronomy=require('astronomy-engine');
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 
