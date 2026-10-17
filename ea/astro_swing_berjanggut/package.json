@@ -1,0 +1,16 @@
+{
+  "name": "cebonk-astro-swing-berjanggut",
+  "version": "1.8.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node ../../scripts/generate-swing-feed.mjs",
+    "test": "node --test ../../tests/swing/*.test.mjs",
+    "test:parity": "node ../../scripts/test-swing-parity.mjs",
+    "test:core": "python ../../scripts/test-swing-core.py"
+  },
+  "dependencies": {
+    "ajv": "8.17.1",
+    "astronomy-engine": "2.1.19"
+  }
+}

@@ -1,0 +1,2 @@
+PASS 46 assertions on the actual shared MQL numeric engine (C++ host, not MetaEditor)
+PASS 34 assertions on actual MQL JSON/feed logic via host API adapter (not MetaEditor)

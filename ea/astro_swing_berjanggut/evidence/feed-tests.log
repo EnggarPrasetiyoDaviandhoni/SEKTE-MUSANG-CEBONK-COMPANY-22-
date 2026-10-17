@@ -1,0 +1,33 @@
+✔ actual feed validates and preserves its checksum on round trip (300.226609ms)
+✔ canonical JSON rejects nonfinite values and changes in bytes (18.528425ms)
+✔ reject old M5 model (10.570161ms)
+✔ reject unknown field (12.496827ms)
+✔ reject missing fifth weekday (1.59648ms)
+✔ reject duplicate weekday (4.978165ms)
+✔ reject daily inherits wrong direction (11.803885ms)
+✔ reject duplicate lunar ranks (16.344682ms)
+✔ reject missing session (82.125625ms)
+✔ reject duplicate session (10.597081ms)
+✔ reject invalid session id (5.615682ms)
+✔ reject DST shift (11.723424ms)
+✔ reject timezone drift (9.973133ms)
+✔ reject short horizon (3.583297ms)
+✔ reject invalid prediction flag (4.33663ms)
+✔ reject negative illumination (2.505607ms)
+✔ reject duplicate moon time (107.33961ms)
+✔ reject past expiry (94.140036ms)
+✔ reject future publication (85.601751ms)
+✔ reject wrong source hash (1.691804ms)
+✔ reject wrong inherited marker (1.53688ms)
+✔ current clock cannot use expired data or data outside its horizon (119.525109ms)
+✔ WAIT has no order window; directional window never accepts end<=core (85.525391ms)
+✔ a zero duration AWAL retains source core==start and does not invent an earlier entry (84.403158ms)
+✔ source killzone schedule switches DST by city, not a permanent WIB table (7.078351ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1120.924259

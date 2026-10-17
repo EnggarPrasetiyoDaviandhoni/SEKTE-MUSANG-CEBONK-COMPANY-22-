@@ -1,0 +1,59 @@
+{
+  "checked_at_utc": "2026-10-17T18:48:09.258125+00:00",
+  "feed_tests": {
+    "status": "PASS",
+    "cases": 25
+  },
+  "shared_numeric_host": {
+    "status": "PASS",
+    "assertions": 46,
+    "sanitizers": [
+      "address",
+      "undefined"
+    ]
+  },
+  "shared_json_feed_host": {
+    "status": "PASS",
+    "assertions": 34
+  },
+  "source_structure": {
+    "status": "PASS",
+    "mql_files": 13
+  },
+  "browser_umd_node_parity": {
+    "status": "PASS",
+    "kind": "VM browser UMD versus Node; not browser UI automation",
+    "trading_dates": 20,
+    "weeks": [
+      "2026-03-02",
+      "2026-03-09",
+      "2026-03-30",
+      "2026-04-06"
+    ],
+    "astronomy_engine": "2.1.19",
+    "maximum_numeric_difference": 0,
+    "tolerance": 1e-09,
+    "coverage": [
+      "weekly/daily bias",
+      "5 city sessions",
+      "focus and all windows",
+      "start/core/end timestamps",
+      "source scores",
+      "lunar illumination/rank",
+      "major moon events",
+      "US/UK/Australia DST before/after"
+    ]
+  },
+  "original_website_regression": "PASS",
+  "website_source_changed": false,
+  "archive_backfill_generator": "PASS, two as-of publications generated and validated",
+  "metaeditor": "NOT_COMPILED: compiler unavailable",
+  "mt5_selftest": "NOT_RUN",
+  "strategy_tester": "NOT_RUN",
+  "broker_demo_live": "NOT_RUN",
+  "pages": {
+    "existing_site_http": 200,
+    "new_v2_feed_http": 404,
+    "state": "NOT_PUBLISHED_PENDING_PR_MERGE"
+  }
+}

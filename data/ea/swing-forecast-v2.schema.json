@@ -1,0 +1,433 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/data/ea/swing-forecast-v2.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "model_id",
+    "m5_model",
+    "source_commit",
+    "generated_at_utc",
+    "expires_at_utc",
+    "horizon_start_wib",
+    "horizon_end_wib",
+    "validated_predictive_model",
+    "weekly_source_method",
+    "daily_source_method",
+    "swing_daily_inherited_weekly",
+    "lunar_rank_broker_mode",
+    "weeks",
+    "sessions",
+    "moon",
+    "liquidity_sessions",
+    "payload_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "2.0.0"
+    },
+    "model_id": {
+      "const": "CEBONK_SWING_ASTRO_WEEKLY_DAILY_5KZ_V1"
+    },
+    "m5_model": {
+      "const": "MUSANG_BERJANGGUT_CBR"
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "generated_at_utc": {
+      "type": "integer",
+      "minimum": 1577836800,
+      "maximum": 4102444800
+    },
+    "expires_at_utc": {
+      "type": "integer",
+      "minimum": 1577836800,
+      "maximum": 4102444800
+    },
+    "horizon_start_wib": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "horizon_end_wib": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "validated_predictive_model": {
+      "const": false
+    },
+    "weekly_source_method": {
+      "const": "CebonkAstroWeekly.scanWeek/CebonkCore.scan(WIB,360)"
+    },
+    "daily_source_method": {
+      "const": "CebonkAstroWeekly.days[].dominant"
+    },
+    "swing_daily_inherited_weekly": {
+      "const": true
+    },
+    "lunar_rank_broker_mode": {
+      "const": "AUTO_NY_CLOSE_ESTIMATE_00:00_ANNOTATION_ONLY"
+    },
+    "weeks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "week_monday_wib",
+          "weekly_direction",
+          "daily"
+        ],
+        "properties": {
+          "week_monday_wib": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "weekly_direction": {
+            "enum": [
+              "BUY",
+              "SELL",
+              "CAMPURAN",
+              "TIDAK ADA ARAH"
+            ]
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "date_wib",
+                "daily_direction",
+                "swing_daily_direction_inherited",
+                "moon_rank",
+                "illumination_pct",
+                "moon_observed_at_utc"
+              ],
+              "properties": {
+                "date_wib": {
+                  "type": "string",
+                  "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+                },
+                "daily_direction": {
+                  "enum": [
+                    "BUY",
+                    "SELL",
+                    "CAMPURAN"
+                  ]
+                },
+                "swing_daily_direction_inherited": {
+                  "enum": [
+                    "BUY",
+                    "SELL",
+                    "WAIT"
+                  ]
+                },
+                "moon_rank": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "illumination_pct": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "moon_observed_at_utc": {
+                  "type": "integer",
+                  "minimum": 1577836800,
+                  "maximum": 4102444800
+                }
+              }
+            },
+            "minItems": 5,
+            "maxItems": 5
+          }
+        }
+      },
+      "minItems": 1,
+      "maxItems": 6
+    },
+    "sessions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "session_id",
+          "date_wib",
+          "iana_timezone",
+          "session_start_utc",
+          "session_end_utc",
+          "astro_direction",
+          "window",
+          "moon_at_core"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "session_id": {
+            "enum": [
+              "sydney",
+              "tokyo",
+              "london",
+              "newyork",
+              "londonclose"
+            ]
+          },
+          "date_wib": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "iana_timezone": {
+            "enum": [
+              "Australia/Sydney",
+              "Asia/Tokyo",
+              "Europe/London",
+              "America/New_York"
+            ]
+          },
+          "session_start_utc": {
+            "type": "integer",
+            "minimum": 1577836800,
+            "maximum": 4102444800
+          },
+          "session_end_utc": {
+            "type": "integer",
+            "minimum": 1577836800,
+            "maximum": 4102444800
+          },
+          "astro_direction": {
+            "enum": [
+              "BUY",
+              "SELL",
+              "WAIT"
+            ]
+          },
+          "window": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "start_utc",
+                  "core_utc",
+                  "end_utc",
+                  "direction",
+                  "score_peak"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "start_utc": {
+                    "type": "integer",
+                    "minimum": 1577836800,
+                    "maximum": 4102444800
+                  },
+                  "core_utc": {
+                    "type": "integer",
+                    "minimum": 1577836800,
+                    "maximum": 4102444800
+                  },
+                  "end_utc": {
+                    "type": "integer",
+                    "minimum": 1577836800,
+                    "maximum": 4102444800
+                  },
+                  "direction": {
+                    "enum": [
+                      "BUY",
+                      "SELL"
+                    ]
+                  },
+                  "score_peak": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "moon_at_core": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "observed_at_utc",
+              "phase",
+              "phase_angle",
+              "illumination_pct"
+            ],
+            "properties": {
+              "observed_at_utc": {
+                "type": "integer",
+                "minimum": 1577836800,
+                "maximum": 4102444800
+              },
+              "phase": {
+                "enum": [
+                  "NEW_MOON",
+                  "WAXING_CRESCENT",
+                  "FIRST_QUARTER",
+                  "WAXING_GIBBOUS",
+                  "FULL_MOON",
+                  "WANING_GIBBOUS",
+                  "LAST_QUARTER",
+                  "WANING_CRESCENT"
+                ]
+              },
+              "phase_angle": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMaximum": 360
+              },
+              "illumination_pct": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          }
+        }
+      },
+      "minItems": 5,
+      "maxItems": 160
+    },
+    "moon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "major_events",
+        "samples"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "astronomy-engine@2.1.19"
+        },
+        "major_events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "phase",
+              "event_at_utc"
+            ],
+            "properties": {
+              "phase": {
+                "enum": [
+                  "NEW_MOON",
+                  "FIRST_QUARTER",
+                  "FULL_MOON",
+                  "LAST_QUARTER"
+                ]
+              },
+              "event_at_utc": {
+                "type": "integer",
+                "minimum": 1577836800,
+                "maximum": 4102444800
+              }
+            }
+          },
+          "minItems": 4,
+          "maxItems": 30
+        },
+        "samples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "observed_at_utc",
+              "phase",
+              "phase_angle",
+              "illumination_pct"
+            ],
+            "properties": {
+              "observed_at_utc": {
+                "type": "integer",
+                "minimum": 1577836800,
+                "maximum": 4102444800
+              },
+              "phase": {
+                "enum": [
+                  "NEW_MOON",
+                  "WAXING_CRESCENT",
+                  "FIRST_QUARTER",
+                  "WAXING_GIBBOUS",
+                  "FULL_MOON",
+                  "WANING_GIBBOUS",
+                  "LAST_QUARTER",
+                  "WANING_CRESCENT"
+                ]
+              },
+              "phase_angle": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMaximum": 360
+              },
+              "illumination_pct": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          },
+          "minItems": 193,
+          "maxItems": 769
+        }
+      }
+    },
+    "liquidity_sessions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "session_id",
+          "start_utc",
+          "end_utc"
+        ],
+        "properties": {
+          "session_id": {
+            "enum": [
+              "sydney",
+              "tokyo",
+              "london",
+              "newyork",
+              "londonclose"
+            ]
+          },
+          "start_utc": {
+            "type": "integer",
+            "minimum": 1577836800,
+            "maximum": 4102444800
+          },
+          "end_utc": {
+            "type": "integer",
+            "minimum": 1577836800,
+            "maximum": 4102444800
+          }
+        }
+      },
+      "minItems": 5,
+      "maxItems": 200
+    },
+    "payload_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
