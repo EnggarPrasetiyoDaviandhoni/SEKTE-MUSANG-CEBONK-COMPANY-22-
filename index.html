@@ -35,6 +35,7 @@
 <link rel="stylesheet" href="assets/moon-phase-calendar.css?v=1.4.0">
 <link rel="stylesheet" href="assets/astro-swing-daily.css?v=1.0.0">
 <link rel="stylesheet" href="assets/astrodox-follow-trend.css?v=1.1.0">
+<link rel="stylesheet" href="assets/astro-killzone.css?v=1.0.0">
 </head>
 <body>
 <main class="wrap">
@@ -46,6 +47,7 @@
  <button class="viewtab active" id="tabAstro" type="button">ASTROLOGI</button>
  <button class="viewtab" id="tabAlBiruni" type="button" aria-controls="albiruniPanel" aria-selected="false">ASTROLOGY AL-BIRUNI</button>
  <button class="viewtab" id="tabAstroFollowTrend" type="button" aria-controls="astroFollowTrendView" aria-selected="false">ASTRODOX FOLLOW TREND</button>
+ <button class="viewtab" id="tabAstroKillzone" type="button" aria-controls="astroKillzoneView" aria-selected="false">KILL ZONE ASTROLOGY</button>
  <button class="viewtab" id="tabSolarReturnOnly" type="button" aria-controls="solarReturnOnlyView" aria-selected="false">SOLAR RETURN MURNI</button>
  <button class="viewtab" id="tabMoonCalendar" type="button" aria-controls="moonCalendarView" aria-selected="false">FASE BULAN + XAGUSD</button>
  <button class="viewtab" id="tabDailySwing" type="button" aria-controls="dailySwingView" aria-selected="false">SINYAL SWING HARIAN</button>
@@ -106,6 +108,7 @@
 </div>
 <section id="albiruniPanel" aria-labelledby="abTitle" hidden></section>
 <section id="astroFollowTrendView" aria-labelledby="aftTitle" hidden></section>
+<section id="astroKillzoneView" aria-label="Analisis Killzone Astrology per sesi WIB" hidden></section>
 <section id="solarReturnOnlyView" aria-label="Solar Return murni untuk riset astrologi, tidak tervalidasi sebagai tren harga" hidden></section>
 <section id="moonCalendarView" class="panel moon-calendar-panel" aria-label="Kalender fase Bulan MT5 broker GMT+2 atau GMT+3 dengan WIB GMT+7" hidden></section>
 <section id="dailySwingView" class="panel" aria-label="Sinyal swing harian: Astrology tujuh hari dan fase Bulan" hidden></section>
@@ -511,6 +514,8 @@ $('dateInput').value=T.todayLuxor();clock();setInterval(clock,1000);run();
 </script>
 <script src="assets/astrodox-follow-trend-core.js?v=1.0.0"></script>
 <script src="assets/astrodox-planet-strength.js?v=1.0.0"></script>
+<script src="assets/astro-killzone-core.js?v=1.0.0"></script>
+<script src="assets/astro-killzone-ui.js?v=1.0.0"></script>
 <script src="assets/astrodox-follow-trend-ui.js?v=1.1.0"></script>
 <script src="assets/astro-weekly-core.js?v=1.0.0"></script>
 <script src="assets/astro-weekly-ui.js?v=1.1.0"></script>
