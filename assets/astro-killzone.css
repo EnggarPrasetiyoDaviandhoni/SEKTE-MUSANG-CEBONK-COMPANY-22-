@@ -1,0 +1,48 @@
+/* CEBONK independent KILLZONE ASTROLOGY mobile panel v1.0 */
+#astroKillzoneView{background:linear-gradient(160deg,#152439,#0b1422);border:1px solid #36506a;border-radius:14px;margin-bottom:17px;overflow:hidden;color:#e8eff8}
+#astroKillzoneView [hidden]{display:none!important}
+#astroKillzoneView .ak-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:19px;border-bottom:1px solid #30445b}
+#astroKillzoneView .ak-kicker{font-size:10px;letter-spacing:1.3px;font-weight:750;color:#f0c16c}
+#astroKillzoneView h2{font-size:21px;line-height:1.25;margin:6px 0}
+#astroKillzoneView .ak-head p{font-size:12px;color:#bdc9db;line-height:1.55;margin:4px 0}
+#astroKillzoneView .ak-mark{font-size:10px;color:#f0c16c;border:1px solid #786039;padding:5px 8px;border-radius:7px;white-space:nowrap}
+#astroKillzoneView .ak-main{padding:17px}
+#astroKillzoneView .ak-controls{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+#astroKillzoneView .ak-controls label{font-size:12px;color:#bbcce0;flex:1;min-width:155px}
+#astroKillzoneView .ak-controls input{display:block;width:100%;margin-top:4px;background:#101d30}
+#astroKillzoneView button{font-size:12px}
+#astroKillzoneView .ak-run{font-weight:700!important;background:#f0c16c!important;color:#132035!important;border-color:#f0c16c!important}
+#astroKillzoneView .ak-warning{font-size:12px;line-height:1.65;border:1px solid #62533c;background:#292519;padding:11px 12px;border-radius:9px;color:#f1dcb5;margin:13px 0}
+#astroKillzoneView .ak-status{font-size:12px;color:#c1cedd;margin:13px 0;min-height:18px}
+#astroKillzoneView .ak-status.ak-error{color:#ffa9a9}
+#astroKillzoneView .ak-status progress{width:150px;max-width:100%;height:9px;accent-color:#70d7dc}
+#astroKillzoneView .ak-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#astroKillzoneView .ak-card{padding:13px;border:1px solid #344c66;border-radius:10px;background:#111e30;min-width:0}
+#astroKillzoneView .ak-title{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;justify-content:space-between;font-weight:750}
+#astroKillzoneView .ak-local{font-size:11px;color:#aebdd1;margin-top:4px}
+#astroKillzoneView .ak-clock{font-size:17px;font-weight:750;font-variant-numeric:tabular-nums;margin:10px 0 5px}
+#astroKillzoneView .ak-label{font-size:10px;color:#aebdd1}
+#astroKillzoneView .ak-focus{font-size:26px;font-weight:800;margin:5px 0}
+#astroKillzoneView .ak-buy{color:#82deb1}#astroKillzoneView .ak-sell{color:#ff9b9b}#astroKillzoneView .ak-wait{color:#f2c779}
+#astroKillzoneView .ak-window{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:9px 0}
+#astroKillzoneView .ak-window>div{border:1px solid #344b62;background:#0d1a29;border-radius:7px;padding:8px;min-width:0}
+#astroKillzoneView .ak-window strong{font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums}
+#astroKillzoneView .ak-window small{font-size:9px;color:#b1c1d3;display:block}
+#astroKillzoneView .ak-info{font-size:11px;line-height:1.6;color:#b8c9dc}
+#astroKillzoneView .ak-judas{font-size:11px;line-height:1.55;color:#e5d2ad;padding:9px;border-radius:8px;border:1px solid #584e3b;background:#23261f}
+#astroKillzoneView details{margin:9px 0 0;border:1px solid #344b62;border-radius:8px;padding:0 9px;background:#101e30}
+#astroKillzoneView summary{padding:9px 0;font-size:12px}
+#astroKillzoneView .ak-scroll{overflow-x:auto}
+#astroKillzoneView .ak-scroll table{font-size:11px}
+#astroKillzoneView .ak-scroll td,#astroKillzoneView .ak-scroll th{padding:7px}
+#astroKillzoneView .ak-method{font-size:11px;color:#c0cfe1;line-height:1.6;margin-top:14px}
+#astroKillzoneView .ak-method p{margin:4px 0 11px}
+@media(max-width:760px){
+ #astroKillzoneView .ak-main{padding:12px}
+ #astroKillzoneView .ak-head{padding:14px}
+ #astroKillzoneView h2{font-size:19px}
+ #astroKillzoneView .ak-mark{display:none}
+ #astroKillzoneView .ak-grid{grid-template-columns:1fr}
+ #astroKillzoneView .ak-controls button{flex:1}
+ #astroKillzoneView .ak-clock{font-size:17px}
+}
