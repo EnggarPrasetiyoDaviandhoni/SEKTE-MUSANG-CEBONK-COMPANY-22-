@@ -48,7 +48,7 @@ function schedule(date,C){
   const start=wallToUtc(date,s.from,s.zone),end=wallToUtc(date,s.to,s.zone);
   requireValue(end>start&&(end-start)%STEP===0,'Rentang sesi salah: '+s.name);
   const a=C.Time.wib(start),b=C.Time.wib(end);
-  requireValue(C.Time.dateISO(a)===date && C.Time.dateISO(b)===date,
+  requireValue(C.Time.dateISO(a)===date,
     'Sesi '+s.name+' di luar tanggal WIB yang dipilih.');
   return Object.freeze({...s,start,end,offsetStart:zoneOffset(start,s.zone),
    startWib:fmtTime(start,C),endWib:fmtTime(end,C)});
