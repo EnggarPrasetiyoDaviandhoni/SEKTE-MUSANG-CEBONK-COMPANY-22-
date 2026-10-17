@@ -4,7 +4,7 @@
 const C=root.CebonkCore,K=root.CebonkAstroKillzone,P=root.CebonkAstrodoxPlanetStrength;
 const panel=document.getElementById('astroKillzoneView');
 if(!panel||!C||!K)return;
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>panel.querySelector('#'+id);
 let busy=false,cancelToken=0,loadPromise=null,result=null;
 function nextWeekday(date){
