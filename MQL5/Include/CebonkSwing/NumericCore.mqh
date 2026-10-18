@@ -210,6 +210,26 @@ double CSRR(int side,double entry,double sl,double tp){
  double risk=side*(entry-sl),reward=side*(tp-entry);
  return risk>0&&reward>0&&CSFinite(risk)&&CSFinite(reward)?reward/risk:-1;
 }
+enum CSH4TargetStatus {CS_H4_TARGET_INVALID=-2,CS_H4_TARGET_RR=-1,CS_H4_TARGET_MISSING=0,CS_H4_TARGET_READY=1};
+int CSNearestH4Target(CS_CONST_ARRAY(CSLevel,levels),int side,double entry,double sl,
+ double minimumRR,double tick,datetime now,double &target){
+ target=0;
+ if((side!=1&&side!=-1)||!CSFinite(entry)||!CSFinite(sl)||!CSFinite(tick)||!CSFinite(minimumRR)||
+  entry<=0||sl<=0||tick<=0||minimumRR<2||now<=0)return CS_H4_TARGET_INVALID;
+ double nearestDistance=0;
+ for(int i=0;i<ArraySize(levels);i++){
+  CSLevel v=levels[i];
+  if((v.kinds&CS_H4)==0||v.side!=side||!CSFinite(v.price)||v.price<=0||v.known<=0||v.known>now||
+   (v.consumed>0&&v.consumed<=now))continue;
+  double distance=side*(v.price-entry);
+  if(distance<=0)continue;
+  if(target==0||distance<nearestDistance){target=v.price;nearestDistance=distance;}
+ }
+ if(target==0)return CS_H4_TARGET_MISSING;
+ // Fix the nearest eligible H4 level first. Never search farther to rescue RR.
+ target=side>0?MathFloor(target/tick+1e-10)*tick:MathCeil(target/tick-1e-10)*tick;
+ return CSRR(side,entry,sl,target)>=minimumRR?CS_H4_TARGET_READY:CS_H4_TARGET_RR;
+}
 bool CSShouldExit(int positionSide,int signalSide,double estimatedNet,bool costsVerified){
  return costsVerified&&positionSide!=0&&signalSide==-positionSide&&CSFinite(estimatedNet)&&estimatedNet>0;
 }

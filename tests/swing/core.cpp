@@ -71,6 +71,33 @@ int main(){
  CHECK(CSM5EL2(sell,-1,gate,end,.01,16,12,12,-.618,custom)&&near(custom.slRaw,162.978)&&near(custom.sl,162.98));
  CHECK(!CSPivot(micro,12,2,2,1,13)&&CSPivot(micro,12,2,2,1,14));
  CHECK(near(CSRR(1,100,99,102),2)&&near(CSRR(-1,100,101,98),2)&&CSRR(1,100,101,102)<0);
+ std::vector<CSLevel> pools={
+  {102,1,2,0,CS_H1,1},{103,1,2,0,CS_D1,1},{104,1,2,0,CS_SESSION,1},
+  {105,1,2,0,CS_IPDA20,1},{106,1,2,0,CS_WEEK,1},{108,1,2,0,CS_H4,1},{112,1,2,0,CS_H4,1}};
+ double target=0;datetime targetNow=1000;
+ CHECK(CSNearestH4Target(pools,1,100,97,2,.01,targetNow,target)==CS_H4_TARGET_READY&&near(target,108));
+ CHECK(CSNearestH4Target(pools,1,100,95,2,.01,targetNow,target)==CS_H4_TARGET_RR&&near(target,108)); // Do not jump to 112.
+ auto ssl=pools;for(auto &v:ssl){v.price=200-v.price;v.side=-1;}
+ CHECK(CSNearestH4Target(ssl,-1,100,103,2,.01,targetNow,target)==CS_H4_TARGET_READY&&near(target,92));
+ CHECK(CSNearestH4Target(ssl,-1,100,105,2,.01,targetNow,target)==CS_H4_TARGET_RR&&near(target,92));
+ auto taken=pools;taken[5].consumed=900;
+ CHECK(CSNearestH4Target(taken,1,100,97,2,.01,targetNow,target)==CS_H4_TARGET_READY&&near(target,112));
+ taken[6].consumed=900;CHECK(CSNearestH4Target(taken,1,100,97,2,.01,targetNow,target)==CS_H4_TARGET_MISSING);
+ auto unconfirmed=pools;unconfirmed[5].known=1001;
+ CHECK(CSNearestH4Target(unconfirmed,1,100,97,2,.01,targetNow,target)==CS_H4_TARGET_READY&&near(target,112));
+ unconfirmed[6].known=1001;CHECK(CSNearestH4Target(unconfirmed,1,100,97,2,.01,targetNow,target)==CS_H4_TARGET_MISSING);
+ auto future=pools;future[5].consumed=1001;CHECK(CSNearestH4Target(future,1,100,97,2,.01,targetNow,target)==CS_H4_TARGET_READY&&near(target,108));
+ auto noH4=pools;noH4.resize(5);CHECK(CSNearestH4Target(noH4,1,100,97,2,.01,targetNow,target)==CS_H4_TARGET_MISSING);
+ std::vector<CSLevel> rounded={{102.049,1,2,0,CS_H4,1},{103,1,2,0,CS_H4,1}};
+ CHECK(CSNearestH4Target(rounded,1,100,99,2,.1,targetNow,target)==CS_H4_TARGET_READY&&near(target,102));
+ rounded[0].price=101.999;CHECK(CSNearestH4Target(rounded,1,100,99,2,.1,targetNow,target)==CS_H4_TARGET_RR&&near(target,101.9));
+ rounded[0]={97.951,1,2,0,CS_H4,-1};rounded[1]={97,1,2,0,CS_H4,-1};
+ CHECK(CSNearestH4Target(rounded,-1,100,101,2,.1,targetNow,target)==CS_H4_TARGET_READY&&near(target,98));
+ rounded[0].price=98.001;CHECK(CSNearestH4Target(rounded,-1,100,101,2,.1,targetNow,target)==CS_H4_TARGET_RR&&near(target,98.1));
+ CHECK(CSNearestH4Target(pools,1,100,97,1.9,.01,targetNow,target)==CS_H4_TARGET_INVALID);
+ CHECK(CSNearestH4Target(pools,1,100,97,2,0,targetNow,target)==CS_H4_TARGET_INVALID);
+ CHECK(CSNearestH4Target(pools,0,100,97,2,.01,targetNow,target)==CS_H4_TARGET_INVALID);
+ CHECK(CSNearestH4Target(pools,1,std::nan(""),97,2,.01,targetNow,target)==CS_H4_TARGET_INVALID);
  CHECK(CSShouldExit(1,-1,12,true)&&CSShouldExit(-1,1,9,true));
  CHECK(!CSShouldExit(1,-1,0,true)&&!CSShouldExit(1,-1,-1,true));
  CHECK(!CSShouldExit(1,1,12,true)&&!CSShouldExit(1,-1,12,false));
@@ -89,6 +116,30 @@ int main(){
  CHECK(!weekly.Capture(monday+1209600,1,monday+1209700)&&weekly.side==0); // WAIT is a weekly lock too.
  CHECK(!weekly.Capture(monday+1814400,1,monday+1814399));
  CHECK(CSAligned(-1,-1)&&CSAligned(1,1)&&!CSAligned(-1,1)&&!CSAligned(0,1));
+ CSIPDARanges zones;zones.point=.01;
+ zones.high[0]=120;zones.low[0]=100;zones.high[1]=140;zones.low[1]=100;zones.high[2]=160;zones.low[2]=100;
+ uint mask=0;
+ CHECK(CSIPDASelect(1,115,zones,mask)==1&&mask==6); // 20 premium, 40/60 discount -> BUY allowed by OR.
+ CHECK(CSIPDASelect(-1,115,zones,mask)==0&&mask==1); // Only 20 premium -> SELL allowed by OR.
+ CHECK(CSIPDASelect(1,125,zones,mask)==2&&mask==4); // 20 out of range, 40 premium, 60 discount.
+ CHECK(CSIPDASelect(1,105,zones,mask)==0&&mask==7); // Deterministic 20, then 40, then 60 when multiple pass.
+ CHECK(CSIPDASelect(-1,135,zones,mask)==1&&mask==6);
+ CHECK(CSIPDASelect(-1,150,zones,mask)==2&&mask==4);
+ CHECK(CSIPDASelect(1,135,zones,mask)==-1&&mask==0);
+ CHECK(CSIPDASelect(-1,105,zones,mask)==-1&&mask==0);
+ CHECK(CSIPDASelect(1,99,zones,mask)==-1&&CSIPDASelect(-1,161,zones,mask)==-1); // Outside every valid range.
+ CHECK(!CSIPDAAllows(1,110,120,100,.01)&&!CSIPDAAllows(-1,110,120,100,.01)); // Midpoint WAIT.
+ CHECK(CSIPDAAllows(1,100,120,100,.01)&&CSIPDAAllows(-1,120,120,100,.01)); // Range extrema are included.
+ CHECK(!CSIPDAAllows(1,109.999,120,100,.01)&&!CSIPDAAllows(-1,110.001,120,100,.01)); // Half-point equilibrium band.
+ CHECK(CSIPDAAllows(1,109.99,120,100,.01)&&CSIPDAAllows(-1,110.01,120,100,.01));
+ CHECK(CSIPDADays(0)==20&&CSIPDADays(1)==40&&CSIPDADays(2)==60&&CSIPDADays(-1)==0);
+ CHECK(!CSIPDAAllows(0,105,120,100,.01)&&!CSIPDAAllows(1,105,100,120,.01));
+ CHECK(!CSIPDAAllows(1,105,120,100,0)&&!CSIPDAAllows(1,105,120,100,std::nan("")));
+ zones.high[1]=zones.low[1];CHECK(CSIPDASelect(1,115,zones,mask)==2&&mask==4); // Invalid range cannot be the qualifying evidence.
+ zones.high[2]=std::nan("");CHECK(CSIPDASelect(1,115,zones,mask)==-1&&mask==0);
+ // BUY uses Ask, SELL uses Bid; crossing a midpoint between layers must block a new request.
+ CHECK(CSIPDAAllows(1,109.98,120,100,.01)&&!CSIPDAAllows(1,110.02,120,100,.01));
+ CHECK(CSIPDAAllows(-1,110.02,120,100,.01)&&!CSIPDAAllows(-1,109.98,120,100,.01));
  CHECK(CSStrengthSide(600,400,360,.55,360)==1&&CSStrengthSide(400,600,360,.55,360)==-1);
  CHECK(CSStrengthSide(500,500,360,.55,360)==0&&CSStrengthSide(540,460,360,.55,360)==0);
  CHECK(CSStrengthSide(900,100,355,.55,360)==0&&CSStrengthSide(550,450,360,.55,360)==1);

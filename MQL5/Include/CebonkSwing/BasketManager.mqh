@@ -8,6 +8,8 @@ class CSBasket {
  private:
   CTrade m_trade;string m_symbol;long m_magic;double m_fee,m_risk,m_lot,m_tick;uint m_deviation;datetime m_lastClose;
   bool m_noticeAutopilot,m_noticeCutProfit;
+  CSIPDARanges m_ipda;int m_ipdaSelected;bool m_ipdaReady;
+  CSLevel m_h4Levels[];bool m_h4Ready;
   bool Netting(){return AccountInfoInteger(ACCOUNT_MARGIN_MODE)!=ACCOUNT_MARGIN_MODE_RETAIL_HEDGING;}
   bool AllDealsOwned(long id){
    if(!HistorySelectByPosition(id))return false;
@@ -37,10 +39,16 @@ class CSBasket {
  public:
   CSState state;int positions;double lastNet,lastRisk;string error;bool conflict;
   void NoticeMode(bool autopilot,bool cutProfit){m_noticeAutopilot=autopilot;m_noticeCutProfit=cutProfit;}
+  void IPDASetup(const CSIPDARanges &ranges){m_ipda=ranges;m_ipdaReady=true;}
+  void H4Targets(CS_CONST_ARRAY(CSLevel,levels)){
+   ArrayResize(m_h4Levels,0);
+   for(int i=0;i<ArraySize(levels);i++)if((levels[i].kinds&CS_H4)!=0){int n=ArraySize(m_h4Levels);ArrayResize(m_h4Levels,n+1);m_h4Levels[n]=levels[i];}
+   m_h4Ready=true;
+  }
   void Init(string sym,long magic,double commission,double risk,double lot,uint deviation){
    m_symbol=sym;m_magic=magic;m_fee=commission;m_risk=risk;m_lot=lot;m_deviation=deviation;m_tick=SymbolInfoDouble(sym,SYMBOL_TRADE_TICK_SIZE);
    m_trade.SetExpertMagicNumber((ulong)magic);m_trade.SetDeviationInPoints(deviation);m_trade.SetAsyncMode(false);m_trade.SetTypeFillingBySymbol(sym);
-   positions=0;lastNet=0;lastRisk=0;conflict=false;m_lastClose=0;m_noticeAutopilot=false;m_noticeCutProfit=false;error="BASKET_READY";
+   positions=0;lastNet=0;lastRisk=0;conflict=false;m_lastClose=0;m_noticeAutopilot=false;m_noticeCutProfit=false;m_ipdaReady=false;m_ipdaSelected=-1;m_h4Ready=false;ArrayResize(m_h4Levels,0);error="BASKET_READY";
   }
   bool Tradable(MqlTick &q,bool entry){
    if(!SymbolInfoTick(m_symbol,q)||q.bid<=0||q.ask<q.bid||q.time<=0||MathAbs((double)(TimeCurrent()-q.time))>30){error="QUOTE_STALE";return false;}
@@ -168,6 +176,11 @@ class CSBasket {
    if((side>0&&mode==SYMBOL_TRADE_MODE_SHORTONLY)||(side<0&&mode==SYMBOL_TRADE_MODE_LONGONLY)){error="BROKER_DIRECTION_DISABLED";return false;}
    if(!CSPriceAfterEL2Retest(side,q.bid,q.ask,micro)){error="SKIP_EL2_REJECTION_LOST";return false;}
    double entry=side>0?q.ask:q.bid,stop=side*(entry-sl);
+   uint ipdaMatches=0;m_ipdaSelected=m_ipdaReady?CSIPDASelect(side,entry,m_ipda,ipdaMatches):-1;
+   if(m_ipdaSelected<0){error="SKIP_IPDA_ZONE";return false;}
+   double nearestH4=0;int h4Status=m_h4Ready?CSNearestH4Target(m_h4Levels,side,entry,sl,2,m_tick,TimeCurrent(),nearestH4):CS_H4_TARGET_MISSING;
+   if(h4Status!=CS_H4_TARGET_READY){error=h4Status==CS_H4_TARGET_RR?"SKIP_RR_NEAREST_H4":"NO_H4_LIQUIDITY";return false;}
+   if(!CSFinite(tp)||MathAbs(nearestH4-tp)>m_tick/2){error="SKIP_H4_TARGET_CHANGED";return false;}
    if(stop<=0||(q.ask-q.bid)/stop>0.10||CSRR(side,entry,sl,tp)<2){error="SKIP_SPREAD_OR_RR";return false;}
    double step=SymbolInfoDouble(m_symbol,SYMBOL_VOLUME_STEP),min=SymbolInfoDouble(m_symbol,SYMBOL_VOLUME_MIN),max=SymbolInfoDouble(m_symbol,SYMBOL_VOLUME_MAX);
    if(step<=0||m_lot<min||m_lot>max||MathAbs(m_lot/step-MathRound(m_lot/step))>1e-7){error="SKIP_VOLUME";return false;}
@@ -201,7 +214,10 @@ class CSBasket {
     if(!Preflight(setup.side,micro,state.sl,state.tp,q))break;
     // Reserve before the request. Uncertain fills cannot be retried as new entries.
     if(!CSReserveLayer(state.layers)){error="LAYER_LIMIT";break;}
-    state.noticeContext=CSNoticeContextEncode(context);state.signal=signal;state.pending=true;state.window=windowId;state.pendingOrder=0;state.intent=TimeCurrent();
+    CSOrderNoticeContext orderContext=context;
+    orderContext.h4Target=true;
+    orderContext.ipdaDays=CSIPDADays(m_ipdaSelected);orderContext.ipdaHigh=m_ipda.high[m_ipdaSelected];orderContext.ipdaLow=m_ipda.low[m_ipdaSelected];
+    state.noticeContext=CSNoticeContextEncode(orderContext);state.signal=signal;state.pending=true;state.window=windowId;state.pendingOrder=0;state.intent=TimeCurrent();
     if(!state.Save()){error="PERSISTENCE_FAILED_BEFORE_ORDER";return false;}
     int index=state.layers;string comment="CSB|"+state.basket+"|"+IntegerToString(index);
     bool sent=setup.side>0?m_trade.Buy(m_lot,m_symbol,q.ask,state.sl,state.tp,comment):m_trade.Sell(m_lot,m_symbol,q.bid,state.sl,state.tp,comment);

@@ -9,9 +9,10 @@ string joinedPush(const std::vector<string>&messages){
  string out="";for(const auto &message:messages){int line=StringFind(message,"\n");out+=StringSubstr(message,line+1);}return out;
 }
 int main(int argc,char **argv){
- CSOrderNoticeContext c;c.known=true;c.autopilot=true;c.cutProfit=true;c.weekly=1;c.model=1;c.ipdaDays=40;c.digits=2;c.volumeDigits=2;
+ CSOrderNoticeContext c;c.known=true;c.h4Target=true;c.autopilot=true;c.cutProfit=true;c.weekly=1;c.model=1;c.ipdaDays=40;c.digits=2;c.volumeDigits=2;
  c.symbol="XAUUSDc";c.session="london";c.ipdaLow=4200;c.ipdaHigh=4320;
  CSOrderNoticeContext decoded;CHECK(CSNoticeContextDecode(CSNoticeContextEncode(c),decoded));
+ CHECK(decoded.h4Target);
  CHECK(decoded.known&&decoded.weekly==1&&decoded.session=="london"&&decoded.ipdaDays==40);
  string text=CSFilledOrderNotice(decoded,c.symbol,1,1,.01,4250,4240,4278);
  CHECK(StringFind(text,"🚀 SWING TRADE — BUY XAUUSDc")>=0);
@@ -19,9 +20,16 @@ int main(int argc,char **argv){
  CHECK(StringFind(text,"IPDA D1: ZONA 40 — DISCOUNT")>=0);
  CHECK(StringFind(text,"BBMA: TIDAK DIGUNAKAN")>=0&&StringFind(text,"BBMA: BUY")==-1);
  CHECK(StringFind(text,"Fibo Musang: EL2 M5")>=0&&StringFind(text,"Lot: 0.01")>=0);
- CHECK(StringFind(text,"Entry: 4250.00")>=0&&StringFind(text,"SL: 4240.00")>=0&&StringFind(text,"TP ICT: 4278.00")>=0);
+ CHECK(StringFind(text,"Entry: 4250.00")>=0&&StringFind(text,"SL: 4240.00")>=0&&StringFind(text,"TP ICT H4: 4278.00")>=0);
  CHECK(StringFind(text,"RR: 1:2.8")>=0&&StringFind(text,"Dominant Break SELL M15 (NET basket > 0)")>=0);
  CHECK(StringFind(text,"Layer: 1/4")>=0&&StringFind(text,"AUTOPILOT ON")>=0);
+ CSIPDARanges ipda;ipda.point=.01;ipda.low[0]=4200;ipda.high[0]=4260;ipda.low[1]=4200;ipda.high[1]=4320;ipda.low[2]=4200;ipda.high[2]=4360;
+ uint matched=0;int chosen=CSIPDASelect(1,4250,ipda,matched);CHECK(chosen==1&&matched==6);
+ CSOrderNoticeContext selected=decoded;selected.ipdaDays=CSIPDADays(chosen);selected.ipdaHigh=ipda.high[chosen];selected.ipdaLow=ipda.low[chosen];
+ auto selectedNotice=CSFilledOrderNotice(selected,c.symbol,1,1,.01,4250,4240,4278);
+ CHECK(StringFind(selectedNotice,"ZONA 40 — DISCOUNT")>=0&&StringFind(selectedNotice,"ZONA 20")==-1);
+ // History price is reported honestly if a broker fill slips across the midpoint.
+ CHECK(StringFind(CSFilledOrderNotice(selected,c.symbol,1,1,.01,4261,4240,4305),"ZONA 40 — PREMIUM")>=0);
  c.weekly=-1;c.model=2;c.autopilot=false;c.cutProfit=false;
  auto sell=CSFilledOrderNotice(c,c.symbol,-1,4,.005,4270,4280,4242);
  CHECK(StringFind(sell,"SWING TRADE — SELL XAUUSDc")>=0&&StringFind(sell,"BOS + Retest")>=0);
@@ -33,6 +41,11 @@ int main(int argc,char **argv){
  CHECK(StringFind(CSNoticeIPDA(c,4260),"EQUILIBRIUM")>=0);
  CHECK(!CSNoticeContextDecode("",c));auto legacy=CSFilledOrderNotice(c,"XAUUSDc",1,1,.01,4250,4240,4278);
  CHECK(StringFind(legacy,"Astrology Weekly: BELUM TERSEDIA")>=0&&StringFind(legacy,"Fibo Musang: BELUM TERVERIFIKASI")>=0);
+ auto oldContext=CSNoticeContextEncode(decoded).utf8();
+ oldContext.replace(oldContext.find("\"version\":2"),11,"\"version\":1");
+ oldContext.erase(oldContext.find(",\"tp_h4\":true"),13);
+ CSOrderNoticeContext oldDecoded;CHECK(CSNoticeContextDecode(oldContext,oldDecoded)&&!oldDecoded.h4Target);
+ CHECK(StringFind(CSFilledOrderNotice(oldDecoded,"XAUUSDc",1,1,.01,4250,4240,4278),"TP ICT H4")==-1);
  std::vector<string> parts;CHECK(CSPushParts(text,parts)&&parts.size()>1);
  CHECK(joinedPush(parts)==text);
  for(const auto &p:parts){CHECK(StringLen(p)<=255);CHECK(string(p.utf8())==p);}

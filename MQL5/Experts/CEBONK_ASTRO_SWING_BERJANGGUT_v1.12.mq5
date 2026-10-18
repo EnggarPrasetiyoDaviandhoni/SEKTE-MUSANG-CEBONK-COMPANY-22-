@@ -1,6 +1,6 @@
 #property strict
-#property version "1.11"
-#property description "CEBONK XAUUSD Swing: original Astro feed + H4/H1/M15 + M5 Musang EL2 only"
+#property version "1.12"
+#property description "CEBONK XAUUSD Swing: original Astro feed + H4/H1/M15 + M5 Musang EL2 + H4-only ICT TP"
 #property tester_file "swing-forecast-v2.history.jsonl"
 #property tester_file "cebonk-broker-offsets.csv"
 #include <CebonkSwing/MarketData.mqh>
@@ -36,7 +36,6 @@ input bool InpTelegramEnabled=false;
 input string InpTelegramBotToken=""; // Local inputs only; never commit .set files containing secrets.
 input string InpTelegramChatId="";
 input bool InpPushEnabled=false;
-input int InpNotificationIPDADays=40; // Display only: 20, 40 or 60; does not alter entry gates.
 
 CSWeeklyLock Weekly;CSClock Clock;CSFeed Feed;CSFeedClient FeedClient;CSMarket Market;CSBasket Basket;CSNotifier Notify;CSPanel Panel;
 string TradeSymbol,LastReason="STARTING",LockKey,HeartbeatKey;double LockOwner=0;bool Autopilot=false,Dirty=true,HasLock=false,StateReady=false;
@@ -79,6 +78,10 @@ void Entry(){
   if(nearest>InpMoonMajorPhaseWindowHours*3600){Reason("SKIP_MOON_RESEARCH_WINDOW");return;}}
  if(!Market.Load(TradeSymbol)){Reason(Market.error);return;}Market.Build(Feed,Clock);
  int side=Weekly.value.side;MqlTick quote;if(!SymbolInfoTick(TradeSymbol,quote)){Reason("QUOTE_NOT_READY");return;}
+ CSIPDARanges ipdaRanges;ipdaRanges.point=Market.point;
+ for(int z=0;z<3;z++){ipdaRanges.high[z]=Market.ipdaHigh[z];ipdaRanges.low[z]=Market.ipdaLow[z];}
+ Basket.IPDASetup(ipdaRanges);Basket.H4Targets(Market.levels);uint matches=0;int ipda=CSIPDASelect(side,side>0?quote.ask:quote.bid,ipdaRanges,matches);
+ if(ipda<0){Reason("SKIP_IPDA_ZONE");return;}
  if(Market.h4State==-2||(Market.h4State!=0&&Market.h4State!=side)){Reason("SKIP_H4_OPPOSED_OR_NOT_READY");return;}
  CSSetup setups[];CSH1Setups(Market.h1,Market.levels,side,Market.h4State,Market.tick,quote.ask-quote.bid,TimeCurrent(),setups);
  datetime start=Clock.ToServer(session.start),end=Clock.ToServer(session.end);if(start<=0||end<=start){Reason("CLOCK_WINDOW_UNVERIFIED");return;}
@@ -89,7 +92,9 @@ void Entry(){
   if(micro.retestClose>TimeCurrent()||TimeCurrent()-micro.retestClose>30){failure="SKIP_NOT_FIRST_RETEST_TICK";continue;}
   double entry=side>0?quote.ask:quote.bid,tp=0;uint kind=0;string why="";
   double sl=Basket.positions>0?Basket.state.sl:micro.sl;
-  if(Basket.positions>0)tp=Basket.state.tp;else if(!Market.Target(side,entry,sl,2,tp,kind,why)){failure=why;continue;}
+  if(!Market.Target(side,entry,sl,2,tp,kind,why)){failure=why;continue;}
+  if(Basket.positions>0&&MathAbs(tp-Basket.state.tp)>Market.tick/2){failure="WAIT_H4_TARGET_DIFFERS_ACTIVE_BASKET";continue;}
+  if(Basket.positions>0)tp=Basket.state.tp;
   string signal=CSHash16(TradeSymbol+"|"+IntegerToString(InpMagic)+"|"+window+"|"+
    IntegerToString(setup.model)+"|"+IntegerToString((long)setup.origin)+"|"+IntegerToString((long)setup.structure)+"|"+IntegerToString((long)setup.birth)+"|"+
    IntegerToString((long)gate)+"|"+IntegerToString((long)micro.source)+"|"+IntegerToString((long)micro.ibClose)+"|"+IntegerToString((long)micro.cb1Pivot)+"|"+IntegerToString((long)micro.breakClose)+"|"+IntegerToString((long)micro.retestClose));
@@ -98,9 +103,9 @@ void Entry(){
   // Recheck UTC/window immediately before execution; source/feed can expire while evaluating.
   now=Clock.Now();if(!Feed.Valid(now)||now<session.start||now>=session.end){failure="SKIP_WINDOW_OR_FEED_EXPIRED";break;}
   datetime deadline=TimeCurrent()+(datetime)CSMin(session.end-now,Feed.expires-now);
-  CSOrderNoticeContext context;context.known=true;context.symbol=TradeSymbol;context.session=session.sessionId;
+  CSOrderNoticeContext context;context.known=true;context.h4Target=true;context.symbol=TradeSymbol;context.session=session.sessionId;
   context.weekly=Weekly.value.side;context.model=setup.model;context.autopilot=Autopilot;context.cutProfit=InpCutProfitEnabled;
-  context.ipdaDays=InpNotificationIPDADays;int ipda=InpNotificationIPDADays==20?0:InpNotificationIPDADays==40?1:2;
+  context.ipdaDays=CSIPDADays(ipda); // Preflight selects again with each fresh per-layer quote.
   context.ipdaHigh=Market.ipdaHigh[ipda];context.ipdaLow=Market.ipdaLow[ipda];context.digits=(int)SymbolInfoInteger(TradeSymbol,SYMBOL_DIGITS);
   context.volumeDigits=0;double volumeStep=SymbolInfoDouble(TradeSymbol,SYMBOL_VOLUME_STEP);
   while(context.volumeDigits<8&&MathAbs(volumeStep-MathRound(volumeStep))>1e-8){context.volumeDigits++;volumeStep*=10;}
@@ -112,7 +117,7 @@ void Entry(){
 }
 void Draw(){
  string rows[];ArrayResize(rows,22);datetime now=Clock.Now();
- rows[0]="CEBONK SWING v1.11 | "+TradeSymbol+" | M5 MUSANG EL2 ONLY";
+ rows[0]="CEBONK SWING v1.12 | "+TradeSymbol+" | M5 MUSANG EL2 ONLY";
  rows[1]="UTC "+TimeToString(now,TIME_DATE|TIME_SECONDS)+" | WIB "+TimeToString(now+25200,TIME_DATE|TIME_SECONDS);
  rows[2]="Broker "+TimeToString(TimeCurrent(),TIME_DATE|TIME_SECONDS)+" | "+Clock.error;
  rows[3]="Feed "+Feed.error+" | age "+IntegerToString(now>0?(long)(now-Feed.generated):0)+" s";
@@ -127,7 +132,7 @@ void Draw(){
  rows[11]="IPDA D1 20 H/L "+DoubleToString(Market.ipdaHigh[0],3)+" / "+DoubleToString(Market.ipdaLow[0],3);
  rows[12]="IPDA D1 40 H/L "+DoubleToString(Market.ipdaHigh[1],3)+" / "+DoubleToString(Market.ipdaLow[1],3);
  rows[13]="IPDA D1 60 H/L "+DoubleToString(Market.ipdaHigh[2],3)+" / "+DoubleToString(Market.ipdaLow[2],3);
- rows[14]="H4 state="+IntegerToString(Market.h4State)+" | H1/M15/M5: "+LastReason;
+ rows[14]="IPDA 20 OR 40 OR 60 REQUIRED | H4 state="+IntegerToString(Market.h4State)+" | H1/M15/M5: "+LastReason;
  rows[15]="Basket "+Basket.state.basket+" positions="+IntegerToString(Basket.positions)+" layers="+IntegerToString(Basket.state.layers)+"/4";
  rows[16]="New basket FIB "+DoubleToString(InpSLFibLevel,5)+" | Basket SL "+DoubleToString(Basket.state.sl,5)+" | TP ICT "+DoubleToString(Basket.state.tp,5);
  double net=0;bool verified=Basket.Net(net);rows[17]="Risk="+DoubleToString(Basket.lastRisk,3)+"% | NET="+(verified?DoubleToString(net,2):"UNVERIFIED");
@@ -139,7 +144,6 @@ void Draw(){
 }
 int OnInit(){
  TradeSymbol=InpSymbol==""?_Symbol:InpSymbol;
- if(InpNotificationIPDADays!=20&&InpNotificationIPDADays!=40&&InpNotificationIPDADays!=60)return INIT_PARAMETERS_INCORRECT;
  if(!CSValidSLFibLevel(InpSLFibLevel)){Print("CEBONK InpSLFibLevel must be finite and negative, for example -0.236");return INIT_PARAMETERS_INCORRECT;}
  if(TradeSymbol!=_Symbol||StringFind(TradeSymbol,"XAUUSD")!=0||StringFind(InpFeedURL,"https://raw.githubusercontent.com/")!=0||InpMagic<=0||InpLotPerLayer<=0||InpMaxBasketRiskPct<=0||InpMaxBasketRiskPct>1||(InpCommissionPerLotPerSide<0&&InpCommissionPerLotPerSide!=-1)||
   InpM5MaxBarsGateToIB<1||InpM5MaxBarsGateToIB>32||InpM5MaxBarsIBToCB1Break<4||InpM5MaxBarsIBToCB1Break>32||InpM5MaxBarsBreakToRetest<1||InpM5MaxBarsBreakToRetest>32||InpMoonMajorPhaseWindowHours<0)return INIT_PARAMETERS_INCORRECT;

@@ -1,6 +1,6 @@
 {
-  "checked_at_utc": "2026-10-18T10:42:30.935204+00:00",
-  "ea_version": "1.11",
+  "checked_at_utc": "2026-10-18T16:45:43.462192+00:00",
+  "ea_version": "1.12",
   "feed_contract": "2.1.0",
   "m5_model": "MUSANG_EL2_IB_CB1_RETEST",
   "weekly_lock": "Monday 00:00 WIB; persisted BUY/SELL/WAIT; Killzone must align; daily is annotation",
@@ -25,7 +25,7 @@
   },
   "numeric_policy_host": {
     "status": "PASS",
-    "assertions": 129
+    "assertions": 167
   },
   "json_feed_host": {
     "status": "PASS",
@@ -97,7 +97,7 @@
   },
   "notification_host": {
     "status": "PASS",
-    "assertions": 62,
+    "assertions": 68,
     "production_headers": [
       "NotificationFormat.mqh",
       "Notifier.mqh",
@@ -134,9 +134,37 @@
       "maximum_per_confirmation_batch": 2,
       "additions": "new H1/M15/EL2, may use a later aligned Killzone"
     },
-    "ipda_pd_entry_filter": false,
-    "ipda_notification_days": 40
+    "ipda_pd_entry_filter": true,
+    "ipda": {
+      "mode": "AUTO OR 20/40/60 closed D1",
+      "buy": "within range, below midpoint minus half point",
+      "sell": "within range, above midpoint plus half point",
+      "recheck": "fresh per-layer Ask BUY / Bid SELL",
+      "notification": "first qualifying range 20 ->40 ->60"
+    },
+    "take_profit": {
+      "source": "H4 ONLY",
+      "buy": "nearest eligible BSL",
+      "sell": "nearest eligible SSL",
+      "minimum_rr": 2,
+      "nearest_fails_rr": "WAIT, no farther-target substitution",
+      "excluded_sources": [
+        "H1",
+        "D1",
+        "PDH/PDL",
+        "prior week",
+        "IPDA",
+        "session"
+      ],
+      "existing_basket": "original stops retained; additions must match current nearest H4 target"
+    }
   },
   "feed_generator_changed_from_v1_10": false,
-  "prior_feed_tests_and_parity": "Unchanged generator/schema/libraries; prior parity and JS feed tests retained, native owner/policy tests rerun"
+  "prior_feed_tests_and_parity": "Unchanged generator/schema/libraries; prior parity and JS feed tests retained, native owner/policy tests rerun",
+  "production_preflight_host": {
+    "status": "PASS",
+    "assertions": 11,
+    "actual_orders_sent": false,
+    "method": "verbatim production CSBasket::Preflight with local broker API adapter"
+  }
 }

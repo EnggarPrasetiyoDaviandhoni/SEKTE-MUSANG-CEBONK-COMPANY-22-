@@ -67,20 +67,11 @@ class CSMarket {
    for(int i=0;i<ArraySize(levels);i++){Consume(d1,86400,levels[i]);Consume(h1,3600,levels[i]);Consume(m5,300,levels[i]);}
   }
   bool Target(int side,double entry,double sl,double minimumRR,double &tp,uint &kind,string &why){
-   tp=0;kind=0;double barrier=0;
-   for(int i=0;i<ArraySize(levels);i++){
-    CSLevel v=levels[i];if(v.side!=side||v.consumed>0||v.known>TimeCurrent()||side*(v.price-entry)<=0)continue;
-    if(v.kinds==CS_PDH&&v.origin!=d1[ArraySize(d1)-1].time)continue;
-    if((v.kinds&127)!=0){
-     if(tp==0||side*(v.price-tp)<-2*tick){tp=v.price;kind=v.kinds;}
-     else if(MathAbs(v.price-tp)<=2*tick){tp=side>0?CSMin(tp,v.price):CSMax(tp,v.price);kind|=v.kinds;}
-    }else if(barrier==0||side*(v.price-barrier)<0)barrier=v.price;
-   }
-   if(tp==0){why="NO_EXTERNAL_LIQUIDITY";return false;}
-   tp=side>0?MathFloor(tp/tick+1e-10)*tick:MathCeil(tp/tick-1e-10)*tick;
-   if(CSRR(side,entry,sl,tp)<minimumRR){why="SKIP_RR_NEAREST_ICT";return false;}
-   if(barrier>0&&side*(barrier-tp)<0&&CSRR(side,entry,sl,barrier)<minimumRR){why="SKIP_INTERVENING_LIQUIDITY";return false;}
-   why="ICT_EXTERNAL_LIQUIDITY";return true;
+   int status=CSNearestH4Target(levels,side,entry,sl,minimumRR,tick,TimeCurrent(),tp);
+   kind=tp>0?CS_H4:0;
+   why=status==CS_H4_TARGET_READY?"ICT_H4_LIQUIDITY":status==CS_H4_TARGET_RR?"SKIP_RR_NEAREST_H4":
+    status==CS_H4_TARGET_MISSING?"NO_H4_LIQUIDITY":"INVALID_H4_TARGET_INPUT";
+   return status==CS_H4_TARGET_READY;
   }
 };
 #endif

@@ -5,7 +5,7 @@ from hashlib import sha256
 import json
 root=Path(__file__).resolve().parents[1]
 project=root/'ea/astro_swing_berjanggut'
-output=project/'dist/CEBONK_ASTRO_SWING_BERJANGGUT_v1.11_SOURCE.zip'
+output=project/'dist/CEBONK_ASTRO_SWING_BERJANGGUT_v1.12_SOURCE.zip'
 output.parent.mkdir(parents=True,exist_ok=True)
 entries={}
 for path in (root/'MQL5').rglob('*'):
@@ -22,7 +22,7 @@ manifest={name:sha256(path.read_bytes()).hexdigest() for name,path in sorted(ent
 with ZipFile(output,'w',ZIP_DEFLATED,compresslevel=9) as archive:
     for name,path in sorted(entries.items()):archive.write(path,name)
     archive.writestr('SHA256SUMS.json',json.dumps(manifest,indent=2)+'\n')
-    archive.writestr('BUILD_STATUS.json',json.dumps({'artifact':'MQL5 source package','version':'1.11','metaeditor':'NOT_COMPILED','strategy_tester':'NOT_RUN','broker_demo_or_live':'NOT_RUN','ex5_included':False},indent=2)+'\n')
+    archive.writestr('BUILD_STATUS.json',json.dumps({'artifact':'MQL5 source package','version':'1.12','metaeditor':'NOT_COMPILED','strategy_tester':'NOT_RUN','broker_demo_or_live':'NOT_RUN','ex5_included':False},indent=2)+'\n')
 with ZipFile(output) as archive:
     assert archive.testzip() is None
     assert not any(n.lower().endswith('.ex5') for n in archive.namelist())

@@ -1,14 +1,15 @@
-# Bukti dan batas verifikasi v1.11
+# Bukti dan batas verifikasi v1.12
 
 | Pemeriksaan | Status |
 |---|---|
 | Feed/schema/hash/calendar/DST/expiry/negative cases | PASS, 31 kasus |
 | Resolver tujuh hari, weekends, tie, threshold/minimum minutes | PASS, 3 kasus |
-| Numeric/policy production headers, C++ Address/UndefinedBehavior Sanitizer | PASS, 129 assertions |
+| Numeric/policy production headers, C++ Address/UndefinedBehavior Sanitizer | PASS, 167 assertions |
 | Parser JSON dan feed production headers, adapter C++ | PASS, 41 assertions |
 | Body NET basket produksi verbatim, history/position API adapter C++ | PASS, 10 assertions |
-| Formatter/outbox/persistence produksi, adapter terminal/transport C++ | PASS, 62 assertions; tanpa kirim pesan nyata |
+| Formatter/outbox/persistence produksi, adapter terminal/transport C++ | PASS, 68 assertions; tanpa kirim pesan nyata |
 | Browser UMD vs Node, Astronomy Engine 2.1.19 | PASS, 20 tanggal trading + 28 tanggal full-day strength; selisih maksimum 0 |
+| Body preflight produksi verbatim: IPDA OR, quote tiap layer, nearest-H4/RR/target berubah | PASS, 11 assertions; tanpa order nyata |
 | Struktur 16 file MQL | PASS; bukan kompilasi |
 | MetaEditor / Standard Library | **NOT_COMPILED** — compiler tidak tersedia |
 | Self-test MT5, Strategy Tester real ticks/in/out sample | **NOT_RUN** |
@@ -35,4 +36,6 @@ python3 scripts/check-swing-source.py
 
 Compile memakai F7 atau `scripts/compile-swing.ps1`, lalu jalankan `CEBONK_SWING_SELFTEST` dalam MT5, real-tick tester dan forward demo. Tidak ada win rate/profit factor/drawdown broker yang dibuktikan oleh tes sintetis ini.
 
-v1.11 native policy tests cover daily opposite/mixed without veto, full Killzone before and after best-window/core, exact session boundaries, opposite/WAIT Killzone rejection, four total reservations without phase caps, explicit-reject rollback, and v1/v2/v3→v4 state migration preserving all four old slots. Generator/schema/parity code is unchanged; existing astronomical parity evidence is retained.
+v1.12 native policy tests cover daily opposite/mixed without veto, full Killzone before and after best-window/core, exact session boundaries, opposite/WAIT Killzone rejection, four total reservations without phase caps, explicit-reject rollback, and v1/v2/v3→v4 state migration preserving all four old slots. Generator/schema/parity code is unchanged; existing astronomical parity evidence is retained.
+
+Tambahan v1.12: IPDA OR ketika hanya 20, 40, atau 60 yang lolos; BUY/SELL, invalid range, midpoint, batas range dan Ask/Bid. Seleksi TP H4 mengabaikan H1/D1/session/IPDA/week, tidak memakai level future/consumed, tidak melompati H4 terdekat yang gagal RR, dan normalisasi tick konservatif. Preflight produksi diuji terhadap quote yang berganti antarlayer, H4 snapshot hilang, target terdekat berubah dan RR kurang. Notifikasi mempertahankan zona hasil preflight serta membedakan H4 baru dari konteks lama.

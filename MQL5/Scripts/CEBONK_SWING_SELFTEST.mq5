@@ -19,6 +19,8 @@ void OnStart(){
  CSWeekLatch lock;lock.Clear();Check(lock.Capture(1800000000,-1,1800000001),"weekly capture");
  Check(!lock.Capture(1800000000,1,1800086400)&&lock.side==-1,"weekly cannot flip");
  Check(!CSAligned(-1,1),"opposite session WAIT");
+ Check(CSIPDAAllows(1,105,120,100,.01)&&!CSIPDAAllows(1,115,120,100,.01),"BUY IPDA discount required");
+ Check(CSIPDAAllows(-1,115,120,100,.01)&&!CSIPDAAllows(-1,105,120,100,.01),"SELL IPDA premium required");
  Check(!CSShouldExit(1,-1,CSDealNetContribution(-100,0,-1,0)+20,true),"closed loss included in NET");
  Check(CSOrderOutcome(10012)==CS_ORDER_UNKNOWN&&CSOrderOutcome(10004)==CS_ORDER_REJECTED,"uncertain versus rejected order");
  int f=FileOpen(InpFixture,FILE_READ|FILE_TXT|FILE_ANSI,0,CP_UTF8);Check(f!=INVALID_HANDLE,"fixture open");

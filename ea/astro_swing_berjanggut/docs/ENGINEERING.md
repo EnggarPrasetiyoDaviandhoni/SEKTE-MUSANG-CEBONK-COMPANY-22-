@@ -1,6 +1,6 @@
-# Pemetaan aturan v1.11
+# Pemetaan aturan v1.12
 
-Instruksi terbaru pengguna “Fibo musang nya pakek yang EL 2 aja” mengganti M5 CBR Berjanggut v1.08/v1.09. Rujukan EL2: PRD v1.07 §8.3A–8.4 dan slide Entry Level 2 (MUS-15/16, FMI-23). ICT H4/H1/M15 tetap. Instruksi lanjutan menghapus fase AWAL/INTI/AKHIR dan daily gate: alur final weekly + Killzone + ICT + EL2. SL dapat diatur, default −0.236; TP tetap ICT.
+Instruksi terbaru pengguna “Fibo musang nya pakek yang EL 2 aja” mengganti M5 CBR Berjanggut v1.08/v1.09. Rujukan EL2: PRD v1.07 §8.3A–8.4 dan slide Entry Level 2 (MUS-15/16, FMI-23). ICT H4/H1/M15 tetap. Instruksi lanjutan menghapus fase AWAL/INTI/AKHIR dan daily gate: alur final IPDA OR + weekly + Killzone + ICT + EL2; TP H4 saja. SL dapat diatur, default −0.236; TP liquidity H4 saja.
 
 ## Weekly lock dan alignment
 
@@ -26,7 +26,7 @@ Source weekly asli tetap hasil lima hari trading, scan 06:00–24:00 WIB, dan da
 
 Harga eksekusi tidak diwajibkan kembali di dalam IB setelah candle rejection ditutup: ketentuan itu dari CBR lama dan akan berlawanan dengan close rejection EL2. Tidak ada fallback dominan/SR, EL1/EL3–EL9, AO, BBMA, EMA atau ATR. TP tidak memakai Fib 1.618/2.618.
 
-H4 pivot 3/3, H1 2/2, D1 target 3/3; Model A diprioritaskan, H4 RANGE hanya A. H1 displacement body ≥60% range dan range ≥median 20 bar sebelumnya; FVG dengan OB fallback. M15 retest valid pertama, maksimal 32 bar setelah zona lahir. Target external PDH/PDL, H4/D1 confirmed, prior week dan IPDA20/40/60; barrier H1/session lebih dekat ikut diperiksa. Target terdekat tidak dilewati untuk membuat RR lolos.
+H4 liquidity memakai confirmed pivot 3/3; H1 struktur 2/2; Model A diprioritaskan, H4 RANGE hanya A. H1 displacement body ≥60% range dan range ≥median 20 bar sebelumnya; FVG dengan OB fallback. M15 retest valid pertama, maksimal 32 bar setelah zona lahir. Target dipilih hanya dari level berlabel H4, searah posisi, di depan entry, confirmed as-of dan belum consumed. BUY menarget BSL H4; SELL SSL H4. `CSNearestH4Target` memilih level H4 TERDEKAT sebelum mengecek RR, menormalisasi tick menuju entry, lalu mewajibkan RR >=2. Target yang lebih jauh tidak boleh menyelamatkan RR. H1/D1/PDH/PDL/prior-week/IPDA/session bukan target atau barrier dalam keputusan TP. Data H1 tetap dipakai untuk konfirmasi ICT; D1 untuk IPDA. Map liquidity lainnya tetap tersedia untuk deteksi sweep, bukan pilihan TP.
 
 ## Akuntansi NET, risiko dan order
 
@@ -38,4 +38,6 @@ State basket v4 mempertahankan nama file/magic/lock namespace sebelumnya dan men
 
 Exit Dominant Break M15: mother +3–12 inside children, directional close di luar full high/low, berlawanan posisi, setelah layer terakhir, dan total NET basket strict >0. Intent exit dikunci sebelum close pertama; partial close dicoba ulang sampai flat atau M15 berikutnya closed. Harga fill/slippage/biaya broker masih dapat membuat realisasi akhir berbeda. Exit tidak membutuhkan feed valid dan pergantian minggu tidak memanggil close.
 
-IPDA premium/discount adalah konteks saja pada v1.11. Range D1 20/40/60 tetap tersedia untuk target ICT dan notifikasi; tidak ada gate PD20 tersembunyi. BEST/core dari feed tetap divalidasi untuk integritas kontrak, bukan dipakai sebagai izin/larangan entry.
+IPDA menjadi syarat wajib AUTO OR. `CSIPDAAllows` mensyaratkan harga di dalam range D1 closed, BUY < midpoint - setengah point, SELL > midpoint + setengah point. `CSIPDASelect` mencoba 20/40/60, cukup satu benar. Range invalid tidak menjadi bukti lolos. Jika beberapa lolos, range pertama 20→40→60 menjadi konteks notifikasi. EA mengecek awal sebelum scan ICT; `CSBasket::Preflight` mengecek lagi setiap request dengan quote aktual terbaru. Per-layer context memakai range yang baru lolos, bukan nilai display default. BEST/core dari feed tetap divalidasi untuk integritas kontrak, bukan dipakai sebagai izin/larangan entry.
+
+Preflight juga menghitung ulang target H4 terdekat dari snapshot level confirmed dengan quote per-layer. Missing H4, nearest RR<2, atau target berubah dari TP yang diajukan memblok request. Snapshot market diperbarui saat evaluasi M5. Existing SL/TP tidak digeser; tambahan pada basket lama wajib cocok dengan target H4 terdekat saat itu. Slippage broker dapat mengubah harga fill setelah preflight; notifikasi menampilkan harga dan klasifikasi range fill yang sebenarnya. Tidak ada klaim bahwa filter menjamin harga eksekusi broker.

@@ -3,7 +3,7 @@
 #include "JsonParser.mqh"
 #include "NumericCore.mqh"
 struct CSOrderNoticeContext {
- bool known,autopilot,cutProfit;
+ bool known,autopilot,cutProfit,h4Target;
  int weekly,model,ipdaDays,digits,volumeDigits;
  string symbol,session;
  double ipdaHigh,ipdaLow;
@@ -15,17 +15,21 @@ string CSNoticeSession(string id){
  if(id=="londonclose")return "LONDON CLOSE";return "BELUM TERSEDIA";
 }
 string CSNoticeContextEncode(const CSOrderNoticeContext &c){
- return "{\"version\":1,\"symbol\":\""+CSJsonEscape(c.symbol)+"\",\"session\":\""+CSJsonEscape(c.session)+
+ return "{\"version\":2,\"symbol\":\""+CSJsonEscape(c.symbol)+"\",\"session\":\""+CSJsonEscape(c.session)+
   "\",\"weekly\":"+IntegerToString(c.weekly)+",\"model\":"+IntegerToString(c.model)+
   ",\"ipda_days\":"+IntegerToString(c.ipdaDays)+",\"ipda_high\":"+DoubleToString(c.ipdaHigh,16)+
   ",\"ipda_low\":"+DoubleToString(c.ipdaLow,16)+",\"digits\":"+IntegerToString(c.digits)+
   ",\"volume_digits\":"+IntegerToString(c.volumeDigits)+",\"autopilot\":"+(c.autopilot?"true":"false")+
-  ",\"cut_profit\":"+(c.cutProfit?"true":"false")+"}";
+  ",\"cut_profit\":"+(c.cutProfit?"true":"false")+",\"tp_h4\":"+(c.h4Target?"true":"false")+"}";
 }
 bool CSNoticeContextDecode(string raw,CSOrderNoticeContext &c){
  c.known=false;c.weekly=0;c.model=0;c.ipdaDays=40;c.digits=2;c.volumeDigits=2;
- c.symbol="";c.session="";c.ipdaHigh=0;c.ipdaLow=0;c.autopilot=false;c.cutProfit=false;
- CSJson j;if(!j.Parse(raw)||!j.Only(0,"version,symbol,session,weekly,model,ipda_days,ipda_high,ipda_low,digits,volume_digits,autopilot,cut_profit")||j.Number(j.Get(0,"version"))!=1)return false;
+ c.symbol="";c.session="";c.ipdaHigh=0;c.ipdaLow=0;c.autopilot=false;c.cutProfit=false;c.h4Target=false;
+ CSJson j;if(!j.Parse(raw))return false;
+ int version=(int)j.Number(j.Get(0,"version"));string fields="version,symbol,session,weekly,model,ipda_days,ipda_high,ipda_low,digits,volume_digits,autopilot,cut_profit";
+ if(version==2)fields+=",tp_h4";
+ if((version!=1&&version!=2)||!j.Only(0,fields)||(version==2&&j.Kind(j.Get(0,"tp_h4"))!=CSJ_BOOL))return false;
+ c.h4Target=version==2&&j.Number(j.Get(0,"tp_h4"))==1;
  c.symbol=j.Text(j.Get(0,"symbol"));c.session=j.Text(j.Get(0,"session"));
  c.weekly=(int)j.Number(j.Get(0,"weekly"));c.model=(int)j.Number(j.Get(0,"model"));
  c.ipdaDays=(int)j.Number(j.Get(0,"ipda_days"));c.digits=(int)j.Number(j.Get(0,"digits"));c.volumeDigits=(int)j.Number(j.Get(0,"volume_digits"));
@@ -61,7 +65,7 @@ string CSFilledOrderNotice(const CSOrderNoticeContext &c,string symbol,int side,
   "\n🌍 Session: "+CSNoticeSession(c.session)+"\n\n📊 ICT: "+ict+
   "\n📍 IPDA D1: "+CSNoticeIPDA(c,entry)+"\n📈 BBMA: TIDAK DIGUNAKAN\n🦊 Fibo Musang: "+(c.known?"EL2 M5":"BELUM TERVERIFIKASI")+
   "\n\n💰 Lot: "+CSNoticeVolume(volume,c.volumeDigits)+"\n📈 Entry: "+DoubleToString(entry,c.digits)+
-  "\n🛑 SL: "+DoubleToString(sl,c.digits)+"\n🎯 TP ICT: "+DoubleToString(tp,c.digits)+
+  "\n🛑 SL: "+DoubleToString(sl,c.digits)+"\n🎯 TP ICT"+(c.h4Target?" H4":"")+": "+DoubleToString(tp,c.digits)+
   "\n⚖️ RR: "+(rr>=0?"1:"+DoubleToString(rr,1):"BELUM TERVERIFIKASI")+
   "\n\n✂️ Cut Profit: "+exit+"\n🔢 Layer: "+IntegerToString(layer)+"/4"+
   "\n🤖 AUTOPILOT "+(!c.known?"BELUM TERSEDIA":c.autopilot?"ON":"OFF");

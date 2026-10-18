@@ -45,3 +45,14 @@ with tempfile.TemporaryDirectory(prefix='cebonk-core-') as directory:
     subprocess.run(['g++','-std=c++17','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-pedantic','-fsanitize=address,undefined','-g',
         '-I'+directory,'-I'+str(root/'MQL5/Include/CebonkSwing'),str(root/'tests/swing/notifications.cpp'),'-lcrypto','-o',str(notices)],check=True)
     subprocess.run([str(notices),str(root/'ea/astro_swing_berjanggut/evidence/notification-example.txt')],check=True,env=env)
+
+    preflight=basket[basket.index('  bool Preflight('):basket.index('  bool Submit(')]
+    (Path(directory)/'BasketPreflightUnderTest.mqh').write_text(
+        'class CSBasketPreflightHarness {public: struct {bool pending;} state; '
+        'string m_symbol,error;long m_magic;double m_lot;uint m_deviation;bool conflict,m_ipdaReady;int m_ipdaSelected;CSIPDARanges m_ipda;std::vector<CSLevel> m_h4Levels;bool m_h4Ready;double m_tick; '
+        'bool Tradable(MqlTick &q,bool){q=currentQuote;return true;} '
+        'bool Risk(double,int,double,double,double &cash){cash=0;return true;}\n'+preflight+'};\n')
+    preflight_binary=Path(directory)/'preflight'
+    subprocess.run(['g++','-std=c++17','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-pedantic','-fsanitize=address,undefined','-g',
+        '-I'+directory,str(root/'tests/swing/preflight.cpp'),'-lcrypto','-o',str(preflight_binary)],check=True)
+    subprocess.run([str(preflight_binary)],check=True,env=env)

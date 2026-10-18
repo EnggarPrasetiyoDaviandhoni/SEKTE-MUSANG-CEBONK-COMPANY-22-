@@ -24,7 +24,7 @@ Format payload: JSON canonical dengan key object tersortir, SHA-256 atas payload
 
 ## MT5
 
-Salin `MQL5/Experts`, `MQL5/Include/CebonkSwing`, `MQL5/Scripts`, dan file tester ke Data Folder terminal yang dipilih. Expert v1.11 bernama `CEBONK_ASTRO_SWING_BERJANGGUT_v1.11.mq5`. Compile dengan F7 atau:
+Salin `MQL5/Experts`, `MQL5/Include/CebonkSwing`, `MQL5/Scripts`, dan file tester ke Data Folder terminal yang dipilih. Expert v1.12 bernama `CEBONK_ASTRO_SWING_BERJANGGUT_v1.12.mq5`. Compile dengan F7 atau:
 
 ```powershell
 .\scripts\compile-swing.ps1 -MetaEditor 'C:\Program Files\MetaTrader 5\metaeditor64.exe' -DataFolder 'C:\Users\NAMA\AppData\Roaming\MetaQuotes\Terminal\ID_TERMINAL'
@@ -34,7 +34,7 @@ Script membutuhkan log “0 errors” dan EX5 baru; exit code proses saja tidak 
 
 Attach pada chart simbol XAUUSD yang sesuai. Isi komisi per lot per sisi; verifikasi kontrak simbol, minimum lot, tick size, margin, dan jam broker di MT5. Suffix broker diterima. Tombol ON hanya mengizinkan entry baru; OFF tidak menutup basket. Menghapus EA menghentikan manajemen client-side, sementara server SL/TP yang sudah terpasang tetap berlaku.
 
-Atur level SL pada **EA Properties → Inputs → `InpSLFibLevel`**. Gunakan angka negatif, misalnya `-0.236` (default), `-0.382`, atau `-0.618`; angka ini level Fibonacci, bukan jarak pip. Level baru berlaku untuk basket baru. Basket aktif dan layer tambahannya tetap memakai harga SL/TP awal dari state. State basket v1/v2/v3 dimigrasikan ke v4 dengan total layer tetap tersimpan tanpa mereset basket. Jangan menghapus file state basket maupun `_weekly.json`: lock arah minggu harus bertahan setelah restart dan penggantian Inputs. Setelah mengganti Inputs atau mengganti expert ke v1.11, AUTOPILOT entry kembali OFF dan perlu dinyalakan bila entry baru diinginkan.
+Atur level SL pada **EA Properties → Inputs → `InpSLFibLevel`**. Gunakan angka negatif, misalnya `-0.236` (default), `-0.382`, atau `-0.618`; angka ini level Fibonacci, bukan jarak pip. Level baru berlaku untuk basket baru. Basket aktif dan layer tambahannya tetap memakai harga SL/TP awal dari state. State basket v1/v2/v3 dimigrasikan ke v4 dengan total layer tetap tersimpan tanpa mereset basket. Jangan menghapus file state basket maupun `_weekly.json`: lock arah minggu harus bertahan setelah restart dan penggantian Inputs. Setelah mengganti Inputs atau mengganti expert ke v1.12, AUTOPILOT entry kembali OFF dan perlu dinyalakan bila entry baru diinginkan.
 
 ## Strategy Tester offline
 
@@ -74,6 +74,9 @@ Common Files memakai prefix account/magic dan hash simbol; tester memakai namesp
 | `CLOCK_UNVERIFIED` | Periksa koneksi/GMT mesin live atau mapping UTC historis tester |
 | `COMMISSION_UNVERIFIED` | Isi biaya broker nyata; 0 hanya untuk akun tanpa komisi |
 | `SKIP_EL2_REJECTION_LOST` | Quote tidak lagi di sisi rejection EL2 yang disyaratkan |
+| `SKIP_IPDA_ZONE` | Tidak ada range 20/40/60 yang memenuhi zona searah pada quote saat ini |
+| `NO_H4_LIQUIDITY` / `SKIP_RR_NEAREST_H4` | Tidak ada H4 target yang sah atau RR target terdekat <2; WAIT |
+| `SKIP_H4_TARGET_CHANGED` / `WAIT_H4_TARGET_DIFFERS_ACTIVE_BASKET` | Target H4 terdekat berubah; tidak menggeser target basket atau melewati pool lebih dekat |
 | `SKIP_RISK` / `SKIP_BROKER_STOPLEVEL` | Kontrak/lot/stop tidak memenuhi batas; SL tidak digeser otomatis |
 | `POSITION_OWNERSHIP_CONFLICT` | Ada posisi/deal manual atau EA lain; basket tidak diambil alih |
 | `STATE_CORRUPT_OR_UNWRITABLE` | Simpan file untuk audit dan pulihkan state yang benar; jangan hapus state saat ada posisi terbuka |
@@ -81,6 +84,6 @@ Common Files memakai prefix account/magic dan hash simbol; tester memakai namesp
 | `WEEKLY_PERSISTENCE_FAILED` | Perbaiki akses Common Files; entry menunggu lock tersimpan |
 | `ORDER_ACK_UNKNOWN` | Rekonsiliasi history/order MT5; jangan membuat request entry pengganti secara manual dari signal yang sama |
 
-## Perubahan entry v1.11
+## Perubahan entry v1.12
 
-Weekly lock + arah Killzone aktif harus searah; daily hanya anotasi. Entry dievaluasi sepanjang sesi lengkap, tanpa AWAL/INTI/AKHIR/core. Maksimal empat layer total, dua order per batch konfirmasi; tambahan wajib setup teknikal baru dan dapat pada Killzone berikutnya. IPDA hanya konteks/target, bukan gate premium/discount. Feed 2.1.0 dan publisher yang sudah aktif tetap kompatibel; generator astronomi tidak berubah. Jangan menjalankan v1.10 dan v1.11 bersamaan.
+Weekly lock + arah Killzone aktif harus searah; daily hanya anotasi. Entry dievaluasi sepanjang sesi lengkap, tanpa AWAL/INTI/AKHIR/core. Maksimal empat layer total, dua order per batch konfirmasi; tambahan wajib setup teknikal baru dan dapat pada Killzone berikutnya. IPDA AUTO OR 20/40/60 wajib; BUY discount atau SELL premium cukup salah satu range. TP hanya liquidity H4 terdekat, RR >=2, tanpa fallback H1/D1 atau lompat target. Feed 2.1.0 dan publisher yang sudah aktif tetap kompatibel; generator astronomi tidak berubah. Jangan menjalankan v1.10 dan v1.12 bersamaan.
