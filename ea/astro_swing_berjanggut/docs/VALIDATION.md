@@ -1,28 +1,35 @@
-# Bukti dan batas verifikasi
+# Bukti dan batas verifikasi v1.10
 
 | Pemeriksaan | Status |
 |---|---|
-| Node JSON/schema, checksum, calendar, expiry, session/DST, negative cases | PASS, 25 kasus |
-| Numeric engine `.mqh` yang sama, C++ host + Address/UndefinedBehavior Sanitizer | PASS, 87 assertion |
-| Parser JSON dan validator feed `.mqh` yang sama, adapter API C++ host | PASS, 34 assertion |
-| Browser UMD asli vs Node, Astronomy Engine 2.1.19, 20 tanggal / 4 minggu | PASS; selisih maksimum 0, toleransi 1e-9 |
-| MetaEditor / MQL5 Standard Library compile | **NOT COMPILED** — MetaEditor tidak tersedia di lingkungan Linux ini |
-| Script self-test pada runtime MT5 | **NOT RUN** |
-| Strategy Tester real ticks / in-sample / out-of-sample | **NOT RUN** |
-| Broker demo/live, hedging/netting, partial fill, commission reconciliation | **NOT RUN** |
+| Feed/schema/hash/calendar/DST/expiry/negative cases | PASS, 31 kasus |
+| Resolver tujuh hari, weekends, tie, threshold/minimum minutes | PASS, 3 kasus |
+| Numeric/policy production headers, C++ Address/UndefinedBehavior Sanitizer | PASS, 126 assertions |
+| Parser JSON dan feed production headers, adapter C++ | PASS, 38 assertions |
+| Body NET basket produksi verbatim, history/position API adapter C++ | PASS, 10 assertions |
+| Browser UMD vs Node, Astronomy Engine 2.1.19 | PASS, 20 tanggal trading + 28 tanggal full-day strength; selisih maksimum 0 |
+| Struktur 15 file MQL | PASS; bukan kompilasi |
+| MetaEditor / Standard Library | **NOT_COMPILED** — compiler tidak tersedia |
+| Self-test MT5, Strategy Tester real ticks/in/out sample | **NOT_RUN** |
+| Broker demo/live, fill, partial fill, actual commission reconciliation | **NOT_RUN** |
 
-Tes numeric mencakup BUY/SELL, level SL default −0.236 dan level pilihan −0.382/−0.618/−1.0, rasio dan tick rounding stop, input nol/positif/nonfinite, overflow, harga stop nonpositif, stop di dalam IB, anchor salah, close break vs wick, retest wajib, expiry dan replay, alternatif S/R, pivot tanpa lookahead, H4 trend, H1 continuation, NET exit >0 dan risk cap. Detektor M5 diuji dengan level kustom pada pola dominan BUY/SELL dan alternatif S/R; contoh stop lebih lebar menurunkan RR hingga di bawah 2. Test parser/feed mengeksekusi control flow header produksi: duplicate key, Unicode surrogate, JSON number invalid, kedalaman, hash, model lama, timezone drift, kalender, expiry dan alignment. Adapter menerjemahkan deklarasi dynamic-array dan menyediakan API string/time/SHA host; ini bukan compiler MQL5 dan tidak menguji API order terminal.
+EL2 diuji simetris BUY/SELL: IB terpisah, pivot CB1 sesudah IB, close break bukan wick, retest/rejection wajib, SL default/kustom dan rounding tick, expiry/replay, invalidasi zona, CB1 belum confirmed, stop di dalam IB, RR dan risk cap. Weekly policy diuji tidak berubah di minggu yang sama, dipulihkan/copy state lalu tetap terkunci, hanya minggu baru diterima, replay ditolak, WAIT tidak dibalik menjadi BUY, dan daily/session kontra WAIT. Reservasi layer diuji ditolak→kembali, maksimal 2+2, dan unknown retcodes tidak dianggap penolakan.
 
-Parity memakai file mesin website yang tidak diubah, dengan build browser UMD dan build Node library astronomi yang dipin. Tanggal 2026-03-02..06, 03-09..13, 03-30..04-03, 04-06..10 mencakup kondisi sebelum/sesudah DST US, UK dan Australia. Ini VM parity API, bukan browser UI automation. Rincian di `evidence/parity.json`.
+Uji NET mengambil body fungsi `CSBasket::Net` dari header produksi tanpa menulis ulang algoritmenya, lalu memberi respons history/position terkendali: layer closed rugi −100 dan floating +20, partial close ID yang masih aktif, komisi/swap/biaya keluar, ownership conflict, missing history, biaya tidak diketahui, dan laporan final tanpa double estimated costs. Adapter bukan terminal atau broker. Runtime file I/O, server stops, transaksi broker, recovery crash dan partial fills masih membutuhkan MT5/demo.
+
+Parity memakai file source website tanpa perubahan dengan library astronomi browser UMD dan Node yang dipin. Empat minggu DST US/UK/Australia: 2026-03-02, 03-09, 03-30, 04-06. Meliputi source weekly/daily, lima sesi, focus/windows/timestamps/scores, lunar, dan tujuh subtotal harian beserta resolver. VM parity API, bukan UI automation.
+
+Feed tester bawaan hanya fixture. Backfill astronomi bukan data harga atau arsip publikasi historis autentik. Bukti publikasi raw HTTP dan jadwal aktif dicatat dalam `evidence/validation.json`; jangan menganggap publikasi sekali sebagai publisher harian aktif.
 
 Jalankan dari repo:
 
 ```bash
 npm ci --prefix ea/astro_swing_berjanggut --ignore-scripts
 node tests/swing/feed.test.mjs
-python scripts/test-swing-core.py
+node tests/swing/weekly-lock.test.mjs
+python3 scripts/test-swing-core.py
 node scripts/test-swing-parity.mjs
-python scripts/check-swing-source.py
+python3 scripts/check-swing-source.py
 ```
 
-`scripts/compile-swing.ps1` dan `MQL5/Scripts/CEBONK_SWING_SELFTEST.mq5` disediakan untuk tahap verifikasi MT5. Belum ada win rate, profit factor atau drawdown trading yang dihasilkan; angka performa tidak diisi dari tes sintetis.
+Compile memakai F7 atau `scripts/compile-swing.ps1`, lalu jalankan `CEBONK_SWING_SELFTEST` dalam MT5, real-tick tester dan forward demo. Tidak ada win rate/profit factor/drawdown broker yang dibuktikan oleh tes sintetis ini.

@@ -13,8 +13,8 @@ int main(int argc,char **argv){
  CHECK(j.Parse(raw)&&j.VerifyHash(raw));datetime now=(datetime)j.Number(j.Get(0,"generated_at_utc"));
  CSFeed feed;if(!feed.Accept(raw,now+1)){std::cerr<<feed.error.utf8()<<'\n';return 1;}CHECK(feed.Valid(now+1));CHECK(ArraySize(feed.sessions)==25&&ArraySize(feed.days)==5&&ArraySize(feed.moon)==193);
  CHECK(!feed.Accept(raw,now+108001)&&feed.error=="FEED_STALE_FUTURE");
- CHECK(!feed.Accept(replaceOne(raw,"MUSANG_BERJANGGUT_CBR","OTHER_MODEL"),now));CHECK(feed.error=="FEED_SHA256");
- CHECK(!feed.Accept(rehash(replaceOne(raw,"MUSANG_BERJANGGUT_CBR","OTHER_MODEL")),now)&&feed.error=="FEED_MODEL");
+ CHECK(!feed.Accept(replaceOne(raw,"MUSANG_EL2_IB_CB1_RETEST","OTHER_MODEL"),now));CHECK(feed.error=="FEED_SHA256");
+ CHECK(!feed.Accept(rehash(replaceOne(raw,"MUSANG_EL2_IB_CB1_RETEST","OTHER_MODEL")),now)&&feed.error=="FEED_MODEL");
  auto drift=raw;std::regex pattern("\\\"session_start_utc\\\":([0-9]+)");std::smatch match;CHECK(std::regex_search(drift,match,pattern));auto old=match.str(1);drift=replaceOne(drift,"\"session_start_utc\":"+old,"\"session_start_utc\":"+std::to_string(std::stoll(old)+3600));
  CHECK(!feed.Accept(rehash(drift),now)&&feed.error=="FEED_SESSION_DST_SCHEDULE");
  CHECK(!j.Parse("{\"a\":1,\"a\":2}")&&j.Error()=="JSON_DUPLICATE_KEY");
@@ -30,7 +30,11 @@ int main(int argc,char **argv){
  CHECK(CSIanaOffset(CSDateParse("2026-04-03"),0)==660&&CSIanaOffset(CSDateParse("2026-04-06"),0)==600);
  CSFeed gates;ArrayResize(gates.days,1);gates.days[0].date="2026-10-19";gates.days[0].weekly=1;gates.days[0].daily=1;
  ArrayResize(gates.sessions,1);gates.sessions[0].date="2026-10-19";gates.sessions[0].direction=1;gates.sessions[0].windowStart=1000;gates.sessions[0].windowEnd=2000;gates.sessions[0].sessionId="london";
- CHECK(gates.Owner(1000)==0&&gates.Owner(1999)==0&&gates.Owner(2000)==-1);
- gates.days[0].daily=-1;CHECK(gates.Owner(1500)==-1);gates.days[0].daily=1;gates.days[0].weekly=0;CHECK(gates.Owner(1500)==-1);
+ CHECK(gates.Owner(1000,1)==0&&gates.Owner(1999,1)==0&&gates.Owner(2000,1)==-1);
+ gates.days[0].daily=-1;CHECK(gates.Owner(1500,1)==-1);gates.days[0].daily=1;gates.days[0].weekly=-1;CHECK(gates.Owner(1500,1)==0); // Updated feed cannot overturn persisted BUY lock.
+ gates.sessions[0].direction=-1;CHECK(gates.Owner(1500,1)==-1); // Opposite session always WAIT.
+ gates.days[0].daily=-1;CHECK(gates.Owner(1500,-1)==0&&gates.Owner(1500,0)==-1);
+ CHECK(!feed.Accept(rehash(replaceOne(raw,"\"total_slots\":2016","\"total_slots\":1728")),now)&&feed.error=="FEED_WEEKLY_STRENGTH");
+ CHECK(!feed.Accept(rehash(replaceOne(raw,"\"min_share\":0.55","\"min_share\":0.5")),now)&&feed.error=="FEED_WEEKLY_STRENGTH");
  CHECK(feed.Accept(raw,now));std::cout<<"PASS "<<checks<<" assertions on actual MQL JSON/feed logic via host API adapter (not MetaEditor)\n";
 }

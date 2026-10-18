@@ -2,9 +2,10 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {ROOT,Astronomy,sourceEngines,requireEA} from './source.mjs';
+import {sevenDayStrength,resolveWeekly,validateWeeklyStrength} from './weekly-lock.mjs';
 export const DAY=86400000;
-export const MODEL='CEBONK_SWING_ASTRO_WEEKLY_DAILY_5KZ_V1';
-export const M5_MODEL='MUSANG_BERJANGGUT_CBR';
+export const MODEL='CEBONK_SWING_ASTRO_WEEKLY_LOCK_7D_V1';
+export const M5_MODEL='MUSANG_EL2_IB_CB1_RETEST';
 export const SESSION_IDS=['sydney','tokyo','london','newyork','londonclose'];
 export const PHASES=['NEW_MOON','WAXING_CRESCENT','FIRST_QUARTER','WAXING_GIBBOUS','FULL_MOON','WANING_GIBBOUS','LAST_QUARTER','WANING_CRESCENT'];
 export const iso=ms=>new Date(ms).toISOString().slice(0,10);
@@ -52,9 +53,11 @@ export async function generateFeed({from,days=8,generatedAt=Date.now(),sourceCom
   try{weekly=await W.scanWeek(monday,(date,p,c)=>C.scan(engine,date,360,true,p,c,'WIB'));}
   finally{engine.clear();}
   const daily=D.make(weekly,Astronomy,B,0);
-  const week={week_monday_wib:monday,weekly_direction:weekly.direction,daily:weekly.days.map(d=>{
+  const strength=await sevenDayStrength(monday,C,Astronomy),decision=resolveWeekly(weekly.direction,strength);
+  const week={week_monday_wib:monday,weekly_source_direction:weekly.direction,weekly_direction:decision.direction,
+   weekly_resolution_reason:decision.reason,seven_day_strength:strength,daily:weekly.days.map(d=>{
    const s=daily.days.find(x=>x.date===d.date);
-   return {date_wib:d.date,daily_direction:d.dominant,swing_daily_direction_inherited:s.direction,
+   return {date_wib:d.date,daily_direction:d.dominant,swing_daily_direction_inherited:decision.direction,
     moon_rank:s.rank,illumination_pct:s.illumination,moon_observed_at_utc:s.observationMs/1000};
   })};weeks.push(week);weekCache.set(monday,week);
  }
@@ -84,7 +87,7 @@ export async function generateFeed({from,days=8,generatedAt=Date.now(),sourceCom
  for(let d=addDay(from,-4);d<=to;d=addDay(d,1))if(weekday(d))
   for(const s of K.schedule(d,C))liquidity_sessions.push({session_id:s.id,start_utc:s.start/1000,end_utc:s.end/1000});
  const generated=Math.floor(generatedAt/1000);
- return {schema_version:'2.0.0',model_id:MODEL,m5_model:M5_MODEL,source_commit:sourceCommit,
+ return {schema_version:'2.1.0',model_id:MODEL,m5_model:M5_MODEL,source_commit:sourceCommit,
   generated_at_utc:generated,expires_at_utc:generated+30*3600,horizon_start_wib:from,horizon_end_wib:to,
   validated_predictive_model:false,weekly_source_method:'CebonkAstroWeekly.scanWeek/CebonkCore.scan(WIB,360)',
   daily_source_method:'CebonkAstroWeekly.days[].dominant',swing_daily_inherited_weekly:true,
@@ -108,6 +111,7 @@ export function validateFeed(data,{nowUtc=Math.floor(Date.now()/1000),requireCur
  if(data.weeks.length!==expectedWeeks.length)fail('Wrong number of weeks');
  data.weeks.forEach((week,i)=>{
   if(week.week_monday_wib!==expectedWeeks[i])fail('Week ordering');
+  validateWeeklyStrength(week);
   const days=W.weekDates(week.week_monday_wib);
   const ranks=new Set();week.daily.forEach((d,j)=>{
    if(d.date_wib!==days[j].date)fail('Missing/duplicate weekday');

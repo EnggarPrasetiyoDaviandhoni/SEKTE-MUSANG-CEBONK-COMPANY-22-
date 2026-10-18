@@ -1,33 +1,50 @@
-✔ actual feed validates and preserves its checksum on round trip (300.226609ms)
-✔ canonical JSON rejects nonfinite values and changes in bytes (18.528425ms)
-✔ reject old M5 model (10.570161ms)
-✔ reject unknown field (12.496827ms)
-✔ reject missing fifth weekday (1.59648ms)
-✔ reject duplicate weekday (4.978165ms)
-✔ reject daily inherits wrong direction (11.803885ms)
-✔ reject duplicate lunar ranks (16.344682ms)
-✔ reject missing session (82.125625ms)
-✔ reject duplicate session (10.597081ms)
-✔ reject invalid session id (5.615682ms)
-✔ reject DST shift (11.723424ms)
-✔ reject timezone drift (9.973133ms)
-✔ reject short horizon (3.583297ms)
-✔ reject invalid prediction flag (4.33663ms)
-✔ reject negative illumination (2.505607ms)
-✔ reject duplicate moon time (107.33961ms)
-✔ reject past expiry (94.140036ms)
-✔ reject future publication (85.601751ms)
-✔ reject wrong source hash (1.691804ms)
-✔ reject wrong inherited marker (1.53688ms)
-✔ current clock cannot use expired data or data outside its horizon (119.525109ms)
-✔ WAIT has no order window; directional window never accepts end<=core (85.525391ms)
-✔ a zero duration AWAL retains source core==start and does not invent an earlier entry (84.403158ms)
-✔ source killzone schedule switches DST by city, not a permanent WIB table (7.078351ms)
-ℹ tests 25
+✔ actual feed validates and preserves its checksum on round trip (287.635847ms)
+✔ canonical JSON rejects nonfinite values and changes in bytes (14.08409ms)
+✔ reject old feed contract (8.164935ms)
+✔ reject six-day strength (2.3132ms)
+✔ reject weekend omitted (3.791864ms)
+✔ reject strength total tamper (6.270384ms)
+✔ reject weaker threshold (6.609314ms)
+✔ reject weekly decision flip (11.618721ms)
+✔ reject old M5 model (3.045032ms)
+✔ reject unknown field (2.847595ms)
+✔ reject missing fifth weekday (2.968305ms)
+✔ reject duplicate weekday (5.499815ms)
+✔ reject daily inherits wrong direction (2.882226ms)
+✔ reject duplicate lunar ranks (4.649696ms)
+✔ reject missing session (91.092566ms)
+✔ reject duplicate session (10.669764ms)
+✔ reject invalid session id (2.805891ms)
+✔ reject DST shift (12.431905ms)
+✔ reject timezone drift (9.63786ms)
+✔ reject short horizon (2.791389ms)
+✔ reject invalid prediction flag (4.351207ms)
+✔ reject negative illumination (2.798511ms)
+✔ reject duplicate moon time (115.727475ms)
+✔ reject past expiry (93.072911ms)
+✔ reject future publication (73.695893ms)
+✔ reject wrong source hash (1.799046ms)
+✔ reject wrong inherited marker (2.35335ms)
+✔ current clock cannot use expired data or data outside its horizon (150.493132ms)
+✔ WAIT has no order window; directional window never accepts end<=core (88.713186ms)
+✔ a zero duration AWAL retains source core==start and does not invent an earlier entry (73.993861ms)
+✔ source killzone schedule switches DST by city, not a permanent WIB table (6.166558ms)
+ℹ tests 31
 ℹ suites 0
-ℹ pass 25
+ℹ pass 31
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 1120.924259
+ℹ duration_ms 1130.676316
+✔ CAMPURAN uses score strength over all seven days including Saturday/Sunday (4.839972ms)
+✔ tie, weak dominance, too few directional minutes and no direction all WAIT (0.170706ms)
+✔ neutral slots do not count as BUY/SELL strength (0.657299ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12.120926

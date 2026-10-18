@@ -2,6 +2,7 @@
   "status": "PASS",
   "kind": "VM browser UMD versus Node; not browser UI automation",
   "trading_dates": 20,
+  "seven_day_strength_dates": 28,
   "weeks": [
     "2026-03-02",
     "2026-03-09",
@@ -12,6 +13,7 @@
   "maximum_numeric_difference": 0,
   "tolerance": 1e-9,
   "coverage": [
+    "7-day weighted strength and weekly decision",
     "weekly/daily bias",
     "5 city sessions",
     "focus and all windows",

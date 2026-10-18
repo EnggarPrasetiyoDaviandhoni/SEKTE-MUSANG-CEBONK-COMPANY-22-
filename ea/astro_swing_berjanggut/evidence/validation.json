@@ -1,38 +1,53 @@
 {
-  "checked_at_utc": "2026-10-18T05:13:36Z",
-  "ea_version": "1.09",
+  "checked_at_utc": "2026-10-18T10:03:02.075329+00:00",
+  "ea_version": "1.10",
+  "feed_contract": "2.1.0",
+  "m5_model": "MUSANG_EL2_IB_CB1_RETEST",
+  "weekly_lock": "Monday 00:00 WIB; persisted BUY/SELL/WAIT; daily AND session must align",
+  "campuran_threshold": {
+    "share": 0.55,
+    "minimum_directional_minutes": 360,
+    "calendar_days": 7,
+    "score": "sum(abs(score)*5 minutes), directional slots only"
+  },
   "sl_input": {
     "name": "InpSLFibLevel",
     "default": -0.236,
-    "allowed": "finite negative Fibonacci extension",
-    "custom_levels_tested": [-0.382, -0.618, -1.0],
-    "active_basket": "stored SL/TP path unchanged; MT5 execution not run",
-    "unchanged_feed_parity_evidence_from_utc": "2026-10-17T18:48:09.258125+00:00"
+    "existing_basket": "stored SL/TP retained; terminal execution not run"
   },
   "feed_tests": {
     "status": "PASS",
-    "cases": 25
+    "cases": 31
   },
-  "shared_numeric_host": {
+  "weekly_strength_tests": {
     "status": "PASS",
-    "assertions": 87,
-    "sanitizers": [
-      "address",
-      "undefined"
-    ]
+    "cases": 3
   },
-  "shared_json_feed_host": {
+  "numeric_policy_host": {
     "status": "PASS",
-    "assertions": 34
+    "assertions": 126
   },
+  "json_feed_host": {
+    "status": "PASS",
+    "assertions": 38
+  },
+  "production_basket_net_host": {
+    "status": "PASS",
+    "assertions": 10
+  },
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
   "source_structure": {
     "status": "PASS",
-    "mql_files": 13
+    "mql_files": 15
   },
-  "browser_umd_node_parity": {
+  "parity": {
     "status": "PASS",
     "kind": "VM browser UMD versus Node; not browser UI automation",
     "trading_dates": 20,
+    "seven_day_strength_dates": 28,
     "weeks": [
       "2026-03-02",
       "2026-03-09",
@@ -43,6 +58,7 @@
     "maximum_numeric_difference": 0,
     "tolerance": 1e-09,
     "coverage": [
+      "7-day weighted strength and weekly decision",
       "weekly/daily bias",
       "5 city sessions",
       "focus and all windows",
@@ -53,16 +69,11 @@
       "US/UK/Australia DST before/after"
     ]
   },
-  "original_website_regression": "PASS",
   "website_source_changed": false,
-  "archive_backfill_generator": "PASS, two as-of publications generated and validated",
-  "metaeditor": "NOT_COMPILED: compiler unavailable",
+  "original_website_regression": "PASS",
+  "metaeditor": "NOT_COMPILED",
   "mt5_selftest": "NOT_RUN",
   "strategy_tester": "NOT_RUN",
   "broker_demo_live": "NOT_RUN",
-  "pages": {
-    "existing_site_http": 200,
-    "new_v2_feed_http": 404,
-    "state": "NOT_PUBLISHED_PENDING_PR_MERGE"
-  }
+  "raw_feed_publication": "PENDING_VERIFICATION"
 }

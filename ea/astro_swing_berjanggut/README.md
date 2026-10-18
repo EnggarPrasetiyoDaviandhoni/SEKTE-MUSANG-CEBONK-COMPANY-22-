@@ -1,33 +1,37 @@
-# CEBONK ASTRO SWING BERJANGGUT v1.09 — MT5
+# CEBONK ASTRO SWING BERJANGGUT v1.10 — MT5
 
-EA XAUUSD Swing dengan **M5 Fibo Musang Berjanggut**, **level SL Fibonacci yang bisa diatur (default −0.236)**, dan **TP liquidity ICT**. Rujukan perubahan M5 dan pengaturan SL: instruksi pengguna sesudah paket PRD v1.07. Mesin astrologi website tetap berasal dari source aslinya.
+EA XAUUSD Swing: **weekly direction lock**, alignment **weekly + daily + session**, **Fibo Musang EL2 saja pada M5**, SL Fibonacci dapat diatur (default −0.236), dan TP liquidity ICT.
 
-Paket ini berisi **source `.mq5` dan `.mqh`**. Status MetaEditor: **NOT COMPILED**. Status Strategy Tester / broker: **NOT RUN**. File `.ex5` harus dihasilkan dengan MetaEditor; hasil tes host tidak menggantikan kompilasi MT5.
+Paket berisi **source `.mq5` / `.mqh`**. MetaEditor **NOT_COMPILED**, Strategy Tester dan broker demo/live **NOT_RUN**. Tidak ada `.ex5`; tes host bukan kompilasi MT5.
+
+## Aturan v1.10
+
+- Arah pertama dari feed valid untuk minggu berjalan disimpan sampai **Senin 00:00 WIB berikutnya**. BUY ONLY, SELL ONLY, atau WAIT. Restart, perubahan daily/session dan pembaruan feed tidak dapat membalik lock itu. Saat dipasang di tengah minggu, keputusan pertama saat pemasangan menjadi lock sisa minggu tersebut.
+- Weekly, daily **dan arah sesi** harus sama. Weekly SELL + daily SELL + sesi BUY = **WAIT**. AWAL/INTI mengatur waktu/layer, tidak membalik arah. Hari CAMPURAN juga WAIT.
+- Weekly sumber CAMPURAN diselesaikan oleh kekuatan skor BUY/SELL **7 hari penuh Senin–Minggu, 00:00–24:00 WIB**, interval 5 menit. Kekuatan = jumlah `abs(score) × 5 menit` pada slot directional. Default minimum **55% kekuatan** dan **360 menit directional**. Imbang/lemah = WAIT sepanjang minggu. Ambang ini keputusan engineering yang tercantum di feed, bukan ukuran win rate.
+- ICT tetap wajib: IPDA D1 20/40/60 closed, struktur H4, H1 sweep/MSS atau BOS, retest M15, kemudian EL2 M5.
+- **EL2:** Initial Break closed → pivot CB1 baru dan terkonfirmasi → break CB1 closed → retest/rejection Zone IB → entry pada tick bar M5 berikutnya, maksimal 30 detik. Tidak ada entry pada candle break atau alternatif CBR dominan/SR.
+- Maksimal **2 layer AWAL + 2 INTI**, satu basket global; INTI tambahan memerlukan setup baru dalam window yang sama. Jika source core = start, AWAL kosong dan INTI dapat memulai maksimal 2 layer.
+- **SL = fib0 + InpSLFibLevel × (fib1 − fib0)**. EL2 fib0: BUY batas body atas Zone IB, SELL batas body bawah; fib1 close pemecah CB1. Default −0.236. SL wajib di luar zona dan memenuhi broker. TP ICT terdekat, **RR minimal 1:2**, risiko basket maksimal 1%.
+- Minggu berganti **tidak menutup posisi lama**. Basket lama memakai SL/TP awal dan menghalangi basket baru sampai flat. Tambahan yang berlawanan dengan lock baru tidak diizinkan.
+- Cut profit hanya Dominant Break M15 berlawanan + **NET seluruh basket > 0**: semua realized P/L layer yang sudah closed/partial, actual swap/commission/fee + floating posisi tersisa + swap terbuka − estimasi biaya exit tersisa. Contoh −100 +20 tidak menjadi profit.
+- Order ditolak secara pasti mengembalikan reservasi layer dan tidak menghabiskan window jika belum ada fill. Fill menghabiskan window; timeout/status tidak pasti tetap pending sampai order/deal yang tepat terkonfirmasi. Tidak ada retry buta.
 
 ## Pasang
 
-1. MT5 → **File → Open Data Folder**. Salin isi folder `MQL5` paket ke folder `MQL5` terminal tersebut.
-2. Buka `Experts/CEBONK_ASTRO_SWING_BERJANGGUT_v1.09.mq5` di MetaEditor, lalu tekan **F7**. Periksa log kompilasi. Script PowerShell pada `scripts/compile-swing.ps1` tersedia untuk verifikasi log dan EX5 baru.
-3. Attach ke chart **XAUUSD broker yang sama dengan simbol EA**, termasuk suffix seperti `XAUUSDc`. TF strategi tetap D1 → H4 → H1 → M15 → M5, terlepas dari TF chart.
-4. Isi `InpCommissionPerLotPerSide` sesuai akun, dalam mata uang akun per lot. Nilai awal **−1 berarti belum diketahui dan memblokir order baru serta cut profit yang belum terverifikasi**. Isi **0 hanya jika akun memang tanpa komisi**. Maksimal risiko basket 1%; 0.01 lot tetap diperiksa terhadap volume dan margin broker.
-5. Untuk feed live, izinkan `https://enggarprasetiyodaviandhoni.github.io` di **Tools → Options → Expert Advisors → Allow WebRequest**. Tunggu status feed dan clock valid. Entry live selalu mulai **AUTOPILOT OFF**; tombol chart mengizinkan entry baru. Exit basket tetap dikelola sesuai pengaturan.
+1. MT5 → **File → Open Data Folder**. Salin isi `MQL5` paket ke `MQL5` terminal.
+2. Compile `Experts/CEBONK_ASTRO_SWING_BERJANGGUT_v1.10.mq5` dengan MetaEditor F7. Helper `scripts/compile-swing.ps1` memeriksa log nol error dan EX5 baru.
+3. Attach pada chart XAUUSD sesuai suffix broker. Isi `InpCommissionPerLotPerSide` sesuai biaya akun; −1 berarti belum diketahui dan memblok order/cut profit yang membutuhkan verifikasi biaya. 0 hanya untuk akun tanpa komisi.
+4. **Tools → Options → Expert Advisors → Allow WebRequest:** tambahkan **`https://raw.githubusercontent.com`**. URL file lengkap bawaan:
 
-Publikasi otomatis feed baru berjalan setelah workflow `publish-swing-feed.yml` berada di `main`. Sebelum itu endpoint Pages dapat mengembalikan 404; EA memblokir entry. `main` tidak diubah oleh proses pembuatan paket ini. Panduan deployment menjelaskan aktivasi feed melalui PR.
+   `https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/cebonk-astro-swing-feed-v2/forecast.json`
+
+5. Tunggu feed/clock valid. Entry live selalu **AUTOPILOT OFF** saat attach/restart. Tombol chart mengizinkan entry baru. Posisi lama tetap dikelola sesuai konfigurasi exit.
 
 ## Atur SL sendiri
 
-Buka **EA Properties → Inputs → `InpSLFibLevel`**. Nilai awal `-0.236`; contoh lain `-0.382`, `-0.618`, atau `-1.0`. Ini level Fibonacci, bukan pip, harga SL, atau persentase risiko. Nilai harus negatif dan terhingga; nol, nilai positif, NaN, dan infinity ditolak saat inisialisasi.
+**EA Properties → Inputs → `InpSLFibLevel`**. Contoh `-0.236`, `-0.382`, `-0.618`. Angka ini level Fibonacci. Hanya nilai negatif terhingga diterima. Perubahan berlaku untuk basket baru; SL/TP basket aktif tidak dihitung ulang. RR dan risiko diperiksa dengan stop yang benar-benar diajukan.
 
-Pengaturan baru hanya menentukan SL **basket baru**. SL/TP basket yang sedang aktif tetap memakai harga asli yang disimpan, termasuk layer tambahan dan setelah restart. Mengubah Inputs menginisialisasi ulang EA, sehingga entry kembali **AUTOPILOT OFF**. SL tetap harus di luar kotak IB, sesuai tick/stop-level broker, memenuhi RR minimal 1:2 dan risiko basket maksimal 1%; setup yang tidak memenuhi syarat dilewati.
+Simpan file Common Files `CSB_...json` dan `CSB_..._weekly.json` ketika restart/memindah terminal. State v1 v1.08/v1.09 dibaca dan dimigrasikan tanpa mengubah SL/TP basket. Jangan menjalankan EA versi lama bersamaan.
 
-## Aturan singkat
-
-- Weekly, daily, session dan window Astro harus searah. Bulan/ranking menjadi anotasi bawaan.
-- IPDA memakai 20/40/60 D1 **closed**; H4 struktur; H1 sweep/MSS atau BOS; M15 retest zona.
-- M5: close break dominan, atau S/R terdekat jika dominan tidak ada, lalu retest kotak Initial Break. Entry harus masih di kotak IB.
-- **SL = fib0 + InpSLFibLevel × (fib1 − fib0)**. Default `InpSLFibLevel=-0.236` mempertahankan stop semula. BUY fib0 di bawah body sumber IB; SELL di atas. Fib1 adalah close candle Musang yang memecah dominan/S/R. Anchor dan harga stop basket dikunci.
-- **TP ICT terdekat yang valid**, RR ≥ 2; tidak melompati target untuk memaksa RR.
-- Satu basket lintas hari; 2 layer AWAL + 2 INTI hanya dengan setup baru; SL/TP basket awal dipertahankan.
-- Exit lebih awal: Dominant Break **M15 lawan arah**, mother + 3–12 inside children, close breakout dan **NET seluruh basket > 0 setelah biaya**.
-
-Rincian definisi numerik untuk otomatisasi, pemasangan, tester offline, dan hasil tes tersedia di `docs/`. Angka astrologi tidak dilabeli sebagai probabilitas win rate.
+Rincian dan status publikasi ada di `docs/` dan `evidence/`. Astrologi belum terbukti menghasilkan keuntungan melalui hasil tester/broker dalam paket ini.

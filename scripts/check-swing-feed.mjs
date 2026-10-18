@@ -6,8 +6,8 @@ const file=get('--file'),url=get('--url');if(!file)throw Error('--file required'
 const raw=readFileSync(file,'utf8'),data=decodeFeed(raw);validateFeed(data);
 if(url){
  const response=await fetch(url,{signal:AbortSignal.timeout(15000),headers:{'Cache-Control':'no-cache'}});
- if(response.status!==200)throw Error('Pages GET '+response.status);
+ if(response.status!==200)throw Error('Raw GitHub GET '+response.status);
  const live=decodeFeed(await response.text());validateFeed(live);
- if(live.payload_sha256!==data.payload_sha256)throw Error('Pages serves a different/older payload');
+ if(live.payload_sha256!==data.payload_sha256)throw Error('Raw GitHub serves a different/older payload');
 }
-console.log('PASS schema, checksum, calendar, freshness'+(url?', Pages GET 200 and payload parity':''));
+console.log('PASS schema, checksum, calendar, freshness'+(url?', raw GitHub GET 200 and payload parity':''));

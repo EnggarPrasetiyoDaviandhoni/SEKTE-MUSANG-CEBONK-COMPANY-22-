@@ -10,18 +10,24 @@ const copy=()=>structuredClone(base);
 const valid=data=>validateFeed(decodeFeed(encodeFeed(data)),{nowUtc:clock});
 test('actual feed validates and preserves its checksum on round trip',()=>{
  assert.equal(valid(base).sessions.length,25);assert.equal(encodeFeed(base),raw);
- assert.equal(base.m5_model,'MUSANG_BERJANGGUT_CBR');
+ assert.equal(base.m5_model,'MUSANG_EL2_IB_CB1_RETEST');
  assert.equal(base.moon.samples.length,193);
 });
 test('canonical JSON rejects nonfinite values and changes in bytes',()=>{
  assert.throws(()=>canonical({bad:NaN}),/Nonfinite/);
- assert.throws(()=>decodeFeed(raw.replace('MUSANG_BERJANGGUT_CBR','MUSANG_OTHER_MODEL')),/mismatch/);
- assert.throws(()=>decodeFeed(raw.replace('"schema_version":"2.0.0"','"schema_version": "2.0.0"')),/mismatch/);
+ assert.throws(()=>decodeFeed(raw.replace('MUSANG_EL2_IB_CB1_RETEST','MUSANG_OTHER_MODEL')),/mismatch/);
+ assert.throws(()=>decodeFeed(raw.replace('"schema_version":"2.1.0"','"schema_version": "2.1.0"')),/mismatch/);
  assert.throws(()=>decodeFeed('{"a":1}'),/suffix/);
  assert.throws(()=>decodeFeed('x'.repeat(2097153)),/exceeds/);
 });
 for(const [name,mutate] of [
- ['old M5 model',d=>{d.m5_model='EL2_CB1';}],
+ ['old feed contract',d=>{d.schema_version='2.0.0';}],
+ ['six-day strength',d=>{d.weeks[0].seven_day_strength.days.pop();}],
+ ['weekend omitted',d=>{d.weeks[0].seven_day_strength.days[6].date_wib=d.weeks[0].seven_day_strength.days[5].date_wib;}],
+ ['strength total tamper',d=>{d.weeks[0].seven_day_strength.buy_score_minutes+=10;}],
+ ['weaker threshold',d=>{d.weeks[0].seven_day_strength.min_share=.5;}],
+ ['weekly decision flip',d=>{d.weeks[0].weekly_direction=d.weeks[0].weekly_direction==='BUY'?'SELL':'BUY';}],
+ ['old M5 model',d=>{d.m5_model='OLD_EL2_CB1';}],
  ['unknown field',d=>{d.new_strategy='AUTO_BUY';}],
  ['missing fifth weekday',d=>d.weeks[0].daily.pop()],
  ['duplicate weekday',d=>{d.weeks[0].daily[1].date_wib=d.weeks[0].daily[0].date_wib;}],

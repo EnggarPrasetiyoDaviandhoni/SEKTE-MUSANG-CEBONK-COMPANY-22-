@@ -25,13 +25,13 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "2.0.0"
+      "const": "2.1.0"
     },
     "model_id": {
-      "const": "CEBONK_SWING_ASTRO_WEEKLY_DAILY_5KZ_V1"
+      "const": "CEBONK_SWING_ASTRO_WEEKLY_LOCK_7D_V1"
     },
     "m5_model": {
-      "const": "MUSANG_BERJANGGUT_CBR"
+      "const": "MUSANG_EL2_IB_CB1_RETEST"
     },
     "source_commit": {
       "type": "string",
@@ -78,7 +78,10 @@
         "required": [
           "week_monday_wib",
           "weekly_direction",
-          "daily"
+          "daily",
+          "weekly_source_direction",
+          "weekly_resolution_reason",
+          "seven_day_strength"
         ],
         "properties": {
           "week_monday_wib": {
@@ -89,8 +92,7 @@
             "enum": [
               "BUY",
               "SELL",
-              "CAMPURAN",
-              "TIDAK ADA ARAH"
+              "WAIT"
             ]
           },
           "daily": {
@@ -144,6 +146,128 @@
             },
             "minItems": 5,
             "maxItems": 5
+          },
+          "weekly_source_direction": {
+            "enum": [
+              "BUY",
+              "SELL",
+              "CAMPURAN",
+              "TIDAK ADA ARAH"
+            ]
+          },
+          "weekly_resolution_reason": {
+            "enum": [
+              "SOURCE_WEEKLY",
+              "SOURCE_NO_DIRECTION",
+              "WAIT_TIE",
+              "WAIT_BELOW_THRESHOLD",
+              "SEVEN_DAY_STRENGTH"
+            ]
+          },
+          "seven_day_strength": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "method",
+              "start_wib",
+              "end_wib",
+              "step_minutes",
+              "total_slots",
+              "min_share",
+              "min_directional_minutes",
+              "buy_score_minutes",
+              "sell_score_minutes",
+              "buy_minutes",
+              "sell_minutes",
+              "days"
+            ],
+            "properties": {
+              "method": {
+                "const": "DIRECTIONAL_ABS_SCORE_MINUTES_7D_WIB_00_24"
+              },
+              "start_wib": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "end_wib": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "step_minutes": {
+                "const": 5
+              },
+              "total_slots": {
+                "const": 2016
+              },
+              "min_share": {
+                "const": 0.55
+              },
+              "min_directional_minutes": {
+                "const": 360
+              },
+              "buy_score_minutes": {
+                "type": "number",
+                "minimum": 0
+              },
+              "sell_score_minutes": {
+                "type": "number",
+                "minimum": 0
+              },
+              "buy_minutes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10080
+              },
+              "sell_minutes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10080
+              },
+              "days": {
+                "type": "array",
+                "minItems": 7,
+                "maxItems": 7,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "date_wib",
+                    "slots",
+                    "buy_score_minutes",
+                    "sell_score_minutes",
+                    "buy_minutes",
+                    "sell_minutes"
+                  ],
+                  "properties": {
+                    "date_wib": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    "slots": {
+                      "const": 288
+                    },
+                    "buy_score_minutes": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "sell_score_minutes": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "buy_minutes": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1440
+                    },
+                    "sell_minutes": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1440
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },

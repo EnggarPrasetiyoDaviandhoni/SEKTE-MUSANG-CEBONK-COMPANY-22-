@@ -1,6 +1,7 @@
 #ifndef CEBONK_SWING_NUMERIC_CORE_MQH
 #define CEBONK_SWING_NUMERIC_CORE_MQH
 #include "Types.mqh"
+#include "PolicyCore.mqh"
 bool CSValidBars(CS_CONST_ARRAY(CSBar,a)){
  for(int i=0;i<ArraySize(a);i++){
   if(a[i].time<=0||(i>0&&a[i].time<=a[i-1].time)||!CSFinite(a[i].high)||!CSFinite(a[i].low)||
@@ -150,72 +151,58 @@ bool CSDominantExit(CS_CONST_ARRAY(CSBar,a),double tick,int minInside,int maxIns
  }
  return false;
 }
-bool CSM5Dominant(CS_CONST_ARRAY(CSBar,a),int b,int side,double tick,int minInside,int maxInside,
- bool &controlling,int &source,int &children,double &breakLevel){
- controlling=false;source=-1;children=0;
- for(int k=minInside;k<=maxInside;k++){
-  int m=b-k-1;if(m<0)break;
-  bool inside=a[m].high>a[m].low&&a[m].open!=a[m].close;
-  for(int c=m+1;c<b&&inside;c++)if(a[c].high>a[m].high||a[c].low<a[m].low)inside=false;
-  if(!inside)continue;
-  controlling=true;
-  double edge=side>0?CSMax(a[m].open,a[m].close):CSMin(a[m].open,a[m].close);
-  bool first=true;for(int c=m+1;c<b;c++)if(side>0?a[c].close>=edge+tick:a[c].close<=edge-tick){first=false;break;}
-  bool broken=side>0?a[b].close>=edge+tick:a[b].close<=edge-tick;
-  if(first&&broken&&CSSign(a[m].close-a[m].open)==-side&&CSSign(a[b].close-a[b].open)==side){
-   source=m;children=k;breakLevel=edge;return true;
-  }
- }
- return false;
-}
-bool CSM5SnR(CS_CONST_ARRAY(CSBar,a),int b,int side,double tick,int lookback,int &source,double &level){
- if(b<6||CSSign(a[b].close-a[b].open)!=side)return false;
- int pivot=-1;double distance=0;
- for(int p=b-3;p>=2&&p>=b-lookback;p--){
-  if(!CSPivot(a,p,2,2,side,b-1))continue;
-  double v=side>0?a[p].high:a[p].low,d=side*(v-a[b-1].close);
-  if(d<0)continue;
-  bool fresh=true;for(int j=p+3;j<b;j++)if(side>0?a[j].close>=v+tick:a[j].close<=v-tick){fresh=false;break;}
-  if(fresh&&(pivot<0||d<distance)){pivot=p;distance=d;level=v;}
- }
- if(pivot<0||!(side>0?a[b].close>=level+tick:a[b].close<=level-tick))return false;
- source=CSLastPivot(a,b-1,2,2,-side,false);
- return source>=0&&source>=b-lookback&&CSSign(a[source].close-a[source].open)==-side;
-}
-bool CSHasDominant(CS_CONST_ARRAY(CSBar,a),int b,int minimumInside,int lookback){
- for(int m=b-minimumInside-1;m>=0&&m>=b-lookback;m--){
-  if(a[m].open==a[m].close||a[m].high<=a[m].low)continue;
-  bool inside=true;
-  for(int k=m+1;k<b;k++)if(a[k].high>a[m].high||a[k].low<a[m].low){inside=false;break;}
-  if(inside)return true;
- }return false;
-}
-bool CSM5CBR(CS_CONST_ARRAY(CSBar,a),int side,datetime gate,datetime windowEnd,double tick,
- int minInside,int maxInside,int lookback,int maxGateBars,int maxRetestBars,double slFibLevel,CSMicro &out){
- int n=ArraySize(a),r=n-1;if(n<24||gate<=0||a[r].time+300>=windowEnd)return false;
- for(int b=20;b<r;b++){
-  datetime closed=a[b].time+300;
-  if(closed<=gate)continue;
-  int bars=0;for(int k=b;k>=0&&a[k].time+300>gate;k--)bars++;
-  if(bars>maxGateBars||r-b>maxRetestBars)continue;
-  bool controlling=false;int source=-1,children=0;double level=0;
-  bool dominant=CSM5Dominant(a,b,side,tick,minInside,maxInside,controlling,source,children,level);
-  if(!dominant&&(controlling||CSHasDominant(a,b,minInside,lookback)||!CSM5SnR(a,b,side,tick,lookback,source,level)))continue;
-  double lo=CSMin(a[source].open,a[source].close),hi=CSMax(a[source].open,a[source].close);
+// EL2 only: confirmed IB -> distinct post-IB CB1 pivot -> closed break ->
+// first closed rejection/retest of the original wick-to-body IB zone.
+bool CSM5EL2(CS_CONST_ARRAY(CSBar,a),int side,datetime gate,datetime windowEnd,double tick,
+ int maxGateBars,int maxIBBreakBars,int maxRetestBars,double slFibLevel,CSMicro &out){
+ int n=ArraySize(a),r=n-1;
+ if(n<12||!CSValidBars(a)||side*side!=1||tick<=0||gate<=0||a[r].time+300>=windowEnd)return false;
+ for(int ib=5;ib<r;ib++){
+  datetime ibClose=a[ib].time+300;if(ibClose<=gate||CSSign(a[ib].close-a[ib].open)!=side)continue;
+  int age=0;for(int k=ib;k>=0&&a[k].time+300>gate;k--)age++;
+  if(age>maxGateBars)continue;
+  int level=CSLastPivot(a,ib-1,2,2,side,true),anchor=CSLastPivot(a,ib-1,2,2,-side,false);
+  if(level<0||anchor<0)continue;
+  double ibLevel=side>0?a[level].high:a[level].low;
+  if(side*(a[ib].close-ibLevel)<tick-1e-9)continue;
+  double lo=side>0?a[anchor].low:CSMax(a[anchor].open,a[anchor].close);
+  double hi=side>0?CSMin(a[anchor].open,a[anchor].close):a[anchor].high;
   if(hi<=lo)continue;
-  bool invalid=false;int firstRetest=-1;
-  for(int k=b+1;k<=r;k++){
-   if(side>0?a[k].close<lo:a[k].close>hi){invalid=true;break;}
-   bool touch=a[k].low<=hi&&a[k].high>=lo;
-   bool direction=CSSign(a[k].close-a[k].open)==side;
-   if(touch&&direction){firstRetest=k;break;}
+  bool invalid=false;
+  for(int k=anchor+3;k<=ib;k++)if(side>0?a[k].close<lo:a[k].close>hi){invalid=true;break;}
+  if(invalid)continue;
+  // The earliest eligible CB1 pivot/break owns this IB; no later retest replay.
+  for(int b=ib+4;b<r&&b-ib<=maxIBBreakBars;b++){
+   if(side>0?a[b].close<lo:a[b].close>hi)break;
+   int cb=-1;
+   for(int p=ib+1;p+2<b;p++){
+    if(!CSPivot(a,p,2,2,side,b-1))continue;
+    double v=side>0?a[p].high:a[p].low;
+    if(side*(v-ibLevel)<tick-1e-9||(side>0?hi>=v:lo<=v))continue;
+    bool first=true;
+    for(int k=p+3;k<b;k++)if(side*(a[k].close-v)>=tick-1e-9){first=false;break;}
+    if(first&&CSSign(a[b].close-a[b].open)==side&&side*(a[b].close-v)>=tick-1e-9){cb=p;break;}
+   }
+   if(cb<0)continue;
+   for(int k=ib+1;k<=b;k++)if(side>0?a[k].close<lo:a[k].close>hi){invalid=true;break;}
+   if(invalid)break;
+   int firstRetest=-1;
+   for(int k=b+1;k<=r&&k-b<=maxRetestBars;k++){
+    if(side>0?a[k].close<lo:a[k].close>hi){invalid=true;break;}
+    if(a[k].low<=hi&&a[k].high>=lo&&CSSign(a[k].close-a[k].open)==side&&
+       (side>0?a[k].close>hi:a[k].close<lo)){firstRetest=k;break;}
+   }
+   if(invalid||firstRetest!=r)break;
+   double f0=side>0?hi:lo,raw=0,sl=0;
+   if(!CSSL(side,lo,hi,f0,a[b].close,tick,slFibLevel,raw,sl))break;
+   out.side=side;out.kind=2;out.children=0;out.source=a[anchor].time;
+   out.ibClose=ibClose;out.cb1Pivot=a[cb].time;out.breakClose=a[b].time+300;
+   out.retestClose=a[r].time+300;out.zoneLow=lo;out.zoneHigh=hi;out.fib0=f0;
+   out.fib1=a[b].close;out.slRaw=raw;out.sl=sl;out.breakLevel=side>0?a[cb].high:a[cb].low;
+   return true;
   }
-  if(invalid||firstRetest!=r)continue;
-  double f0=side>0?lo:hi,raw=0,sl=0;
-  if(!CSSL(side,lo,hi,f0,a[b].close,tick,slFibLevel,raw,sl))continue;
-  out.side=side;out.kind=dominant?1:2;out.children=children;out.source=a[source].time;
-  out.breakClose=closed;out.retestClose=a[r].time+300;out.zoneLow=lo;out.zoneHigh=hi;
-  out.fib0=f0;out.fib1=a[b].close;out.slRaw=raw;out.sl=sl;out.breakLevel=level;return true;
+  // A later IB must not silently replace the first valid IB for this M15 gate.
+  return false;
  }
  return false;
 }
@@ -226,14 +213,14 @@ double CSRR(int side,double entry,double sl,double tp){
 bool CSShouldExit(int positionSide,int signalSide,double estimatedNet,bool costsVerified){
  return costsVerified&&positionSide!=0&&signalSide==-positionSide&&CSFinite(estimatedNet)&&estimatedNet>0;
 }
-double CSDealNetContribution(double profit,double swap,double commission,double fee,bool realized){
- return commission+fee+(realized?profit+swap:0);
+double CSDealNetContribution(double profit,double swap,double commission,double fee){
+ return profit+swap+commission+fee;
 }
 bool CSRiskCap(double cash,double equity,double maximumPct){
  return CSFinite(cash)&&CSFinite(equity)&&cash>=0&&equity>0&&maximumPct>0&&maximumPct<=1&&cash<=equity*maximumPct/100.0;
 }
-bool CSPriceInIB(int side,double bid,double ask,const CSMicro &m){
+bool CSPriceAfterEL2Retest(int side,double bid,double ask,const CSMicro &m){
  double entry=side>0?ask:bid;
- return bid>0&&ask>=bid&&entry>=m.zoneLow&&entry<=m.zoneHigh;
+ return bid>0&&ask>=bid&&(side>0?entry>m.zoneHigh:entry<m.zoneLow);
 }
 #endif

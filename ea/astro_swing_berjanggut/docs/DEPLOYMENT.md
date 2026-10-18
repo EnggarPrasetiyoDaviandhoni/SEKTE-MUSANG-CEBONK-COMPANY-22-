@@ -12,19 +12,17 @@ node scripts/generate-swing-feed.mjs
 node scripts/check-swing-feed.mjs --file data/ea/swing-forecast-v2.json
 ```
 
-Feed v2 adalah data baru; feed v1 tetap milik alur lama. Publikasi dijalankan workflow baru setiap 00:10 UTC setelah branch/PR masuk ke `main`. Workflow mengecek model/browser parity, menghasilkan JSON sementara, validasi, commit **hanya** file data v2, meminta build Pages yang sudah dipakai repo, kemudian memeriksa GET 200 dan hash payload yang benar. Perubahan source bersamaan membuat publikasi berhenti agar hasil source lama tidak menimpa hasil source baru.
+Feed 2.1 adalah data baru untuk v1.10; feed v1 lama tidak diubah. Host EA dibatasi **raw.githubusercontent.com**. URL lengkap:
 
-URL MT5:
+`https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/cebonk-astro-swing-feed-v2/forecast.json`
 
-`https://EnggarPrasetiyoDaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/data/ea/swing-forecast-v2.json`
-
-Sebelum workflow dipublikasikan, 404 berarti feed belum tersedia dan EA tidak membuka order. Untuk uji branch, `InpFeedURL` boleh memakai raw GitHub branch tersebut dan domain `https://raw.githubusercontent.com` harus di-whitelist; data tetap hanya berlaku ≤30 jam. Jangan memakai JSON fixture lama sebagai feed live.
+Tambahkan hanya host `https://raw.githubusercontent.com` pada whitelist WebRequest untuk feed. Host saja bukan URL JSON. Data berada pada branch publik data tersendiri, bukan Pages. Periksa `evidence/validation.json` untuk status HTTP dan publisher yang benar-benar diuji. Feed berlaku maksimal 30 jam; publikasi manual sekali tidak menggantikan jadwal pembaruan harian. Workflow sumber menguji PR; workflow publisher terpisah dapat memakai commit generator yang dipin tanpa menjalankan EA.
 
 Format payload: JSON canonical dengan key object tersortir, SHA-256 atas payload tanpa field hash. Field `payload_sha256` ditempatkan paling akhir. Parser MT5 memverifikasi bytes UTF-8 payload yang sama tanpa mengubah format float. Ini pemeriksaan integritas, bukan tanda tangan digital; transport HTTPS tetap dipakai.
 
 ## MT5
 
-Salin `MQL5/Experts`, `MQL5/Include/CebonkSwing`, `MQL5/Scripts`, dan file tester ke Data Folder terminal yang dipilih. Expert v1.09 bernama `CEBONK_ASTRO_SWING_BERJANGGUT_v1.09.mq5`. Compile dengan F7 atau:
+Salin `MQL5/Experts`, `MQL5/Include/CebonkSwing`, `MQL5/Scripts`, dan file tester ke Data Folder terminal yang dipilih. Expert v1.10 bernama `CEBONK_ASTRO_SWING_BERJANGGUT_v1.10.mq5`. Compile dengan F7 atau:
 
 ```powershell
 .\scripts\compile-swing.ps1 -MetaEditor 'C:\Program Files\MetaTrader 5\metaeditor64.exe' -DataFolder 'C:\Users\NAMA\AppData\Roaming\MetaQuotes\Terminal\ID_TERMINAL'
@@ -34,7 +32,7 @@ Script membutuhkan log “0 errors” dan EX5 baru; exit code proses saja tidak 
 
 Attach pada chart simbol XAUUSD yang sesuai. Isi komisi per lot per sisi; verifikasi kontrak simbol, minimum lot, tick size, margin, dan jam broker di MT5. Suffix broker diterima. Tombol ON hanya mengizinkan entry baru; OFF tidak menutup basket. Menghapus EA menghentikan manajemen client-side, sementara server SL/TP yang sudah terpasang tetap berlaku.
 
-Atur level SL pada **EA Properties → Inputs → `InpSLFibLevel`**. Gunakan angka negatif, misalnya `-0.236` (default), `-0.382`, atau `-0.618`; angka ini level Fibonacci, bukan jarak pip. Level baru berlaku untuk basket baru. Basket aktif dan layer tambahannya tetap memakai harga SL/TP awal dari state. Jangan menghapus file state saat upgrade dari v1.08. Setelah mengganti Inputs atau mengganti expert ke v1.09, AUTOPILOT entry kembali OFF dan perlu dinyalakan bila entry baru diinginkan.
+Atur level SL pada **EA Properties → Inputs → `InpSLFibLevel`**. Gunakan angka negatif, misalnya `-0.236` (default), `-0.382`, atau `-0.618`; angka ini level Fibonacci, bukan jarak pip. Level baru berlaku untuk basket baru. Basket aktif dan layer tambahannya tetap memakai harga SL/TP awal dari state. State basket v1 v1.08/v1.09 dimigrasikan ke v2. Jangan menghapus file state basket maupun `_weekly.json`: lock arah minggu harus bertahan setelah restart dan penggantian Inputs. Setelah mengganti Inputs atau mengganti expert ke v1.10, AUTOPILOT entry kembali OFF dan perlu dinyalakan bila entry baru diinginkan.
 
 ## Strategy Tester offline
 
@@ -71,8 +69,10 @@ Common Files memakai prefix account/magic dan hash simbol; tester memakai namesp
 | `FEED_STALE` / `FEED_SHA256` | Periksa publikasi terbaru; jangan edit timestamp/hash untuk meloloskan feed |
 | `CLOCK_UNVERIFIED` | Periksa koneksi/GMT mesin live atau mapping UTC historis tester |
 | `COMMISSION_UNVERIFIED` | Isi biaya broker nyata; 0 hanya untuk akun tanpa komisi |
-| `SKIP_PRICE_LEFT_IB` | Harga sudah meninggalkan area; tidak mengejar entry |
+| `SKIP_EL2_REJECTION_LOST` | Quote tidak lagi di sisi rejection EL2 yang disyaratkan |
 | `SKIP_RISK` / `SKIP_BROKER_STOPLEVEL` | Kontrak/lot/stop tidak memenuhi batas; SL tidak digeser otomatis |
 | `POSITION_OWNERSHIP_CONFLICT` | Ada posisi/deal manual atau EA lain; basket tidak diambil alih |
 | `STATE_CORRUPT_OR_UNWRITABLE` | Simpan file untuk audit dan pulihkan state yang benar; jangan hapus state saat ada posisi terbuka |
+| `WEEKLY_LOCK_WAIT` | Keputusan minggu ini WAIT; tidak memaksa arah atau menghapus lock |
+| `WEEKLY_PERSISTENCE_FAILED` | Perbaiki akses Common Files; entry menunggu lock tersimpan |
 | `ORDER_ACK_UNKNOWN` | Rekonsiliasi history/order MT5; jangan membuat request entry pengganti secara manual dari signal yang sama |

@@ -34,7 +34,7 @@ struct CSSetup {
 };
 struct CSMicro {
  int side,kind,children;
- datetime source,breakClose,retestClose;
+ datetime source,ibClose,cb1Pivot,breakClose,retestClose;
  double zoneLow,zoneHigh,fib0,fib1,slRaw,sl,breakLevel;
 };
 struct CSDominant {

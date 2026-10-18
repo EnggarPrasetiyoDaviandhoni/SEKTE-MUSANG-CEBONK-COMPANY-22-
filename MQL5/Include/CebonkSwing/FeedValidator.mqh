@@ -1,10 +1,12 @@
 #ifndef CEBONK_SWING_FEED_VALIDATOR_MQH
 #define CEBONK_SWING_FEED_VALIDATOR_MQH
 #include "JsonParser.mqh"
+#include "PolicyCore.mqh"
 struct CSSession {
  string id,sessionId,date,zone,windowId;int direction;
  datetime start,end,windowStart,core,windowEnd;
 };
+struct CSWeekPlan {string monday,sourceDirection,reason;int side;double buyStrength,sellStrength;};
 struct CSDay {string date,monday;int weekly,daily,rank;double illumination;};
 struct CSLunar {datetime observed;string phase;double illumination;};
 struct CSRangeSession {int id;datetime start,end;};
@@ -31,18 +33,45 @@ int CSIanaOffset(datetime date,int session){
 bool CSPhaseAllowed(string phase){return phase!=""&&StringFind("|NEW_MOON|WAXING_CRESCENT|FIRST_QUARTER|WAXING_GIBBOUS|FULL_MOON|WANING_GIBBOUS|LAST_QUARTER|WANING_CRESCENT|","|"+phase+"|")>=0;}
 class CSFeed {
  public:
-  CSSession sessions[];CSDay days[];CSLunar moon[];CSRangeSession ranges[];datetime majorEvents[];
+  CSSession sessions[];CSDay days[];CSWeekPlan weeks[];CSLunar moon[];CSRangeSession ranges[];datetime majorEvents[];
   datetime generated,expires,horizonStart,horizonEnd;string source,hash,error;bool healthy;
   CSFeed(){healthy=false;generated=0;expires=0;horizonStart=0;horizonEnd=0;}
   bool Reject(string reason){error=reason;healthy=false;return false;}
   bool TimeField(CSJson &j,int object,string key,datetime &out){int n=j.Get(object,key);if(!j.Integer(n)||j.Number(n)<1577836800||j.Number(n)>4102444800)return false;out=(datetime)j.Number(n);return true;}
   bool TextIs(CSJson &j,int object,string key,string expected){int n=j.Get(object,key);return j.Kind(n)==CSJ_STRING&&j.Text(n)==expected;}
   bool Valid(datetime now){return healthy&&now>=generated-600&&now<expires&&now-generated<=108000&&now+25200>=horizonStart&&now+25200<horizonEnd+86400;}
+  bool Strength(CSJson &j,int node,CSWeekPlan &plan){
+   if(!j.Only(node,"method,start_wib,end_wib,step_minutes,total_slots,min_share,min_directional_minutes,buy_score_minutes,sell_score_minutes,buy_minutes,sell_minutes,days")||
+    !TextIs(j,node,"method","DIRECTIONAL_ABS_SCORE_MINUTES_7D_WIB_00_24")||!TextIs(j,node,"start_wib",plan.monday)||
+    !TextIs(j,node,"end_wib",CSDate(CSDateParse(plan.monday)+6*86400))||j.Number(j.Get(node,"step_minutes"))!=5||
+    j.Number(j.Get(node,"total_slots"))!=2016||j.Number(j.Get(node,"min_share"))!=0.55||j.Number(j.Get(node,"min_directional_minutes"))!=360)return false;
+   int daily=j.Get(node,"days");if(j.Kind(daily)!=CSJ_ARRAY||j.Count(daily)!=7)return false;
+   double buy=0,sell=0;int bm=0,sm=0;
+   for(int i=0;i<7;i++){
+    int d=j.At(daily,i),bn=j.Get(d,"buy_score_minutes"),sn=j.Get(d,"sell_score_minutes"),mb=j.Get(d,"buy_minutes"),ms=j.Get(d,"sell_minutes");
+    if(!j.Only(d,"date_wib,slots,buy_score_minutes,sell_score_minutes,buy_minutes,sell_minutes")||
+     !TextIs(j,d,"date_wib",CSDate(CSDateParse(plan.monday)+i*86400))||j.Number(j.Get(d,"slots"))!=288||
+     j.Kind(bn)!=CSJ_NUMBER||j.Kind(sn)!=CSJ_NUMBER||j.Number(bn)<0||j.Number(sn)<0||!j.Integer(mb)||!j.Integer(ms))return false;
+    int b=(int)j.Number(mb),v=(int)j.Number(ms);
+    if(b<0||v<0||b+v>1440||b%5!=0||v%5!=0||(b==0&&j.Number(bn)!=0)||(v==0&&j.Number(sn)!=0))return false;
+    buy+=j.Number(bn);sell+=j.Number(sn);bm+=b;sm+=v;
+   }
+   int bn=j.Get(node,"buy_score_minutes"),sn=j.Get(node,"sell_score_minutes"),mb=j.Get(node,"buy_minutes"),ms=j.Get(node,"sell_minutes");
+   if(j.Kind(bn)!=CSJ_NUMBER||j.Kind(sn)!=CSJ_NUMBER||!j.Integer(mb)||!j.Integer(ms)||
+    MathAbs(buy-j.Number(bn))>CSMax(1,buy)*1e-10||MathAbs(sell-j.Number(sn))>CSMax(1,sell)*1e-10||j.Number(mb)!=bm||j.Number(ms)!=sm)return false;
+   string src=plan.sourceDirection,reason="SOURCE_WEEKLY";int expected=CSDirection(src);
+   if(src=="CAMPURAN"){
+    expected=CSStrengthSide(buy,sell,bm+sm,0.55,360);
+    reason=buy+sell<=0||MathAbs(buy-sell)<=(buy+sell)*1e-12?"WAIT_TIE":expected==0?"WAIT_BELOW_THRESHOLD":"SEVEN_DAY_STRENGTH";
+   }else if(src=="TIDAK ADA ARAH"){expected=0;reason="SOURCE_NO_DIRECTION";}
+   else if(src!="BUY"&&src!="SELL")return false;
+   plan.buyStrength=buy;plan.sellStrength=sell;return expected==plan.side&&reason==plan.reason;
+  }
   bool Accept(string raw,datetime now){
    CSJson j;if(!j.Parse(raw))return Reject(j.Error());
    if(!j.Only(0,"schema_version,model_id,m5_model,source_commit,generated_at_utc,expires_at_utc,horizon_start_wib,horizon_end_wib,validated_predictive_model,weekly_source_method,daily_source_method,swing_daily_inherited_weekly,lunar_rank_broker_mode,weeks,sessions,moon,liquidity_sessions,payload_sha256"))return Reject("FEED_FIELDS");
    if(!j.VerifyHash(raw))return Reject("FEED_SHA256");
-   if(!TextIs(j,0,"schema_version","2.0.0")||!TextIs(j,0,"model_id","CEBONK_SWING_ASTRO_WEEKLY_DAILY_5KZ_V1")||!TextIs(j,0,"m5_model","MUSANG_BERJANGGUT_CBR"))return Reject("FEED_MODEL");
+   if(!TextIs(j,0,"schema_version","2.1.0")||!TextIs(j,0,"model_id","CEBONK_SWING_ASTRO_WEEKLY_LOCK_7D_V1")||!TextIs(j,0,"m5_model","MUSANG_EL2_IB_CB1_RETEST"))return Reject("FEED_MODEL");
    if(!TextIs(j,0,"weekly_source_method","CebonkAstroWeekly.scanWeek/CebonkCore.scan(WIB,360)")||!TextIs(j,0,"daily_source_method","CebonkAstroWeekly.days[].dominant")||!TextIs(j,0,"lunar_rank_broker_mode","AUTO_NY_CLOSE_ESTIMATE_00:00_ANNOTATION_ONLY"))return Reject("FEED_SOURCE_METHOD");
    int flag=j.Get(0,"validated_predictive_model"),inherited=j.Get(0,"swing_daily_inherited_weekly");
    if(j.Kind(flag)!=CSJ_BOOL||j.Number(flag)!=0||j.Kind(inherited)!=CSJ_BOOL||j.Number(inherited)!=1)return Reject("FEED_FLAGS");
@@ -53,7 +82,7 @@ class CSFeed {
    if(hs==0||he-hs<7*86400||he-hs>31*86400||now+25200<hs||now+25200>=he+86400)return Reject("FEED_HORIZON");
    int weekly=j.Get(0,"weeks"),ss=j.Get(0,"sessions"),lunar=j.Get(0,"moon"),rs=j.Get(0,"liquidity_sessions");
    if(j.Kind(weekly)!=CSJ_ARRAY||j.Count(weekly)<1||j.Count(weekly)>6||j.Kind(ss)!=CSJ_ARRAY||j.Count(ss)>160||j.Kind(rs)!=CSJ_ARRAY||j.Count(rs)>200||j.Count(rs)<5)return Reject("FEED_ARRAYS");
-   CSDay newDays[];CSSession newSessions[];CSLunar newMoon[];CSRangeSession newRanges[];
+   CSWeekPlan newWeeks[];CSDay newDays[];CSSession newSessions[];CSLunar newMoon[];CSRangeSession newRanges[];
    string expectedMondays[];int expectedRecords=0;
    for(datetime d=hs;d<=he;d+=86400)if(CSIsWeekday(d)){
     expectedRecords+=5;MqlDateTime p;TimeToStruct(d,p);string monday=CSDate(d-(p.day_of_week-1)*86400);
@@ -61,9 +90,13 @@ class CSFeed {
    }
    if(j.Count(weekly)!=ArraySize(expectedMondays)||j.Count(ss)!=expectedRecords)return Reject("FEED_MISSING_DAYS_SESSIONS");
    for(int w=0;w<j.Count(weekly);w++){
-    int item=j.At(weekly,w);if(!j.Only(item,"week_monday_wib,weekly_direction,daily"))return Reject("FEED_WEEK_FIELDS");
+    int item=j.At(weekly,w);if(!j.Only(item,"week_monday_wib,weekly_direction,weekly_source_direction,weekly_resolution_reason,seven_day_strength,daily"))return Reject("FEED_WEEK_FIELDS");
     string monday=j.Text(j.Get(item,"week_monday_wib")),wd=j.Text(j.Get(item,"weekly_direction"));
-    if(monday!=expectedMondays[w]||(wd!="BUY"&&wd!="SELL"&&wd!="CAMPURAN"&&wd!="TIDAK ADA ARAH"))return Reject("FEED_WEEK");
+    if(monday!=expectedMondays[w]||(wd!="BUY"&&wd!="SELL"&&wd!="WAIT"))return Reject("FEED_WEEK");
+    CSWeekPlan plan;plan.monday=monday;plan.side=CSDirection(wd);
+    plan.sourceDirection=j.Text(j.Get(item,"weekly_source_direction"));plan.reason=j.Text(j.Get(item,"weekly_resolution_reason"));
+    if(!Strength(j,j.Get(item,"seven_day_strength"),plan))return Reject("FEED_WEEKLY_STRENGTH");
+    ArrayResize(newWeeks,w+1);newWeeks[w]=plan;
     int da=j.Get(item,"daily");if(j.Kind(da)!=CSJ_ARRAY||j.Count(da)!=5)return Reject("FEED_WEEK_DAYS");int ranks=0;
     for(int k=0;k<5;k++){
      int di=j.At(da,k);if(!j.Only(di,"date_wib,daily_direction,swing_daily_direction_inherited,moon_rank,illumination_pct,moon_observed_at_utc"))return Reject("FEED_DAY_FIELDS");
@@ -126,17 +159,19 @@ class CSFeed {
     int n=ArraySize(newRanges);ArrayResize(newRanges,n+1);newRanges[n]=v;
    }
    ArrayResize(sessions,ArraySize(newSessions));for(int i=0;i<ArraySize(newSessions);i++)sessions[i]=newSessions[i];
+   ArrayResize(weeks,ArraySize(newWeeks));for(int i=0;i<ArraySize(newWeeks);i++)weeks[i]=newWeeks[i];
    ArrayResize(days,ArraySize(newDays));for(int i=0;i<ArraySize(newDays);i++)days[i]=newDays[i];
    ArrayResize(moon,ArraySize(newMoon));for(int i=0;i<ArraySize(newMoon);i++)moon[i]=newMoon[i];
    ArrayResize(ranges,ArraySize(newRanges));for(int i=0;i<ArraySize(newRanges);i++)ranges[i]=newRanges[i];ArrayCopy(majorEvents,newEvents);
    generated=gen;expires=exp;horizonStart=hs;horizonEnd=he;source=commit;hash=j.Text(j.Get(0,"payload_sha256"));healthy=true;error="FEED_VALID";return true;
   }
   int DayIndex(string date){for(int i=0;i<ArraySize(days);i++)if(days[i].date==date)return i;return -1;}
-  int Owner(datetime now){
+  int WeekIndex(string monday){for(int i=0;i<ArraySize(weeks);i++)if(weeks[i].monday==monday)return i;return -1;}
+  int Owner(datetime now,int lockedSide){
    int owner=-1;
    for(int i=0;i<ArraySize(sessions);i++){
     CSSession s=sessions[i];int day=DayIndex(s.date);
-    if(s.direction==0||day<0||days[day].weekly!=s.direction||days[day].daily!=s.direction||now<s.windowStart||now>=s.windowEnd)continue;
+    if(day<0||!CSAligned(lockedSide,days[day].daily,s.direction)||now<s.windowStart||now>=s.windowEnd)continue;
     if(owner<0||s.windowStart<sessions[owner].windowStart||(s.windowStart==sessions[owner].windowStart&&StringCompare(s.sessionId,sessions[owner].sessionId)<0))owner=i;
    }return owner;
   }

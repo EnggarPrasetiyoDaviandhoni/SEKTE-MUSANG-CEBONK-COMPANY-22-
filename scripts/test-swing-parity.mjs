@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {sourceEngines,Astronomy,ROOT,requireEA} from './swing/source.mjs';
 import {addDay} from './swing/feed.mjs';
+import {sevenDayStrength,resolveWeekly} from './swing/weekly-lock.mjs';
 const library=resolve(dirname(requireEA.resolve('astronomy-engine')),'astronomy.browser.min.js');
 const astroContext=vm.createContext({Date,Math,console});
 vm.runInContext(readFileSync(library,'utf8'),astroContext,{filename:'astronomy.browser.min.js'});
@@ -43,11 +44,14 @@ for(const monday of mondays){
  equal(plain(node.D.make(nw,Astronomy,node.B,0)),plain(browser.D.make(bw,BA,browser.B,0)),monday+'.dailySwing');
  const start=new Date(monday+'T00:00:00Z');let nq=Astronomy.SearchMoonQuarter(start),bq=BA.SearchMoonQuarter(start);
  for(let i=0;i<4;i++){assert.equal(nq.quarter,bq.quarter);assert.equal(nq.time.date.getTime(),bq.time.date.getTime());nq=Astronomy.NextMoonQuarter(nq);bq=BA.NextMoonQuarter(bq);}
- console.log('PASS parity week '+monday);
+ const strength=await sevenDayStrength(monday,node.C,Astronomy),browserStrength=await sevenDayStrength(monday,browser.C,BA);
+ equal(plain(strength),plain(browserStrength),monday+'.sevenDayStrength');
+ equal(resolveWeekly(nw.direction,strength),resolveWeekly(bw.direction,browserStrength),monday+'.resolvedWeek');
+ console.log('PASS parity week '+monday+' including seven calendar days');
 }
-const report={status:'PASS',kind:'VM browser UMD versus Node; not browser UI automation',trading_dates:dates,
+const report={status:'PASS',kind:'VM browser UMD versus Node; not browser UI automation',trading_dates:dates,seven_day_strength_dates:mondays.length*7,
  weeks:mondays,astronomy_engine:'2.1.19',maximum_numeric_difference:maximumDifference,tolerance:1e-9,
- coverage:['weekly/daily bias','5 city sessions','focus and all windows','start/core/end timestamps','source scores','lunar illumination/rank','major moon events','US/UK/Australia DST before/after']};
+ coverage:['7-day weighted strength and weekly decision','weekly/daily bias','5 city sessions','focus and all windows','start/core/end timestamps','source scores','lunar illumination/rank','major moon events','US/UK/Australia DST before/after']};
 mkdirSync(resolve(ROOT,'ea/astro_swing_berjanggut/evidence'),{recursive:true});
 writeFileSync(resolve(ROOT,'ea/astro_swing_berjanggut/evidence/parity.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));

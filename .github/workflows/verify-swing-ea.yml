@@ -1,0 +1,70 @@
+name: CEBONK Swing v1.10 - verify source and feed
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'MQL5/**'
+      - 'data/ea/swing-forecast-v2.schema.json'
+      - 'ea/astro_swing_berjanggut/**'
+      - 'scripts/*swing*'
+      - 'scripts/swing/**'
+      - 'tests/swing/**'
+      - 'index.html'
+      - 'assets/astro-killzone-core.js'
+      - 'assets/astro-weekly-core.js'
+      - 'assets/astro-swing-daily-core.js'
+      - 'assets/mt5-broker-clock.js'
+      - '.github/workflows/verify-swing-ea.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'MQL5/**'
+      - 'ea/astro_swing_berjanggut/**'
+      - 'scripts/*swing*'
+      - 'scripts/swing/**'
+      - 'tests/swing/**'
+      - 'data/ea/swing-forecast-v2.schema.json'
+      - 'index.html'
+      - 'assets/astro-killzone-core.js'
+      - 'assets/astro-weekly-core.js'
+      - 'assets/astro-swing-daily-core.js'
+      - 'assets/mt5-broker-clock.js'
+      - '.github/workflows/verify-swing-ea.yml'
+permissions:
+  contents: read
+concurrency:
+  group: cebonk-swing-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned dependencies
+        run: npm ci --prefix ea/astro_swing_berjanggut --ignore-scripts --no-audit --no-fund
+      - name: Feed and original weekly regressions
+        run: |
+          node --test tests/swing/*.test.mjs
+          node tests/astro-weekly.test.cjs
+      - name: Actual numeric and JSON/feed code on C++ host
+        run: python3 scripts/test-swing-core.py
+      - name: Browser UMD versus Node parity - 20 trading dates and DST
+        run: node scripts/test-swing-parity.mjs
+      - name: Source structure and complete current JSON
+        run: |
+          python3 scripts/check-swing-source.py
+          node scripts/generate-swing-feed.mjs
+          node scripts/check-swing-feed.mjs --file data/ea/swing-forecast-v2.json
+      - name: Build source EA package
+        run: python3 scripts/package-swing-ea.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CEBONK-SWING-BERJANGGUT-SOURCE-NOT-MT5-COMPILED
+          path: |
+            ea/astro_swing_berjanggut/dist/*.zip
+            ea/astro_swing_berjanggut/evidence/
+          if-no-files-found: error
