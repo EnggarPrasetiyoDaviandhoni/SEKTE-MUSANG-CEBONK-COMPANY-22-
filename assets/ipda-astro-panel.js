@@ -14,7 +14,7 @@ async function refreshYahoo(){
   if(feed.symbol!=="GC=F"||!Array.isArray(feed.candles))throw new Error("Format feed tidak valid");
   const completed=feed.candles.slice(0,-1);
   if(completed.length<60)throw new Error("Candle selesai kurang dari 60");
-  const csv=completed.map(x=>[new Date(x.timestamp*1000).toISOString().slice(0,10),x.open,x.high,x.low,x.close].join(",")).join("\\n");
+  const csv=completed.map(x=>[new Date(x.timestamp*1000).toISOString().slice(0,10),x.open,x.high,x.low,x.close].join(",")).join("\n");
   host.querySelector("#ipda-csv").value=csv;
   host.querySelector("#ipda-calc").click();
   const note=document.createElement("p");
