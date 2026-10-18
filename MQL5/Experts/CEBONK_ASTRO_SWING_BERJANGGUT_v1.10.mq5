@@ -37,6 +37,7 @@ input bool InpTelegramEnabled=false;
 input string InpTelegramBotToken=""; // Local inputs only; never commit .set files containing secrets.
 input string InpTelegramChatId="";
 input bool InpPushEnabled=false;
+input int InpNotificationIPDADays=40; // Display only: 20, 40 or 60; does not alter entry gates.
 
 CSWeeklyLock Weekly;CSClock Clock;CSFeed Feed;CSFeedClient FeedClient;CSMarket Market;CSBasket Basket;CSNotifier Notify;CSPanel Panel;
 string TradeSymbol,LastReason="STARTING",LockKey,HeartbeatKey;double LockOwner=0;bool Autopilot=false,Dirty=true,HasLock=false,StateReady=false;
@@ -58,6 +59,7 @@ bool CheckLock(){
 }
 void ProtectBasket(){
  if(!HasLock)return;
+ Basket.NoticeMode(Autopilot,InpCutProfitEnabled);
  if(Dirty){Basket.Reconcile(Notify);Basket.state.Save();Dirty=false;}
  if(Basket.positions>0){CSBar bars[];if(Market.Copy(TradeSymbol,PERIOD_M15,32,5,bars))
   Basket.ManageExit(bars,InpCutProfitEnabled&&(Autopilot||InpManageExitWhenAutopilotOff),Notify);}
@@ -95,14 +97,18 @@ void Entry(){
    IntegerToString(setup.model)+"|"+IntegerToString((long)setup.origin)+"|"+IntegerToString((long)setup.structure)+"|"+IntegerToString((long)setup.birth)+"|"+
    IntegerToString((long)gate)+"|"+IntegerToString((long)micro.source)+"|"+IntegerToString((long)micro.ibClose)+"|"+IntegerToString((long)micro.cb1Pivot)+"|"+IntegerToString((long)micro.breakClose)+"|"+IntegerToString((long)micro.retestClose));
   if(signal==""){failure="SIGNAL_HASH_FAILED";continue;}
-  int day=Feed.DayIndex(session.date);
-  Notify.Add("SIGNAL_"+signal,StringFormat("CEBONK %s %s | WEEK/DAY/SESSION aligned | H1 model %d, M15 retest, M5 %s + IB retest | candidate fib0 %.5f fib1 %.5f | order SL FIB %.5f TP ICT %.5f RR %.2f | moon rank %d (annotation)",TradeSymbol,session.sessionId,setup.model,"EL2 IB -> CB1 break",micro.fib0,micro.fib1,sl,tp,CSRR(side,entry,sl,tp),day<0?0:Feed.days[day].rank));
   PrintFormat("CEBONK M5 EL2 kind=%d source=%I64d IB_close=%I64d CB1_pivot=%I64d break=%I64d retest=%I64d IB=[%.8f,%.8f] fib0=%.8f fib1=%.8f span=%.8f candidate_SL_level=%.8f candidate_SL_raw=%.8f order_SL=%.8f TP_ICT=%.8f target_mask=%u RR=%.3f",micro.kind,(long)micro.source,(long)micro.ibClose,(long)micro.cb1Pivot,(long)micro.breakClose,(long)micro.retestClose,micro.zoneLow,micro.zoneHigh,micro.fib0,micro.fib1,micro.fib1-micro.fib0,InpSLFibLevel,micro.slRaw,sl,tp,kind,CSRR(side,entry,sl,tp));
   // Recheck UTC/window immediately before execution; source/feed can expire while evaluating.
   now=Clock.Now();if(!Feed.Valid(now)||now<session.windowStart||now>=session.windowEnd){failure="SKIP_WINDOW_OR_FEED_EXPIRED";break;}
   core=now>=session.core;datetime phaseEnd=core?session.windowEnd:session.core;
   datetime deadline=TimeCurrent()+(datetime)CSMin(phaseEnd-now,Feed.expires-now);
-  bool sent=Basket.Submit(window,core,signal,setup,gate,micro,tp,deadline,Notify);failure=Basket.error;Dirty=true;
+  CSOrderNoticeContext context;context.known=true;context.symbol=TradeSymbol;context.session=session.sessionId;
+  context.weekly=Weekly.value.side;context.model=setup.model;context.autopilot=Autopilot;context.cutProfit=InpCutProfitEnabled;
+  context.ipdaDays=InpNotificationIPDADays;int ipda=InpNotificationIPDADays==20?0:InpNotificationIPDADays==40?1:2;
+  context.ipdaHigh=Market.ipdaHigh[ipda];context.ipdaLow=Market.ipdaLow[ipda];context.digits=(int)SymbolInfoInteger(TradeSymbol,SYMBOL_DIGITS);
+  context.volumeDigits=0;double volumeStep=SymbolInfoDouble(TradeSymbol,SYMBOL_VOLUME_STEP);
+  while(context.volumeDigits<8&&MathAbs(volumeStep-MathRound(volumeStep))>1e-8){context.volumeDigits++;volumeStep*=10;}
+  bool sent=Basket.Submit(window,core,signal,setup,gate,micro,tp,deadline,context,Notify);failure=Basket.error;Dirty=true;
   if(!sent)Notify.Add("ENTRY_BLOCKED_"+signal+"_"+failure,"CEBONK entry blocked: "+failure);
   if(sent||Basket.state.Contains(Basket.state.signals,signal))break;
  }
@@ -137,6 +143,7 @@ void Draw(){
 }
 int OnInit(){
  TradeSymbol=InpSymbol==""?_Symbol:InpSymbol;
+ if(InpNotificationIPDADays!=20&&InpNotificationIPDADays!=40&&InpNotificationIPDADays!=60)return INIT_PARAMETERS_INCORRECT;
  if(!CSValidSLFibLevel(InpSLFibLevel)){Print("CEBONK InpSLFibLevel must be finite and negative, for example -0.236");return INIT_PARAMETERS_INCORRECT;}
  if(TradeSymbol!=_Symbol||StringFind(TradeSymbol,"XAUUSD")!=0||StringFind(InpFeedURL,"https://raw.githubusercontent.com/")!=0||InpMagic<=0||InpLotPerLayer<=0||InpMaxBasketRiskPct<=0||InpMaxBasketRiskPct>1||(InpCommissionPerLotPerSide<0&&InpCommissionPerLotPerSide!=-1)||
   InpM5MaxBarsGateToIB<1||InpM5MaxBarsGateToIB>32||InpM5MaxBarsIBToCB1Break<4||InpM5MaxBarsIBToCB1Break>32||InpM5MaxBarsBreakToRetest<1||InpM5MaxBarsBreakToRetest>32||InpMoonMajorPhaseWindowHours<0)return INIT_PARAMETERS_INCORRECT;
@@ -150,7 +157,7 @@ int OnInit(){
  StateReady=true;
  Notify.Init(InpPushEnabled,InpTelegramEnabled,InpTelegramBotToken,InpTelegramChatId,storage+".notices.json");Panel.Init();
  FeedClient.Init(InpFeedURL,InpTesterFeedFile,storage+"_feed.json");
- Autopilot=Clock.Tester()&&InpTesterAutopilot;LastM5Open=iTime(TradeSymbol,PERIOD_M5,0);Basket.Reconcile(Notify);
+ Autopilot=Clock.Tester()&&InpTesterAutopilot;Basket.NoticeMode(Autopilot,InpCutProfitEnabled);LastM5Open=iTime(TradeSymbol,PERIOD_M5,0);Basket.Reconcile(Notify);
  if(!Basket.state.exitPending){datetime latest=iTime(TradeSymbol,PERIOD_M15,1);if(latest>0)Basket.state.lastM15=(datetime)CSMax(Basket.state.lastM15,latest+900);}
  Basket.state.Save();FeedClient.Poll(Clock.Now(),Feed);Weekly.Refresh(Clock.Now(),Feed);EventSetTimer(10);Draw();return INIT_SUCCEEDED;
 }

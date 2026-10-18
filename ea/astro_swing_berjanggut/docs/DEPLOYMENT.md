@@ -34,7 +34,7 @@ Script membutuhkan log “0 errors” dan EX5 baru; exit code proses saja tidak 
 
 Attach pada chart simbol XAUUSD yang sesuai. Isi komisi per lot per sisi; verifikasi kontrak simbol, minimum lot, tick size, margin, dan jam broker di MT5. Suffix broker diterima. Tombol ON hanya mengizinkan entry baru; OFF tidak menutup basket. Menghapus EA menghentikan manajemen client-side, sementara server SL/TP yang sudah terpasang tetap berlaku.
 
-Atur level SL pada **EA Properties → Inputs → `InpSLFibLevel`**. Gunakan angka negatif, misalnya `-0.236` (default), `-0.382`, atau `-0.618`; angka ini level Fibonacci, bukan jarak pip. Level baru berlaku untuk basket baru. Basket aktif dan layer tambahannya tetap memakai harga SL/TP awal dari state. State basket v1 v1.08/v1.09 dimigrasikan ke v2. Jangan menghapus file state basket maupun `_weekly.json`: lock arah minggu harus bertahan setelah restart dan penggantian Inputs. Setelah mengganti Inputs atau mengganti expert ke v1.10, AUTOPILOT entry kembali OFF dan perlu dinyalakan bila entry baru diinginkan.
+Atur level SL pada **EA Properties → Inputs → `InpSLFibLevel`**. Gunakan angka negatif, misalnya `-0.236` (default), `-0.382`, atau `-0.618`; angka ini level Fibonacci, bukan jarak pip. Level baru berlaku untuk basket baru. Basket aktif dan layer tambahannya tetap memakai harga SL/TP awal dari state. State basket v1/v2 dimigrasikan ke v3 tanpa mereset basket. Jangan menghapus file state basket maupun `_weekly.json`: lock arah minggu harus bertahan setelah restart dan penggantian Inputs. Setelah mengganti Inputs atau mengganti expert ke v1.10, AUTOPILOT entry kembali OFF dan perlu dinyalakan bila entry baru diinginkan.
 
 ## Strategy Tester offline
 
@@ -56,6 +56,8 @@ Clock tester **tidak menganggap TimeCurrent sebagai UTC**. Pilih salah satu:
 Set `InpTesterAutopilot=true` untuk simulasi nonvisual. Input ini tidak bisa menyalakan autopilot pada akun live. Pilih Every Tick Based on Real Ticks bila data tersedia, uji in-sample dan out-of-sample, lalu simpan report MT5 beserta Journal. `OnTester` menulis trades, net, expectancy, profit factor dan drawdown dari statistik tester. Belum ada hasil performa yang dapat dilaporkan dari paket ini.
 
 ## Telegram dan Push
+
+Format kartu entry, sumber data dan multipart Push dijelaskan dalam `NOTIFIKASI.md`. MT5 tidak lagi memotong kartu pada 255 karakter; bagian yang belum terkirim dilanjutkan setelah restart.
 
 Telegram/Push default OFF. Masukkan Bot Token dan Chat ID hanya pada terminal lokal. Whitelist `https://api.telegram.org`; aktifkan notifikasi MT5 pada terminal bila memakai Push. Tombol TEST NOTIFIKASI menguji konfigurasi saat EA berjalan. Token tidak ditulis ke source, JSON feed, atau log.
 

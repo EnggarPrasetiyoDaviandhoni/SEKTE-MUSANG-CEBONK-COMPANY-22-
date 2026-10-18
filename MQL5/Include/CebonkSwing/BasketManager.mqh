@@ -7,6 +7,7 @@
 class CSBasket {
  private:
   CTrade m_trade;string m_symbol;long m_magic;double m_fee,m_risk,m_lot,m_tick;uint m_deviation;datetime m_lastClose;
+  bool m_noticeAutopilot,m_noticeCutProfit;
   bool Netting(){return AccountInfoInteger(ACCOUNT_MARGIN_MODE)!=ACCOUNT_MARGIN_MODE_RETAIL_HEDGING;}
   bool AllDealsOwned(long id){
    if(!HistorySelectByPosition(id))return false;
@@ -35,10 +36,11 @@ class CSBasket {
   }
  public:
   CSState state;int positions;double lastNet,lastRisk;string error;bool conflict;
+  void NoticeMode(bool autopilot,bool cutProfit){m_noticeAutopilot=autopilot;m_noticeCutProfit=cutProfit;}
   void Init(string sym,long magic,double commission,double risk,double lot,uint deviation){
    m_symbol=sym;m_magic=magic;m_fee=commission;m_risk=risk;m_lot=lot;m_deviation=deviation;m_tick=SymbolInfoDouble(sym,SYMBOL_TRADE_TICK_SIZE);
    m_trade.SetExpertMagicNumber((ulong)magic);m_trade.SetDeviationInPoints(deviation);m_trade.SetAsyncMode(false);m_trade.SetTypeFillingBySymbol(sym);
-   positions=0;lastNet=0;lastRisk=0;conflict=false;m_lastClose=0;error="BASKET_READY";
+   positions=0;lastNet=0;lastRisk=0;conflict=false;m_lastClose=0;m_noticeAutopilot=false;m_noticeCutProfit=false;error="BASKET_READY";
   }
   bool Tradable(MqlTick &q,bool entry){
    if(!SymbolInfoTick(m_symbol,q)||q.bid<=0||q.ask<q.bid||q.time<=0||MathAbs((double)(TimeCurrent()-q.time))>30){error="QUOTE_STALE";return false;}
@@ -91,7 +93,7 @@ class CSBasket {
   void Reconcile(CSNotifier &notify){
    positions=0;conflict=false;
    if(state.basket!=""&&state.first>0&&HistorySelect(state.first-3600,TimeCurrent()+60)){
-    int count=HistoryDealsTotal();long found[];bool latestFilled=false;
+    int count=HistoryDealsTotal();long found[];bool latestFilled=false;double fillVolume=0,fillValue=0;
     string latest="CSB|"+state.basket+"|"+IntegerToString(state.awal+state.inti);
     for(int d=0;d<count;d++){
      ulong t=HistoryDealGetTicket(d);if(HistoryDealGetInteger(t,DEAL_MAGIC)==m_magic&&HistoryDealGetString(t,DEAL_SYMBOL)==m_symbol&&(StringFind(HistoryDealGetString(t,DEAL_COMMENT),"CSB|"+state.basket+"|")==0||(state.pending&&state.pendingOrder>0&&(ulong)HistoryDealGetInteger(t,DEAL_ORDER)==state.pendingOrder))){
@@ -99,7 +101,10 @@ class CSBasket {
       long entry=HistoryDealGetInteger(t,DEAL_ENTRY);
       if(state.pending&&(entry==DEAL_ENTRY_IN||entry==DEAL_ENTRY_INOUT)&&
        ((state.pendingOrder>0&&(ulong)HistoryDealGetInteger(t,DEAL_ORDER)==state.pendingOrder)||
-        (state.pendingOrder==0&&HistoryDealGetString(t,DEAL_COMMENT)==latest)))latestFilled=true;
+        (state.pendingOrder==0&&HistoryDealGetString(t,DEAL_COMMENT)==latest))){
+       latestFilled=true;double volume=HistoryDealGetDouble(t,DEAL_VOLUME);
+       fillVolume+=volume;fillValue+=volume*HistoryDealGetDouble(t,DEAL_PRICE);
+      }
      }
     }for(int k=0;k<ArraySize(found);k++)state.AddId(found[k]);
     bool activeOrder=false;
@@ -108,6 +113,12 @@ class CSBasket {
      if((state.pendingOrder>0&&ticket==state.pendingOrder)||(state.pendingOrder==0&&OrderGetString(ORDER_COMMENT)==latest))activeOrder=true;
     }
     if(latestFilled){
+     if(fillVolume>0&&fillValue>0){
+      CSOrderNoticeContext context;CSNoticeContextDecode(state.noticeContext,context);
+      if(context.known){context.autopilot=m_noticeAutopilot;context.cutProfit=m_noticeCutProfit;}
+      notify.Add("ENTRY_FILLED_"+state.basket+"_"+IntegerToString(state.awal+state.inti),
+       CSFilledOrderNotice(context,m_symbol,state.side,state.awal+state.inti,fillVolume,fillValue/fillVolume,state.sl,state.tp));
+     }
      state.Remember(state.spent,state.window,256);state.Remember(state.signals,state.signal,512);
      state.last=TimeCurrent();if(!activeOrder){state.pending=false;state.pendingOrder=0;}state.Save();
     }else if(state.pending&&state.pendingOrder>0&&!activeOrder&&HistoryOrderSelect(state.pendingOrder)&&
@@ -171,7 +182,7 @@ class CSBasket {
    request.type_filling=(filling&SYMBOL_FILLING_FOK)!=0?ORDER_FILLING_FOK:(filling&SYMBOL_FILLING_IOC)!=0?ORDER_FILLING_IOC:ORDER_FILLING_RETURN;
    if(!OrderCheck(request,checked)){error="ORDER_CHECK_"+IntegerToString(checked.retcode);return false;}return true;
   }
-  bool Submit(string windowId,bool core,string signal,const CSSetup &setup,datetime gate,const CSMicro &micro,double tp,datetime deadline,CSNotifier &notify){
+  bool Submit(string windowId,bool core,string signal,const CSSetup &setup,datetime gate,const CSMicro &micro,double tp,datetime deadline,const CSOrderNoticeContext &context,CSNotifier &notify){
    bool newBasket=positions==0;
    if(newBasket&&(GlobalBusy()||state.Contains(state.spent,windowId))){error="WINDOW_SPENT_OR_BASKET_BUSY";return false;}
    if((core?state.inti>=2:state.awal>=2)||state.awal+state.inti>=4){error="LAYER_LIMIT";return false;}
@@ -190,7 +201,7 @@ class CSBasket {
     if(!Preflight(setup.side,micro,state.sl,state.tp,q))break;
     // Reserve before the request. Uncertain fills cannot be retried as new entries.
     if(!CSReserveLayer(core,state.awal,state.inti)){error="LAYER_LIMIT";break;}
-    state.signal=signal;state.pending=true;state.pendingCore=core;state.pendingOrder=0;state.intent=TimeCurrent();
+    state.noticeContext=CSNoticeContextEncode(context);state.signal=signal;state.pending=true;state.pendingCore=core;state.pendingOrder=0;state.intent=TimeCurrent();
     if(!state.Save()){error="PERSISTENCE_FAILED_BEFORE_ORDER";return false;}
     int index=state.awal+state.inti;string comment="CSB|"+state.basket+"|"+IntegerToString(index);
     bool sent=setup.side>0?m_trade.Buy(m_lot,m_symbol,q.ask,state.sl,state.tp,comment):m_trade.Sell(m_lot,m_symbol,q.bid,state.sl,state.tp,comment);
@@ -202,7 +213,10 @@ class CSBasket {
     // 'sent' alone is not a broker fill acknowledgement. Unknown requests stay
     // persisted until the exact latest order/deal is reconciled, never an old fill.
     state.Save();
-    notify.Add("ORDER_"+state.basket+"_"+IntegerToString(index),StringFormat("%s %.2f ticket=%I64u retcode=%u SL FIB=%s TP ICT=%s fib0=%s fib1=%s risk=%.3f%%",setup.side>0?"BUY":"SELL",m_lot,m_trade.ResultOrder(),code,DoubleToString(state.sl,8),DoubleToString(state.tp,8),DoubleToString(state.fib0,8),DoubleToString(state.fib1,8),lastRisk));
+    PrintFormat("%s %.2f ticket=%I64u retcode=%u SL FIB=%s TP ICT=%s fib0=%s fib1=%s risk=%.3f%%",setup.side>0?"BUY":"SELL",m_lot,m_trade.ResultOrder(),code,DoubleToString(state.sl,8),DoubleToString(state.tp,8),DoubleToString(state.fib0,8),DoubleToString(state.fib1,8),lastRisk);
+    if(outcome!=CS_ORDER_FILLED)notify.Add("ORDER_STATUS_"+state.basket+"_"+IntegerToString(index)+"_"+IntegerToString(code),
+     "🟢 CEBONK COMPANY 22\n"+(outcome==CS_ORDER_REJECTED?"⛔ ORDER DITOLAK":"⏳ STATUS ORDER BELUM PASTI")+
+     " — "+CSNoticeSide(setup.side)+" "+m_symbol+"\nRetcode: "+IntegerToString(code)+"\nBelum ada fill terkonfirmasi untuk request ini.");
     if(!sent&&outcome==CS_ORDER_UNKNOWN)error="ORDER_ACK_UNKNOWN";
     Reconcile(notify);if(!filled||state.pending||positions==0||conflict)break;
     double cash=0;if(!Risk(0,state.side,0,state.sl,cash)){state.exitEvent="SAFETY_RISK_"+state.basket;state.exitPending=true;state.Save();notify.Add("UNSAFE_FILL_"+state.basket,"Risk after fill exceeded cap; emergency close requested");CloseAll(notify);break;}

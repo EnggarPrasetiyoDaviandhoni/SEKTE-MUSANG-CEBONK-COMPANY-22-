@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
+#include <tuple>
 #include <openssl/sha.h>
 class CSString {
 public:
@@ -37,7 +38,18 @@ inline int StringSplit(const string&s,ushort delimiter,std::vector<string>&out){
 inline double StringToDouble(const string&s){return std::strtod(s.utf8().c_str(),nullptr);}
 inline long long StringToInteger(const string&s){return std::strtoll(s.utf8().c_str(),nullptr,10);}
 inline string IntegerToString(long long n){return string(std::to_string(n));}
-template<class... Args> string StringFormat(const string&format,Args... args){auto f=format.utf8();int n=std::snprintf(nullptr,0,f.c_str(),args...);std::vector<char> out(n+1);std::snprintf(out.data(),out.size(),f.c_str(),args...);return string(std::string(out.data(),n));}
+inline std::string CSFormatStore(const string &s){return s.utf8();}
+template<class T> T CSFormatStore(T value){return value;}
+inline const char *CSFormatValue(const std::string &s){return s.c_str();}
+template<class T> T CSFormatValue(T value){return value;}
+template<class... Args> string StringFormat(const string&format,Args... args){
+ auto f=format.utf8();for(const auto &pair:{std::pair<std::string,std::string>{"%I64d","%lld"},{"%I64u","%llu"}})
+  for(auto pos=f.find(pair.first);pos!=std::string::npos;pos=f.find(pair.first,pos+pair.second.size()))f.replace(pos,pair.first.size(),pair.second);
+ auto values=std::make_tuple(CSFormatStore(args)...);
+ return std::apply([&](const auto &...stored){int n=std::snprintf(nullptr,0,f.c_str(),CSFormatValue(stored)...);
+  std::vector<char> out(n+1);std::snprintf(out.data(),out.size(),f.c_str(),CSFormatValue(stored)...);return string(std::string(out.data(),n));},values);
+}
+inline string DoubleToString(double value,int digits=8){return StringFormat("%.*f",digits,value);}
 inline int StringCompare(const string&a,const string&b){return a.value<b.value?-1:a.value>b.value?1:0;}
 constexpr int WHOLE_ARRAY=-1,CP_UTF8=65001,CRYPT_HASH_SHA256=1;
 inline int StringToCharArray(const string&s,std::vector<uchar>&out,int start=0,int count=WHOLE_ARRAY,int cp=CP_UTF8){(void)start;(void)count;(void)cp;auto b=s.utf8();out.assign(b.begin(),b.end());out.push_back(0);return (int)out.size();}

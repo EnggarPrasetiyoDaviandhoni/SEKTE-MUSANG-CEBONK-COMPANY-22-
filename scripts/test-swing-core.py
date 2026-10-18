@@ -17,7 +17,7 @@ with tempfile.TemporaryDirectory(prefix='cebonk-core-') as directory:
     subprocess.run([str(output)],check=True,env=env)
     # Translate only dynamic array declarations; all parser/validator control flow
     # comes directly from the production headers, including hash verification.
-    for name in ['JsonParser.mqh','FeedValidator.mqh']:
+    for name in ['JsonParser.mqh','FeedValidator.mqh','NotificationFormat.mqh','Notifier.mqh','Persistence.mqh']:
         content=(root/'MQL5/Include/CebonkSwing'/name).read_text()
         pattern=r'\b([A-Za-z_]\w*)\s+((?:[A-Za-z_]\w*\[\]\s*,\s*)*[A-Za-z_]\w*\[\])\s*;'
         def arrays(match):
@@ -41,3 +41,7 @@ with tempfile.TemporaryDirectory(prefix='cebonk-core-') as directory:
     subprocess.run(['g++','-std=c++17','-Wall','-Wextra','-Werror','-pedantic','-fsanitize=address,undefined','-g',
         '-I'+directory,str(root/'tests/swing/basket_net.cpp'),'-lcrypto','-o',str(net_binary)],check=True)
     subprocess.run([str(net_binary)],check=True,env=env)
+    notices=Path(directory)/'notifications'
+    subprocess.run(['g++','-std=c++17','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-pedantic','-fsanitize=address,undefined','-g',
+        '-I'+directory,'-I'+str(root/'MQL5/Include/CebonkSwing'),str(root/'tests/swing/notifications.cpp'),'-lcrypto','-o',str(notices)],check=True)
+    subprocess.run([str(notices),str(root/'ea/astro_swing_berjanggut/evidence/notification-example.txt')],check=True,env=env)

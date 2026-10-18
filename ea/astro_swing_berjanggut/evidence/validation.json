@@ -1,5 +1,5 @@
 {
-  "checked_at_utc": "2026-10-18T10:08:23.805Z",
+  "checked_at_utc": "2026-10-18T10:30:45.611730+00:00",
   "ea_version": "1.10",
   "feed_contract": "2.1.0",
   "m5_model": "MUSANG_EL2_IB_CB1_RETEST",
@@ -41,7 +41,7 @@
   ],
   "source_structure": {
     "status": "PASS",
-    "mql_files": 15
+    "mql_files": 16
   },
   "parity": {
     "status": "PASS",
@@ -56,7 +56,7 @@
     ],
     "astronomy_engine": "2.1.19",
     "maximum_numeric_difference": 0,
-    "tolerance": 1e-9,
+    "tolerance": 1e-09,
     "coverage": [
       "7-day weighted strength and weekly decision",
       "weekly/daily bias",
@@ -94,5 +94,30 @@
     "status": "PASS",
     "publications": 2,
     "note": "simulated as-of publication, not authentic historical archive"
+  },
+  "notification_host": {
+    "status": "PASS",
+    "assertions": 58,
+    "production_headers": [
+      "NotificationFormat.mqh",
+      "Notifier.mqh",
+      "Persistence.mqh"
+    ],
+    "coverage": [
+      "BUY/SELL",
+      "actual fill formatting and RR",
+      "ICT A/B",
+      "IPDA context",
+      "explicit BBMA unused",
+      "partial lot precision",
+      "UTF16-safe 255-character push chunks",
+      "complete Telegram JSON",
+      "durable chunk resume",
+      "retry and dedup",
+      "v1/v2 state migration to v3",
+      "64-bit identifier precision"
+    ],
+    "actual_messages_sent": false,
+    "real_telegram_mt5_delivery": "NOT_RUN"
   }
 }

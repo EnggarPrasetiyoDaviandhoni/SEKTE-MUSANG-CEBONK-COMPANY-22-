@@ -7,8 +7,9 @@
 | Numeric/policy production headers, C++ Address/UndefinedBehavior Sanitizer | PASS, 126 assertions |
 | Parser JSON dan feed production headers, adapter C++ | PASS, 38 assertions |
 | Body NET basket produksi verbatim, history/position API adapter C++ | PASS, 10 assertions |
+| Formatter/outbox/persistence produksi, adapter terminal/transport C++ | PASS, 58 assertions; tanpa kirim pesan nyata |
 | Browser UMD vs Node, Astronomy Engine 2.1.19 | PASS, 20 tanggal trading + 28 tanggal full-day strength; selisih maksimum 0 |
-| Struktur 15 file MQL | PASS; bukan kompilasi |
+| Struktur 16 file MQL | PASS; bukan kompilasi |
 | MetaEditor / Standard Library | **NOT_COMPILED** — compiler tidak tersedia |
 | Self-test MT5, Strategy Tester real ticks/in/out sample | **NOT_RUN** |
 | Broker demo/live, fill, partial fill, actual commission reconciliation | **NOT_RUN** |

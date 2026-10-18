@@ -32,6 +32,10 @@ Paket berisi **source `.mq5` / `.mqh`**. MetaEditor **NOT_COMPILED**, Strategy T
 
 **EA Properties → Inputs → `InpSLFibLevel`**. Contoh `-0.236`, `-0.382`, `-0.618`. Angka ini level Fibonacci. Hanya nilai negatif terhingga diterima. Perubahan berlaku untuk basket baru; SL/TP basket aktif tidak dihitung ulang. RR dan risiko diperiksa dengan stop yang benar-benar diajukan.
 
-Simpan file Common Files `CSB_...json` dan `CSB_..._weekly.json` ketika restart/memindah terminal. State v1 v1.08/v1.09 dibaca dan dimigrasikan tanpa mengubah SL/TP basket. Jangan menjalankan EA versi lama bersamaan.
+Simpan file Common Files `CSB_...json` dan `CSB_..._weekly.json` ketika restart/memindah terminal. State basket v1/v2 dibaca dan dimigrasikan ke v3 tanpa mengubah SL/TP basket. Jangan menjalankan EA versi lama bersamaan.
+
+## Notifikasi sesuai template
+
+Kartu tiap fill mengikuti format emoji **CEBONK COMPANY 22**: weekly/session, ICT, IPDA, BBMA, EL2, lot/entry/SL/TP/RR, cut profit, layer dan AUTOPILOT. Data order diambil dari fill terkonfirmasi. BBMA ditulis **TIDAK DIGUNAKAN** karena tidak ada filter BBMA pada EA ini. Telegram menerima kartu utuh; MT5 Push membaginya menjadi beberapa bagian berurutan agar seluruh isi lolos batas 255 karakter. Aktifkan `InpTelegramEnabled`/`InpPushEnabled` beserta konfigurasi terminal yang sesuai. Rincian ada di `docs/NOTIFIKASI.md`.
 
 Rincian dan status publikasi ada di `docs/` dan `evidence/`. Astrologi belum terbukti menghasilkan keuntungan melalui hasil tester/broker dalam paket ini.

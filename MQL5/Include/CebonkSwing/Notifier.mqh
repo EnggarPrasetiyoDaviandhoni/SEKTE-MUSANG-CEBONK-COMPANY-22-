@@ -2,16 +2,17 @@
 #define CEBONK_SWING_NOTIFIER_MQH
 #include "Types.mqh"
 #include "JsonParser.mqh"
-struct CSNotice {string id,text;int pending,attempts;datetime retry;};
+#include "NotificationFormat.mqh"
+struct CSNotice {string id,text;int pending,attempts,pushPart;datetime retry;};
 class CSNotifier {
  private:
-  CSNotice m_queue[];string m_seen[],m_token,m_chat,m_store;bool m_push,m_telegram,m_tester;datetime m_lastPush,m_lastTelegram;
+  CSNotice m_queue[];string m_seen[];string m_token,m_chat,m_store;bool m_push,m_telegram,m_tester;datetime m_lastPush,m_lastTelegram;
   void Persist(){
    if(m_tester||m_store=="")return;
    string raw="{\"seen\":[";for(int i=0;i<ArraySize(m_seen);i++){if(i)raw+=",";raw+="\""+CSJsonEscape(m_seen[i])+"\"";}
    raw+="],\"queue\":[";
    for(int i=0;i<ArraySize(m_queue);i++){
-    if(i)raw+=",";raw+=StringFormat("{\"id\":\"%s\",\"text\":\"%s\",\"pending\":%d,\"attempts\":%d,\"retry\":%I64d}",CSJsonEscape(m_queue[i].id),CSJsonEscape(m_queue[i].text),m_queue[i].pending,m_queue[i].attempts,(long)m_queue[i].retry);
+    if(i)raw+=",";raw+=StringFormat("{\"id\":\"%s\",\"text\":\"%s\",\"pending\":%d,\"attempts\":%d,\"push_part\":%d,\"retry\":%I64d}",CSJsonEscape(m_queue[i].id),CSJsonEscape(m_queue[i].text),m_queue[i].pending,m_queue[i].attempts,m_queue[i].pushPart,(long)m_queue[i].retry);
    }
    raw+=StringFormat("],\"last_push\":%I64d,\"last_telegram\":%I64d}",(long)m_lastPush,(long)m_lastTelegram);
    int f=FileOpen(m_store+".tmp",FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON,0,CP_UTF8);if(f==INVALID_HANDLE){Print("CEBONK NOTIFY_PERSISTENCE_FAILED");return;}
@@ -28,7 +29,8 @@ class CSNotifier {
    for(int i=0;i<j.Count(queue);i++){
     int item=j.At(queue,i);CSNotice v;v.id=j.Text(j.Get(item,"id"));v.text=j.Text(j.Get(item,"text"));
     v.pending=(int)j.Number(j.Get(item,"pending"))&((m_push?1:0)|(m_telegram?2:0));
-    v.attempts=(int)j.Number(j.Get(item,"attempts"));v.retry=(datetime)j.Number(j.Get(item,"retry"));
+    v.attempts=(int)j.Number(j.Get(item,"attempts"));v.pushPart=(int)j.Number(j.Get(item,"push_part"));
+    if(v.pushPart<0||v.pushPart>99)v.pushPart=0;v.retry=(datetime)j.Number(j.Get(item,"retry"));
     if(v.id==""||v.pending==0)continue;int n=ArraySize(m_queue);ArrayResize(m_queue,n+1);m_queue[n]=v;
    }
    m_lastPush=(datetime)j.Number(j.Get(0,"last_push"));m_lastTelegram=(datetime)j.Number(j.Get(0,"last_telegram"));
@@ -43,27 +45,38 @@ class CSNotifier {
    ArrayResize(m_seen,n+1);m_seen[n]=id;Print("CEBONK ",id," | ",text);
    if(m_tester||(!m_push&&!m_telegram)){Persist();return;}
    n=ArraySize(m_queue);if(n>=64){Print("CEBONK NOTIFY_QUEUE_FULL; journal retains event");return;}
-   ArrayResize(m_queue,n+1);m_queue[n].id=id;m_queue[n].text=text;m_queue[n].pending=(m_push?1:0)|(m_telegram?2:0);m_queue[n].attempts=0;m_queue[n].retry=0;Persist();
+   ArrayResize(m_queue,n+1);m_queue[n].id=id;m_queue[n].text=text;m_queue[n].pending=(m_push?1:0)|(m_telegram?2:0);m_queue[n].attempts=0;m_queue[n].pushPart=0;m_queue[n].retry=0;Persist();
   }
   void Pump(datetime now){
    if(m_tester||ArraySize(m_queue)==0)return;
    if(m_queue[0].retry>now)return;
+   bool attempted=false,failed=false,progress=false;
    if((m_queue[0].pending&1)!=0&&now-m_lastPush>=10){
-    m_lastPush=now;if(SendNotification(StringSubstr(m_queue[0].text,0,255)))m_queue[0].pending&=~1;
+    attempted=true;m_lastPush=now;string parts[];
+    if(!CSPushParts(m_queue[0].text,parts)){Print("CEBONK PUSH_MESSAGE_TOO_LONG");failed=true;}
+    else if(m_queue[0].pushPart>=ArraySize(parts)){m_queue[0].pending&=~1;progress=true;}
+    else if(SendNotification(parts[m_queue[0].pushPart])){
+     m_queue[0].pushPart++;progress=true;
+     if(m_queue[0].pushPart>=ArraySize(parts))m_queue[0].pending&=~1;
+    }else failed=true;
    }
    if((m_queue[0].pending&2)!=0&&now-m_lastTelegram>=10){
-    m_lastTelegram=now;
-    if(m_token==""||m_chat==""){Print("CEBONK TELEGRAM_NOT_CONFIGURED");m_queue[0].pending&=~2;}
+    attempted=true;m_lastTelegram=now;
+    if(m_token==""||m_chat==""){Print("CEBONK TELEGRAM_NOT_CONFIGURED");m_queue[0].pending&=~2;progress=true;}
     else{
      string payload="{\"chat_id\":\""+CSJsonEscape(m_chat)+"\",\"text\":\""+CSJsonEscape(m_queue[0].text)+"\"}";
      char data[],result[];int n=StringToCharArray(payload,data,0,WHOLE_ARRAY,CP_UTF8);ArrayResize(data,n-1);string headers;
      int code=WebRequest("POST","https://api.telegram.org/bot"+m_token+"/sendMessage","Content-Type: application/json\r\n",8000,data,result,headers);
-     if(code==200){CSJson response;if(response.Parse(CharArrayToString(result,0,ArraySize(result),CP_UTF8))&&response.Kind(response.Get(0,"ok"))==CSJ_BOOL&&response.Number(response.Get(0,"ok"))==1)m_queue[0].pending&=~2;}
+     bool accepted=false;
+     if(code==200){CSJson response;accepted=response.Parse(CharArrayToString(result,0,ArraySize(result),CP_UTF8))&&response.Kind(response.Get(0,"ok"))==CSJ_BOOL&&response.Number(response.Get(0,"ok"))==1;}
+     if(accepted){m_queue[0].pending&=~2;progress=true;}else failed=true;
      // Never print the token, URL, HTTP body, or chat identifier on failure.
     }
    }
    if(m_queue[0].pending==0){for(int i=1;i<ArraySize(m_queue);i++)m_queue[i-1]=m_queue[i];ArrayResize(m_queue,ArraySize(m_queue)-1);}
-   else{m_queue[0].attempts++;m_queue[0].retry=now+(int)CSMin(3600,10*MathPow(2,CSMin(m_queue[0].attempts,8)));}Persist();
+   else if(attempted&&failed){m_queue[0].attempts++;m_queue[0].retry=now+(int)CSMin(3600,10*MathPow(2,CSMin(m_queue[0].attempts,8)));}
+   else if(progress){m_queue[0].attempts=0;m_queue[0].retry=0;}
+   if(attempted||progress)Persist();
   }
 };
 #endif

@@ -1,3 +1,4 @@
 PASS 126 assertions on the actual shared MQL numeric engine (C++ host, not MetaEditor)
 PASS 38 assertions on actual MQL JSON/feed logic via host API adapter (not MetaEditor)
 PASS 10 assertions on verbatim production basket NET method (host broker API adapter)
+PASS 58 assertions on production notification formatter, multipart push and durable outbox (host API adapter; no external messages sent)
