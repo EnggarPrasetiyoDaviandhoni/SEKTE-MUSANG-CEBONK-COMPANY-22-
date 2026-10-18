@@ -1,5 +1,5 @@
 {
-  "checked_at_utc": "2026-10-18T10:03:02.075329+00:00",
+  "checked_at_utc": "2026-10-18T10:08:23.805Z",
   "ea_version": "1.10",
   "feed_contract": "2.1.0",
   "m5_model": "MUSANG_EL2_IB_CB1_RETEST",
@@ -56,7 +56,7 @@
     ],
     "astronomy_engine": "2.1.19",
     "maximum_numeric_difference": 0,
-    "tolerance": 1e-09,
+    "tolerance": 1e-9,
     "coverage": [
       "7-day weighted strength and weekly decision",
       "weekly/daily bias",
@@ -75,5 +75,24 @@
   "mt5_selftest": "NOT_RUN",
   "strategy_tester": "NOT_RUN",
   "broker_demo_live": "NOT_RUN",
-  "raw_feed_publication": "PENDING_VERIFICATION"
+  "raw_feed_publication": {
+    "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/cebonk-astro-swing-feed-v2/forecast.json",
+    "http": 200,
+    "schema": "2.1.0",
+    "payload_sha256": "3251ac60929acfcd48361e5aae1db8124eb59301cb529f412a2551820218f493",
+    "generator_source_commit": "b14c1db11e2f860118c84f0b48c30ea94779540a",
+    "branch": "cebonk-astro-swing-feed-v2",
+    "daily_publisher": "ACTIVE_ON_MAIN",
+    "schedule_utc": "00:10 daily",
+    "deployment_pr": 79,
+    "workflow_run": 39117993191,
+    "workflow_conclusion": "success",
+    "workflow_url": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39117993191",
+    "no_query_default_url_validated": true
+  },
+  "archive_backfill_generator": {
+    "status": "PASS",
+    "publications": 2,
+    "note": "simulated as-of publication, not authentic historical archive"
+  }
 }

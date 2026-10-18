@@ -18,6 +18,8 @@ Feed 2.1 adalah data baru untuk v1.10; feed v1 lama tidak diubah. Host EA dibata
 
 Tambahkan hanya host `https://raw.githubusercontent.com` pada whitelist WebRequest untuk feed. Host saja bukan URL JSON. Data berada pada branch publik data tersendiri, bukan Pages. Periksa `evidence/validation.json` untuk status HTTP dan publisher yang benar-benar diuji. Feed berlaku maksimal 30 jam; publikasi manual sekali tidak menggantikan jadwal pembaruan harian. Workflow sumber menguji PR; workflow publisher terpisah dapat memakai commit generator yang dipin tanpa menjalankan EA.
 
+Publisher harian telah diaktifkan melalui PR #79 pada branch main: `publish-swing-live-feed.yml`, 00:10 UTC setiap hari, generator dipin ke commit `b14c1db11e2f860118c84f0b48c30ea94779540a`. Uji workflow #39117993191 sukses, termasuk validasi payload dan GET raw HTTP 200. EA tetap source pada draft PR #76; workflow hanya menerbitkan data. Untuk mengganti model generator, perbarui pin melalui review/PR baru.
+
 Format payload: JSON canonical dengan key object tersortir, SHA-256 atas payload tanpa field hash. Field `payload_sha256` ditempatkan paling akhir. Parser MT5 memverifikasi bytes UTF-8 payload yang sama tanpa mengubah format float. Ini pemeriksaan integritas, bukan tanda tangan digital; transport HTTPS tetap dipakai.
 
 ## MT5
