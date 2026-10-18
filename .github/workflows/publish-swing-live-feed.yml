@@ -1,0 +1,73 @@
+name: CEBONK Swing v1.10 - publish raw feed
+on:
+  schedule:
+    - cron: '10 0 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cebonk-swing-live-data
+  cancel-in-progress: false
+env:
+  # Immutable tested generator; source EA remains in its own draft PR.
+  CEBONK_SWING_GENERATOR_SHA: b14c1db11e2f860118c84f0b48c30ea94779540a
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CEBONK_SWING_GENERATOR_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned generator dependencies without lifecycle scripts
+        run: npm ci --prefix ea/astro_swing_berjanggut --ignore-scripts --no-audit --no-fund
+      - name: Verify feed policies and generate current data
+        run: |
+          node --test tests/swing/*.test.mjs
+          node scripts/generate-swing-feed.mjs --source-commit "$CEBONK_SWING_GENERATOR_SHA"
+          node scripts/check-swing-feed.mjs --file data/ea/swing-forecast-v2.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-swing-feed
+          path: data/ea/swing-forecast-v2.json
+          if-no-files-found: error
+          retention-days: 2
+  publish:
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cebonk-astro-swing-feed-v2
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-swing-feed
+          path: /tmp/cebonk-verified-feed
+      - name: Commit only the verified data branch file
+        run: |
+          cp /tmp/cebonk-verified-feed/swing-forecast-v2.json forecast.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- forecast.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'data: refresh v1.10 weekly lock Astro feed [skip ci]'
+            git push origin HEAD:cebonk-astro-swing-feed-v2
+          fi
+      - name: Verify public raw GitHub HTTP 200 and identical payload bytes
+        run: |
+          url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/cebonk-astro-swing-feed-v2/forecast.json?run=${GITHUB_RUN_ID}"
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --max-time 20 "$url" -o /tmp/cebonk-live-feed.json && cmp forecast.json /tmp/cebonk-live-feed.json; then
+              echo 'PASS raw GitHub GET 200 and identical verified payload'
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
