@@ -1,12 +1,14 @@
 #property strict
-#property version "1.00"
+#property version "1.01"
 #property indicator_chart_window
 #property indicator_plots 0
 #property indicator_buffers 0
 #property description "Standalone CEBONK Astrology Killzone: five independent session forecasts"
 #include <CebonkKillzone/Forecast.mqh>
+#include <CebonkKillzone/WebState.mqh>
 
 input string InpForecastFile="cebonk-killzone-forecast-v1.json";
+input int InpMaxWebSilenceMinutes=60; // Hide forecasts if no verified WebRequest download within this interval.
 input string InpDateWIB=""; // Blank follows today, or next weekday on weekends; YYYY-MM-DD selects a date.
 input int InpBrokerUtcOffsetMinutes=2147483647; // AUTO; set real broker offset in minutes if automatic clock is unavailable.
 input int InpHistoryDays=3; // Number of trading dates drawn, including the selected date.
@@ -29,10 +31,12 @@ input color InpBuyFill=C'16,58,39';
 input color InpSellFill=C'67,27,32';
 
 CKAForecast Forecast;
+CKAWebState Web;
 string Prefix,LastRaw="",ClockStatus="STARTING",NavStatus="";
 datetime NowUTC=0,SelectedDate=0;
 int BrokerOffset=0;
 bool ClockVerified=false,FollowToday=true,InDraw=false,FirstCalculation=true;
+bool WebCacheReady=false;
 bool Enabled(int i){return i==0?InpSydney:i==1?InpTokyo:i==2?InpLondonOpen:i==3?InpNewYorkOpen:InpLondonClose;}
 color DirectionColor(int side){return side>0?InpBuyColor:side<0?InpSellColor:clrSilver;}
 string WIB(datetime t){return TimeToString(t+25200,TIME_MINUTES);}
@@ -50,12 +54,19 @@ void RefreshClock(){
  ClockVerified=true;ClockStatus="BROKER OFFSET AUTO (CURRENT)";
 }
 void LoadForecast(){
+ WebCacheReady=false;Web.valid=false;string metadata="";
+ int state=FileOpen(InpForecastFile+".webstatus.json",FILE_READ|FILE_TXT|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE,0,CP_UTF8);
+ if(state==INVALID_HANDLE){Forecast.Reject("START CEBONK_KILLZONE_WEBREQUEST SCRIPT");return;}
+ if(FileSize(state)>8192){FileClose(state);Forecast.Reject("WEB_STATUS_INVALID");return;}
+ metadata=FileReadString(state);FileClose(state);if(!Web.Parse(metadata)){Forecast.Reject("WEB_STATUS_INVALID");return;}
  int handle=FileOpen(InpForecastFile,FILE_READ|FILE_TXT|FILE_ANSI|FILE_SHARE_READ|FILE_SHARE_WRITE,0,CP_UTF8);
- if(handle==INVALID_HANDLE){Forecast.Reject("FORECAST_FILE_MISSING: copy MQL5/Files from package");return;}
+ if(handle==INVALID_HANDLE){Forecast.Reject("WEB CACHE MISSING: "+Web.status);return;}
  if(FileSize(handle)>2097152){FileClose(handle);Forecast.Reject("FORECAST_TOO_LARGE");return;}
  string raw=FileReadString(handle);FileClose(handle);
  if(raw!=LastRaw||!Forecast.healthy){if(Forecast.Accept(raw,NowUTC))LastRaw=raw;}
  if(Forecast.healthy&&Forecast.generated>NowUTC+600)Forecast.Reject("FORECAST_FUTURE");
+ if(Forecast.healthy&&!Web.CacheUsable(NowUTC,InpMaxWebSilenceMinutes*60,Forecast.hash))Forecast.Reject("WEB CACHE UNVERIFIED OR EXPIRED: "+Web.status);
+ WebCacheReady=Forecast.healthy;
 }
 void BaseObject(string key){ObjectSetInteger(0,key,OBJPROP_SELECTABLE,false);ObjectSetInteger(0,key,OBJPROP_HIDDEN,true);}
 void Label(string name,string text,int row,color shade){
@@ -72,11 +83,11 @@ void Button(string name,string text,int x,int y,int width){
 }
 void DrawPanel(){
  ObjectsDeleteAll(0,Prefix+"UI_");if(!InpShowPanel)return;
- int rows=7;for(int i=0;i<5;i++)if(Enabled(i))rows+=2;
+ int rows=8;for(int i=0;i<5;i++)if(Enabled(i))rows+=2;
  string bg=Prefix+"UI_background";ObjectCreate(0,bg,OBJ_RECTANGLE_LABEL,0,0,0);BaseObject(bg);
  ObjectSetInteger(0,bg,OBJPROP_XDISTANCE,InpPanelX);ObjectSetInteger(0,bg,OBJPROP_YDISTANCE,InpPanelY);ObjectSetInteger(0,bg,OBJPROP_XSIZE,790);
  ObjectSetInteger(0,bg,OBJPROP_YSIZE,rows*(InpFontSize+9)+54);ObjectSetInteger(0,bg,OBJPROP_BGCOLOR,C'17,21,29');ObjectSetInteger(0,bg,OBJPROP_BORDER_TYPE,BORDER_FLAT);
- int row=0;Label("title","CEBONK KILLZONE ASTROLOGY | "+CKADate(SelectedDate)+" WIB",row++,clrWhite);
+ int row=0;Label("title","CEBONK KILLZONE ASTROLOGY WEB | "+CKADate(SelectedDate)+" WIB",row++,clrWhite);
  Label("clock","UTC "+TimeToString(NowUTC,TIME_DATE|TIME_SECONDS)+" | WIB "+WIB(NowUTC)+" | Chart "+OffsetText(),row++,clrSilver);
  Label("legend","Jam tabel WIB. Kotak/garis chart memakai jam broker. AWAL > INTI > AKHIR",row++,clrSilver);
  for(int i=0;i<5;i++)if(Enabled(i)){
@@ -90,8 +101,9 @@ void DrawPanel(){
   Label("window"+IntegerToString(i),text,row++,clrWhite);
  }
  Label("meaning","BUY/SELL = arah skor Astro per sesi. Tidak ada konfirmasi harga dalam indikator.",row++,clrSilver);
- string status=!Forecast.healthy?Forecast.error:!Forecast.Covers(SelectedDate)?"UPDATE FORECAST: date outside file horizon":!ClockVerified?ClockStatus:NavStatus!=""?NavStatus:"FORECAST VALID | "+ClockStatus;
- Label("status",status,row++,Forecast.healthy&&Forecast.Covers(SelectedDate)&&ClockVerified?clrPaleGreen:clrOrange);
+ string status=!Forecast.healthy?Forecast.error:!Forecast.Covers(SelectedDate)?"REMOTE FORECAST: date outside horizon":!ClockVerified?ClockStatus:NavStatus!=""?NavStatus:"FORECAST VALID | "+ClockStatus;
+ Label("status",status,row++,Forecast.healthy&&Forecast.Covers(SelectedDate)&&ClockVerified&&Web.Online()?clrPaleGreen:clrOrange);
+ Label("web",WebCacheReady?"WebRequest "+Web.status+" HTTP="+IntegerToString(Web.http)+" | last success "+TimeToString(Web.lastSuccess,TIME_DATE|TIME_SECONDS)+" UTC":"WebRequest: "+(Web.valid?Web.status:"start downloader script"),row++,Web.Online()&&WebCacheReady?clrPaleGreen:clrOrange);
  string publication=Forecast.healthy?TimeToString(Forecast.generated,TIME_DATE|TIME_MINUTES)+" UTC | "+CKADate(Forecast.horizonStart)+".."+CKADate(Forecast.horizonEnd):"--";
  Label("file","Forecast dibuat "+publication,row++,clrSilver);
  int y=InpPanelY+14+row*(InpFontSize+9);Button("previous","< PREV",InpPanelX+10,y,110);Button("today","TODAY / NEXT WEEKDAY",InpPanelX+130,y,225);Button("next","NEXT >",InpPanelX+365,y,110);
@@ -122,12 +134,12 @@ void DrawBands(){
 void Paint(){if(InDraw)return;InDraw=true;DrawBands();DrawPanel();ChartRedraw();InDraw=false;}
 void Refresh(){RefreshClock();LoadForecast();if(FollowToday&&NowUTC>0)SelectedDate=CKAUpcomingDay(NowUTC);Paint();}
 int OnInit(){
- if(InpHistoryDays<1||InpHistoryDays>10||InpPanelX<0||InpPanelY<0||InpFontSize<8||InpFontSize>16||
+ if(InpMaxWebSilenceMinutes<2||InpMaxWebSilenceMinutes>1440||InpHistoryDays<1||InpHistoryDays>10||InpPanelX<0||InpPanelY<0||InpFontSize<8||InpFontSize>16||
   (InpBrokerUtcOffsetMinutes!=2147483647&&(InpBrokerUtcOffsetMinutes<-840||InpBrokerUtcOffsetMinutes>840)))return INIT_PARAMETERS_INCORRECT;
  if(InpDateWIB!=""&&CKADateParse(InpDateWIB)==0)return INIT_PARAMETERS_INCORRECT;
  Prefix="CEBONK_KZ_"+IntegerToString(ChartID())+"_"+IntegerToString((long)GetMicrosecondCount())+"_";
  FollowToday=InpDateWIB=="";SelectedDate=FollowToday?CKAUpcomingDay(TimeGMT()):CKADateParse(InpDateWIB);
- IndicatorSetString(INDICATOR_SHORTNAME,"CEBONK KILLZONE ASTROLOGY 1.00");if(!EventSetTimer(15))return INIT_FAILED;Refresh();return INIT_SUCCEEDED;
+ IndicatorSetString(INDICATOR_SHORTNAME,"CEBONK KILLZONE ASTROLOGY WEB 1.01");if(!EventSetTimer(15))return INIT_FAILED;Refresh();return INIT_SUCCEEDED;
 }
 int OnCalculate(const int rates_total,const int prev_calculated,const datetime &time[],const double &open[],const double &high[],const double &low[],const double &close[],const long &tick_volume[],const long &volume[],const int &spread[]){
  if(FirstCalculation){FirstCalculation=false;Paint();}return rates_total;
@@ -138,7 +150,7 @@ void OnChartEvent(const int id,const long &lparam,const double &dparam,const str
  bool previous=sparam==Prefix+"UI_previous",next=sparam==Prefix+"UI_next",today=sparam==Prefix+"UI_today";if(!previous&&!next&&!today)return;
  NavStatus="";
  if(today){FollowToday=true;if(NowUTC>0)SelectedDate=CKAUpcomingDay(NowUTC);}
- else{datetime candidate=CKANextTradingDay(SelectedDate,previous?-1:1);if(Forecast.Covers(candidate)){SelectedDate=candidate;FollowToday=false;}else NavStatus="Date outside forecast. Run Update-KillzoneForecast.ps1.";}
+ else{datetime candidate=CKANextTradingDay(SelectedDate,previous?-1:1);if(Forecast.Covers(candidate)){SelectedDate=candidate;FollowToday=false;}else NavStatus="Date outside web forecast horizon.";}
  Paint();
 }
 void OnDeinit(const int reason){EventKillTimer();if(Prefix!="")ObjectsDeleteAll(0,Prefix);ChartRedraw();}

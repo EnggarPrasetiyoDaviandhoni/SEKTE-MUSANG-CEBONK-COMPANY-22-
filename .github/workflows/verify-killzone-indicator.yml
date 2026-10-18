@@ -4,11 +4,14 @@ on:
   pull_request:
     paths:
       - 'MQL5/Indicators/CEBONK_KILLZONE_ASTROLOGY*'
+      - 'MQL5/Scripts/CEBONK_KILLZONE_WEBREQUEST*'
       - 'MQL5/Include/CebonkKillzone/**'
       - 'MQL5/Files/cebonk-killzone-forecast-v1.json'
       - 'indicators/astro_killzone/**'
       - 'tests/killzone/**'
       - 'scripts/package-killzone-indicator.py'
+      - 'scripts/check-killzone-web-feed.mjs'
+      - '.github/workflows/publish-killzone-web-feed.yml'
       - 'index.html'
       - 'assets/astro-killzone-core.js'
       - '.github/workflows/verify-killzone-indicator.yml'
@@ -16,10 +19,13 @@ on:
     branches: [main]
     paths:
       - 'MQL5/Indicators/CEBONK_KILLZONE_ASTROLOGY*'
+      - 'MQL5/Scripts/CEBONK_KILLZONE_WEBREQUEST*'
       - 'MQL5/Include/CebonkKillzone/**'
       - 'indicators/astro_killzone/**'
       - 'tests/killzone/**'
       - 'scripts/package-killzone-indicator.py'
+      - 'scripts/check-killzone-web-feed.mjs'
+      - '.github/workflows/publish-killzone-web-feed.yml'
       - '.github/workflows/verify-killzone-indicator.yml'
 permissions:
   contents: read

@@ -1,5 +1,5 @@
 {
-  "checked_at_utc": "2026-10-18T05:30:31.126693+00:00",
+  "checked_at_utc": "2026-10-18T06:25:41.481965+00:00",
   "node_tests": {
     "status": "PASS",
     "cases": 15
@@ -13,7 +13,7 @@
   },
   "actual_mql_headers_cpp_host": {
     "status": "PASS",
-    "assertions": 99,
+    "assertions": 112,
     "iana_dst_schedules": 60,
     "sanitizers": [
       "address",
@@ -22,28 +22,41 @@
   },
   "standalone_source_checks": {
     "status": "PASS",
-    "mql_files": 5,
+    "mql_files": 7,
     "trade_apis": false,
-    "webrequest": false,
+    "webrequest_only_in_native_script": true,
+    "webrequest_in_indicator": false,
     "other_strategy_modules": false
   },
   "metaeditor": "NOT_COMPILED: compiler unavailable",
   "mt5_rendering_runtime": "NOT_RUN",
   "powershell_scripts": "NOT_RUN: PowerShell unavailable",
-  "ea_required": false,
-  "network_required_to_recalculate_forecast": false,
-  "node_required_to_recalculate_forecast": ">=20",
-  "node_required_to_display_bundled_forecast": false,
-  "archive_manifest": {
+  "client_version": "1.01 WebRequest",
+  "mt5_native_webrequest": "NOT_RUN: MetaEditor/MT5 unavailable",
+  "trading_ea_required": false,
+  "client_needs_node_or_python": false,
+  "web_request_cache_policy": {
     "status": "PASS",
-    "files_verified": 20,
-    "ea_files_included": false
+    "cases": [
+      "HTTPS only",
+      "bounded retry/backoff",
+      "hash-bound verified cache",
+      "60-minute expiry boundary",
+      "future download timestamp rejected",
+      "HTTP 503 retains prior verified cache within grace",
+      "HTTP 200 label without verified payload rejected"
+    ]
   },
-  "packed_offline_generator": {
-    "status": "PASS",
-    "location": "extracted ZIP outside repository",
-    "sessions_regenerated": 5,
-    "npm_install_required": false,
-    "ea_or_network_required": false
-  }
+  "public_endpoint": {
+    "checked_at_utc": "2026-10-18T06:25:10.066Z",
+    "http": 200,
+    "payload_sha256": "ebd9f278ec49fa4ca764e2f18403ee4104883a622dec625a8fcc69b513c11b16",
+    "model_id": "CEBONK_ASTRODOX_V1_SESSION_ONLY",
+    "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/killzone-astrology-feed-v1/forecast.json",
+    "bytes": 57657,
+    "horizon_start_wib": "2026-10-11",
+    "horizon_end_wib": "2026-11-21",
+    "mt5_native_webrequest": "NOT_RUN"
+  },
+  "daily_publication": "WORKFLOW_READY_PENDING_MERGE_INTO_MAIN; initial feed published and HTTP 200 verified"
 }

@@ -1,0 +1,11 @@
+{
+  "checked_at_utc": "2026-10-18T06:25:10.066Z",
+  "http": 200,
+  "payload_sha256": "ebd9f278ec49fa4ca764e2f18403ee4104883a622dec625a8fcc69b513c11b16",
+  "model_id": "CEBONK_ASTRODOX_V1_SESSION_ONLY",
+  "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/killzone-astrology-feed-v1/forecast.json",
+  "bytes": 57657,
+  "horizon_start_wib": "2026-10-11",
+  "horizon_end_wib": "2026-11-21",
+  "mt5_native_webrequest": "NOT_RUN"
+}

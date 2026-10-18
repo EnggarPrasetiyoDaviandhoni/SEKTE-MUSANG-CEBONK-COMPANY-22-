@@ -1,2 +1,2 @@
-PASS standalone/source checks on 5 MQL files; no trade APIs, WebRequest or other strategy modules
-PASS 99 assertions on actual standalone MQL forecast/calendar/parser headers; 60 IANA/DST schedules; C++ host, not MetaEditor
+PASS standalone/source checks on 7 MQL files; WebRequest only in downloader script; no trade APIs or other strategy modules
+PASS 112 assertions on actual MQL forecast/calendar/parser and WebRequest cache policy; 60 IANA/DST schedules; C++ host, not MetaEditor

@@ -1,0 +1,1 @@
+The MT5 WebRequest downloader script creates its forecast cache and webstatus file in this Files folder. Start the downloader script first; an offline forecast without verified web status does not activate the indicator.

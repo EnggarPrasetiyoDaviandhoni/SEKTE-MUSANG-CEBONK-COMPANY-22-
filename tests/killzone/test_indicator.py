@@ -3,15 +3,17 @@ from pathlib import Path
 import os,re,subprocess,tempfile
 root=Path(__file__).resolve().parents[2]
 headers=root/'MQL5/Include/CebonkKillzone'
-indicator=root/'MQL5/Indicators/CEBONK_KILLZONE_ASTROLOGY_v1.00.mq5'
-files=[indicator,*headers.glob('*.mqh')]
+indicator=root/'MQL5/Indicators/CEBONK_KILLZONE_ASTROLOGY_v1.01.mq5'
+downloader=root/'MQL5/Scripts/CEBONK_KILLZONE_WEBREQUEST_v1.01.mq5'
+files=[indicator,downloader,*headers.glob('*.mqh')]
 for path in files:
     source=re.sub(r'#ifdef __cplusplus\n.*?#endif','',path.read_text(),flags=re.S)
     for delimiter,target in re.findall(r'#include\s*([<"])([^>"\n]+)[>"]',source):
         include=(root/'MQL5/Include'/target) if delimiter=='<' else path.parent/target
         assert include.is_file(),f'{path}: missing {target}'
     stripped=re.sub(r'/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'',' ',source,flags=re.S)
-    assert not re.search(r'\b(?:CTrade|OrderSend|OrderSendAsync|OrderCheck|PositionModify|PositionClose|WebRequest|iATR|iMA)\b|#import|CebonkSwing',stripped),f'{path}: non-standalone capability'
+    assert not re.search(r'\b(?:CTrade|OrderSend|OrderSendAsync|OrderCheck|PositionModify|PositionClose|iATR|iMA)\b|#import|CebonkSwing',stripped),f'{path}: non-standalone capability'
+    if path!=downloader:assert not re.search(r'\bWebRequest\s*\(',stripped),f'{path}: network call outside downloader script'
     stack=[]
     for c in stripped:
         if c in '([{':stack.append(c)
@@ -19,7 +21,8 @@ for path in files:
     assert not stack,path
 assert '#property indicator_chart_window' in indicator.read_text()
 assert 'OnCalculate(' in indicator.read_text() and 'OnTick(' not in indicator.read_text()
-print(f'PASS standalone/source checks on {len(files)} MQL files; no trade APIs, WebRequest or other strategy modules',flush=True)
+assert 'void OnStart()' in downloader.read_text() and 'WebRequest("GET"' in downloader.read_text() and 'OnTick(' not in downloader.read_text()
+print(f'PASS standalone/source checks on {len(files)} MQL files; WebRequest only in downloader script; no trade APIs or other strategy modules',flush=True)
 with tempfile.TemporaryDirectory(prefix='cebonk-killzone-') as directory:
     for path in headers.glob('*.mqh'):
         source=path.read_text()

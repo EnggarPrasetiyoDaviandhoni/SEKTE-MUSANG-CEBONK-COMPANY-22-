@@ -1,5 +1,6 @@
 #include "host_mt5.hpp"
 #include "Forecast.mqh"
+#include "WebState.mqh"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -42,5 +43,18 @@ int main(int argc,char **argv){
   CHECK(start==d+local*60-CKAIanaOffset(d,index)*60&&end==start+(index==4?7200:10800));schedules++;
  }
  CHECK(schedules==60);CHECK(feed.Accept(raw,now));
- std::cout<<"PASS "<<checks<<" assertions on actual standalone MQL forecast/calendar/parser headers; 60 IANA/DST schedules; C++ host, not MetaEditor\n";
+ CHECK(CKAWebURL("https://example.invalid/forecast.json")&&!CKAWebURL("http://example.invalid/forecast.json"));
+ CHECK(!CKAWebURL("https://example.invalid/\r\nX-Test: bad"));
+ CHECK(CKAWebDelay(true,0,600)==600&&CKAWebDelay(false,1,600)==30&&CKAWebDelay(false,2,600)==60&&CKAWebDelay(false,10,600)==600);
+ CKAWebState state;state.url="https://example.invalid/forecast.json";state.lastAttempt=now;state.lastSuccess=now;state.http=200;state.status="WEB_OK";state.cacheHash=feed.hash;
+ CKAWebState restored;CHECK(restored.Parse(state.Encode()));CHECK(restored.Online()&&restored.CacheUsable(now,3600,feed.hash));
+ CHECK(restored.CacheUsable(now+3599,3600,feed.hash)&&!restored.CacheUsable(now+3600,3600,feed.hash));
+ CHECK(!restored.CacheUsable(now,3600,std::string(64,'0'))&&!restored.CacheUsable(now,0,feed.hash));
+ CHECK(!restored.CacheUsable(now-61,3600,feed.hash));
+ state.status="HTTP_503";state.http=503;state.lastAttempt=now+10;CHECK(restored.Parse(state.Encode()));
+ CHECK(!restored.Online()&&restored.CacheUsable(now+10,3600,feed.hash)); // Verified cache survives a transient network failure.
+ state.lastSuccess=0;state.cacheHash="";CHECK(restored.Parse(state.Encode())&&!restored.CacheUsable(now+10,3600,feed.hash));
+ state.status="WEB_OK";state.http=200;CHECK(!restored.Parse(state.Encode())); // A 200 label without verified data is not online.
+ CHECK(!restored.Parse(replaceOne(state.Encode().utf8(),"CEBONK_KILLZONE_WEBREQUEST","OTHER_STATUS_MODEL")));
+ std::cout<<"PASS "<<checks<<" assertions on actual MQL forecast/calendar/parser and WebRequest cache policy; 60 IANA/DST schedules; C++ host, not MetaEditor\n";
 }
