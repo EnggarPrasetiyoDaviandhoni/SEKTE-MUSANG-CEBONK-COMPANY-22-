@@ -1,0 +1,11 @@
+{
+  "name": "cebonk-mt5-killzone-astrology-only",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=20"},
+  "scripts": {
+    "generate": "node generate.mjs",
+    "test": "node ../../tests/killzone/feed.test.mjs"
+  }
+}

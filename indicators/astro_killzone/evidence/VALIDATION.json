@@ -1,0 +1,49 @@
+{
+  "checked_at_utc": "2026-10-18T05:30:31.126693+00:00",
+  "node_tests": {
+    "status": "PASS",
+    "cases": 15
+  },
+  "original_browser_vs_node": {
+    "status": "PASS",
+    "dates": 12,
+    "sessions": 60,
+    "window_times_and_scores": "IDENTICAL",
+    "kind": "VM browser UMD API parity, not browser UI automation"
+  },
+  "actual_mql_headers_cpp_host": {
+    "status": "PASS",
+    "assertions": 99,
+    "iana_dst_schedules": 60,
+    "sanitizers": [
+      "address",
+      "undefined"
+    ]
+  },
+  "standalone_source_checks": {
+    "status": "PASS",
+    "mql_files": 5,
+    "trade_apis": false,
+    "webrequest": false,
+    "other_strategy_modules": false
+  },
+  "metaeditor": "NOT_COMPILED: compiler unavailable",
+  "mt5_rendering_runtime": "NOT_RUN",
+  "powershell_scripts": "NOT_RUN: PowerShell unavailable",
+  "ea_required": false,
+  "network_required_to_recalculate_forecast": false,
+  "node_required_to_recalculate_forecast": ">=20",
+  "node_required_to_display_bundled_forecast": false,
+  "archive_manifest": {
+    "status": "PASS",
+    "files_verified": 20,
+    "ea_files_included": false
+  },
+  "packed_offline_generator": {
+    "status": "PASS",
+    "location": "extracted ZIP outside repository",
+    "sessions_regenerated": 5,
+    "npm_install_required": false,
+    "ea_or_network_required": false
+  }
+}

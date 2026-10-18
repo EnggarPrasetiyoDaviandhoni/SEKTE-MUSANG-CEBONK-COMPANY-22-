@@ -1,0 +1,47 @@
+name: Standalone MT5 Killzone Astrology indicator
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'MQL5/Indicators/CEBONK_KILLZONE_ASTROLOGY*'
+      - 'MQL5/Include/CebonkKillzone/**'
+      - 'MQL5/Files/cebonk-killzone-forecast-v1.json'
+      - 'indicators/astro_killzone/**'
+      - 'tests/killzone/**'
+      - 'scripts/package-killzone-indicator.py'
+      - 'index.html'
+      - 'assets/astro-killzone-core.js'
+      - '.github/workflows/verify-killzone-indicator.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'MQL5/Indicators/CEBONK_KILLZONE_ASTROLOGY*'
+      - 'MQL5/Include/CebonkKillzone/**'
+      - 'indicators/astro_killzone/**'
+      - 'tests/killzone/**'
+      - 'scripts/package-killzone-indicator.py'
+      - '.github/workflows/verify-killzone-indicator.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Forecast validation and original-browser parity
+        run: node tests/killzone/feed.test.mjs
+      - name: Actual MQL parser/calendar/forecast code on host and standalone source checks
+        run: python3 tests/killzone/test_indicator.py
+      - name: Recalculate complete standalone forecast offline
+        run: node indicators/astro_killzone/generate.mjs
+      - name: Build standalone source indicator package
+        run: python3 scripts/package-killzone-indicator.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CEBONK-KILLZONE-INDICATOR-SOURCE-NOT-MT5-COMPILED
+          path: indicators/astro_killzone/dist/*.zip
+          if-no-files-found: error

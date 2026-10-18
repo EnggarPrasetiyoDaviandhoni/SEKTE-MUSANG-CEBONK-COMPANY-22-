@@ -1,0 +1,24 @@
+✔ complete standalone forecast validates, without swing/weekly/daily fields (46.669397ms)
+✔ all five session identities occur exactly once per weekday (0.416808ms)
+✔ checksum detects edited scores (6.11123ms)
+✔ missing sessions rejected (21.064753ms)
+✔ duplicate session rejected (21.220602ms)
+✔ broker/WIB substitution cannot change source UTC times (20.224899ms)
+✔ unexpected weekly filter rejected (3.106274ms)
+✔ wrong model rejected (3.333305ms)
+✔ focus and best-window ranking are checked (57.764639ms)
+✔ invalid window bounds and off-grid endpoints rejected (37.598699ms)
+✔ future publication and current date outside horizon rejected (4.291637ms)
+✔ invalid/too-wide generation ranges rejected (4.659ms)
+✔ vendored original source and ephemeris hashes match audit (1.563833ms)
+PARITY PASS: 12 dates, 60 sessions; all window times/scores identical; browser UMD versus Node.
+✔ real browser astronomy and original website source match standalone engine across DST (11498.127199ms)
+✔ neutral mixed windows and dominant longest-window selection stay independent (3.448219ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11736.009385
