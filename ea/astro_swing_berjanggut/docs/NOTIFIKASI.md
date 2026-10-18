@@ -1,4 +1,4 @@
-# Notifikasi MT5 dan Telegram — v1.10
+# Notifikasi MT5 dan Telegram — v1.11
 
 Kartu entry mengikuti format CEBONK COMPANY 22 yang diminta pengguna. Contoh dalam `evidence/notification-example.txt` memakai harga fiktif dari contoh pengguna dan dihasilkan oleh tes; itu bukan transaksi atau sinyal pasar.
 
@@ -23,6 +23,6 @@ Outbox menyimpan cursor bagian push dan status Telegram per event. Restart melan
 
 ## Upgrade dan validasi
 
-State basket v3 menambahkan konteks notifikasi yang disimpan sebelum request. File v1/v2 tetap diterima tanpa menghapus arah, pending order, layer counter, position identifiers atau SL/TP. Field konteks lama yang memang tidak tersedia ditulis BELUM TERSEDIA/TERVERIFIKASI, bukan direka. File weekly lock tidak diubah oleh penyesuaian notifikasi.
+State basket v4 menyimpan total layer tanpa fase serta konteks notifikasi sebelum request. File v1/v2/v3 tetap diterima tanpa menghapus arah, pending order, layer counter, position identifiers atau SL/TP. Field konteks lama yang memang tidak tersedia ditulis BELUM TERSEDIA/TERVERIFIKASI, bukan direka. File weekly lock tidak diubah oleh penyesuaian notifikasi.
 
-Tes host menjalankan formatter, splitter, outbox dan persistence produksi dengan adapter terminal/transport dalam memori. Meliputi BUY/SELL, ICT A/B, IPDA, RR, volume partial, batas 255, Unicode emoji, pesan Telegram utuh, retry, dedup, resume sesudah restart, dan migrasi state v1/v2. MetaEditor serta penerimaan pesan pada MT5/Telegram nyata belum diuji dalam lingkungan ini.
+Tes host menjalankan formatter, splitter, outbox dan persistence produksi dengan adapter terminal/transport dalam memori. Meliputi BUY/SELL, ICT A/B, IPDA, RR, volume partial, batas 255, Unicode emoji, pesan Telegram utuh, retry, dedup, resume sesudah restart, dan migrasi state v1/v2/v3. MetaEditor serta penerimaan pesan pada MT5/Telegram nyata belum diuji dalam lingkungan ini.

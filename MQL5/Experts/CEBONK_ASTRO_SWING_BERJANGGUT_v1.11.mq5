@@ -1,5 +1,5 @@
 #property strict
-#property version "1.10"
+#property version "1.11"
 #property description "CEBONK XAUUSD Swing: original Astro feed + H4/H1/M15 + M5 Musang EL2 only"
 #property tester_file "swing-forecast-v2.history.jsonl"
 #property tester_file "cebonk-broker-offsets.csv"
@@ -22,7 +22,6 @@ input bool InpTokyo=true;
 input bool InpLondonOpen=true;
 input bool InpNewYork=true;
 input bool InpLondonClose=true;
-input bool InpStrictIPDA_PDFilter=false;
 input double InpMoonMajorPhaseWindowHours=0; // 0=annotation only; optional research veto, no direction or sizing.
 input int InpM5MaxBarsGateToIB=16;
 input int InpM5MaxBarsIBToCB1Break=12;
@@ -73,18 +72,16 @@ void Entry(){
  CSSession session=Feed.sessions[owner];if(!SessionEnabled(session.sessionId)){Reason("SESSION_DISABLED");return;}
  if(Basket.conflict||Basket.state.pending||Basket.state.exitPending){Reason("BASKET_BLOCKED");return;}
  if(Basket.positions==0&&Basket.GlobalBusy()){Reason("ONE_GLOBAL_BASKET");return;}
- bool core=now>=session.core;string window=session.id+"|"+IntegerToString((long)session.windowStart)+"|"+IntegerToString((long)session.windowEnd);
+ string window=session.id+"|"+IntegerToString((long)session.start)+"|"+IntegerToString((long)session.end);
  if(Basket.positions==0&&Basket.state.Contains(Basket.state.spent,window)){Reason("WINDOW_ALREADY_SPENT");return;}
- if(Basket.positions>0&&(Basket.state.side!=Weekly.value.side||Basket.state.window!=window||!core||Basket.state.inti>=2||Basket.state.awal==0||Basket.state.recovered)){Reason("BASKET_ACTIVE_NO_NEW_LAYERS");return;}
+ if(Basket.positions>0&&(Basket.state.side!=Weekly.value.side||Basket.state.layers>=4||Basket.state.recovered)){Reason("BASKET_ACTIVE_NO_NEW_LAYERS");return;}
  if(InpMoonMajorPhaseWindowHours>0){double nearest=1e20;for(int i=0;i<ArraySize(Feed.majorEvents);i++)nearest=CSMin(nearest,MathAbs((double)(now-Feed.majorEvents[i])));
   if(nearest>InpMoonMajorPhaseWindowHours*3600){Reason("SKIP_MOON_RESEARCH_WINDOW");return;}}
  if(!Market.Load(TradeSymbol)){Reason(Market.error);return;}Market.Build(Feed,Clock);
  int side=Weekly.value.side;MqlTick quote;if(!SymbolInfoTick(TradeSymbol,quote)){Reason("QUOTE_NOT_READY");return;}
  if(Market.h4State==-2||(Market.h4State!=0&&Market.h4State!=side)){Reason("SKIP_H4_OPPOSED_OR_NOT_READY");return;}
- if(InpStrictIPDA_PDFilter){double eq=(Market.ipdaHigh[0]+Market.ipdaLow[0])/2,mid=(quote.ask+quote.bid)/2;
-  if(side>0?mid>=eq-Market.tick:mid<=eq+Market.tick){Reason("SKIP_IPDA_RESEARCH_PD_FILTER");return;}}
  CSSetup setups[];CSH1Setups(Market.h1,Market.levels,side,Market.h4State,Market.tick,quote.ask-quote.bid,TimeCurrent(),setups);
- datetime start=Clock.ToServer(session.windowStart),end=Clock.ToServer(session.windowEnd);if(start<=0||end<=start){Reason("CLOCK_WINDOW_UNVERIFIED");return;}
+ datetime start=Clock.ToServer(session.start),end=Clock.ToServer(session.end);if(start<=0||end<=start){Reason("CLOCK_WINDOW_UNVERIFIED");return;}
  string failure="WAIT_H1_SWEEP_MSS_OR_BOS";
  for(int i=0;i<ArraySize(setups);i++){
   CSSetup setup=setups[i];datetime gate=CSM15Gate(Market.m15,setup,start,end);if(gate==0){failure="WAIT_M15_FRESH_RETEST";continue;}
@@ -99,16 +96,15 @@ void Entry(){
   if(signal==""){failure="SIGNAL_HASH_FAILED";continue;}
   PrintFormat("CEBONK M5 EL2 kind=%d source=%I64d IB_close=%I64d CB1_pivot=%I64d break=%I64d retest=%I64d IB=[%.8f,%.8f] fib0=%.8f fib1=%.8f span=%.8f candidate_SL_level=%.8f candidate_SL_raw=%.8f order_SL=%.8f TP_ICT=%.8f target_mask=%u RR=%.3f",micro.kind,(long)micro.source,(long)micro.ibClose,(long)micro.cb1Pivot,(long)micro.breakClose,(long)micro.retestClose,micro.zoneLow,micro.zoneHigh,micro.fib0,micro.fib1,micro.fib1-micro.fib0,InpSLFibLevel,micro.slRaw,sl,tp,kind,CSRR(side,entry,sl,tp));
   // Recheck UTC/window immediately before execution; source/feed can expire while evaluating.
-  now=Clock.Now();if(!Feed.Valid(now)||now<session.windowStart||now>=session.windowEnd){failure="SKIP_WINDOW_OR_FEED_EXPIRED";break;}
-  core=now>=session.core;datetime phaseEnd=core?session.windowEnd:session.core;
-  datetime deadline=TimeCurrent()+(datetime)CSMin(phaseEnd-now,Feed.expires-now);
+  now=Clock.Now();if(!Feed.Valid(now)||now<session.start||now>=session.end){failure="SKIP_WINDOW_OR_FEED_EXPIRED";break;}
+  datetime deadline=TimeCurrent()+(datetime)CSMin(session.end-now,Feed.expires-now);
   CSOrderNoticeContext context;context.known=true;context.symbol=TradeSymbol;context.session=session.sessionId;
   context.weekly=Weekly.value.side;context.model=setup.model;context.autopilot=Autopilot;context.cutProfit=InpCutProfitEnabled;
   context.ipdaDays=InpNotificationIPDADays;int ipda=InpNotificationIPDADays==20?0:InpNotificationIPDADays==40?1:2;
   context.ipdaHigh=Market.ipdaHigh[ipda];context.ipdaLow=Market.ipdaLow[ipda];context.digits=(int)SymbolInfoInteger(TradeSymbol,SYMBOL_DIGITS);
   context.volumeDigits=0;double volumeStep=SymbolInfoDouble(TradeSymbol,SYMBOL_VOLUME_STEP);
   while(context.volumeDigits<8&&MathAbs(volumeStep-MathRound(volumeStep))>1e-8){context.volumeDigits++;volumeStep*=10;}
-  bool sent=Basket.Submit(window,core,signal,setup,gate,micro,tp,deadline,context,Notify);failure=Basket.error;Dirty=true;
+  bool sent=Basket.Submit(window,signal,setup,gate,micro,tp,deadline,context,Notify);failure=Basket.error;Dirty=true;
   if(!sent)Notify.Add("ENTRY_BLOCKED_"+signal+"_"+failure,"CEBONK entry blocked: "+failure);
   if(sent||Basket.state.Contains(Basket.state.signals,signal))break;
  }
@@ -116,28 +112,28 @@ void Entry(){
 }
 void Draw(){
  string rows[];ArrayResize(rows,22);datetime now=Clock.Now();
- rows[0]="CEBONK SWING v1.10 | "+TradeSymbol+" | M5 MUSANG EL2 ONLY";
+ rows[0]="CEBONK SWING v1.11 | "+TradeSymbol+" | M5 MUSANG EL2 ONLY";
  rows[1]="UTC "+TimeToString(now,TIME_DATE|TIME_SECONDS)+" | WIB "+TimeToString(now+25200,TIME_DATE|TIME_SECONDS);
  rows[2]="Broker "+TimeToString(TimeCurrent(),TIME_DATE|TIME_SECONDS)+" | "+Clock.error;
  rows[3]="Feed "+Feed.error+" | age "+IntegerToString(now>0?(long)(now-Feed.generated):0)+" s";
  int day=Feed.DayIndex(CSDate(now+25200));bool locked=now>0&&Weekly.value.Current(CSWeekMondayUTC(now));
  rows[4]="WEEKLY LOCK "+(locked?(Weekly.value.side>0?"BUY ONLY":Weekly.value.side<0?"SELL ONLY":"WAIT"):"UNSET")+
-  " | "+(Weekly.value.monday>0?CSDate(Weekly.value.monday+25200):"-")+" | DAY="+IntegerToString(day<0?0:Feed.days[day].daily);
+  " | "+(Weekly.value.monday>0?CSDate(Weekly.value.monday+25200):"-")+" | DAY (annotation)="+IntegerToString(day<0?0:Feed.days[day].daily);
  rows[5]="Moon: no accepted observation";for(int i=ArraySize(Feed.moon)-1;i>=0;i--)if(Feed.moon[i].observed<=now){rows[5]=Feed.moon[i].phase+" "+DoubleToString(Feed.moon[i].illumination,2)+"% observed UTC "+TimeToString(Feed.moon[i].observed,TIME_DATE|TIME_MINUTES);break;}
  for(int k=0;k<5;k++){rows[6+k]="Session "+IntegerToString(k)+": WAIT";for(int i=0;i<ArraySize(Feed.sessions);i++){
   CSSession s=Feed.sessions[i];if(CSSessionIndex(s.sessionId)==k&&s.date==CSDate(now+25200)){
-   rows[6+k]=s.sessionId+" "+s.zone+" dir="+IntegerToString(s.direction)+(s.direction==0?" WAIT":" UTC "+TimeToString(s.windowStart,TIME_MINUTES)+" / "+TimeToString(s.core,TIME_MINUTES)+" / "+TimeToString(s.windowEnd,TIME_MINUTES));break;
+   rows[6+k]=s.sessionId+" "+s.zone+" dir="+IntegerToString(s.direction)+(s.direction==0?" WAIT":" UTC "+TimeToString(s.start,TIME_MINUTES)+" — "+TimeToString(s.end,TIME_MINUTES));break;
   }}}
  rows[11]="IPDA D1 20 H/L "+DoubleToString(Market.ipdaHigh[0],3)+" / "+DoubleToString(Market.ipdaLow[0],3);
  rows[12]="IPDA D1 40 H/L "+DoubleToString(Market.ipdaHigh[1],3)+" / "+DoubleToString(Market.ipdaLow[1],3);
  rows[13]="IPDA D1 60 H/L "+DoubleToString(Market.ipdaHigh[2],3)+" / "+DoubleToString(Market.ipdaLow[2],3);
  rows[14]="H4 state="+IntegerToString(Market.h4State)+" | H1/M15/M5: "+LastReason;
- rows[15]="Basket "+Basket.state.basket+" positions="+IntegerToString(Basket.positions)+" layers="+IntegerToString(Basket.state.awal+Basket.state.inti)+"/4";
+ rows[15]="Basket "+Basket.state.basket+" positions="+IntegerToString(Basket.positions)+" layers="+IntegerToString(Basket.state.layers)+"/4";
  rows[16]="New basket FIB "+DoubleToString(InpSLFibLevel,5)+" | Basket SL "+DoubleToString(Basket.state.sl,5)+" | TP ICT "+DoubleToString(Basket.state.tp,5);
  double net=0;bool verified=Basket.Net(net);rows[17]="Risk="+DoubleToString(Basket.lastRisk,3)+"% | NET="+(verified?DoubleToString(net,2):"UNVERIFIED");
  rows[18]="M15 exit "+Basket.error+" pending="+(Basket.state.exitPending?"YES":"NO");
  rows[19]="Telegram "+(InpTelegramEnabled?"ON":"OFF")+" | MT5 Push "+(InpPushEnabled?"ON":"OFF")+" | risk cap "+DoubleToString(InpMaxBasketRiskPct,2)+"%";
- rows[20]="5-day bias: ";if(day>=0)for(int i=0;i<ArraySize(Feed.days);i++)if(Feed.days[i].monday==Feed.days[day].monday)rows[20]+=Feed.days[i].date+":"+IntegerToString(Feed.days[i].daily)+" ";
+ rows[20]="Daily annotation: ";if(day>=0)for(int i=0;i<ArraySize(Feed.days);i++)if(Feed.days[i].monday==Feed.days[day].monday)rows[20]+=Feed.days[i].date+":"+IntegerToString(Feed.days[i].daily)+" ";
  rows[21]="H1 source "+TimeToString(Basket.state.h1Origin,TIME_DATE|TIME_MINUTES)+" | M15 "+TimeToString(Basket.state.m15Retest,TIME_MINUTES)+" | IB "+TimeToString(Basket.state.m5Source,TIME_MINUTES);
  Panel.Draw(Autopilot,InpCutProfitEnabled&&InpManageExitWhenAutopilotOff,rows);
 }
@@ -172,9 +168,9 @@ void OnTimer(){
   int d=Feed.DayIndex(CSDate(Clock.Now()+25200));if(d>=0){
    string week=CSDate(Weekly.value.monday+25200)+"_"+IntegerToString(Weekly.value.side),day=Feed.days[d].date+"_"+IntegerToString(Feed.days[d].daily);
    if(week!=LastWeek){LastWeek=week;Notify.Add("WEEK_"+week,"CEBONK weekly bias "+week);}
-   if(day!=LastDay){LastDay=day;Notify.Add("DAY_"+day,"CEBONK daily bias "+day);}
+   LastDay=day; // Daily forecast remains an annotation, not an entry gate or alert.
   }
-  int owner=Feed.Owner(Clock.Now(),Weekly.value.Current(CSWeekMondayUTC(Clock.Now()))?Weekly.value.side:0);if(owner>=0&&SessionEnabled(Feed.sessions[owner].sessionId))Notify.Add("WINDOW_READY_"+Feed.sessions[owner].windowId,"CEBONK window ready "+Feed.sessions[owner].sessionId+"; entry still requires H4/H1/M15/M5, SL/TP and risk checks");
+  int owner=Feed.Owner(Clock.Now(),Weekly.value.Current(CSWeekMondayUTC(Clock.Now()))?Weekly.value.side:0);if(owner>=0&&SessionEnabled(Feed.sessions[owner].sessionId))Notify.Add("KILLZONE_READY_"+Feed.sessions[owner].id,"CEBONK weekly + Killzone aligned "+Feed.sessions[owner].sessionId+"; entry still requires H4/H1/M15/M5, SL/TP and risk checks");
  }
  Notify.Pump(TimeCurrent());Draw();
 }

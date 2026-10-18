@@ -1,9 +1,9 @@
 {
-  "checked_at_utc": "2026-10-18T10:30:45.611730+00:00",
-  "ea_version": "1.10",
+  "checked_at_utc": "2026-10-18T10:42:30.935204+00:00",
+  "ea_version": "1.11",
   "feed_contract": "2.1.0",
   "m5_model": "MUSANG_EL2_IB_CB1_RETEST",
-  "weekly_lock": "Monday 00:00 WIB; persisted BUY/SELL/WAIT; daily AND session must align",
+  "weekly_lock": "Monday 00:00 WIB; persisted BUY/SELL/WAIT; Killzone must align; daily is annotation",
   "campuran_threshold": {
     "share": 0.55,
     "minimum_directional_minutes": 360,
@@ -25,11 +25,11 @@
   },
   "numeric_policy_host": {
     "status": "PASS",
-    "assertions": 126
+    "assertions": 129
   },
   "json_feed_host": {
     "status": "PASS",
-    "assertions": 38
+    "assertions": 41
   },
   "production_basket_net_host": {
     "status": "PASS",
@@ -97,7 +97,7 @@
   },
   "notification_host": {
     "status": "PASS",
-    "assertions": 58,
+    "assertions": 62,
     "production_headers": [
       "NotificationFormat.mqh",
       "Notifier.mqh",
@@ -114,10 +114,29 @@
       "complete Telegram JSON",
       "durable chunk resume",
       "retry and dedup",
-      "v1/v2 state migration to v3",
-      "64-bit identifier precision"
+      "v1/v2/v3 state migration to v4",
+      "64-bit identifier precision",
+      "legacy 2+2 quota migrates as total four slots",
+      "reject out-of-range layer counter"
     ],
     "actual_messages_sent": false,
     "real_telegram_mt5_delivery": "NOT_RUN"
-  }
+  },
+  "entry_policy": {
+    "direction": "weekly lock + Killzone Astrology",
+    "daily_filter": false,
+    "session_phase_filter": false,
+    "time_interval": "full session [start,end), not best window/core",
+    "technical": "ICT H4/H1/M15 + M5 Musang EL2",
+    "layers": {
+      "maximum": 4,
+      "phase_quotas": false,
+      "maximum_per_confirmation_batch": 2,
+      "additions": "new H1/M15/EL2, may use a later aligned Killzone"
+    },
+    "ipda_pd_entry_filter": false,
+    "ipda_notification_days": 40
+  },
+  "feed_generator_changed_from_v1_10": false,
+  "prior_feed_tests_and_parity": "Unchanged generator/schema/libraries; prior parity and JS feed tests retained, native owner/policy tests rerun"
 }

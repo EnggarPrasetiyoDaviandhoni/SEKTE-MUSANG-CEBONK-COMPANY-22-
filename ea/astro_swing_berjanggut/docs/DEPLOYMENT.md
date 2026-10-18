@@ -24,7 +24,7 @@ Format payload: JSON canonical dengan key object tersortir, SHA-256 atas payload
 
 ## MT5
 
-Salin `MQL5/Experts`, `MQL5/Include/CebonkSwing`, `MQL5/Scripts`, dan file tester ke Data Folder terminal yang dipilih. Expert v1.10 bernama `CEBONK_ASTRO_SWING_BERJANGGUT_v1.10.mq5`. Compile dengan F7 atau:
+Salin `MQL5/Experts`, `MQL5/Include/CebonkSwing`, `MQL5/Scripts`, dan file tester ke Data Folder terminal yang dipilih. Expert v1.11 bernama `CEBONK_ASTRO_SWING_BERJANGGUT_v1.11.mq5`. Compile dengan F7 atau:
 
 ```powershell
 .\scripts\compile-swing.ps1 -MetaEditor 'C:\Program Files\MetaTrader 5\metaeditor64.exe' -DataFolder 'C:\Users\NAMA\AppData\Roaming\MetaQuotes\Terminal\ID_TERMINAL'
@@ -34,7 +34,7 @@ Script membutuhkan log “0 errors” dan EX5 baru; exit code proses saja tidak 
 
 Attach pada chart simbol XAUUSD yang sesuai. Isi komisi per lot per sisi; verifikasi kontrak simbol, minimum lot, tick size, margin, dan jam broker di MT5. Suffix broker diterima. Tombol ON hanya mengizinkan entry baru; OFF tidak menutup basket. Menghapus EA menghentikan manajemen client-side, sementara server SL/TP yang sudah terpasang tetap berlaku.
 
-Atur level SL pada **EA Properties → Inputs → `InpSLFibLevel`**. Gunakan angka negatif, misalnya `-0.236` (default), `-0.382`, atau `-0.618`; angka ini level Fibonacci, bukan jarak pip. Level baru berlaku untuk basket baru. Basket aktif dan layer tambahannya tetap memakai harga SL/TP awal dari state. State basket v1/v2 dimigrasikan ke v3 tanpa mereset basket. Jangan menghapus file state basket maupun `_weekly.json`: lock arah minggu harus bertahan setelah restart dan penggantian Inputs. Setelah mengganti Inputs atau mengganti expert ke v1.10, AUTOPILOT entry kembali OFF dan perlu dinyalakan bila entry baru diinginkan.
+Atur level SL pada **EA Properties → Inputs → `InpSLFibLevel`**. Gunakan angka negatif, misalnya `-0.236` (default), `-0.382`, atau `-0.618`; angka ini level Fibonacci, bukan jarak pip. Level baru berlaku untuk basket baru. Basket aktif dan layer tambahannya tetap memakai harga SL/TP awal dari state. State basket v1/v2/v3 dimigrasikan ke v4 dengan total layer tetap tersimpan tanpa mereset basket. Jangan menghapus file state basket maupun `_weekly.json`: lock arah minggu harus bertahan setelah restart dan penggantian Inputs. Setelah mengganti Inputs atau mengganti expert ke v1.11, AUTOPILOT entry kembali OFF dan perlu dinyalakan bila entry baru diinginkan.
 
 ## Strategy Tester offline
 
@@ -80,3 +80,7 @@ Common Files memakai prefix account/magic dan hash simbol; tester memakai namesp
 | `WEEKLY_LOCK_WAIT` | Keputusan minggu ini WAIT; tidak memaksa arah atau menghapus lock |
 | `WEEKLY_PERSISTENCE_FAILED` | Perbaiki akses Common Files; entry menunggu lock tersimpan |
 | `ORDER_ACK_UNKNOWN` | Rekonsiliasi history/order MT5; jangan membuat request entry pengganti secara manual dari signal yang sama |
+
+## Perubahan entry v1.11
+
+Weekly lock + arah Killzone aktif harus searah; daily hanya anotasi. Entry dievaluasi sepanjang sesi lengkap, tanpa AWAL/INTI/AKHIR/core. Maksimal empat layer total, dua order per batch konfirmasi; tambahan wajib setup teknikal baru dan dapat pada Killzone berikutnya. IPDA hanya konteks/target, bukan gate premium/discount. Feed 2.1.0 dan publisher yang sudah aktif tetap kompatibel; generator astronomi tidak berubah. Jangan menjalankan v1.10 dan v1.11 bersamaan.

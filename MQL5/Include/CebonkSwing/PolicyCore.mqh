@@ -14,7 +14,7 @@ struct CSWeekLatch {
  }
  bool Current(datetime week){return monday==week&&week>0;}
 };
-bool CSAligned(int locked,int daily,int session){return locked!=0&&daily==locked&&session==locked;}
+bool CSAligned(int locked,int session){return locked*locked==1&&session==locked;}
 int CSStrengthSide(double buy,double sell,int minutes,double minShare,int minMinutes){
  if(!CSFinite(buy)||!CSFinite(sell)||buy<0||sell<0||minShare<=0.5||minShare>1||minutes<minMinutes)return 0;
  double total=buy+sell;if(total<=0||MathAbs(buy-sell)<=total*1e-12)return 0;
@@ -33,9 +33,9 @@ int CSOrderOutcome(uint code){
   case 10044:case 10045:case 10046:return CS_ORDER_REJECTED;
  }return CS_ORDER_UNKNOWN;
 }
-bool CSReserveLayer(bool core,int &awal,int &inti){
- if(awal<0||inti<0||awal>2||inti>2||awal+inti>=4||(core?inti>=2:awal>=2))return false;
- if(core)inti++;else awal++;return true;
+bool CSReserveLayer(int &layers){
+ if(layers<0||layers>=4)return false;
+ layers++;return true;
 }
-void CSReleaseLayer(bool core,int &awal,int &inti){if(core){if(inti>0)inti--;}else if(awal>0)awal--;}
+void CSReleaseLayer(int &layers){if(layers>0)layers--;}
 #endif

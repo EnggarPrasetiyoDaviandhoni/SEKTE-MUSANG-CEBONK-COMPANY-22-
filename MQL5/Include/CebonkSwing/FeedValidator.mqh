@@ -170,9 +170,10 @@ class CSFeed {
   int Owner(datetime now,int lockedSide){
    int owner=-1;
    for(int i=0;i<ArraySize(sessions);i++){
-    CSSession s=sessions[i];int day=DayIndex(s.date);
-    if(day<0||!CSAligned(lockedSide,days[day].daily,s.direction)||now<s.windowStart||now>=s.windowEnd)continue;
-    if(owner<0||s.windowStart<sessions[owner].windowStart||(s.windowStart==sessions[owner].windowStart&&StringCompare(s.sessionId,sessions[owner].sessionId)<0))owner=i;
+    CSSession s=sessions[i];
+    // The whole Killzone is eligible. Daily bias and best-window/core are annotations.
+    if(!CSAligned(lockedSide,s.direction)||now<s.start||now>=s.end)continue;
+    if(owner<0||s.start<sessions[owner].start||(s.start==sessions[owner].start&&StringCompare(s.sessionId,sessions[owner].sessionId)<0))owner=i;
    }return owner;
   }
 };

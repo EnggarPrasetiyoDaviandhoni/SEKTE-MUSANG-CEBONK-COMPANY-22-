@@ -1,4 +1,4 @@
-name: CEBONK Swing v1.10 - verify source and feed
+name: CEBONK Swing v1.11 - verify source and feed
 on:
   workflow_dispatch:
   pull_request:

@@ -94,7 +94,7 @@ class CSBasket {
    positions=0;conflict=false;
    if(state.basket!=""&&state.first>0&&HistorySelect(state.first-3600,TimeCurrent()+60)){
     int count=HistoryDealsTotal();long found[];bool latestFilled=false;double fillVolume=0,fillValue=0;
-    string latest="CSB|"+state.basket+"|"+IntegerToString(state.awal+state.inti);
+    string latest="CSB|"+state.basket+"|"+IntegerToString(state.layers);
     for(int d=0;d<count;d++){
      ulong t=HistoryDealGetTicket(d);if(HistoryDealGetInteger(t,DEAL_MAGIC)==m_magic&&HistoryDealGetString(t,DEAL_SYMBOL)==m_symbol&&(StringFind(HistoryDealGetString(t,DEAL_COMMENT),"CSB|"+state.basket+"|")==0||(state.pending&&state.pendingOrder>0&&(ulong)HistoryDealGetInteger(t,DEAL_ORDER)==state.pendingOrder))){
       int n=ArraySize(found);ArrayResize(found,n+1);found[n]=HistoryDealGetInteger(t,DEAL_POSITION_ID);
@@ -116,14 +116,14 @@ class CSBasket {
      if(fillVolume>0&&fillValue>0){
       CSOrderNoticeContext context;CSNoticeContextDecode(state.noticeContext,context);
       if(context.known){context.autopilot=m_noticeAutopilot;context.cutProfit=m_noticeCutProfit;}
-      notify.Add("ENTRY_FILLED_"+state.basket+"_"+IntegerToString(state.awal+state.inti),
-       CSFilledOrderNotice(context,m_symbol,state.side,state.awal+state.inti,fillVolume,fillValue/fillVolume,state.sl,state.tp));
+      notify.Add("ENTRY_FILLED_"+state.basket+"_"+IntegerToString(state.layers),
+       CSFilledOrderNotice(context,m_symbol,state.side,state.layers,fillVolume,fillValue/fillVolume,state.sl,state.tp));
      }
      state.Remember(state.spent,state.window,256);state.Remember(state.signals,state.signal,512);
      state.last=TimeCurrent();if(!activeOrder){state.pending=false;state.pendingOrder=0;}state.Save();
     }else if(state.pending&&state.pendingOrder>0&&!activeOrder&&HistoryOrderSelect(state.pendingOrder)&&
       (ENUM_ORDER_STATE)HistoryOrderGetInteger(state.pendingOrder,ORDER_STATE)==ORDER_STATE_REJECTED){
-     CSReleaseLayer(state.pendingCore,state.awal,state.inti);state.pending=false;state.pendingOrder=0;state.Save();
+     CSReleaseLayer(state.layers);state.pending=false;state.pendingOrder=0;state.Save();
     }
    }
    for(int i=0;i<PositionsTotal();i++){
@@ -182,13 +182,13 @@ class CSBasket {
    request.type_filling=(filling&SYMBOL_FILLING_FOK)!=0?ORDER_FILLING_FOK:(filling&SYMBOL_FILLING_IOC)!=0?ORDER_FILLING_IOC:ORDER_FILLING_RETURN;
    if(!OrderCheck(request,checked)){error="ORDER_CHECK_"+IntegerToString(checked.retcode);return false;}return true;
   }
-  bool Submit(string windowId,bool core,string signal,const CSSetup &setup,datetime gate,const CSMicro &micro,double tp,datetime deadline,const CSOrderNoticeContext &context,CSNotifier &notify){
+  bool Submit(string windowId,string signal,const CSSetup &setup,datetime gate,const CSMicro &micro,double tp,datetime deadline,const CSOrderNoticeContext &context,CSNotifier &notify){
    bool newBasket=positions==0;
    if(newBasket&&(GlobalBusy()||state.Contains(state.spent,windowId))){error="WINDOW_SPENT_OR_BASKET_BUSY";return false;}
-   if((core?state.inti>=2:state.awal>=2)||state.awal+state.inti>=4){error="LAYER_LIMIT";return false;}
-   if(!newBasket&&(state.side!=setup.side||state.window!=windowId||!core||state.recovered||state.inti>=2||state.awal==0)){error="SKIP_BASKET_ADDITION";return false;}
+   if(state.layers>=4){error="LAYER_LIMIT";return false;}
+   if(!newBasket&&(state.side!=setup.side||state.recovered)){error="SKIP_BASKET_ADDITION";return false;}
    if(state.Contains(state.signals,signal)){error="DUPLICATE_SIGNAL";return false;}
-   if(!newBasket&&(setup.origin<=state.last||setup.structure<=state.last||setup.origin==state.h1Origin||setup.birth==state.h1Birth||gate<=state.last||micro.source<=state.last)){error="INTI_REQUIRES_NEW_SETUP";return false;}
+   if(!newBasket&&(setup.origin<=state.last||setup.structure<=state.last||setup.origin==state.h1Origin||setup.birth==state.h1Birth||gate<=state.last||micro.source<=state.last)){error="ADDITION_REQUIRES_NEW_ICT_EL2_SETUP";return false;}
    double sl=newBasket?micro.sl:state.sl,target=newBasket?tp:state.tp;MqlTick q;
    if(!Preflight(setup.side,micro,sl,target,q))return false;
    if(newBasket){
@@ -200,16 +200,16 @@ class CSBasket {
     if(TimeCurrent()>=deadline){error="SKIP_WINDOW_OR_FEED_EXPIRED";break;}
     if(!Preflight(setup.side,micro,state.sl,state.tp,q))break;
     // Reserve before the request. Uncertain fills cannot be retried as new entries.
-    if(!CSReserveLayer(core,state.awal,state.inti)){error="LAYER_LIMIT";break;}
-    state.noticeContext=CSNoticeContextEncode(context);state.signal=signal;state.pending=true;state.pendingCore=core;state.pendingOrder=0;state.intent=TimeCurrent();
+    if(!CSReserveLayer(state.layers)){error="LAYER_LIMIT";break;}
+    state.noticeContext=CSNoticeContextEncode(context);state.signal=signal;state.pending=true;state.window=windowId;state.pendingOrder=0;state.intent=TimeCurrent();
     if(!state.Save()){error="PERSISTENCE_FAILED_BEFORE_ORDER";return false;}
-    int index=state.awal+state.inti;string comment="CSB|"+state.basket+"|"+IntegerToString(index);
+    int index=state.layers;string comment="CSB|"+state.basket+"|"+IntegerToString(index);
     bool sent=setup.side>0?m_trade.Buy(m_lot,m_symbol,q.ask,state.sl,state.tp,comment):m_trade.Sell(m_lot,m_symbol,q.bid,state.sl,state.tp,comment);
     uint code=m_trade.ResultRetcode();int outcome=CSOrderOutcome(code);
     bool filled=outcome==CS_ORDER_FILLED;
     state.pendingOrder=m_trade.ResultOrder();
     if(filled){state.Remember(state.spent,windowId,256);state.Remember(state.signals,signal,512);state.last=TimeCurrent();}
-    else if(outcome==CS_ORDER_REJECTED){CSReleaseLayer(core,state.awal,state.inti);state.pending=false;state.pendingOrder=0;}
+    else if(outcome==CS_ORDER_REJECTED){CSReleaseLayer(state.layers);state.pending=false;state.pendingOrder=0;}
     // 'sent' alone is not a broker fill acknowledgement. Unknown requests stay
     // persisted until the exact latest order/deal is reconciled, never an old fill.
     state.Save();

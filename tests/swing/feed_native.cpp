@@ -29,11 +29,15 @@ int main(int argc,char **argv){
  CHECK(CSIanaOffset(CSDateParse("2026-03-27"),2)==0&&CSIanaOffset(CSDateParse("2026-03-30"),2)==60);
  CHECK(CSIanaOffset(CSDateParse("2026-04-03"),0)==660&&CSIanaOffset(CSDateParse("2026-04-06"),0)==600);
  CSFeed gates;ArrayResize(gates.days,1);gates.days[0].date="2026-10-19";gates.days[0].weekly=1;gates.days[0].daily=1;
- ArrayResize(gates.sessions,1);gates.sessions[0].date="2026-10-19";gates.sessions[0].direction=1;gates.sessions[0].windowStart=1000;gates.sessions[0].windowEnd=2000;gates.sessions[0].sessionId="london";
- CHECK(gates.Owner(1000,1)==0&&gates.Owner(1999,1)==0&&gates.Owner(2000,1)==-1);
- gates.days[0].daily=-1;CHECK(gates.Owner(1500,1)==-1);gates.days[0].daily=1;gates.days[0].weekly=-1;CHECK(gates.Owner(1500,1)==0); // Updated feed cannot overturn persisted BUY lock.
- gates.sessions[0].direction=-1;CHECK(gates.Owner(1500,1)==-1); // Opposite session always WAIT.
- gates.days[0].daily=-1;CHECK(gates.Owner(1500,-1)==0&&gates.Owner(1500,0)==-1);
+ ArrayResize(gates.sessions,1);gates.sessions[0].date="2026-10-19";gates.sessions[0].direction=1;gates.sessions[0].start=900;gates.sessions[0].end=2100;gates.sessions[0].core=1800;gates.sessions[0].windowStart=1000;gates.sessions[0].windowEnd=2000;gates.sessions[0].sessionId="london";
+ CHECK(gates.Owner(899,1)==-1&&gates.Owner(900,1)==0&&gates.Owner(2099,1)==0&&gates.Owner(2100,1)==-1);
+ CHECK(gates.Owner(950,1)==0&&gates.Owner(2050,1)==0); // Before/after best window still inside full Killzone.
+ gates.days[0].daily=-1;CHECK(gates.Owner(1500,1)==0); // Daily SELL cannot veto locked BUY + Killzone BUY.
+ gates.days[0].daily=0;CHECK(gates.Owner(1500,1)==0); // Mixed daily is annotation too.
+ gates.days[0].weekly=-1;CHECK(gates.Owner(1500,1)==0); // Updated feed cannot replace persisted BUY lock.
+ gates.sessions[0].direction=-1;CHECK(gates.Owner(1500,1)==-1); // Opposite Killzone WAIT.
+ CHECK(gates.Owner(1500,-1)==0&&gates.Owner(1500,0)==-1);
+ gates.sessions[0].direction=0;CHECK(gates.Owner(1500,-1)==-1); // WAIT Killzone cannot trade.
  CHECK(!feed.Accept(rehash(replaceOne(raw,"\"total_slots\":2016","\"total_slots\":1728")),now)&&feed.error=="FEED_WEEKLY_STRENGTH");
  CHECK(!feed.Accept(rehash(replaceOne(raw,"\"min_share\":0.55","\"min_share\":0.5")),now)&&feed.error=="FEED_WEEKLY_STRENGTH");
  CHECK(feed.Accept(raw,now));std::cout<<"PASS "<<checks<<" assertions on actual MQL JSON/feed logic via host API adapter (not MetaEditor)\n";

@@ -88,19 +88,19 @@ int main(){
  CHECK(weekly.Capture(monday+1209600,0,monday+1209601)&&weekly.side==0);
  CHECK(!weekly.Capture(monday+1209600,1,monday+1209700)&&weekly.side==0); // WAIT is a weekly lock too.
  CHECK(!weekly.Capture(monday+1814400,1,monday+1814399));
- CHECK(CSAligned(-1,-1,-1)&&!CSAligned(-1,1,-1)&&!CSAligned(-1,-1,1)&&!CSAligned(0,1,1));
+ CHECK(CSAligned(-1,-1)&&CSAligned(1,1)&&!CSAligned(-1,1)&&!CSAligned(0,1));
  CHECK(CSStrengthSide(600,400,360,.55,360)==1&&CSStrengthSide(400,600,360,.55,360)==-1);
  CHECK(CSStrengthSide(500,500,360,.55,360)==0&&CSStrengthSide(540,460,360,.55,360)==0);
  CHECK(CSStrengthSide(900,100,355,.55,360)==0&&CSStrengthSide(550,450,360,.55,360)==1);
  for(uint code:{10009u,10010u})CHECK(CSOrderOutcome(code)==CS_ORDER_FILLED);
  for(uint code:{10004u,10006u,10016u,10019u,10020u,10021u})CHECK(CSOrderOutcome(code)==CS_ORDER_REJECTED);
  for(uint code:{0u,10008u,10011u,10012u,10023u,10025u,10028u,10031u,99999u})CHECK(CSOrderOutcome(code)==CS_ORDER_UNKNOWN);
- int awal=0,inti=0;CHECK(CSReserveLayer(false,awal,inti)&&awal==1);
- CSReleaseLayer(false,awal,inti);CHECK(awal==0&&inti==0); // Rejected first request leaves both slots.
- CHECK(CSReserveLayer(false,awal,inti)&&CSReserveLayer(false,awal,inti)&&!CSReserveLayer(false,awal,inti));
- CHECK(CSReserveLayer(true,awal,inti)&&CSReserveLayer(true,awal,inti)&&!CSReserveLayer(true,awal,inti));
- CSReleaseLayer(true,awal,inti);CHECK(awal==2&&inti==1); // Failed second INTI cannot erase filled AWAL.
- CHECK(CSReserveLayer(true,awal,inti)&&awal+inti==4);
+ int layers=0;CHECK(CSReserveLayer(layers)&&layers==1);
+ CSReleaseLayer(layers);CHECK(layers==0); // Explicit rejection releases only this reservation.
+ for(int i=1;i<=4;i++)CHECK(CSReserveLayer(layers)&&layers==i); // No phase quotas.
+ CHECK(!CSReserveLayer(layers)&&layers==4);
+ CSReleaseLayer(layers);CHECK(layers==3&&CSReserveLayer(layers)&&layers==4);
+ layers=-1;CHECK(!CSReserveLayer(layers));
  CHECK(CSRiskCap(10,1000,1)&&!CSRiskCap(10.01,1000,1));
  CHECK(!CSRiskCap(0,0,1)&&!CSRiskCap(1,1000,1.01));
  std::vector<CSBar> trend;

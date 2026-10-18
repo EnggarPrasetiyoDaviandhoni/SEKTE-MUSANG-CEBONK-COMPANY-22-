@@ -57,19 +57,30 @@ int main(int argc,char **argv){
  CHECK(telegramBodies.size()==before+1&&telegram.Parse(telegramBodies.back())&&telegram.Text(telegram.Get(0,"text"))==sell);
  CSState state;CHECK(state.Init("basket-state","XAUUSDc",77,false));
  state.basket="0123456789abcdef";state.side=1;state.first=100;state.sl=4240;state.tp=4278;
- state.awal=1;state.pending=true;state.pendingCore=false;state.pendingOrder=9007199254740995UL;
+ state.layers=1;state.pending=true;state.pendingOrder=9007199254740995UL;
  state.AddId(9007199254740993L);state.Remember(state.spent,"windowA",256);state.noticeContext=CSNoticeContextEncode(decoded);
  CHECK(state.Save());CSState recovered;CHECK(recovered.Init("basket-state","XAUUSDc",77,false));
  CHECK(recovered.pending&&recovered.pendingOrder==9007199254740995UL&&recovered.ids[0]==9007199254740993L);
- CHECK(recovered.noticeContext==state.noticeContext&&recovered.awal==1&&recovered.sl==4240&&recovered.tp==4278);
+ CHECK(recovered.noticeContext==state.noticeContext&&recovered.layers==1&&recovered.sl==4240&&recovered.tp==4278);
  auto raw=testFiles.at("basket-state");auto marker=raw.rfind(",\"notice_context\":");CHECK(marker!=std::string::npos);
- auto version2=raw.substr(0,marker)+"}";version2.replace(version2.find("\"version\":3"),11,"\"version\":2");testFiles["legacy-v2"]=version2;
+ auto version3=raw;version3.replace(version3.find("\"version\":4"),11,"\"version\":3");
+ version3.replace(version3.find("\"layers\":1"),10,"\"awal\":1,\"inti\":0");
+ version3.insert(version3.find("\"pending_order\":"),"\"pending_core\":false,");
+ testFiles["legacy-v3"]=version3;CSState v3;CHECK(v3.Init("legacy-v3","XAUUSDc",77,false));
+ CHECK(v3.layers==1&&v3.noticeContext==state.noticeContext&&v3.pendingOrder==state.pendingOrder&&v3.pending);
+ auto version2=version3.substr(0,version3.rfind(",\"notice_context\":"))+"}";
+ version2.replace(version2.find("\"version\":3"),11,"\"version\":2");testFiles["legacy-v2"]=version2;
  CSState v2;CHECK(v2.Init("legacy-v2","XAUUSDc",77,false)&&v2.noticeContext==""&&v2.pending&&v2.pendingOrder==state.pendingOrder);
- CHECK(v2.awal==1&&v2.sl==4240&&v2.Contains(v2.spent,"windowA"));
+ CHECK(v2.layers==1&&v2.sl==4240&&v2.Contains(v2.spent,"windowA"));
  auto version1=version2;version1.replace(version1.find("\"version\":2"),11,"\"version\":1");
  for(const std::string field:{"\"pending_core\":false,","\"pending_order\":\"9007199254740995\","})version1.erase(version1.find(field),field.size());
  testFiles["legacy-v1"]=version1;CSState v1;CHECK(v1.Init("legacy-v1","XAUUSDc",77,false));
- CHECK(v1.pending&&v1.pendingOrder==0&&v1.awal==1&&v1.sl==4240&&v1.noticeContext=="");
+ CHECK(v1.pending&&v1.pendingOrder==0&&v1.layers==1&&v1.sl==4240&&v1.noticeContext=="");
+ // Legacy 2 AWAL + 2 INTI must migrate as four spent/reserved slots, never reset.
+ auto full=version3;full.replace(full.find("\"awal\":1,\"inti\":0"),17,"\"awal\":2,\"inti\":2");testFiles["legacy-full"]=full;
+ CSState four;CHECK(four.Init("legacy-full","XAUUSDc",77,false)&&four.layers==4&&!CSReserveLayer(four.layers));
+ auto invalid=raw;invalid.replace(invalid.find("\"layers\":1"),10,"\"layers\":5");testFiles["invalid-five"]=invalid;CSState five;
+ CHECK(!five.Init("invalid-five","XAUUSDc",77,false));
  if(argc==2){std::ofstream out(argv[1]);out<<text.utf8()<<'\n';}
  std::cout<<"PASS "<<checks<<" assertions on production notification formatter, multipart push and durable outbox (host API adapter; no external messages sent)\n";
 }
