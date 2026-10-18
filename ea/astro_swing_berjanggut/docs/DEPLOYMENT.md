@@ -16,9 +16,9 @@ Feed v2 adalah data baru; feed v1 tetap milik alur lama. Publikasi dijalankan wo
 
 URL MT5:
 
-`https://EnggarPrasetiyoDaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/data/ea/swing-forecast-v2.json`
+`https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/data/ea/swing-forecast-v2.json`
 
-Sebelum workflow dipublikasikan, 404 berarti feed belum tersedia dan EA tidak membuka order. Untuk uji branch, `InpFeedURL` boleh memakai raw GitHub branch tersebut dan domain `https://raw.githubusercontent.com` harus di-whitelist; data tetap hanya berlaku ≤30 jam. Jangan memakai JSON fixture lama sebagai feed live.
+URL RAW di atas tetap menghasilkan 404 sebelum file feed v2 tersedia di branch main. Branch kerja bukan feed live. Jangan memakai data fixture lama sebagai feed live; jalankan workflow generator dan validasi untuk penerbitan otomatis tiap hari ke main. Pada MT5: Tools > Options > Expert Advisors > Allow WebRequest for listed URL, tambahkan https://raw.githubusercontent.com. Untuk uji branch, `InpFeedURL` boleh memakai raw GitHub branch tersebut dan domain `https://raw.githubusercontent.com` harus di-whitelist; data tetap hanya berlaku ≤30 jam. Jangan memakai JSON fixture lama sebagai feed live.
 
 Format payload: JSON canonical dengan key object tersortir, SHA-256 atas payload tanpa field hash. Field `payload_sha256` ditempatkan paling akhir. Parser MT5 memverifikasi bytes UTF-8 payload yang sama tanpa mengubah format float. Ini pemeriksaan integritas, bukan tanda tangan digital; transport HTTPS tetap dipakai.
 
