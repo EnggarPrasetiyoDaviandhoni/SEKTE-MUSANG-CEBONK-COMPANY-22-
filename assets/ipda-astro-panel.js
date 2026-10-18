@@ -1,6 +1,6 @@
 (function(){
 "use strict";
-const host=document.createElement("section");host.id="ipda-astro-panel";host.style.cssText="margin:18px auto;max-width:1180px;padding:18px;border:1px solid #34465b;border-radius:14px;background:#101a28;color:#e8eff8";
+const host=document.createElement("section");host.id="ipdaAstroView";host.hidden=true;host.style.cssText="margin:18px auto;max-width:1180px;padding:18px;border:1px solid #34465b;border-radius:14px;background:#101a28;color:#e8eff8";
 host.innerHTML='<h2>IPDA ICT 20 / 40 / 60 — XAUUSD</h2><p>Panel analisis teknikal. Arah dominan tetap berasal dari astrologi mingguan, bukan IPDA. Data OHLC D1 harus diisi dari sumber pasar yang valid.</p><label>Bias astrologi mingguan (pilih sesuai hasil panel astrologi) <select id="ipda-bias"><option value="WAIT">WAIT / CAMPURAN</option><option value="BUY">BUY ONLY</option><option value="SELL">SELL ONLY</option></select></label><p><label>OHLC D1 (CSV, minimal 60 candle selesai; urutan lama ke baru, header: date,open,high,low,close)</label></p><textarea id="ipda-csv" rows="5" style="width:100%;background:#0d1725;color:#fff;border:1px solid #34465b;border-radius:8px;padding:10px" placeholder="2026-07-01,3300,3340,3280,3320"></textarea><p><button id="ipda-calc" type="button">Hitung IPDA</button></p><div id="ipda-result" aria-live="polite">Belum ada data OHLC terverifikasi. Tidak menampilkan level rekaan.</div>';
 const anchor=document.querySelector("main")||document.body;anchor.appendChild(host);
 const output=host.querySelector("#ipda-result");
