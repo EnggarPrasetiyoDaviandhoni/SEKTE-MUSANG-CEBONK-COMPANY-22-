@@ -10,8 +10,11 @@ void OnStart(){
  Check(j.Number(j.Get(0,"n"))==-120,"JSON exponent");Check(!j.Parse("{\"a\":1,\"a\":2}"),"duplicate key rejected");
  Check(!j.Parse("[1,]"),"trailing comma rejected");Check(!j.Parse("[01]"),"leading zero rejected");
  Check(!j.Parse("\"\\uD800\""),"unpaired surrogate rejected");
- double raw=0,sl=0;Check(CSSL(1,3299.1,3300,3300,3310,.01,raw,sl)&&MathAbs(sl-3297.64)<1e-7,"BUY -0.236");
- Check(CSSL(-1,3300,3300.9,3300,3290,.01,raw,sl)&&MathAbs(sl-3302.36)<1e-7,"SELL -0.236");
+ double raw=0,sl=0;Check(CSSL(1,3299.1,3300,3300,3310,.01,-.236,raw,sl)&&MathAbs(sl-3297.64)<1e-7,"BUY -0.236");
+ Check(CSSL(-1,3300,3300.9,3300,3290,.01,-.236,raw,sl)&&MathAbs(sl-3302.36)<1e-7,"SELL -0.236");
+ Check(CSSL(1,3299.1,3300,3300,3310,.01,-.382,raw,sl)&&MathAbs(sl-3296.18)<1e-7,"BUY custom -0.382");
+ Check(CSSL(-1,3300,3300.9,3300,3290,.01,-.618,raw,sl)&&MathAbs(sl-3306.18)<1e-7,"SELL custom -0.618");
+ Check(!CSSL(1,3299.1,3300,3300,3310,.01,0,raw,sl)&&!CSSL(1,3299.1,3300,3300,3310,.01,.236,raw,sl),"zero and positive SL levels rejected");
  Check(CSShouldExit(1,-1,12,true)&&!CSShouldExit(1,-1,0,true)&&!CSShouldExit(1,-1,12,false),"NET exit");
  int f=FileOpen(InpFixture,FILE_READ|FILE_TXT|FILE_ANSI,0,CP_UTF8);Check(f!=INVALID_HANDLE,"fixture open");
  if(f!=INVALID_HANDLE){string text=FileReadString(f);FileClose(f);Check(j.Parse(text)&&j.VerifyHash(text),"fixture SHA-256");

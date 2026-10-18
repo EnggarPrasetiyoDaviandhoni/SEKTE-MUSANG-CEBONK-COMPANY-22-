@@ -1,12 +1,21 @@
 {
-  "checked_at_utc": "2026-10-17T18:48:09.258125+00:00",
+  "checked_at_utc": "2026-10-18T05:13:36Z",
+  "ea_version": "1.09",
+  "sl_input": {
+    "name": "InpSLFibLevel",
+    "default": -0.236,
+    "allowed": "finite negative Fibonacci extension",
+    "custom_levels_tested": [-0.382, -0.618, -1.0],
+    "active_basket": "stored SL/TP path unchanged; MT5 execution not run",
+    "unchanged_feed_parity_evidence_from_utc": "2026-10-17T18:48:09.258125+00:00"
+  },
   "feed_tests": {
     "status": "PASS",
     "cases": 25
   },
   "shared_numeric_host": {
     "status": "PASS",
-    "assertions": 46,
+    "assertions": 87,
     "sanitizers": [
       "address",
       "undefined"

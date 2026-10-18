@@ -24,7 +24,7 @@ Format payload: JSON canonical dengan key object tersortir, SHA-256 atas payload
 
 ## MT5
 
-Salin `MQL5/Experts`, `MQL5/Include/CebonkSwing`, `MQL5/Scripts`, dan file tester ke Data Folder terminal yang dipilih. Compile dengan F7 atau:
+Salin `MQL5/Experts`, `MQL5/Include/CebonkSwing`, `MQL5/Scripts`, dan file tester ke Data Folder terminal yang dipilih. Expert v1.09 bernama `CEBONK_ASTRO_SWING_BERJANGGUT_v1.09.mq5`. Compile dengan F7 atau:
 
 ```powershell
 .\scripts\compile-swing.ps1 -MetaEditor 'C:\Program Files\MetaTrader 5\metaeditor64.exe' -DataFolder 'C:\Users\NAMA\AppData\Roaming\MetaQuotes\Terminal\ID_TERMINAL'
@@ -33,6 +33,8 @@ Salin `MQL5/Experts`, `MQL5/Include/CebonkSwing`, `MQL5/Scripts`, dan file teste
 Script membutuhkan log “0 errors” dan EX5 baru; exit code proses saja tidak dianggap bukti compile. Jalankan script MT5 `CEBONK_SWING_SELFTEST` untuk menguji parser/hash/feed di runtime MT5 setelah compile. Log self-test belum dihasilkan dalam lingkungan pembuatan ini.
 
 Attach pada chart simbol XAUUSD yang sesuai. Isi komisi per lot per sisi; verifikasi kontrak simbol, minimum lot, tick size, margin, dan jam broker di MT5. Suffix broker diterima. Tombol ON hanya mengizinkan entry baru; OFF tidak menutup basket. Menghapus EA menghentikan manajemen client-side, sementara server SL/TP yang sudah terpasang tetap berlaku.
+
+Atur level SL pada **EA Properties → Inputs → `InpSLFibLevel`**. Gunakan angka negatif, misalnya `-0.236` (default), `-0.382`, atau `-0.618`; angka ini level Fibonacci, bukan jarak pip. Level baru berlaku untuk basket baru. Basket aktif dan layer tambahannya tetap memakai harga SL/TP awal dari state. Jangan menghapus file state saat upgrade dari v1.08. Setelah mengganti Inputs atau mengganti expert ke v1.09, AUTOPILOT entry kembali OFF dan perlu dinyalakan bila entry baru diinginkan.
 
 ## Strategy Tester offline
 

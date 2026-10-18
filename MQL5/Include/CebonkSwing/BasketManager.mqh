@@ -183,7 +183,7 @@ class CSBasket {
     if(filled){state.pending=false;state.last=TimeCurrent();}
     else if(code!=0&&code!=TRADE_RETCODE_PLACED&&code!=TRADE_RETCODE_TIMEOUT&&code!=TRADE_RETCODE_CONNECTION)state.pending=false;
     state.Save();
-    notify.Add("ORDER_"+state.basket+"_"+IntegerToString(index),StringFormat("%s %.2f ticket=%I64u retcode=%u SL FIB -0.236=%s TP ICT=%s fib0=%s fib1=%s risk=%.3f%%",setup.side>0?"BUY":"SELL",m_lot,m_trade.ResultOrder(),code,DoubleToString(state.sl,8),DoubleToString(state.tp,8),DoubleToString(state.fib0,8),DoubleToString(state.fib1,8),lastRisk));
+    notify.Add("ORDER_"+state.basket+"_"+IntegerToString(index),StringFormat("%s %.2f ticket=%I64u retcode=%u SL FIB=%s TP ICT=%s fib0=%s fib1=%s risk=%.3f%%",setup.side>0?"BUY":"SELL",m_lot,m_trade.ResultOrder(),code,DoubleToString(state.sl,8),DoubleToString(state.tp,8),DoubleToString(state.fib0,8),DoubleToString(state.fib1,8),lastRisk));
     Reconcile(notify);if(!filled||positions==0||conflict)break;
     double cash=0;if(!Risk(0,state.side,0,state.sl,cash)){state.exitEvent="SAFETY_RISK_"+state.basket;state.exitPending=true;state.Save();notify.Add("UNSAFE_FILL_"+state.basket,"Risk after fill exceeded cap; emergency close requested");CloseAll(notify);break;}
    }

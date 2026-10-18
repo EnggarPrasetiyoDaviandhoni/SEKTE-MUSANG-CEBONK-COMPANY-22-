@@ -126,10 +126,11 @@ datetime CSM15Gate(CS_CONST_ARRAY(CSBar,a),const CSSetup &s,datetime windowStart
  }
  return 0;
 }
-bool CSSL(int side,double zoneLow,double zoneHigh,double f0,double f1,double tick,double &raw,double &sl){
- if(tick<=0||!CSFinite(f0)||!CSFinite(f1)||zoneLow<=0||zoneHigh<=zoneLow)return false;
+bool CSValidSLFibLevel(double level){return CSFinite(level)&&level<0;}
+bool CSSL(int side,double zoneLow,double zoneHigh,double f0,double f1,double tick,double level,double &raw,double &sl){
+ if(!CSValidSLFibLevel(level)||!CSFinite(tick)||tick<=0||!CSFinite(f0)||!CSFinite(f1)||zoneLow<=0||zoneHigh<=zoneLow)return false;
  double span=f1-f0;if(side*span<=0||MathAbs(span)<2*tick)return false;
- raw=f0-0.236*span;
+ raw=f0+level*span;if(!CSFinite(raw))return false;
  sl=side>0?MathFloor(raw/tick+1e-10)*tick:MathCeil(raw/tick-1e-10)*tick;
  return CSFinite(sl)&&sl>0&&MathAbs(sl-raw)<tick+1e-9&&(side>0?sl<zoneLow:sl>zoneHigh);
 }
@@ -190,7 +191,7 @@ bool CSHasDominant(CS_CONST_ARRAY(CSBar,a),int b,int minimumInside,int lookback)
  }return false;
 }
 bool CSM5CBR(CS_CONST_ARRAY(CSBar,a),int side,datetime gate,datetime windowEnd,double tick,
- int minInside,int maxInside,int lookback,int maxGateBars,int maxRetestBars,CSMicro &out){
+ int minInside,int maxInside,int lookback,int maxGateBars,int maxRetestBars,double slFibLevel,CSMicro &out){
  int n=ArraySize(a),r=n-1;if(n<24||gate<=0||a[r].time+300>=windowEnd)return false;
  for(int b=20;b<r;b++){
   datetime closed=a[b].time+300;
@@ -211,7 +212,7 @@ bool CSM5CBR(CS_CONST_ARRAY(CSBar,a),int side,datetime gate,datetime windowEnd,d
   }
   if(invalid||firstRetest!=r)continue;
   double f0=side>0?lo:hi,raw=0,sl=0;
-  if(!CSSL(side,lo,hi,f0,a[b].close,tick,raw,sl))continue;
+  if(!CSSL(side,lo,hi,f0,a[b].close,tick,slFibLevel,raw,sl))continue;
   out.side=side;out.kind=dominant?1:2;out.children=children;out.source=a[source].time;
   out.breakClose=closed;out.retestClose=a[r].time+300;out.zoneLow=lo;out.zoneHigh=hi;
   out.fib0=f0;out.fib1=a[b].close;out.slRaw=raw;out.sl=sl;out.breakLevel=level;return true;

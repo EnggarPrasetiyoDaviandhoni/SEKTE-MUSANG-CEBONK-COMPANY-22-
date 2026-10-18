@@ -1,21 +1,35 @@
 #include "../../MQL5/Include/CebonkSwing/NumericCore.mqh"
 #include <cassert>
 #include <iostream>
+#include <limits>
 static int checks=0;
 #define CHECK(x) do{++checks;if(!(x)){std::cerr<<"FAILED line "<<__LINE__<<": "<<#x<<'\n';return 1;}}while(0)
 CSBar bar(int i,double o,double h,double l,double c,int seconds=300){return {1700000000LL+i*seconds,o,h,l,c};}
 bool near(double a,double b){return std::abs(a-b)<1e-8;}
 int main(){
  double raw=0,sl=0;
- CHECK(CSSL(1,3299.1,3300,3300,3310,.01,raw,sl)&&near(sl,3297.64));
- CHECK(CSSL(-1,3300,3300.9,3300,3290,.01,raw,sl)&&near(sl,3302.36));
- CHECK(!CSSL(1,3296,3300,3300,3310,.01,raw,sl));
- CHECK(!CSSL(-1,3300,3305,3300,3290,.01,raw,sl));
- CHECK(!CSSL(1,3299,3300,3300,3290,.01,raw,sl));
- CHECK(!CSSL(1,3299,3300,3300,3300.001,.01,raw,sl));
- for(double tick:{.001,.01,.1}){
-  CHECK(CSSL(1,3299.1,3300,3300,3310,tick,raw,sl)&&sl<=raw+1e-9&&raw-sl<tick+1e-8);
-  CHECK(CSSL(-1,3300,3300.9,3300,3290,tick,raw,sl)&&sl>=raw-1e-9&&sl-raw<tick+1e-8);
+ CHECK(CSSL(1,3299.1,3300,3300,3310,.01,-.236,raw,sl)&&near(sl,3297.64));
+ CHECK(CSSL(-1,3300,3300.9,3300,3290,.01,-.236,raw,sl)&&near(sl,3302.36));
+ CHECK(CSSL(1,3299.1,3300,3300,3310,.01,-.382,raw,sl)&&near(raw,3296.18)&&near(sl,3296.18));
+ CHECK(CSSL(-1,3300,3300.9,3300,3290,.01,-.382,raw,sl)&&near(raw,3303.82)&&near(sl,3303.82));
+ CHECK(CSSL(1,3299.1,3300,3300,3310,.01,-.618,raw,sl)&&near(sl,3293.82));
+ CHECK(CSSL(-1,3300,3300.9,3300,3290,.01,-.618,raw,sl)&&near(sl,3306.18));
+ CHECK(CSSL(1,3299.1,3300,3300,3310,.01,-1,raw,sl)&&near(sl,3290));
+ CHECK(CSSL(-1,3300,3300.9,3300,3290,.01,-1,raw,sl)&&near(sl,3310));
+ CHECK(!CSSL(1,3296,3300,3300,3310,.01,-.236,raw,sl));
+ CHECK(!CSSL(-1,3300,3305,3300,3290,.01,-.236,raw,sl));
+ CHECK(!CSSL(1,3299,3300,3300,3290,.01,-.236,raw,sl));
+ CHECK(!CSSL(1,3299,3300,3300,3300.001,.01,-.236,raw,sl));
+ for(double level:{0.,.236,std::nan(""),std::numeric_limits<double>::infinity(),-std::numeric_limits<double>::infinity()}){
+  CHECK(!CSSL(1,3299.1,3300,3300,3310,.01,level,raw,sl));
+  CHECK(!CSSL(-1,3300,3300.9,3300,3290,.01,level,raw,sl));
+ }
+ CHECK(!CSSL(1,3299.1,3300,3300,3310,.01,-std::numeric_limits<double>::max(),raw,sl));
+ CHECK(!CSSL(1,3299.1,3300,3300,3310,.01,-.05,raw,sl)); // Inside IB despite a negative level.
+ CHECK(!CSSL(1,1,2,1,11,.01,-1,raw,sl)); // Nonpositive price cannot become a server SL.
+ for(double tick:{.001,.01,.1})for(double level:{-.236,-.382,-.618}){
+  CHECK(CSSL(1,3299.1,3300,3300,3310,tick,level,raw,sl)&&sl<=raw+1e-9&&raw-sl<tick+1e-8);
+  CHECK(CSSL(-1,3300,3300.9,3300,3290,tick,level,raw,sl)&&sl>=raw-1e-9&&sl-raw<tick+1e-8);
  }
  std::vector<CSBar> exit={bar(0,3316,3320,3305,3314),bar(1,3312,3319,3306,3311),bar(2,3313,3318,3307,3310),bar(3,3315,3319,3307,3314),bar(4,3307,3308,3303,3304.9)};
  CSDominant dominant;
@@ -28,22 +42,30 @@ int main(){
  micro.push_back(bar(20,110,111,99,100));micro.push_back(bar(21,103,105,101,102));micro.push_back(bar(22,102,106,100,104));micro.push_back(bar(23,104,107,101,105));
  micro.push_back(bar(24,105,113,104,112));micro.push_back(bar(25,101,105,100,103));
  CSMicro m;datetime gate=micro[20].time,end=gate+7200;
- CHECK(CSM5CBR(micro,1,gate,end,.01,3,12,96,16,12,m));
+ CHECK(CSM5CBR(micro,1,gate,end,.01,3,12,96,16,12,-.236,m));
  CHECK(m.kind==1&&m.source==micro[20].time&&m.breakClose==micro[24].time+300&&near(m.fib0,100)&&near(m.fib1,112)&&near(m.sl,97.16));
+ CSMicro custom;
+ CHECK(CSM5CBR(micro,1,gate,end,.01,3,12,96,16,12,-.618,custom)&&near(custom.slRaw,92.584)&&near(custom.sl,92.58));
+ CHECK(custom.source==m.source&&custom.breakClose==m.breakClose&&custom.retestClose==m.retestClose&&near(custom.fib0,m.fib0)&&near(custom.fib1,m.fib1));
+ CHECK(CSRR(1,103,m.sl,115)>=2&&CSRR(1,103,custom.sl,115)<2); // A wider stop must face the existing RR gate.
+ for(double level:{0.,.236,std::nan(""),std::numeric_limits<double>::infinity(),-std::numeric_limits<double>::infinity()})
+  CHECK(!CSM5CBR(micro,1,gate,end,.01,3,12,96,16,12,level,custom));
  CHECK(CSPriceInIB(1,102.9,103,m)&&!CSPriceInIB(1,110,110.1,m));
- auto noRetest=micro;noRetest.pop_back();CHECK(!CSM5CBR(noRetest,1,gate,end,.01,3,12,96,16,12,m));
- auto wickBreak=micro;wickBreak[24].close=109;CHECK(!CSM5CBR(wickBreak,1,gate,end,.01,3,12,96,16,12,m));
- auto expired=micro;CHECK(!CSM5CBR(expired,1,gate,expired.back().time+300,.01,3,12,96,16,12,m));
- auto replay=micro;replay.push_back(bar(26,103,105,101,104));CHECK(!CSM5CBR(replay,1,gate,end,.01,3,12,96,16,12,m));
- auto invalid=micro;invalid.insert(invalid.end()-1,bar(25,100,101,98,99));invalid.back().time+=300;CHECK(!CSM5CBR(invalid,1,gate,end,.01,3,12,96,16,12,m));
+ auto noRetest=micro;noRetest.pop_back();CHECK(!CSM5CBR(noRetest,1,gate,end,.01,3,12,96,16,12,-.236,m));
+ auto wickBreak=micro;wickBreak[24].close=109;CHECK(!CSM5CBR(wickBreak,1,gate,end,.01,3,12,96,16,12,-.236,m));
+ auto expired=micro;CHECK(!CSM5CBR(expired,1,gate,expired.back().time+300,.01,3,12,96,16,12,-.236,m));
+ auto replay=micro;replay.push_back(bar(26,103,105,101,104));CHECK(!CSM5CBR(replay,1,gate,end,.01,3,12,96,16,12,-.236,m));
+ auto invalid=micro;invalid.insert(invalid.end()-1,bar(25,100,101,98,99));invalid.back().time+=300;CHECK(!CSM5CBR(invalid,1,gate,end,.01,3,12,96,16,12,-.236,m));
  auto sell=micro;for(auto &b:sell){b.open=250-b.open;b.close=250-b.close;double hi=250-b.low;b.low=250-b.high;b.high=hi;}
- CHECK(CSM5CBR(sell,-1,gate,end,.01,3,12,96,16,12,m)&&m.side==-1&&m.sl>m.zoneHigh);
+ CHECK(CSM5CBR(sell,-1,gate,end,.01,3,12,96,16,12,-.236,m)&&m.side==-1&&m.sl>m.zoneHigh);
+ CHECK(CSM5CBR(sell,-1,gate,end,.01,3,12,96,16,12,-.618,custom)&&near(custom.slRaw,157.416)&&near(custom.sl,157.42));
  // SnR alternative: no containing dominant candle; resistance existed before break.
  std::vector<CSBar> snr;for(int i=0;i<23;i++)snr.push_back(bar(i,99,102,97,100));
  snr.push_back(bar(23,101,108,96,100));snr.push_back(bar(24,100,103,96,99));snr.push_back(bar(25,99,102,95,98));
  snr.push_back(bar(26,94,96,90,92));snr.push_back(bar(27,98,101,94,99));snr.push_back(bar(28,99,103,95,100));
  snr.push_back(bar(29,100,110,99,109));snr.push_back(bar(30,92.5,95,92,93.5));
- CHECK(CSM5CBR(snr,1,snr[23].time,end+3600,.01,3,12,96,16,12,m)&&m.kind==2&&near(m.breakLevel,108)&&near(m.fib0,92));
+ CHECK(CSM5CBR(snr,1,snr[23].time,end+3600,.01,3,12,96,16,12,-.236,m)&&m.kind==2&&near(m.breakLevel,108)&&near(m.fib0,92));
+ CHECK(CSM5CBR(snr,1,snr[23].time,end+3600,.01,3,12,96,16,12,-.382,custom)&&custom.kind==2&&near(custom.slRaw,85.506)&&near(custom.sl,85.5));
  auto longDominant=micro;longDominant.resize(24);for(int i=24;i<35;i++)longDominant.push_back(bar(i,103,107,101,104));
  CHECK(CSHasDominant(longDominant,34,3,96));
  CHECK(!CSPivot(snr,23,2,2,1,24)&&CSPivot(snr,23,2,2,1,25));

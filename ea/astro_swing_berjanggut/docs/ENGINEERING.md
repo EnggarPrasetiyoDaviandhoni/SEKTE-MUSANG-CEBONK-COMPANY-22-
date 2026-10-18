@@ -1,6 +1,6 @@
 # Pemetaan aturan dan keputusan implementasi
 
-Dasar: PRD v1.07, kemudian instruksi pengguna “M5 ne gae Iki AE SL tetep -0.236” dengan **FIBO MUSANG BERJANGGUT.pdf**, 21 halaman, Mohd Zulkifli Mohd Din, 6/7/2014. Instruksi ini mengganti M5 EL2/CB1 lama, sementara gate D1/H4/H1/M15 dan pengelolaan basket tetap mengikuti PRD.
+Dasar: PRD v1.07, kemudian instruksi pengguna “M5 ne gae Iki AE SL tetep -0.236” dengan **FIBO MUSANG BERJANGGUT.pdf**, 21 halaman, Mohd Zulkifli Mohd Din, 6/7/2014. Instruksi ini mengganti M5 EL2/CB1 lama, sementara gate D1/H4/H1/M15 dan pengelolaan basket tetap mengikuti PRD. Instruksi berikutnya “ISO diatur Dewe” mengizinkan level SL menjadi input pengguna pada v1.09, dengan default tetap −0.236.
 
 ## M5 Berjanggut
 
@@ -19,7 +19,7 @@ PDF tidak memberi seluruh ambang detektor numerik. Berikut **keputusan otomatisa
 | Kotak IB | `[min(Open,Close), max(Open,Close)]` candle sumber; berbeda dari kotak wick-to-body EL2 lama |
 | Fib0 | BUY = batas bawah body sumber IB; SELL = batas atas. Mengikuti penarikan dari bottom/top sumber baru |
 | Fib1 | Harga **close candle Musang** pemecah dominan/S/R, bukan wick, garis S/R, atau close retest |
-| Stop | `fib0 - .236*(fib1-fib0)`, span searah dan ≥2 tick; BUY floor tick / SELL ceil tick; SL harus di luar IB dan lolos broker |
+| Stop | `fib0 + InpSLFibLevel*(fib1-fib0)`, default −0.236; input negatif dan terhingga; span searah dan ≥2 tick; BUY floor tick / SELL ceil tick; harga SL positif, di luar IB, dan lolos broker |
 | Retest | Candle sesudah break menyentuh IB, directional searah entry, dan belum ada close yang mematahkan sisi risiko IB. Ambil retest sah pertama; tidak wajib close di luar kotak seperti EL2 lama |
 | Eksekusi | Tick pertama yang diterima EA pada bar M5 berikutnya, maksimal 30 detik sesudah retest close. Ask BUY / Bid SELL wajib masih di dalam IB; jika harga sudah pergi, skip |
 | Umur | Break maksimal 16 closed M5 sesudah gate M15; retest maksimal 12 closed M5 sesudah break; eksekusi harus sebelum akhir window/fase yang mengizinkan layer dan expiry feed |
@@ -27,6 +27,8 @@ PDF tidak memberi seluruh ambang detektor numerik. Berikut **keputusan otomatisa
 Initial Break dan candle Musang boleh merupakan satu peristiwa jika struktur demikian; tidak ada kewajiban pivot CB1 baru setelah IB. Tidak menambahkan AO, BBMA, EMA, ATR atau entry EL1/EL3–EL9.
 
 Target 261/423 dalam bahan sumber digunakan untuk memahami ilustrasi siklus. **TP proyek tetap ICT**. Penarikan body-ke-ekor yang disebut materi tidak dipakai untuk menggeser SL basket terbuka.
+
+`InpSLFibLevel` hanya membentuk kandidat stop baru melalui `CSM5CBR` → `CSSL`. Saat basket sudah aktif, entry tambahan dan proteksi posisi tetap menggunakan `state.sl`/`state.tp`, bukan menghitung ulang anchor lama dengan input baru. Format state dan identitas basket tidak berubah, sehingga harga stop yang disimpan v1.08 tetap dipakai saat dibuka oleh v1.09. Panel membedakan level untuk basket baru dari harga SL basket aktif; notifikasi order menampilkan harga stop yang benar-benar diajukan. RR dan risiko dihitung ulang memakai harga stop yang akan dipakai order.
 
 ## Gate dan konteks lain
 

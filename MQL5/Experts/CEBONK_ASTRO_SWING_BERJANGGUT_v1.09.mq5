@@ -1,5 +1,5 @@
 #property strict
-#property version "1.08"
+#property version "1.09"
 #property description "CEBONK XAUUSD Swing: original Astro feed + H4/H1/M15 + M5 Musang Berjanggut CBR"
 #property tester_file "swing-forecast-v2.history.jsonl"
 #property tester_file "cebonk-broker-offsets.csv"
@@ -12,6 +12,7 @@ input string InpSymbol="";
 input long InpMagic=52251017;
 input double InpLotPerLayer=0.01;
 input double InpMaxBasketRiskPct=1.0;
+input double InpSLFibLevel=-0.236; // Negative Fibonacci extension; applies to new baskets only.
 input double InpCommissionPerLotPerSide=-1.0; // Required: actual account currency per lot, 0 only if commission-free.
 input uint InpMaxSlippagePoints=30;
 input string InpFeedURL="https://EnggarPrasetiyoDaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/data/ea/swing-forecast-v2.json";
@@ -84,7 +85,7 @@ void Entry(){
  string failure="WAIT_H1_SWEEP_MSS_OR_BOS";
  for(int i=0;i<ArraySize(setups);i++){
   CSSetup setup=setups[i];datetime gate=CSM15Gate(Market.m15,setup,start,end);if(gate==0){failure="WAIT_M15_FRESH_RETEST";continue;}
-  CSMicro micro;if(!CSM5CBR(Market.m5,side,gate,end,Market.tick,InpM5DominantMinInside,InpM5DominantMaxInside,InpM5SnRLookback,InpM5MaxBarsGateToBreak,InpM5MaxBarsBreakToRetest,micro)){failure="WAIT_M5_BERJANGGUT_BREAK_AND_IB_RETEST";continue;}
+  CSMicro micro;if(!CSM5CBR(Market.m5,side,gate,end,Market.tick,InpM5DominantMinInside,InpM5DominantMaxInside,InpM5SnRLookback,InpM5MaxBarsGateToBreak,InpM5MaxBarsBreakToRetest,InpSLFibLevel,micro)){failure="WAIT_M5_BERJANGGUT_BREAK_AND_IB_RETEST";continue;}
   if(micro.retestClose>TimeCurrent()||TimeCurrent()-micro.retestClose>30){failure="SKIP_NOT_FIRST_RETEST_TICK";continue;}
   double entry=side>0?quote.ask:quote.bid,tp=0;uint kind=0;string why="";
   double sl=Basket.positions>0?Basket.state.sl:micro.sl;
@@ -94,8 +95,8 @@ void Entry(){
    IntegerToString((long)gate)+"|"+IntegerToString((long)micro.source)+"|"+IntegerToString((long)micro.breakClose)+"|"+IntegerToString((long)micro.retestClose));
   if(signal==""){failure="SIGNAL_HASH_FAILED";continue;}
   int day=Feed.DayIndex(session.date);
-  Notify.Add("SIGNAL_"+signal,StringFormat("CEBONK %s %s | WEEK/DAY/SESSION aligned | H1 model %d, M15 retest, M5 %s + IB retest | fib0 %.5f fib1 %.5f SL -0.236 %.5f TP ICT %.5f RR %.2f | moon rank %d (annotation)",TradeSymbol,session.sessionId,setup.model,micro.kind==1?"dominant break":"nearest SnR break",micro.fib0,micro.fib1,sl,tp,CSRR(side,entry,sl,tp),day<0?0:Feed.days[day].rank));
-  PrintFormat("CEBONK M5 CBR kind=%d source=%I64d break=%I64d retest=%I64d IB=[%.8f,%.8f] fib0=%.8f fib1=%.8f span=%.8f SL_raw=%.8f SL=%.8f TP_ICT=%.8f target_mask=%u RR=%.3f",micro.kind,(long)micro.source,(long)micro.breakClose,(long)micro.retestClose,micro.zoneLow,micro.zoneHigh,micro.fib0,micro.fib1,micro.fib1-micro.fib0,micro.slRaw,sl,tp,kind,CSRR(side,entry,sl,tp));
+  Notify.Add("SIGNAL_"+signal,StringFormat("CEBONK %s %s | WEEK/DAY/SESSION aligned | H1 model %d, M15 retest, M5 %s + IB retest | candidate fib0 %.5f fib1 %.5f | order SL FIB %.5f TP ICT %.5f RR %.2f | moon rank %d (annotation)",TradeSymbol,session.sessionId,setup.model,micro.kind==1?"dominant break":"nearest SnR break",micro.fib0,micro.fib1,sl,tp,CSRR(side,entry,sl,tp),day<0?0:Feed.days[day].rank));
+  PrintFormat("CEBONK M5 CBR kind=%d source=%I64d break=%I64d retest=%I64d IB=[%.8f,%.8f] fib0=%.8f fib1=%.8f span=%.8f candidate_SL_level=%.8f candidate_SL_raw=%.8f order_SL=%.8f TP_ICT=%.8f target_mask=%u RR=%.3f",micro.kind,(long)micro.source,(long)micro.breakClose,(long)micro.retestClose,micro.zoneLow,micro.zoneHigh,micro.fib0,micro.fib1,micro.fib1-micro.fib0,InpSLFibLevel,micro.slRaw,sl,tp,kind,CSRR(side,entry,sl,tp));
   // Recheck UTC/window immediately before execution; source/feed can expire while evaluating.
   now=Clock.Now();if(!Feed.Valid(now)||now<session.windowStart||now>=session.windowEnd){failure="SKIP_WINDOW_OR_FEED_EXPIRED";break;}
   core=now>=session.core;datetime phaseEnd=core?session.windowEnd:session.core;
@@ -108,7 +109,7 @@ void Entry(){
 }
 void Draw(){
  string rows[];ArrayResize(rows,22);datetime now=Clock.Now();
- rows[0]="CEBONK SWING v1.08 | "+TradeSymbol+" | M5 MUSANG BERJANGGUT CBR";
+ rows[0]="CEBONK SWING v1.09 | "+TradeSymbol+" | M5 MUSANG BERJANGGUT CBR";
  rows[1]="UTC "+TimeToString(now,TIME_DATE|TIME_SECONDS)+" | WIB "+TimeToString(now+25200,TIME_DATE|TIME_SECONDS);
  rows[2]="Broker "+TimeToString(TimeCurrent(),TIME_DATE|TIME_SECONDS)+" | "+Clock.error;
  rows[3]="Feed "+Feed.error+" | age "+IntegerToString(now>0?(long)(now-Feed.generated):0)+" s";
@@ -123,7 +124,7 @@ void Draw(){
  rows[13]="IPDA D1 60 H/L "+DoubleToString(Market.ipdaHigh[2],3)+" / "+DoubleToString(Market.ipdaLow[2],3);
  rows[14]="H4 state="+IntegerToString(Market.h4State)+" | H1/M15/M5: "+LastReason;
  rows[15]="Basket "+Basket.state.basket+" positions="+IntegerToString(Basket.positions)+" layers="+IntegerToString(Basket.state.awal+Basket.state.inti)+"/4";
- rows[16]="SL FIB -0.236 "+DoubleToString(Basket.state.sl,5)+" | TP ICT "+DoubleToString(Basket.state.tp,5);
+ rows[16]="New basket FIB "+DoubleToString(InpSLFibLevel,5)+" | Basket SL "+DoubleToString(Basket.state.sl,5)+" | TP ICT "+DoubleToString(Basket.state.tp,5);
  double net=0;bool verified=Basket.Net(net);rows[17]="Risk="+DoubleToString(Basket.lastRisk,3)+"% | NET="+(verified?DoubleToString(net,2):"UNVERIFIED");
  rows[18]="M15 exit "+Basket.error+" pending="+(Basket.state.exitPending?"YES":"NO");
  rows[19]="Telegram "+(InpTelegramEnabled?"ON":"OFF")+" | MT5 Push "+(InpPushEnabled?"ON":"OFF")+" | risk cap "+DoubleToString(InpMaxBasketRiskPct,2)+"%";
@@ -133,6 +134,7 @@ void Draw(){
 }
 int OnInit(){
  TradeSymbol=InpSymbol==""?_Symbol:InpSymbol;
+ if(!CSValidSLFibLevel(InpSLFibLevel)){Print("CEBONK InpSLFibLevel must be finite and negative, for example -0.236");return INIT_PARAMETERS_INCORRECT;}
  if(TradeSymbol!=_Symbol||StringFind(TradeSymbol,"XAUUSD")!=0||StringFind(InpFeedURL,"https://")!=0||InpMagic<=0||InpLotPerLayer<=0||InpMaxBasketRiskPct<=0||InpMaxBasketRiskPct>1||(InpCommissionPerLotPerSide<0&&InpCommissionPerLotPerSide!=-1)||
   InpM5DominantMinInside<1||InpM5DominantMaxInside>12||InpM5DominantMinInside>InpM5DominantMaxInside||InpM5SnRLookback<12||InpM5SnRLookback>256||
   InpM5MaxBarsGateToBreak<1||InpM5MaxBarsBreakToRetest<1||InpMoonMajorPhaseWindowHours<0)return INIT_PARAMETERS_INCORRECT;
