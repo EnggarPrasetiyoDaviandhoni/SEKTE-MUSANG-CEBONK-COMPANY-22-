@@ -5,6 +5,12 @@ disiapkan. Kedua payload nyata lulus decoder asli EA dalam harness lokal.
 Repository feed terpisah belum bisa dibuat karena GitHub menolak izin integrasi
 dengan HTTP 403. URL EA dan visibilitas repository asal belum diubah.
 
+**Pembaruan Pages, 19 Oktober 2026 19:51 UTC:** pemilik telah menyimpan
+`Branch: None`. Tangkapan pengaturan menunjukkan **GitHub Pages is currently
+disabled**. GET anonim ke URL website dan `index.html` menghasilkan HTTP 404;
+API Pages juga menghasilkan 404. Kedua endpoint RAW EA lama masih HTTP 404.
+Penonaktifan website terverifikasi; pemulihan feed belum selesai.
+
 ## Audit dua EA asli
 
 File yang diterima disimpan serta diuji secara lokal; tidak dimasukkan ke GitHub:
@@ -55,7 +61,10 @@ feed kosong sebagai pengganti kegagalan sumber.
   duplicate keys, surrogate, batas nesting/token, detik versus milidetik, WIB,
   overlap dan header lifetime.
 - `.github/workflows/mt5-public-feeds.yml`: validasi pada PR, jadwal setiap enam
-  jam di `main`, serta manual staging/production. Masa berlaku publikasi 36 jam.
+  jam di `main`, serta manual staging/production. Push ke branch pekerjaan yang
+  dipercaya juga menjalankan pengujian dan hanya dapat menerbitkan ke `staging`,
+  sehingga pengujian sebelum merge tidak bergantung pada registrasi workflow
+  baru di default branch. Masa berlaku publikasi 36 jam.
   Job news dan momen berjalan terpisah; kegagalan kalender news tidak membatalkan
   job momen. Tidak ada deployment atau izin GitHub Pages.
 - Token source hanya `contents: read`. Publikasi menggunakan token terpisah
@@ -70,6 +79,9 @@ feed kosong sebagai pengganti kegagalan sumber.
   penolakan perubahan layout/tanggal yang belum bisa dipastikan.
 - 5 tes Node dengan ephemeris asli: kesamaan waktu fase, bias, window entry,
   ID yang stabil, kegagalan sumber dan penolakan perubahan model.
+- 12 kombinasi event/ref/flag/input menguji ekspresi workflow yang sebenarnya:
+  PR dan branch tak dipercaya tidak boleh publish; branch pekerjaan hanya
+  staging; production hanya dari source `main` dengan flag publikasi aktif.
 - 52 kasus positif/negatif membandingkan validator Python dengan parser JSON,
   `DecodeFeed()` dan `FeedAvailable()` yang diekstrak dari EA asli. Semuanya lulus.
   Harness hanya mengganti dukungan string/array/waktu MQL menjadi padanan C++;
@@ -102,14 +114,18 @@ Penerbitan jarak jauh, HTTP 200 pada URL baru, dan terminal MT5 masih belum teru
    `EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS` dan `MT5_ENABLE_PUBLISH` dengan
    nilai `true`. Semua publikasi PR otomatis tetap dinonaktifkan; staging hanya
    bisa diminta secara manual dari branch pekerjaan yang dipercaya.
-5. Jalankan manual workflow pada branch PR, `publish=true`, `destination=staging`.
+5. Sebelum merge, buka **Actions → MT5 isolated public HTTPS feeds**, pilih run
+   dengan event **push** dari branch `codex/isolated-mt5-https-feeds-20261019`,
+   lalu **Re-run all jobs** setelah konfigurasi siap. Push branch ini selalu
+   mengarah ke `staging`; flag publikasi dan token target tetap wajib.
    Workflow membuat branch data `staging` bila perlu dan memeriksa endpointnya.
    Publikasi `main` hanya diizinkan dari source `main`. Lengkapi pemeriksaan
    HTTP serta decoder pada staging sebelum review/merge perubahan kode.
-6. Pada repository asal, atur **Settings → Pages → Build and deployment → Branch:
-   None → Save**. [PR #80](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pull/80)
-   untuk menghapus pemicu Pages masih terpisah dan belum di-merge. Konfigurasi Pages
-   harus diselesaikan sebelum commit baru di `main` memicu rebuild website lagi.
+6. Pada repository asal, **Settings → Pages → Build and deployment → Branch:
+   None → Save** sudah dilakukan pemilik dan diverifikasi. Pertahankan pengaturan
+   ini. [PR #80](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pull/80)
+   untuk menghapus permintaan build Pages dari workflow lama masih terpisah dan
+   belum di-merge.
 7. Setelah pengujian dan review selesai, aktifkan workflow di source `main`, lalu
    jalankan `publish=true`, `destination=main`. Pastikan kedua job benar-benar
    menerbitkan data, bukan hanya berstatus **Validation only**.
@@ -146,10 +162,11 @@ Sesudah GET 200, format, waktu, ID dan pembaruan otomatis teruji:
 - `POST /user/repos` untuk membuat `CEBONK-MT5-FEEDS` ditolak HTTP 403
   `Resource not accessible by integration`. Konfigurasi repository/secret memerlukan
   pemilik; belum ada klaim bahwa target publik atau credential publikasi siap.
-- Dua URL RAW lama masih 404 pada pemeriksaan awal sesi. Source tetap Public,
+- Dua URL RAW lama masih 404 pada pemeriksaan 19:51 UTC. Source tetap Public,
   `main` dan `mt5-feed` tidak diubah, dan dua EA asli tetap lokal.
-- Pengaturan Pages/visibilitas pernah ditolak izin administrasi; status website
-  harus diverifikasi lagi setelah pemilik menonaktifkan sumber publikasinya.
+- Pemilik telah menonaktifkan Pages dan URL website terverifikasi 404. PR #80
+  yang menghapus pemicu build lama masih perlu review; perubahan visibilitas
+  source tetap menunggu feed publik dan terminal MT5 teruji.
 - Belum ada HTTP 200 dari endpoint baru atau bukti push publikasi yang sukses.
   Workflow hanya disiapkan, belum dijalankan sebagai publisher produksi.
 - Tidak tersedia terminal live MT5 untuk menguji WebRequest, broker/account,

@@ -7,7 +7,7 @@ on:
       - 'tests/mt5-feeds/**'
       - '.github/workflows/mt5-public-feeds.yml'
   push:
-    branches: [main]
+    branches: [main, codex/isolated-mt5-https-feeds-20261019]
     paths:
       - 'scripts/mt5-feeds/**'
       - 'tests/mt5-feeds/**'
@@ -63,7 +63,7 @@ jobs:
     env:
       MT5_KIND: ${{ matrix.kind }}
       MT5_PUBLIC_FEED_REPOSITORY: ${{ vars.MT5_PUBLIC_FEED_REPOSITORY }}
-      MT5_TARGET_BRANCH: ${{ github.event_name == 'workflow_dispatch' && inputs.destination == 'staging' && 'staging' || 'main' }}
+      MT5_TARGET_BRANCH: ${{ (github.ref == 'refs/heads/codex/isolated-mt5-https-feeds-20261019' || (github.event_name == 'workflow_dispatch' && inputs.destination == 'staging')) && 'staging' || 'main' }}
       MT5_PUBLISH_ALLOWED: ${{ github.event_name != 'pull_request' && vars.MT5_ENABLE_PUBLISH == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/codex/isolated-mt5-https-feeds-20261019') && (github.event_name != 'workflow_dispatch' || inputs.publish) }}
     steps:
       - uses: actions/checkout@v4

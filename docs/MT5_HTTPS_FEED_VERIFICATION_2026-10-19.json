@@ -22,6 +22,7 @@
   "local_tests": {
     "python_tests": 9,
     "node_tests_with_real_ephemeris": 5,
+    "workflow_publication_guard_scenarios": 12,
     "native_decoder_parity": {
       "passed": 52,
       "total": 52,
@@ -362,10 +363,23 @@
   "production_automation_verified": false,
   "live_mt5_webrequest_verified": false,
   "repository_visibility_changed": false,
+  "pages_disabled_verification": {
+    "checked_at_utc": "2026-10-19T19:51:39.545197+00:00",
+    "owner_screenshot": "153684.jpg",
+    "owner_setting": "Branch: None; GitHub Pages source saved; GitHub Pages is currently disabled",
+    "pages_home_http_status": 404,
+    "pages_index_http_status": 404,
+    "authenticated_pages_api_http_status": 404,
+    "news_raw_http_status": 404,
+    "moments_raw_http_status": 404,
+    "website_shutdown_verified": true,
+    "pages_trigger_cleanup_pr": 80,
+    "pages_trigger_cleanup_merged": false
+  },
   "unresolved": [
     "Owner must create the public feed repository and configure the target-only write token.",
     "Publish to staging and verify anonymous HTTP 200 with exact bytes and original decoders.",
     "Verify production refresh and terminal MT5 before switching live URLs or making the source private.",
-    "Pages configuration still requires the owner; prior administrative requests returned 403."
+    "Review PR #80 removing legacy Pages build requests; the owner has already disabled Pages and the public website returns 404."
   ]
 }
