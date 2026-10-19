@@ -1,0 +1,13 @@
+{
+  "source_base_commit": "f5daccf2ae805146ca3352de7efe6e6a9189a69b",
+  "embedded_core_sha256": "b3de7ac2391e9b23b93d654c0d744433cc9cc002afb17506a317f06ba94afd61",
+  "files_sha256": {
+    "assets/astro-news-v1.js": "348927ac5aa35a7e78cdd7be5d5d6f9e66cfba17003ac5f26df3636b658c21bc",
+    "assets/triple-cycle-core.js": "b30e1a137120d63030f0ca5459a2704290340d7804fbf3ebed5d9673babbb005",
+    "assets/astro-moment-bias.js": "01b81d8a538014cdbf85d85911e2332c7723a819c39502f156b001cf3f0540bb"
+  },
+  "original_ea_sha256": {
+    "news": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b",
+    "moments": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+  }
+}

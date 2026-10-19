@@ -1,0 +1,371 @@
+{
+  "status": "BLOCKED_PUBLIC_DEPLOYMENT_AND_MT5_TEST",
+  "checked_at_utc": "2026-10-19T17:54:51.229705+00:00",
+  "source_repository": "EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-",
+  "branch": "codex/isolated-mt5-https-feeds-20261019",
+  "source_pins": {
+    "source_base_commit": "f5daccf2ae805146ca3352de7efe6e6a9189a69b",
+    "embedded_core_sha256": "b3de7ac2391e9b23b93d654c0d744433cc9cc002afb17506a317f06ba94afd61",
+    "files_sha256": {
+      "assets/astro-news-v1.js": "348927ac5aa35a7e78cdd7be5d5d6f9e66cfba17003ac5f26df3636b658c21bc",
+      "assets/triple-cycle-core.js": "b30e1a137120d63030f0ca5459a2704290340d7804fbf3ebed5d9673babbb005",
+      "assets/astro-moment-bias.js": "01b81d8a538014cdbf85d85911e2332c7723a819c39502f156b001cf3f0540bb"
+    },
+    "original_ea_sha256": {
+      "news": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b",
+      "moments": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+    }
+  },
+  "source_ea_modified": false,
+  "source_ea_committed": false,
+  "source_main_or_mt5_feed_modified": false,
+  "local_tests": {
+    "python_tests": 9,
+    "node_tests_with_real_ephemeris": 5,
+    "native_decoder_parity": {
+      "passed": 52,
+      "total": 52,
+      "scope": "C++ compatibility harness for unchanged original decoder; not a live MT5 terminal",
+      "cases": [
+        {
+          "kind": "news",
+          "case": "real generated payload",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root model='WRONG'",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root schema_version=99",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root schema_version=True",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root schema_version=1.0",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root instrument='XAGUSD'",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root generated_at_utc=1792431760",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root generated_at_utc=1792431759000",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root generated_at_utc='1792431759'",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root expires_at_utc=1792431759",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root schedule_to_utc=1800207759",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "root revision='unsafe/id'",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "duplicate signal IDs",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "window out of coverage",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "overlap with another ID",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "bad direction",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "wrong WIB date",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "empty signals allowed by original",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "news rejects neutral",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "news rejects session alias",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "news core at exclusive end",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "duplicate root key",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "escaped duplicate root key",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "trailing bytes",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "unpaired surrogate",
+          "pass": true
+        },
+        {
+          "kind": "news",
+          "case": "excessive JSON nesting",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "real generated payload",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root model='WRONG'",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root schema_version=99",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root schema_version=True",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root schema_version=2.0",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root instrument='XAGUSD'",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root generated_at_utc=1792431760",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root generated_at_utc=1792431759000",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root generated_at_utc='1792431759'",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root expires_at_utc=1792431759",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root schedule_to_utc=1800207759",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "root revision='unsafe/id'",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "duplicate signal IDs",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "window out of coverage",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "overlap with another ID",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "bad direction",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "wrong WIB date",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "empty signals allowed by original",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "moment neutral is valid",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "millisecond timestamp mismatch",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "moment wrong midnight",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "duplicate root key",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "escaped duplicate root key",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "trailing bytes",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "unpaired surrogate",
+          "pass": true
+        },
+        {
+          "kind": "moments",
+          "case": "excessive JSON nesting",
+          "pass": true
+        }
+      ]
+    }
+  },
+  "official_calendar": {
+    "checked_at_utc": 1792432312,
+    "sources": [
+      {
+        "agency": "BLS",
+        "url": "https://www.bls.gov/schedule/2026/10_sched.htm",
+        "sha256": "362eb29a5b132a41f14ac7f4a94e803690b4ef26472cc279813d05fb3cb1d69e",
+        "checked_at_utc": 1792432312
+      },
+      {
+        "agency": "FED",
+        "url": "https://www.federalreserve.gov/newsevents/2026-october.htm",
+        "sha256": "00e45b75fac454f485fe9804aa9a002970d37d1fab08b5f26e80f80318ed2460",
+        "checked_at_utc": 1792432312
+      },
+      {
+        "agency": "BLS",
+        "url": "https://www.bls.gov/schedule/2026/11_sched.htm",
+        "sha256": "67e5029903969e344658000d1a210a2a241957035e24def3d5d8878a644c55cd",
+        "checked_at_utc": 1792432312
+      },
+      {
+        "agency": "FED",
+        "url": "https://www.federalreserve.gov/newsevents/2026-november.htm",
+        "sha256": "49a4771753921f4b101d61a606fd97d1209d7ca7f977eb00c8a5614441e4c3fa",
+        "checked_at_utc": 1792432312
+      },
+      {
+        "agency": "BEA",
+        "url": "https://www.bea.gov/news/schedule",
+        "sha256": "c94fa95c88e978775f29c2fc935dff4ebce2791693772ecd73273a941caadf8d",
+        "checked_at_utc": 1792432312
+      }
+    ],
+    "supported_events_in_current_horizon": 7,
+    "unconfirmed_release_count": 0
+  },
+  "local_payloads": {
+    "news": {
+      "filename": "news-astrology-mt5.json",
+      "bytes": 4019,
+      "sha256": "e2885a9c67212976e6a3c947d6ab4501cc530df8b3d075990c19c5a5c3b83cc3",
+      "schema_version": 1,
+      "model": "CEBONK_NEWS_ASTROLOGY_V1",
+      "signal_count": 4,
+      "generated_at_utc": 1792431758,
+      "expires_at_utc": 1792561358,
+      "status": "local validated preview; not publicly deployed"
+    },
+    "moments": {
+      "filename": "astro-4momen-mt5.json",
+      "bytes": 4116,
+      "sha256": "9341f64b209ac17881f182a6e1c6d940eda486dfb7ea2b55fc92f0df910ee8a1",
+      "schema_version": 2,
+      "model": "CEBONK_FOUR_MOMENTS_ASTROLOGY_V1",
+      "signal_count": 9,
+      "generated_at_utc": 1792431758,
+      "expires_at_utc": 1792561358,
+      "status": "local validated preview; not publicly deployed"
+    }
+  },
+  "repository_creation": {
+    "attempted_at_utc": "2026-10-19T17:35:40.223318+00:00",
+    "requested_repository": "EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS",
+    "succeeded": false,
+    "status": "403",
+    "message": "Resource not accessible by integration"
+  },
+  "live_public_endpoint_verified": false,
+  "production_automation_verified": false,
+  "live_mt5_webrequest_verified": false,
+  "repository_visibility_changed": false,
+  "unresolved": [
+    "Owner must create the public feed repository and configure the target-only write token.",
+    "Publish to staging and verify anonymous HTTP 200 with exact bytes and original decoders.",
+    "Verify production refresh and terminal MT5 before switching live URLs or making the source private.",
+    "Pages configuration still requires the owner; prior administrative requests returned 403."
+  ]
+}
