@@ -8,7 +8,7 @@
   "core_epoch": 1792446666,
   "end_epoch": 1792460831,
   "valid_until_epoch": 1792460831,
-  "published_epoch": 1792446042,
+  "published_epoch": 1792453352,
   "aspect": "Moon/Saturn Sextile 60deg orb 1.826deg",
   "phase": "APPLYING",
   "buy_aspects": 0,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "SELL"
   },
-  "generated_at_utc": "2026-10-19T21:40:42.000Z",
+  "generated_at_utc": "2026-10-19T23:42:32.000Z",
   "candidate_entry_wib": "2026-10-20 01:15:00 WIB",
   "start_wib": "2026-10-20 01:00:00 WIB",
   "core_wib": "2026-10-20 04:51:06 WIB",
