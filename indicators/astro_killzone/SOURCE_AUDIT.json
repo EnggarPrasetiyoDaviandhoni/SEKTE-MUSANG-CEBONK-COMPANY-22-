@@ -1,0 +1,14 @@
+{
+  "source_commit": "d8b96f75ee5a780bfc560840d155e1e3618d514c",
+  "source_sha256": {
+    "index.html": "5f84b8967fd1002a21c773c0842c5c7d7e8eccda43eefc74e4b009d44777d849",
+    "assets/astro-killzone-core.js": "cfe41d6f64f6fe1307dde20164a5de1ce5ee26604c8d53acbf0e47dcd2145c04"
+  },
+  "vendor_sha256": {
+    "astro-killzone-core.cjs": "cfe41d6f64f6fe1307dde20164a5de1ce5ee26604c8d53acbf0e47dcd2145c04",
+    "astronomy.cjs": "6268029496ec7072e91a6ee3588dc645144dccc91ddbaa03b7f646fa0959da59",
+    "cebonk-core.js": "b3de7ac2391e9b23b93d654c0d744433cc9cc002afb17506a317f06ba94afd61"
+  },
+  "astronomy_engine": "2.1.19",
+  "math_modified": false
+}

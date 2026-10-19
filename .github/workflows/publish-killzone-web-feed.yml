@@ -1,0 +1,57 @@
+name: Publish Killzone Astrology WebRequest feed
+on:
+  schedule:
+    - cron: '20 0 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'indicators/astro_killzone/**'
+      - '.github/workflows/publish-killzone-web-feed.yml'
+permissions:
+  contents: read
+concurrency:
+  group: killzone-astrology-feed-v1
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify the unchanged Astro source and forecast model
+        run: node tests/killzone/feed.test.mjs
+      - name: Calculate and validate standalone Killzone forecast
+        run: |
+          node indicators/astro_killzone/generate.mjs --output "$RUNNER_TEMP/killzone-forecast.json"
+          node scripts/check-killzone-web-feed.mjs --file "$RUNNER_TEMP/killzone-forecast.json"
+      - uses: actions/checkout@v4
+        with:
+          ref: killzone-astrology-feed-v1
+          path: feed-publication
+      - name: Publish only the forecast file on the data branch
+        run: |
+          cp "$RUNNER_TEMP/killzone-forecast.json" feed-publication/forecast.json
+          git -C feed-publication config user.name 'github-actions[bot]'
+          git -C feed-publication config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C feed-publication add forecast.json
+          if ! git -C feed-publication diff --cached --quiet; then
+            git -C feed-publication commit -m 'data: refresh standalone Astrology Killzone forecast [skip ci]'
+            git -C feed-publication push origin HEAD:refs/heads/killzone-astrology-feed-v1
+          fi
+      - name: Verify public HTTP 200 and exact forecast hash
+        run: |
+          url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/killzone-astrology-feed-v1/forecast.json?run=${GITHUB_RUN_ID}"
+          for attempt in 1 2 3 4 5 6; do
+            if node scripts/check-killzone-web-feed.mjs --file "$RUNNER_TEMP/killzone-forecast.json" --url "$url"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
