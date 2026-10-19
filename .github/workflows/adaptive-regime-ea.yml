@@ -1,0 +1,19 @@
+name: adaptive-regime-ea
+
+on:
+  push:
+    paths:
+      - "ea/adaptive_regime/**"
+      - ".github/workflows/adaptive-regime-ea.yml"
+  pull_request:
+    paths:
+      - "ea/adaptive_regime/**"
+      - ".github/workflows/adaptive-regime-ea.yml"
+
+jobs:
+  source-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Adaptive Regime source tests
+        run: python3 ea/adaptive_regime/tests/test_source.py
