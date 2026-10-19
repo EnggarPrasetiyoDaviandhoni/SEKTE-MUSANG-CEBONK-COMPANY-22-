@@ -1,6 +1,6 @@
 {
-  "status": "STAGING_VERIFIED_PRODUCTION_AUTOMATION_AND_MT5_PENDING",
-  "checked_at_utc": "2026-10-19T20:05:13.734451+00:00",
+  "status": "STAGING_ACTIONS_VERIFIED_PRODUCTION_AND_MT5_PENDING",
+  "checked_at_utc": "2026-10-19T22:32:37.852148+00:00",
   "source_repository": "EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-",
   "branch": "codex/isolated-mt5-https-feeds-20261019",
   "source_pins": {
@@ -18,277 +18,485 @@
   },
   "source_ea_modified": false,
   "source_ea_committed": false,
-  "source_main_or_mt5_feed_modified": false,
   "local_tests": {
-    "python_tests": 10,
-    "node_tests_with_real_ephemeris": 5,
+    "python_tests": 12,
+    "node_tests_with_real_ephemeris": 6,
     "workflow_publication_guard_scenarios": 12,
     "native_decoder_parity": {
+      "scope": "C++ compatibility harness for unchanged original decoder; not a live MT5 terminal",
       "passed": 52,
       "total": 52,
-      "scope": "C++ compatibility harness for unchanged original decoder; not a live MT5 terminal",
       "cases": [
         {
           "kind": "news",
           "case": "real generated payload",
-          "pass": true
+          "expected": true,
+          "python_accepted": true,
+          "original_decoder_accepted": true,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "root model='WRONG'",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "root schema_version=99",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "root schema_version=True",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "root schema_version=1.0",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "root instrument='XAGUSD'",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
-          "case": "root generated_at_utc=1792431760",
-          "pass": true
+          "case": "root generated_at_utc=1792449007",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
-          "case": "root generated_at_utc=1792431759000",
-          "pass": true
+          "case": "root generated_at_utc=1792449006000",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
-          "case": "root generated_at_utc='1792431759'",
-          "pass": true
+          "case": "root generated_at_utc='1792449006'",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
-          "case": "root expires_at_utc=1792431759",
-          "pass": true
+          "case": "root expires_at_utc=1792449006",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
-          "case": "root schedule_to_utc=1800207759",
-          "pass": true
+          "case": "root schedule_to_utc=1800225006",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "root revision='unsafe/id'",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "duplicate signal IDs",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "window out of coverage",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "overlap with another ID",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "bad direction",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "wrong WIB date",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "empty signals allowed by original",
-          "pass": true
+          "expected": true,
+          "python_accepted": true,
+          "original_decoder_accepted": true,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "news rejects neutral",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "news rejects session alias",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "news core at exclusive end",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "duplicate root key",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "escaped duplicate root key",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "trailing bytes",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "unpaired surrogate",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "news",
           "case": "excessive JSON nesting",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
         },
         {
           "kind": "moments",
           "case": "real generated payload",
-          "pass": true
+          "expected": true,
+          "python_accepted": true,
+          "original_decoder_accepted": true,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "root model='WRONG'",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "root schema_version=99",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "root schema_version=True",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "root schema_version=2.0",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "root instrument='XAGUSD'",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
-          "case": "root generated_at_utc=1792431760",
-          "pass": true
+          "case": "root generated_at_utc=1792449005",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
-          "case": "root generated_at_utc=1792431759000",
-          "pass": true
+          "case": "root generated_at_utc=1792449004000",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
-          "case": "root generated_at_utc='1792431759'",
-          "pass": true
+          "case": "root generated_at_utc='1792449004'",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
-          "case": "root expires_at_utc=1792431759",
-          "pass": true
+          "case": "root expires_at_utc=1792449004",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
-          "case": "root schedule_to_utc=1800207759",
-          "pass": true
+          "case": "root schedule_to_utc=1800225004",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "root revision='unsafe/id'",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "duplicate signal IDs",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "window out of coverage",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "overlap with another ID",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "bad direction",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "wrong WIB date",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "empty signals allowed by original",
-          "pass": true
+          "expected": true,
+          "python_accepted": true,
+          "original_decoder_accepted": true,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "moment neutral is valid",
-          "pass": true
+          "expected": true,
+          "python_accepted": true,
+          "original_decoder_accepted": true,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "millisecond timestamp mismatch",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "moment wrong midnight",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "duplicate root key",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "escaped duplicate root key",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "trailing bytes",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "unpaired surrogate",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         },
         {
           "kind": "moments",
           "case": "excessive JSON nesting",
-          "pass": true
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
         }
-      ]
+      ],
+      "checked_at_utc": "2026-10-19T22:32:32.538745+00:00"
     }
   },
   "official_calendar": {
@@ -430,10 +638,209 @@
     "pages_trigger_cleanup_merged": false
   },
   "unresolved": [
-    "Owner must configure the target-only write token and publication variables on the source repository; integration variable access returned 403.",
-    "Verify automatic staging refresh; manual staging HTTP 200 with exact validated bytes and original decoders is already verified.",
-    "Verify production refresh and terminal MT5 before switching live URLs or making the source private.",
-    "Restore official release-calendar access from the GitHub runner and pass the news job before enabling automated news publication.",
-    "Review PR #80 removing legacy Pages build requests; the owner has already disabled Pages and the public website returns 404."
-  ]
+    "Production main endpoints have not been published; both source and feed PRs remain draft and unmerged.",
+    "Six-hour cron is configured but not active on the source default branch while the workflow remains in the PR.",
+    "Verify WebRequest and feed acceptance in a separate MT5 demo terminal before switching running EA URLs or making the source private.",
+    "Both original source/mt5-feed RAW endpoints still return 404; running EA URLs remain unchanged.",
+    "PR #80 removing legacy Pages build requests is separate and unmerged; Pages itself is disabled and website returns 404."
+  ],
+  "source_main_or_mt5_feed_modified_by_codex": false,
+  "staging_actions_publication_verified": true,
+  "default_branch_cron_active": false,
+  "live_public_endpoint_scope": "production main; staging is verified separately",
+  "latest_staging_actions_verification": {
+    "checked_at_utc": "2026-10-19T22:31:14.171245+00:00",
+    "source_commit": "8983687450907df2e425d07a0072ae82b059c5b4",
+    "push_workflow_run": 39335344228,
+    "pr_workflow_run": 39335351166,
+    "checks": [
+      {
+        "name": "news-astrology-mt5.json",
+        "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS/staging/data/news-astrology-mt5.json",
+        "http_status": 200,
+        "sha256": "d5f7d02901161f6b05325b6e1cb2e864a5cea5952b3ff5aa25d60532024a7ff7",
+        "signals": 4,
+        "stable_signal_content": true,
+        "generated_at_utc": 1792449005,
+        "expires_at_utc": 1792578605,
+        "source_commit": "8983687450907df2e425d07a0072ae82b059c5b4",
+        "calendar_providers": [
+          "BEA",
+          "FED",
+          "NYFED"
+        ]
+      },
+      {
+        "name": "astro-4momen-mt5.json",
+        "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS/staging/data/astro-4momen-mt5.json",
+        "http_status": 200,
+        "sha256": "0b213c3a520ed4608a78929836dc276143328c888668461f23b04d83b4578e84",
+        "signals": 9,
+        "stable_signal_content": true,
+        "generated_at_utc": 1792449003,
+        "expires_at_utc": 1792578603,
+        "source_commit": "8983687450907df2e425d07a0072ae82b059c5b4",
+        "calendar_providers": []
+      }
+    ],
+    "staging_commit": "f43c780de22b61b7f4e98a1649e540c0359ac442",
+    "publication_steps": [
+      {
+        "name": "checks",
+        "conclusion": "success",
+        "steps": {}
+      },
+      {
+        "name": "feed (news)",
+        "conclusion": "success",
+        "steps": {
+          "Validate destination and publication credentials": "success",
+          "Publish only this verified data file, preserving concurrent updates": "success",
+          "Verify anonymous HTTPS 200 and exact published bytes": "success"
+        }
+      },
+      {
+        "name": "feed (moments)",
+        "conclusion": "success",
+        "steps": {
+          "Validate destination and publication credentials": "success",
+          "Publish only this verified data file, preserving concurrent updates": "success",
+          "Verify anonymous HTTPS 200 and exact published bytes": "success"
+        }
+      }
+    ],
+    "token_target_write_verified": true,
+    "token_value_read": false,
+    "artifact_download_from_workspace": "HTTP 403 from artifact storage; cmp on runner and independent RAW/parser verification passed"
+  },
+  "calendar_transport_resolution": {
+    "selected_explicitly": "nyfed",
+    "new_york_fed_runner_http_status": 200,
+    "transport_diagnostic_run": 39334928562,
+    "original_bls_runner_http_status": 403,
+    "equal_release_count": 6,
+    "comparison": [
+      {
+        "month": "2026-10",
+        "events_equal": true,
+        "selected_releases": [
+          [
+            "cpi-20261014",
+            "CPI",
+            "BLS",
+            1791981000
+          ],
+          [
+            "nfp-20261002",
+            "NFP / Employment Situation",
+            "BLS",
+            1790944200
+          ],
+          [
+            "ppi-20261015",
+            "PPI",
+            "BLS",
+            1792067400
+          ]
+        ],
+        "bls_sha256": "362eb29a5b132a41f14ac7f4a94e803690b4ef26472cc279813d05fb3cb1d69e",
+        "nyfed_sha256": "b0c3b86d6d933c42999c2fcba191b833ba58bd1cf7ef1deefb3fe24c1d4876b3"
+      },
+      {
+        "month": "2026-11",
+        "events_equal": true,
+        "selected_releases": [
+          [
+            "cpi-20261110",
+            "CPI",
+            "BLS",
+            1794317400
+          ],
+          [
+            "nfp-20261106",
+            "NFP / Employment Situation",
+            "BLS",
+            1793971800
+          ],
+          [
+            "ppi-20261113",
+            "PPI",
+            "BLS",
+            1794576600
+          ]
+        ],
+        "bls_sha256": "67e5029903969e344658000d1a210a2a241957035e24def3d5d8878a644c55cd",
+        "nyfed_sha256": "ba232e08bbf9ce8c33b7a21e731c4559a337746f2d4c63447f6595b1bb64fce2"
+      }
+    ],
+    "date_time_inference_used": false,
+    "stale_fallback_used": false
+  },
+  "latest_preservation_verification": {
+    "source_repo": {
+      "private": false,
+      "has_pages": false
+    },
+    "source_refs": {
+      "refs/heads/main": "f6f3efca443be07a0a99ebd91f38fd4704fba57b",
+      "refs/heads/mt5-feed": "f5daccf2ae805146ca3352de7efe6e6a9189a69b"
+    },
+    "feed_main": {
+      "sha": "453df586d1c5865d2891bbca45282a02a33ea5fe"
+    },
+    "feed_staging": {
+      "sha": "f43c780de22b61b7f4e98a1649e540c0359ac442"
+    },
+    "source_pr": {
+      "number": 81,
+      "draft": true,
+      "merged": false,
+      "state": "open"
+    },
+    "feed_pr": {
+      "number": 1,
+      "draft": true,
+      "merged": false,
+      "state": "open"
+    },
+    "jobs": [
+      {
+        "name": "checks",
+        "conclusion": "success",
+        "steps": {}
+      },
+      {
+        "name": "feed (news)",
+        "conclusion": "success",
+        "steps": {
+          "Validate destination and publication credentials": "success",
+          "Publish only this verified data file, preserving concurrent updates": "success",
+          "Verify anonymous HTTPS 200 and exact published bytes": "success"
+        }
+      },
+      {
+        "name": "feed (moments)",
+        "conclusion": "success",
+        "steps": {
+          "Validate destination and publication credentials": "success",
+          "Publish only this verified data file, preserving concurrent updates": "success",
+          "Verify anonymous HTTPS 200 and exact published bytes": "success"
+        }
+      }
+    ],
+    "http_statuses": {
+      "pages": 404,
+      "old_news": 404,
+      "old_moments": 404,
+      "production_news": 404,
+      "production_moments": 404
+    },
+    "checked_at_utc": "2026-10-19T22:32:37.852148+00:00",
+    "source_main_change": {
+      "author": "github-actions[bot]",
+      "commit": "f6f3efca443be07a0a99ebd91f38fd4704fba57b",
+      "message": "data: update Al-Biruni intraday experimental schedule [skip ci]",
+      "scope": "six existing Al-Biruni intraday data files; independent of this task"
+    }
+  }
 }

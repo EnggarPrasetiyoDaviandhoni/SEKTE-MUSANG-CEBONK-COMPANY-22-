@@ -1,10 +1,11 @@
 # Pemisahan feed HTTPS MT5 dari source privat
 
-**Status: staging publik terverifikasi; produksi, otomatisasi dan MT5 belum
-terverifikasi.** Pemilik telah membuat repository Public `CEBONK-MT5-FEEDS`.
-Codex berhasil menulis dua JSON tervalidasi ke branch `staging`, dan kedua RAW
-memberi HTTP 200 dengan byte identik. `main` repository feed tetap berisi README.
-URL EA dan visibilitas repository asal belum diubah.
+**Status: kedua feed staging dan publikasi lewat GitHub Actions terverifikasi.
+Produksi, cron di default branch dan WebRequest terminal MT5 belum terverifikasi.**
+Token dan variabel yang disimpan pemilik berhasil digunakan. Job news serta
+empat momen sama-sama lulus, lalu memperbarui dua JSON di `CEBONK-MT5-FEEDS/staging`.
+`main` repository feed tetap berisi README. URL EA dan visibilitas repository
+asal belum diubah; PR source #81 dan PR feed #1 tetap draft dan belum di-merge.
 
 **Pembaruan Pages, 19 Oktober 2026 19:51 UTC:** pemilik telah menyimpan
 `Branch: None`. Tangkapan pengaturan menunjukkan **GitHub Pages is currently
@@ -44,8 +45,13 @@ feed kosong sebagai pengganti kegagalan sumber.
 - News memakai `assets/astro-news-v1.js` serta Astrology core asli dari `index.html`.
   Parameter planner yang sudah ada dipertahankan. Batas `end_utc` memakai
   `entryEnd`, sehingga periode continuation tidak diperluas menjadi entry baru.
-- `sync_calendar.py`: mengambil waktu rilis dari kalender primer BLS, BEA dan
-  Federal Reserve, termasuk perubahan DST New York. Cakupan bergulir maksimum
+- `sync_calendar.py`: workflow memilih `--labor-calendar nyfed` secara eksplisit.
+  Jadwal NFP/CPI/PPI diambil dari [kalender resmi New York Fed](https://www.newyorkfed.org/research/calendars/i-oct26.html)
+  yang mencantumkan tanggal, jam Eastern Time dan tautan BLS; BEA serta Federal
+  Reserve tetap memakai kalender masing-masing. Enam jadwal Oktober–November
+  telah dibandingkan dengan BLS langsung dan semuanya identik, termasuk DST.
+  Mode BLS langsung tetap tersedia untuk audit; tidak ada pergantian sumber
+  otomatis atau fallback kalender lama. Cakupan bergulir maksimum
   30 hari, dengan kelompok rilis yang sama: NFP, CPI, PPI, FOMC statement/minutes/
   press conference, GDP advance dan Personal Income and Outlays/PCE. Waktu TBA,
   tanggal ambigu, layout yang tidak dikenali atau perubahan tanggal melalui
@@ -76,11 +82,12 @@ feed kosong sebagai pengganti kegagalan sumber.
 
 ## Hasil pengujian
 
-- 10 tes Python: kontrak ketat, masa berlaku, identitas, kalender resmi, DST,
+- 12 tes Python: kontrak ketat, masa berlaku, identitas, kalender resmi, DST,
   penolakan perubahan layout/tanggal yang belum bisa dipastikan, serta penolakan
   membuat kalender kosong ketika sumber resmi mengembalikan HTTP 403.
-- 5 tes Node dengan ephemeris asli: kesamaan waktu fase, bias, window entry,
-  ID yang stabil, kegagalan sumber dan penolakan perubahan model.
+- 6 tes Node dengan ephemeris asli: kesamaan waktu fase, bias, window entry,
+  ID yang stabil, kesamaan sinyal antar-transport kalender, kegagalan sumber
+  dan penolakan perubahan model.
 - 12 kombinasi event/ref/flag/input menguji ekspresi workflow yang sebenarnya:
   PR dan branch tak dipercaya tidak boleh publish; branch pekerjaan hanya
   staging; production hanya dari source `main` dengan flag publikasi aktif.
@@ -92,15 +99,44 @@ feed kosong sebagai pengganti kegagalan sumber.
   Jumlah berubah mengikuti kalender dan cakupan; tidak dipaksa memiliki BUY/SELL.
 - Lima halaman kalender primer (BLS/Fed dua bulan dan BEA) memberi HTTP 200.
   Kalender hasil unduhan harus baru diperiksa, maksimum satu jam sebelum generasi.
-- Snapshot source website, generator lama, EA dan data lama tetap identik dengan
-  `main`. Hanya file baru untuk adapter, pengujian, workflow dan laporan ditambahkan.
+- Snapshot source website, generator lama, EA dan data lama pada branch pekerjaan
+  tetap identik dengan base commit `f5daccf`. PR tidak mengubah file tersebut;
+  update Al-Biruni di `main` dijalankan oleh workflow lama secara terpisah.
 
 Bukti terstruktur ada di [MT5_HTTPS_FEED_VERIFICATION_2026-10-19.json](MT5_HTTPS_FEED_VERIFICATION_2026-10-19.json).
 Harness C++ tidak menggantikan kompilasi MetaEditor atau WebRequest terminal live.
-Publikasi manual ke staging sudah teruji seperti dicatat di bawah. Publikasi
-produksi, pembaruan otomatis dan terminal MT5 masih belum teruji.
+Publikasi melalui Actions ke staging sudah teruji seperti dicatat di bawah.
+Publikasi produksi, cron default branch dan terminal MT5 masih belum teruji.
 
-### Hasil staging pada repository publik baru
+### Hasil terbaru: publikasi kedua feed lewat Actions
+
+- Source commit `8983687450907df2e425d07a0072ae82b059c5b4` lulus
+  [run push 39335344228](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39335344228)
+  dan [run PR 39335351166](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39335351166).
+  Job `checks`, `feed (news)` dan `feed (moments)` semuanya **success**.
+- Pada run push, kedua job berhasil memakai secret, memeriksa destinasi Public
+  dengan Pages nonaktif, push file yang tervalidasi ke `staging`, kemudian
+  membandingkan GET anonim dengan bytes build memakai `cmp` dan validator.
+  Run PR hanya memvalidasi, tanpa mempublikasikan data.
+- Staging pada `f43c780de22b61b7f4e98a1649e540c0359ac442` memberi HTTP 200
+  dari kedua URL kanonis pada 22:31 UTC. Payload berisi 4 window news dan 9
+  konteks momen. Seluruh arah, waktu, ID dan isi sinyal identik dengan publikasi
+  sebelumnya; hanya header publikasi/provenance diperbarui.
+- RAW yang diunduh diuji ulang dengan validator ketat serta 52 kasus parser
+  asli EA; semuanya lulus. Ini tetap harness C++, bukan terminal MT5.
+- Akses kalender NY Fed Oktober/November dari runner telah dibuktikan HTTP 200
+  pada [run diagnostik 39334928562](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39334928562).
+  Kalender langsung BLS tetap HTTP 403; workflow memakai transport NY Fed yang
+  sudah dibandingkan, dengan provenance yang menyebut provider sebenarnya.
+- Unduhan artifact langsung dari workspace ditolak storage HTTP 403.
+  Verifikasi bytes tetap dibuktikan oleh langkah `cmp` pada runner dan
+  pemeriksaan RAW/parser secara terpisah; tidak ada nilai token yang dibaca.
+- Source `main` maju sendiri ke `f6f3efc` melalui workflow Al-Biruni lama
+  (`github-actions[bot]`, hanya enam file data intraday). Codex tidak menulis
+  `main` atau `mt5-feed`; branch `mt5-feed` tetap `f5daccf`. Setelah perubahan
+  main tersebut, Pages tetap nonaktif dan URL website tetap HTTP 404.
+
+### Uji awal staging pada repository publik baru
 
 - Repository `EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS` terverifikasi Public,
   default branch `main`, Pages nonaktif. Akses tulis berhasil, dan source EA tidak
@@ -130,8 +166,8 @@ belum di-merge. CI awal pada commit `89e34a7` lulus job `checks` dan
 permintaan GitHub Actions dengan HTTP 403, meskipun unduhan dari lingkungan
 audit sebelumnya berhasil. Generator menghentikan publikasi; tidak ada kalender
 cadangan, feed kosong, atau sinyal pengganti. Status CI ini belum memenuhi
-syarat publikasi news atau merge. Diagnostik berikutnya menyertakan URL sumber
-yang gagal agar kendala akses dapat diperiksa dengan tepat.
+syarat publikasi news atau merge pada waktu itu. Kendala tersebut sudah ditangani
+dengan transport kalender resmi New York Fed dan uji Actions terbaru di atas.
 
 Diagnostik jaringan terpisah pada
 [run 39316417839](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39316417839)
@@ -141,6 +177,10 @@ Tidak digunakan proxy pihak ketiga atau penanggalan hasil tebakan. Workflow
 diagnostik sementara sudah dihapus setelah hasil dicatat.
 
 ## Konfigurasi yang perlu dilakukan pemilik
+
+Langkah 1–4 sudah dilakukan pemilik dan credential berhasil dipakai pada Actions.
+Tidak perlu membuat ulang token. Pemeriksaan Settings langsung oleh integrasi
+tetap dibatasi HTTP 403; hasil runtime membuktikan konfigurasi efektif.
 
 1. Repository `EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS` **sudah dibuat**
    pemilik sebagai Public dengan README, default branch `main`, Pages nonaktif.
@@ -163,6 +203,7 @@ diagnostik sementara sudah dihapus setelah hasil dicatat.
    Workflow membuat branch data `staging` bila perlu dan memeriksa endpointnya.
    Publikasi `main` hanya diizinkan dari source `main`. Lengkapi pemeriksaan
    HTTP serta decoder pada staging sebelum review/merge perubahan kode.
+   Uji staging melalui Actions sudah lulus; verifikasi terminal MT5 masih menunggu.
 6. Pada repository asal, **Settings → Pages → Build and deployment → Branch:
    None → Save** sudah dilakukan pemilik dan diverifikasi. Pertahankan pengaturan
    ini. [PR #80](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pull/80)
@@ -189,7 +230,7 @@ Sesudah GET 200, format, waktu, ID dan pembaruan otomatis teruji:
 3. Uji terlebih dahulu pada terminal demo dengan konfigurasi yang sesuai.
    Ganti **hanya `InpFeedURL`** pada masing-masing EA. Default
    `InpFeedInstrument` keduanya `XAUUSD`; payload harus sesuai nilai yang dipakai.
-4. Periksa panel/Experts: HTTP 200, feed diterima, revisi dan masa berlaku benar,
+4. Periksa panel/Experts: HTTP 200, status **FEED OK**, revisi dan masa berlaku benar,
    serta tidak ada `FEED_INVALID`, rollback, mutasi ID atau penggantian slot.
    Jika ada cache/journal dari penerbit lama, audit payload lamanya sebelum pindah;
    identitas sinyal penerbit lama belum tersedia untuk dibandingkan pada sesi ini.
@@ -201,19 +242,20 @@ Sesudah GET 200, format, waktu, ID dan pembaruan otomatis teruji:
 
 ## Masalah yang belum selesai
 
-- Pembuatan repository oleh Codex sebelumnya ditolak HTTP 403, tetapi pemilik
-  sudah menyelesaikannya. Konfigurasi secret/variabel Actions pada source tetap
-  memerlukan pemilik; pemeriksaan variabel ditolak izin integrasi HTTP 403.
-- Dua URL RAW lama masih 404 pada pemeriksaan 19:51 UTC. Source tetap Public,
-  `main` dan `mt5-feed` tidak diubah, dan dua EA asli tetap lokal.
+- Pemilik telah membuat repository, secret dan variabel; publikasi staging kedua
+  job sudah lulus. Akses Settings langsung oleh integrasi tetap terbatas, tetapi
+  tidak lagi menghalangi pengujian credential melalui workflow.
+- Dua URL RAW lama masih 404 pada pemeriksaan 22:32 UTC. Source tetap Public,
+  Codex tidak menulis `main` atau `mt5-feed`, dan dua EA asli tetap lokal.
 - Pemilik telah menonaktifkan Pages dan URL website terverifikasi 404. PR #80
   yang menghapus pemicu build lama masih perlu review; perubahan visibilitas
   source tetap menunggu feed publik dan terminal MT5 teruji.
-- Dua endpoint staging sudah HTTP 200 dengan JSON yang lolos parser asli.
-  Produksi `main`, pembaruan otomatis dan terminal MT5 belum terverifikasi.
-- Pengambilan kalender resmi dari GitHub Actions gagal HTTP 403 pada CI awal.
-  Akses sumber news harus dipulihkan dan job news harus lulus sebelum publikasi
-  otomatis dapat dinyatakan berjalan.
+- Dua endpoint staging sudah HTTP 200 dan diperbarui lewat Actions. Produksi
+  `main` masih belum diterbitkan, dan cron setiap enam jam belum aktif karena
+  workflow masih berada di branch PR. Semua PR tetap draft dan belum di-merge.
+- BLS langsung ditolak runner, tetapi transport resmi NY Fed sudah lulus dan
+  menghasilkan jadwal/sinyal yang sama. Semua sumber dapat mengubah layout atau
+  jadwal; parser tetap berhenti jika data tidak lengkap atau ambigu.
 - Tidak tersedia terminal live MT5 untuk menguji WebRequest, broker/account,
   journal sebelumnya atau posisi yang sedang berjalan.
 - Kalender resmi bisa mengubah layout atau membatalkan jadwal. Generator berhenti
