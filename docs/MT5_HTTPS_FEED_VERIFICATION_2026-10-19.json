@@ -1,6 +1,6 @@
 {
-  "status": "BLOCKED_PUBLIC_DEPLOYMENT_AND_MT5_TEST",
-  "checked_at_utc": "2026-10-19T17:54:51.229705+00:00",
+  "status": "STAGING_VERIFIED_PRODUCTION_AUTOMATION_AND_MT5_PENDING",
+  "checked_at_utc": "2026-10-19T20:05:13.734451+00:00",
   "source_repository": "EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-",
   "branch": "codex/isolated-mt5-https-feeds-20261019",
   "source_pins": {
@@ -360,6 +360,49 @@
     "message": "Resource not accessible by integration"
   },
   "live_public_endpoint_verified": false,
+  "public_staging_verification": {
+    "checked_at_utc": "2026-10-19T20:05:13.734451+00:00",
+    "repository": "EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS",
+    "repository_public": true,
+    "pages_enabled": false,
+    "owner_created_repository_verified": true,
+    "integration_write_access_verified": true,
+    "branch": "staging",
+    "staging_commit_prefix": "1fbee30",
+    "draft_pull_request": 1,
+    "default_main_commit_prefix": "453df58",
+    "default_main_contains_only_readme": true,
+    "generator_source_commit": "597c6b31f7f03f6ff2640ac2fedf3b505c5c704c",
+    "native_decoder_cases_passed": 52,
+    "news": {
+      "http_status": 200,
+      "valid_json": true,
+      "identical_validated_bytes": true,
+      "schema_version": 1,
+      "signals": 4,
+      "sha256": "5a73d0903cf25e29bfafccd05e29b5ae8df8e9d864471352cdeb9b90d27e15df"
+    },
+    "moments": {
+      "http_status": 200,
+      "valid_json": true,
+      "identical_validated_bytes": true,
+      "schema_version": 2,
+      "signals": 9,
+      "sha256": "d8bffe41317686f51ae975a16e53a530aa9b86400e799bdc7871812a40a43d46"
+    },
+    "generated_at_utc": 1792440199,
+    "expires_at_utc": 1792569799,
+    "publication_mode": "manual staging only; not live EA or automatic production"
+  },
+  "calendar_runner_access_diagnostic": {
+    "run_id": 39316417839,
+    "bls_monthly_html_http_status": 403,
+    "bls_icalendar_http_status": 403,
+    "federal_reserve_http_status": 200,
+    "bea_http_status": 200,
+    "publishes_data": false,
+    "temporary_workflow_removed_after_audit": true
+  },
   "production_automation_verified": false,
   "live_mt5_webrequest_verified": false,
   "draft_pull_request": 81,
@@ -387,8 +430,8 @@
     "pages_trigger_cleanup_merged": false
   },
   "unresolved": [
-    "Owner must create the public feed repository and configure the target-only write token.",
-    "Publish to staging and verify anonymous HTTP 200 with exact bytes and original decoders.",
+    "Owner must configure the target-only write token and publication variables on the source repository; integration variable access returned 403.",
+    "Verify automatic staging refresh; manual staging HTTP 200 with exact validated bytes and original decoders is already verified.",
     "Verify production refresh and terminal MT5 before switching live URLs or making the source private.",
     "Restore official release-calendar access from the GitHub runner and pass the news job before enabling automated news publication.",
     "Review PR #80 removing legacy Pages build requests; the owner has already disabled Pages and the public website returns 404."

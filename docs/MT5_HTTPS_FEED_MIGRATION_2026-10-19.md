@@ -1,9 +1,10 @@
 # Pemisahan feed HTTPS MT5 dari source privat
 
-**Status: belum aktif di publik.** Kode generator, validator dan workflow telah
-disiapkan. Kedua payload nyata lulus decoder asli EA dalam harness lokal.
-Repository feed terpisah belum bisa dibuat karena GitHub menolak izin integrasi
-dengan HTTP 403. URL EA dan visibilitas repository asal belum diubah.
+**Status: staging publik terverifikasi; produksi, otomatisasi dan MT5 belum
+terverifikasi.** Pemilik telah membuat repository Public `CEBONK-MT5-FEEDS`.
+Codex berhasil menulis dua JSON tervalidasi ke branch `staging`, dan kedua RAW
+memberi HTTP 200 dengan byte identik. `main` repository feed tetap berisi README.
+URL EA dan visibilitas repository asal belum diubah.
 
 **Pembaruan Pages, 19 Oktober 2026 19:51 UTC:** pemilik telah menyimpan
 `Branch: None`. Tangkapan pengaturan menunjukkan **GitHub Pages is currently
@@ -96,7 +97,32 @@ feed kosong sebagai pengganti kegagalan sumber.
 
 Bukti terstruktur ada di [MT5_HTTPS_FEED_VERIFICATION_2026-10-19.json](MT5_HTTPS_FEED_VERIFICATION_2026-10-19.json).
 Harness C++ tidak menggantikan kompilasi MetaEditor atau WebRequest terminal live.
-Penerbitan jarak jauh, HTTP 200 pada URL baru, dan terminal MT5 masih belum teruji.
+Publikasi manual ke staging sudah teruji seperti dicatat di bawah. Publikasi
+produksi, pembaruan otomatis dan terminal MT5 masih belum teruji.
+
+### Hasil staging pada repository publik baru
+
+- Repository `EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS` terverifikasi Public,
+  default branch `main`, Pages nonaktif. Akses tulis berhasil, dan source EA tidak
+  disalin. Branch `main` tetap pada initial commit README `453df58`.
+- Branch `staging`, commit `1fbee30`, hanya menambahkan dua file `data/*.json`.
+  [Draft PR feed #1](https://github.com/EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS/pull/1)
+  menyediakan hasil yang dapat direview, tanpa merge.
+- Kalender primer diunduh ulang: 7 event pada cakupan aktif dari 5 halaman resmi.
+  Payload dibuat oleh source commit `597c6b3`, berisi 4 window news dan 9 konteks
+  momen; pembandingan dengan preview sebelumnya mempertahankan identitas window.
+- 52 kasus parser asli diulang terhadap payload baru dan semuanya lulus.
+- GET anonim pada 19 Oktober 2026 20:05 UTC memberi **HTTP 200**, JSON valid,
+  serta byte/hash identik untuk kedua URL staging berikut. Masa berlaku payload
+  36 jam; hasil ini membuktikan publikasi manual, bukan pembaruan cron.
+
+```text
+https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS/staging/data/news-astrology-mt5.json
+https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS/staging/data/astro-4momen-mt5.json
+```
+
+Kedua URL staging belum boleh menggantikan URL EA live sebelum otomatisasi dan
+terminal MT5 diuji. URL produksi memakai branch `main` dan belum tersedia.
 
 PR implementasi: [draft #81](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pull/81),
 belum di-merge. CI awal pada commit `89e34a7` lulus job `checks` dan
@@ -107,13 +133,19 @@ cadangan, feed kosong, atau sinyal pengganti. Status CI ini belum memenuhi
 syarat publikasi news atau merge. Diagnostik berikutnya menyertakan URL sumber
 yang gagal agar kendala akses dapat diperiksa dengan tepat.
 
+Diagnostik jaringan terpisah pada
+[run 39316417839](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39316417839)
+membuktikan halaman HTML **dan** kalender iCalendar resmi BLS sama-sama HTTP 403
+dari runner GitHub, sedangkan Fed dan BEA HTTP 200. Probe tidak menerbitkan data.
+Tidak digunakan proxy pihak ketiga atau penanggalan hasil tebakan. Workflow
+diagnostik sementara sudah dihapus setelah hasil dicatat.
+
 ## Konfigurasi yang perlu dilakukan pemilik
 
-1. Buat repository melalui [GitHub New repository](https://github.com/new): owner
-   `EnggarPrasetiyoDaviandhoni`, nama `CEBONK-MT5-FEEDS`, **Public**, tambahkan
-   README, default branch `main`. Isinya hanya README dan dua file di `data/`.
-   Biarkan Pages nonaktif. Jika Codex akan membantu menulis branch staging,
-   tambahkan repository tersebut ke akses koneksi GitHub Codex.
+1. Repository `EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS` **sudah dibuat**
+   pemilik sebagai Public dengan README, default branch `main`, Pages nonaktif.
+   Akses Codex dan publikasi dua JSON ke `staging` sudah berhasil. Pertahankan
+   repository ini sebagai distribusi data publik, tanpa source EA.
 2. Pada akun GitHub, buka **Settings → Developer settings → Personal access
    tokens → Fine-grained tokens → Generate new token**. Batasi Repository access
    ke `CEBONK-MT5-FEEDS`, dengan permission **Contents: Read and write**.
@@ -169,16 +201,16 @@ Sesudah GET 200, format, waktu, ID dan pembaruan otomatis teruji:
 
 ## Masalah yang belum selesai
 
-- `POST /user/repos` untuk membuat `CEBONK-MT5-FEEDS` ditolak HTTP 403
-  `Resource not accessible by integration`. Konfigurasi repository/secret memerlukan
-  pemilik; belum ada klaim bahwa target publik atau credential publikasi siap.
+- Pembuatan repository oleh Codex sebelumnya ditolak HTTP 403, tetapi pemilik
+  sudah menyelesaikannya. Konfigurasi secret/variabel Actions pada source tetap
+  memerlukan pemilik; pemeriksaan variabel ditolak izin integrasi HTTP 403.
 - Dua URL RAW lama masih 404 pada pemeriksaan 19:51 UTC. Source tetap Public,
   `main` dan `mt5-feed` tidak diubah, dan dua EA asli tetap lokal.
 - Pemilik telah menonaktifkan Pages dan URL website terverifikasi 404. PR #80
   yang menghapus pemicu build lama masih perlu review; perubahan visibilitas
   source tetap menunggu feed publik dan terminal MT5 teruji.
-- Belum ada HTTP 200 dari endpoint baru atau bukti push publikasi yang sukses.
-  Workflow hanya disiapkan, belum dijalankan sebagai publisher produksi.
+- Dua endpoint staging sudah HTTP 200 dengan JSON yang lolos parser asli.
+  Produksi `main`, pembaruan otomatis dan terminal MT5 belum terverifikasi.
 - Pengambilan kalender resmi dari GitHub Actions gagal HTTP 403 pada CI awal.
   Akses sumber news harus dipulihkan dan job news harus lulus sebelum publikasi
   otomatis dapat dinyatakan berjalan.
