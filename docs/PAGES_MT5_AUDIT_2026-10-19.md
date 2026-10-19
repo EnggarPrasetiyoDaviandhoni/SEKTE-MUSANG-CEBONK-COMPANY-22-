@@ -7,6 +7,7 @@ pengujian serta ketergantungan feed diselesaikan.
 Repository: `EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-`.
 Commit dasar: `f5daccf2ae805146ca3352de7efe6e6a9189a69b`.
 Branch pekerjaan: `codex/disable-pages-preserve-mt5-20261019`.
+Review: [draft PR #80](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pull/80), tanpa auto-merge.
 Seluruh waktu dalam laporan ini menggunakan UTC.
 
 ## Temuan dan perubahan
@@ -52,7 +53,10 @@ status; tidak ada run aktif yang perlu dibatalkan saat pemeriksaan.
 
 ## Hasil HTTP dan audit feed
 
-GET publik diperiksa pada 19 Oktober 2026 pukul 14:45. Detail terstruktur ada di
+GET publik diperiksa pada 19 Oktober 2026 pukul 14:45. Uji ulang root Pages,
+`/index.html`, dan kedua RAW yang diminta pada pukul 14:52 tetap menghasilkan
+404. API Pages masih `legacy`, sumber `main /`; kedua branch tetap pada commit
+dasar, dan repository tetap public. Detail terstruktur ada di
 [PAGES_MT5_VERIFICATION_2026-10-19.json](PAGES_MT5_VERIFICATION_2026-10-19.json).
 `mt5-feed` pada dua URL pertama berikut diperlakukan sebagai nama branch,
 sedangkan `data/...json` merupakan path file.
@@ -121,6 +125,19 @@ hilang. Untuk dua endpoint yang diminta, otomatisasi belum dapat diverifikasi.
   keberhasilan WebRequest serta penerimaan payload oleh kedua EA aktif belum
   dapat diuji langsung.
 
+CI PR telah selesai pada commit kode `0513f23d35748a61fefd0f849ffe5f0aa8b0c03c`:
+
+| Workflow CI | Hasil | Bukti |
+| --- | --- | --- |
+| Astrology H1 H4 candle summaries | Gagal pada assertion header website lama, sama dengan baseline | [run 39272577983](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577983) |
+| Astrology daily whipsaw news brief | Gagal pada assertion header website lama yang sama | [run 39272577958](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577958) |
+| Web wallpaper glass skin | Lulus | [run 39272577990](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577990) |
+
+Log kedua job yang gagal mengonfirmasi `astro-candles.integration.cjs:8` dengan
+pesan `Astrology view and inputs must remain present after header simplification`.
+Commit sesudah hasil CI hanya memperbarui laporan/bukti; workflow dan source
+yang diuji tidak berubah. Tidak ada klaim bahwa seluruh pengujian lulus.
+
 ## Langkah pemilik repository
 
 1. Buka [repository → Settings → Pages](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/settings/pages).
@@ -153,7 +170,8 @@ hilang. Untuk dua endpoint yang diminta, otomatisasi belum dapat diverifikasi.
   `ea/liquidity_sweep/src` mempunyai URL default ke Pages. Belum diketahui apakah
   versi tersebut yang sedang berjalan. Penonaktifan Pages juga menghilangkan
   endpoint data yang disajikan dari Pages; jangan menganggap semua EA memakai RAW.
-- Satu tes integrasi lama gagal. Hasil CI PR harus dicatat sebelum review/merge.
+- Satu tes integrasi lama gagal secara lokal dan pada dua workflow CI PR.
+  Kegagalan tetap terbuka; PR tetap draft dan tidak di-merge.
 - Kebijakan Actions dan webhooks tingkat admin tidak dapat diaudit dengan izin
   yang tersedia. Tidak ada klaim bahwa proses eksternal telah seluruhnya diperiksa.
 - Source tetap terbuka di repository public. Pemisahan feed publik yang telah

@@ -444,5 +444,160 @@
     "Existing news and weekly contract checks do not validate either missing JSON contract.",
     "MT5 terminal was unavailable for live WebRequest verification.",
     "Code changes remain on an unmerged branch."
-  ]
+  ],
+  "final_verification": {
+    "checked_at_utc": "2026-10-19T14:52:37.194015+00:00",
+    "repository-final": {
+      "visibility": "public",
+      "default_branch": "main",
+      "archived": false,
+      "has_pages": true
+    },
+    "pages-final": {
+      "url": "https://api.github.com/repos/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pages",
+      "status": "built",
+      "cname": null,
+      "custom_404": false,
+      "html_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/",
+      "build_type": "legacy",
+      "source": {
+        "branch": "main",
+        "path": "/"
+      },
+      "public": true,
+      "protected_domain_state": null,
+      "pending_domain_unverified_at": null,
+      "https_enforced": true
+    },
+    "main-final": {
+      "name": "main",
+      "sha": "f5daccf2ae805146ca3352de7efe6e6a9189a69b"
+    },
+    "mt5-feed-final": {
+      "name": "mt5-feed",
+      "sha": "f5daccf2ae805146ca3352de7efe6e6a9189a69b"
+    },
+    "pull_request": {
+      "autoMergeRequest": null,
+      "baseRefName": "main",
+      "headRefName": "codex/disable-pages-preserve-mt5-20261019",
+      "headRefOid": "0513f23d35748a61fefd0f849ffe5f0aa8b0c03c",
+      "isDraft": true,
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-19T14:50:35Z",
+          "conclusion": "FAILURE",
+          "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577983/job/118128465056",
+          "name": "verify",
+          "startedAt": "2026-10-19T14:50:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Astrology H1 H4 candle summaries"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-19T14:50:36Z",
+          "conclusion": "FAILURE",
+          "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577958/job/118128464566",
+          "name": "verify",
+          "startedAt": "2026-10-19T14:50:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Astrology daily whipsaw news brief"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-19T14:50:37Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577990/job/118128464504",
+          "name": "verify",
+          "startedAt": "2026-10-19T14:50:32Z",
+          "status": "COMPLETED",
+          "workflowName": "Web wallpaper glass skin"
+        }
+      ],
+      "url": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pull/80"
+    },
+    "http_gets": [
+      {
+        "checked_at_utc": "2026-10-19T14:52:40.036765+00:00",
+        "url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/",
+        "status": 404,
+        "final_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/",
+        "bytes": 9115,
+        "sha256": "70d613e3acfba24fd2876fcbacaf639e1e111ef4d54baf70761c47673f37d6a3",
+        "server_date": "Mon, 19 Oct 2026 14:52:40 GMT",
+        "valid_json": false
+      },
+      {
+        "checked_at_utc": "2026-10-19T14:52:40.037805+00:00",
+        "url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/index.html",
+        "status": 404,
+        "final_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/index.html",
+        "bytes": 9115,
+        "sha256": "70d613e3acfba24fd2876fcbacaf639e1e111ef4d54baf70761c47673f37d6a3",
+        "server_date": "Mon, 19 Oct 2026 14:52:40 GMT",
+        "valid_json": false
+      },
+      {
+        "checked_at_utc": "2026-10-19T14:52:40.038445+00:00",
+        "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/news-astrology-mt5.json",
+        "status": 404,
+        "final_url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/news-astrology-mt5.json",
+        "bytes": 14,
+        "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+        "server_date": "Mon, 19 Oct 2026 14:52:40 GMT",
+        "valid_json": false
+      },
+      {
+        "checked_at_utc": "2026-10-19T14:52:40.039432+00:00",
+        "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/astro-4momen-mt5.json",
+        "status": 404,
+        "final_url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/astro-4momen-mt5.json",
+        "bytes": 14,
+        "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+        "server_date": "Mon, 19 Oct 2026 14:52:40 GMT",
+        "valid_json": false
+      }
+    ]
+  },
+  "ci": {
+    "tested_code_commit": "0513f23d35748a61fefd0f849ffe5f0aa8b0c03c",
+    "workflow_tree_sha": "4d1289be8c8f0071a1d05dd9791e03ef59de6bd6",
+    "checks": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-19T14:50:35Z",
+        "conclusion": "FAILURE",
+        "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577983/job/118128465056",
+        "name": "verify",
+        "startedAt": "2026-10-19T14:50:31Z",
+        "status": "COMPLETED",
+        "workflowName": "Astrology H1 H4 candle summaries"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-19T14:50:36Z",
+        "conclusion": "FAILURE",
+        "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577958/job/118128464566",
+        "name": "verify",
+        "startedAt": "2026-10-19T14:50:31Z",
+        "status": "COMPLETED",
+        "workflowName": "Astrology daily whipsaw news brief"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-19T14:50:37Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577990/job/118128464504",
+        "name": "verify",
+        "startedAt": "2026-10-19T14:50:32Z",
+        "status": "COMPLETED",
+        "workflowName": "Web wallpaper glass skin"
+      }
+    ],
+    "failed_jobs_same_as_unchanged_baseline": true,
+    "failure": "astro-candles.integration.cjs:8: Astrology view and inputs must remain present after header simplification",
+    "subsequent_changes": "Audit documentation and evidence only; tested workflows and source unchanged."
+  }
 }
