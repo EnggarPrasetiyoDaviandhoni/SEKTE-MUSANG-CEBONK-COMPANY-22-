@@ -75,8 +75,9 @@ feed kosong sebagai pengganti kegagalan sumber.
 
 ## Hasil pengujian
 
-- 9 tes Python: kontrak ketat, masa berlaku, identitas, kalender resmi, DST dan
-  penolakan perubahan layout/tanggal yang belum bisa dipastikan.
+- 10 tes Python: kontrak ketat, masa berlaku, identitas, kalender resmi, DST,
+  penolakan perubahan layout/tanggal yang belum bisa dipastikan, serta penolakan
+  membuat kalender kosong ketika sumber resmi mengembalikan HTTP 403.
 - 5 tes Node dengan ephemeris asli: kesamaan waktu fase, bias, window entry,
   ID yang stabil, kegagalan sumber dan penolakan perubahan model.
 - 12 kombinasi event/ref/flag/input menguji ekspresi workflow yang sebenarnya:
@@ -96,6 +97,15 @@ feed kosong sebagai pengganti kegagalan sumber.
 Bukti terstruktur ada di [MT5_HTTPS_FEED_VERIFICATION_2026-10-19.json](MT5_HTTPS_FEED_VERIFICATION_2026-10-19.json).
 Harness C++ tidak menggantikan kompilasi MetaEditor atau WebRequest terminal live.
 Penerbitan jarak jauh, HTTP 200 pada URL baru, dan terminal MT5 masih belum teruji.
+
+PR implementasi: [draft #81](https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pull/81),
+belum di-merge. CI awal pada commit `89e34a7` lulus job `checks` dan
+`feed (moments)`. Job `feed (news)` gagal saat sumber kalender resmi menolak
+permintaan GitHub Actions dengan HTTP 403, meskipun unduhan dari lingkungan
+audit sebelumnya berhasil. Generator menghentikan publikasi; tidak ada kalender
+cadangan, feed kosong, atau sinyal pengganti. Status CI ini belum memenuhi
+syarat publikasi news atau merge. Diagnostik berikutnya menyertakan URL sumber
+yang gagal agar kendala akses dapat diperiksa dengan tepat.
 
 ## Konfigurasi yang perlu dilakukan pemilik
 
@@ -169,6 +179,9 @@ Sesudah GET 200, format, waktu, ID dan pembaruan otomatis teruji:
   source tetap menunggu feed publik dan terminal MT5 teruji.
 - Belum ada HTTP 200 dari endpoint baru atau bukti push publikasi yang sukses.
   Workflow hanya disiapkan, belum dijalankan sebagai publisher produksi.
+- Pengambilan kalender resmi dari GitHub Actions gagal HTTP 403 pada CI awal.
+  Akses sumber news harus dipulihkan dan job news harus lulus sebelum publikasi
+  otomatis dapat dinyatakan berjalan.
 - Tidak tersedia terminal live MT5 untuk menguji WebRequest, broker/account,
   journal sebelumnya atau posisi yang sedang berjalan.
 - Kalender resmi bisa mengubah layout atau membatalkan jadwal. Generator berhenti

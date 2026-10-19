@@ -9,6 +9,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
+import urllib.error
 import urllib.request
 import urllib.parse
 from zoneinfo import ZoneInfo
@@ -192,11 +193,16 @@ def parse_bea(html, source):
 def fetch(url):
     need(urllib.parse.urlparse(url).hostname in ALLOWED_HOSTS, "Unapproved calendar source")
     request = urllib.request.Request(url, headers={"User-Agent": "Cebonk-MT5-Calendar-Audit/1.0", "Cache-Control": "no-cache"})
-    with urllib.request.urlopen(request, timeout=25) as response:
-        final = urllib.parse.urlparse(response.url)
-        need(response.status == 200 and final.scheme == "https" and final.hostname in ALLOWED_HOSTS, "Unverified calendar response")
-        raw = response.read(4000001)
-        need(len(raw) <= 4000000, "Calendar response too large")
+    try:
+        with urllib.request.urlopen(request, timeout=25) as response:
+            final = urllib.parse.urlparse(response.url)
+            need(response.status == 200 and final.scheme == "https" and final.hostname in ALLOWED_HOSTS, "Unverified calendar response")
+            raw = response.read(4000001)
+            need(len(raw) <= 4000000, "Calendar response too large")
+    except urllib.error.HTTPError as error:
+        raise ValueError(f"Official calendar unavailable: {url} (HTTP {error.code}); publication stopped") from error
+    except urllib.error.URLError as error:
+        raise ValueError(f"Official calendar unavailable: {url}; publication stopped: {error.reason}") from error
     return raw.decode("utf-8-sig"), hashlib.sha256(raw).hexdigest()
 
 

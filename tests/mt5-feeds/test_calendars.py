@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("release_calendars", ROOT / "scripts/mt5-feeds/sync_calendar.py")
@@ -9,6 +10,12 @@ spec.loader.exec_module(C)
 
 
 class CalendarTests(unittest.TestCase):
+    def test_unavailable_official_source_does_not_become_an_empty_calendar(self):
+        failure = C.urllib.error.HTTPError("https://www.bls.gov", 403, "Forbidden", None, None)
+        with patch.object(C.urllib.request, "urlopen", side_effect=failure):
+            with self.assertRaisesRegex(ValueError, r"www\.bls\.gov/schedule/2026/10_sched\.htm.*HTTP 403"):
+                C.sync(1792431758)
+
     def test_us_dst_is_not_a_fixed_utc_offset(self):
         summer = C.release_epoch(2026, 10, 14, "08:30 AM")
         winter = C.release_epoch(2026, 11, 10, "08:30 AM")

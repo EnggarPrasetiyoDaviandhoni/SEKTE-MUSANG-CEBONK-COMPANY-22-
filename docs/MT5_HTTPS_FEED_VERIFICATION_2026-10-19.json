@@ -20,7 +20,7 @@
   "source_ea_committed": false,
   "source_main_or_mt5_feed_modified": false,
   "local_tests": {
-    "python_tests": 9,
+    "python_tests": 10,
     "node_tests_with_real_ephemeris": 5,
     "workflow_publication_guard_scenarios": 12,
     "native_decoder_parity": {
@@ -362,6 +362,16 @@
   "live_public_endpoint_verified": false,
   "production_automation_verified": false,
   "live_mt5_webrequest_verified": false,
+  "draft_pull_request": 81,
+  "initial_github_actions": {
+    "source_commit": "89e34a7f671d66d68c418f38014817fd90b9f519",
+    "push_run_id": 39314810289,
+    "pull_request_run_id": 39314848132,
+    "checks": "success",
+    "feed_moments": "success",
+    "feed_news": "failure",
+    "news_error": "Official release calendar HTTP 403 from GitHub-hosted runner; no publication or fallback performed"
+  },
   "repository_visibility_changed": false,
   "pages_disabled_verification": {
     "checked_at_utc": "2026-10-19T19:51:39.545197+00:00",
@@ -380,6 +390,7 @@
     "Owner must create the public feed repository and configure the target-only write token.",
     "Publish to staging and verify anonymous HTTP 200 with exact bytes and original decoders.",
     "Verify production refresh and terminal MT5 before switching live URLs or making the source private.",
+    "Restore official release-calendar access from the GitHub runner and pass the news job before enabling automated news publication.",
     "Review PR #80 removing legacy Pages build requests; the owner has already disabled Pages and the public website returns 404."
   ]
 }
