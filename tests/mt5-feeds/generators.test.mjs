@@ -57,6 +57,12 @@ test('news windows preserve original direction, model peak and initial-entry end
   assert.deepEqual(feed.signals, refreshed.signals);
 });
 
+test('official calendar transport does not change strategy, windows or signal identities', async () => {
+  const direct = await generateNews(models, calendar, now, commit);
+  const nyfed = await generateNews(models, {...calendar, source: 'OFFICIAL_NYFED_BEA_FED'}, now, commit);
+  assert.deepEqual(nyfed.signals, direct.signals);
+});
+
 test('missing/stale calendars fail; no BUY or SELL fallback is fabricated', async () => {
   await assert.rejects(generateNews(models, null, now, commit), /Official calendar/);
   await assert.rejects(generateNews(models, {...calendar, checked_at_utc: now - 3601}, now, commit), /freshly/);

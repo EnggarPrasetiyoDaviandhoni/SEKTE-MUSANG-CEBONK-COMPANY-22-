@@ -76,9 +76,9 @@ jobs:
         with:
           python-version: '3.12'
       - run: npm ci --prefix scripts/mt5-feeds --ignore-scripts --no-audit --no-fund
-      - name: Check primary release calendars without stale fallback
+      - name: Check official release calendars without stale fallback
         if: matrix.kind == 'news'
-        run: python3 scripts/mt5-feeds/sync_calendar.py --out build/news-calendar.json
+        run: python3 scripts/mt5-feeds/sync_calendar.py --labor-calendar nyfed --out build/news-calendar.json
       - name: Generate from the unchanged original models and validate the EA contract
         shell: bash
         run: |

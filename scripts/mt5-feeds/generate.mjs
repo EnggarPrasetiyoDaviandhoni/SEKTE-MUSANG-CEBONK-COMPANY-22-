@@ -71,7 +71,7 @@ function complete(feed, signals) {
 }
 
 export async function generateNews(models, calendar, now, sourceCommit) {
-  assert(calendar?.source === 'OFFICIAL_BLS_BEA_FED' && Array.isArray(calendar.events), 'Official calendar required');
+  assert(['OFFICIAL_BLS_BEA_FED', 'OFFICIAL_NYFED_BEA_FED'].includes(calendar?.source) && Array.isArray(calendar.events), 'Official calendar required');
   assert(Number.isSafeInteger(calendar.checked_at_utc) && calendar.checked_at_utc <= now &&
     now - calendar.checked_at_utc <= 3600, 'Calendar must be freshly verified; no stale fallback');
   const from = midnight(now * 1000) / 1000 - 86400;

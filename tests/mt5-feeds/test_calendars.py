@@ -9,7 +9,47 @@ C = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(C)
 
 
+def nyfed_fixture(year=2026, month=10):
+    days = {10: {2: "Employment Situation", 14: "Consumer Price Index", 15: "Producer Price Index (PPI)"},
+            11: {6: "Employment Situation", 10: "Consumer Price Index", 13: "Producer Price Index (PPI)"}}[month]
+    cells = []
+    for day in range(1, C.calendar.monthrange(year, month)[1] + 1):
+        if C.dt.date(year, month, day).weekday() >= 5:
+            continue
+        release = ''
+        if day in days:
+            release = '<span class="ts-accordion-content"><a href="https://www.example.org">Other release</a>(10:00)' \
+                      f'<a href="https://www.bls.gov/news.release/">{days[day]}</a><br />(08:30)<br />' \
+                      '<a href="https://www.example.org">Next release</a>(14:00)</span>'
+        cells.append(f'<td class="somatdR"><div>{day:02d}<br />{release}</div></td>')
+    return f'<p>{C.calendar.month_name[month]} {year} (all Eastern Time)</p><table class="research-table-1col greyborder">' \
+           '<tr><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr><tr>' + ''.join(cells) + '</tr></table>'
+
+
 class CalendarTests(unittest.TestCase):
+    def test_nyfed_uses_each_selected_clock_and_dst_with_original_event_ids(self):
+        for month, expected_hour in ((10, 12), (11, 13)):
+            events = C.parse_nyfed(nyfed_fixture(month=month), 2026, month, 'https://www.newyorkfed.org/research/calendars/')
+            self.assertEqual(len(events), 3)
+            self.assertEqual({event['id'].split('-')[0] for event in events}, {'nfp', 'cpi', 'ppi'})
+            self.assertTrue(all(C.dt.datetime.fromtimestamp(event['release_utc'], C.UTC).hour == expected_hour for event in events))
+            self.assertTrue(all(event['agency'] == 'BLS' for event in events))
+
+    def test_nyfed_rejects_stale_ambiguous_or_incomplete_calendar(self):
+        html = nyfed_fixture()
+        for invalid in (
+            html.replace('October 2026', 'September 2026'),
+            html.replace('all Eastern Time', 'time unavailable'),
+            html.replace('(08:30)', '(TBA)'),
+            html.replace('Consumer Price Index', 'Unknown release'),
+            html.replace('www.bls.gov', 'www.example.org'),
+            html.replace('research-table-1col', 'new-layout'),
+            html.replace('<div>02<br', '<div>03<br'),
+            html.replace('<div>01<br', '<div>02<br'),
+        ):
+            with self.subTest(invalid=invalid[:60]):
+                with self.assertRaises(ValueError): C.parse_nyfed(invalid, 2026, 10, 'test')
+
     def test_unavailable_official_source_does_not_become_an_empty_calendar(self):
         failure = C.urllib.error.HTTPError("https://www.bls.gov", 403, "Forbidden", None, None)
         with patch.object(C.urllib.request, "urlopen", side_effect=failure):

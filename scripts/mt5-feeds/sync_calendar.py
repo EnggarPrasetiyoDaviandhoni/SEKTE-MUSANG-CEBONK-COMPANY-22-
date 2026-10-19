@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 UTC = dt.timezone.utc
 WIB = dt.timezone(dt.timedelta(hours=7))
 NEW_YORK = ZoneInfo("America/New_York")
-ALLOWED_HOSTS = {"www.bls.gov", "www.bea.gov", "www.federalreserve.gov"}
+ALLOWED_HOSTS = {"www.bls.gov", "www.bea.gov", "www.federalreserve.gov", "www.newyorkfed.org"}
 
 
 def need(condition, message):
@@ -118,6 +118,65 @@ def parse_bls(html, year, month, source):
     return events
 
 
+def parse_nyfed(html, year, month, source):
+    """Read explicit BLS release dates/clocks from the official NY Fed calendar."""
+    root = Document(html).root
+    months = re.findall(r"\b(" + "|".join(calendar.month_name[1:]) + r")\s+(20\d\d)\b", root.text())
+    need(set(months) == {(calendar.month_name[month], str(year))}, "NY Fed calendar month/year is missing or stale")
+    need("all Eastern Time" in root.text(), "NY Fed calendar timezone is not explicit")
+    tables = [node for node in root.all("table") if node.has_class("research-table-1col")]
+    need(len(tables) == 1 and tables[0].text().split()[:5] == ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "NY Fed calendar layout changed")
+    names = {"Employment Situation": ("nfp", "NFP / Employment Situation"),
+             "Consumer Price Index": ("cpi", "CPI"), "Producer Price Index (PPI)": ("ppi", "PPI")}
+    dates, events = set(), []
+    for cell in tables[0].all("td"):
+        if not cell.has_class("somatdR"):
+            continue
+        divs = [node for node in cell.children if isinstance(node, Node) and node.tag == "div"]
+        if not divs:
+            continue
+        need(len(divs) == 1, "NY Fed calendar day is ambiguous")
+        leading = []
+        for child in divs[0].children:
+            if isinstance(child, Node):
+                break
+            leading.append(child)
+        day_text = "".join(leading).strip()
+        if not day_text:
+            continue
+        need(re.fullmatch(r"\d{1,2}", day_text), "NY Fed day is not explicit")
+        day = int(day_text)
+        date = dt.date(year, month, day)
+        need(date.weekday() < 5 and day not in dates, "NY Fed day is duplicated or outside weekday grid")
+        dates.add(day)
+        for span in divs[0].all("span"):
+            if not span.has_class("ts-accordion-content"):
+                continue
+            for index, child in enumerate(span.children):
+                if not isinstance(child, Node) or child.tag != "a" or child.text() not in names:
+                    continue
+                link = urllib.parse.urlparse(child.attrs.get("href", ""))
+                need(link.scheme == "https" and link.hostname == "www.bls.gov", "NY Fed selected release no longer identifies BLS")
+                following = []
+                for sibling in span.children[index + 1:]:
+                    if isinstance(sibling, Node) and sibling.tag == "a":
+                        break
+                    following.append(sibling.text() if isinstance(sibling, Node) else sibling)
+                clock = re.fullmatch(r"\s*\((\d{2}):(\d{2})\)\s*", " ".join(following))
+                need(clock is not None and int(clock[1]) < 24 and int(clock[2]) < 60, "NY Fed selected release time is missing or ambiguous")
+                hour, minute = int(clock[1]), int(clock[2])
+                time = f"{hour % 12 or 12}:{minute:02d} {'PM' if hour >= 12 else 'AM'}"
+                prefix, name = names[child.text()]
+                events.append(event(prefix, name, "BLS", year, month, day, time, source))
+    expected = {day for day in range(1, calendar.monthrange(year, month)[1] + 1) if dt.date(year, month, day).weekday() < 5}
+    need(dates == expected, "NY Fed calendar day coverage is incomplete")
+    labels = [node for node in root.all("a") if node.text() in names]
+    need(len(labels) == len(events), "NY Fed selected rows were not completely decoded")
+    need({item["id"].split("-")[0] for item in events} == {"nfp", "cpi", "ppi"}, "NY Fed supported release coverage changed")
+    need(len({item["id"] for item in events}) == len(events), "NY Fed selected release identity is duplicated")
+    return events
+
+
 def parse_fed(html, year, month, source):
     root = Document(html).root
     need(any(node.has_class("cal-nojs__rowTitle") for node in root.all("div")), "Fed calendar layout changed")
@@ -206,7 +265,8 @@ def fetch(url):
     return raw.decode("utf-8-sig"), hashlib.sha256(raw).hexdigest()
 
 
-def sync(now):
+def sync(now, labor_calendar="bls"):
+    need(labor_calendar in ("bls", "nyfed"), "Unsupported labor calendar provider")
     date = dt.datetime.fromtimestamp(now, WIB).replace(hour=0, minute=0, second=0, microsecond=0)
     start = date - dt.timedelta(days=1)
     end = start + dt.timedelta(days=30)
@@ -217,16 +277,20 @@ def sync(now):
         first = (first.replace(day=28) + dt.timedelta(days=4)).replace(day=1)
     jobs = []
     for year, month in months:
-        jobs.append(("BLS", year, month, f"https://www.bls.gov/schedule/{year}/{month:02d}_sched.htm"))
+        labor_url = (f"https://www.bls.gov/schedule/{year}/{month:02d}_sched.htm" if labor_calendar == "bls" else
+                     f"https://www.newyorkfed.org/research/calendars/i-{calendar.month_abbr[month].lower()}{year % 100:02d}.html")
+        jobs.append(("BLS", year, month, labor_url))
         jobs.append(("FED", year, month, f"https://www.federalreserve.gov/newsevents/{year}-{calendar.month_name[month].lower()}.htm"))
     jobs.append(("BEA", 0, 0, "https://www.bea.gov/news/schedule"))
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
         responses = list(pool.map(fetch, [job[3] for job in jobs]))
     events, sources, unconfirmed = [], [], []
     for (agency, year, month, url), (html, digest) in zip(jobs, responses):
-        sources.append({"agency": agency, "url": url, "sha256": digest, "checked_at_utc": now})
+        sources.append({"agency": agency, "calendar_provider": "NYFED" if agency == "BLS" and labor_calendar == "nyfed" else agency,
+                        "url": url, "sha256": digest, "checked_at_utc": now})
         if agency == "BLS":
-            events.extend(parse_bls(html, year, month, url))
+            parse_labor = parse_bls if labor_calendar == "bls" else parse_nyfed
+            events.extend(parse_labor(html, year, month, url))
         elif agency == "FED":
             events.extend(parse_fed(html, year, month, url))
         else:
@@ -241,7 +305,8 @@ def sync(now):
             continue
         need(item["id"] not in unique or item == unique[item["id"]], "Conflicting official event identity")
         unique[item["id"]] = item
-    return {"source": "OFFICIAL_BLS_BEA_FED", "checked_at_utc": now,
+    return {"source": "OFFICIAL_BLS_BEA_FED" if labor_calendar == "bls" else "OFFICIAL_NYFED_BEA_FED",
+            "labor_calendar_provider": labor_calendar, "checked_at_utc": now,
             "coverage_from_utc": int(start.timestamp()), "coverage_to_utc": int(end.timestamp()),
             "sources": sources, "unconfirmed_releases": unconfirmed,
             "events": sorted(unique.values(), key=lambda e: (e["release_utc"], e["id"]))}
@@ -250,8 +315,9 @@ def sync(now):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--labor-calendar", choices=("bls", "nyfed"), default="bls")
     args = parser.parse_args()
-    payload = sync(int(dt.datetime.now(UTC).timestamp()))
+    payload = sync(int(dt.datetime.now(UTC).timestamp()), args.labor_calendar)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.out.with_suffix(".tmp")
     temporary.write_text(json.dumps(payload, indent=2) + "\n")
