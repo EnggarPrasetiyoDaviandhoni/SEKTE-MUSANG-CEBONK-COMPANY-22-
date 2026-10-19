@@ -10,7 +10,6 @@ on:
       - '.github/workflows/musang-pdf.yml'
 permissions:
   contents: write
-  pages: write
 concurrency:
   group: musang-pdf-install
   cancel-in-progress: false
@@ -56,7 +55,3 @@ jobs:
             git commit -m 'Activate reviewed Musang PDF Combined 1/2; preserve Astrology and News'
             git push origin HEAD:main
           fi
-      - name: Request Pages rebuild
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api --method POST "repos/${{ github.repository }}/pages/builds" > /dev/null

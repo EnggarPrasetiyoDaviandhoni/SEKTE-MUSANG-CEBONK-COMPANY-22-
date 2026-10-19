@@ -10,7 +10,6 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
-  pages: write
 concurrency:
   group: restore-combined-split
   cancel-in-progress: false
@@ -78,7 +77,3 @@ jobs:
             git rebase --onto origin/main "$base"
             git push origin HEAD:main
           fi
-      - name: Request website build only - no MT5 or Cloudflare changes
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"

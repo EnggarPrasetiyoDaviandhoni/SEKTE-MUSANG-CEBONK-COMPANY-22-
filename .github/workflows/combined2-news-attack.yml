@@ -11,7 +11,6 @@ on:
       - '.github/workflows/combined2-news-attack.yml'
 permissions:
   contents: write
-  pages: write
 concurrency:
   group: combined2-news-attack-package
   cancel-in-progress: false
@@ -72,7 +71,3 @@ jobs:
             git rebase --onto origin/main "$base"
             git push origin HEAD:main
           fi
-      - name: Refresh downloadable website files only - not a trading deployment
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
