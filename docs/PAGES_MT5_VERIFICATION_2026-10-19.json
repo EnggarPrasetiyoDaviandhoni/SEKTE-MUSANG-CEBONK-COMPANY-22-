@@ -1,0 +1,603 @@
+{
+  "status": "BLOCKED_INCOMPLETE",
+  "repository": "EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-",
+  "generated_at_utc": "2026-10-19T14:49:33.030515+00:00",
+  "pages_settings_after_denied_change": {
+    "url": "https://api.github.com/repos/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pages",
+    "status": "built",
+    "cname": null,
+    "custom_404": false,
+    "html_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/",
+    "build_type": "legacy",
+    "source": {
+      "branch": "main",
+      "path": "/"
+    },
+    "public": true,
+    "protected_domain_state": null,
+    "pending_domain_unverified_at": null,
+    "https_enforced": true
+  },
+  "setting_mutations": [
+    {
+      "method": "DELETE",
+      "endpoint": "/repos/{owner}/{repo}/pages",
+      "status": 403,
+      "message": "Resource not accessible by integration",
+      "succeeded": false
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/repos/{owner}/{repo}/actions/workflows/374014886/disable",
+      "status": 422,
+      "message": "Unable to disable this workflow.",
+      "succeeded": false
+    }
+  ],
+  "admin_audit_limits": {
+    "actions_repository_permissions": 403,
+    "repository_webhooks": 403
+  },
+  "pages_pending_runs": {
+    "queued": 0,
+    "in_progress": 0,
+    "waiting": 0
+  },
+  "target_feed_search": {
+    "shallow_clone": false,
+    "remote_branches_audited": 82,
+    "all_history_path_matches": {
+      "data/news-astrology-mt5.json": [],
+      "data/astro-4momen-mt5.json": []
+    },
+    "mt5_feed_tree_sha": "f5daccf2ae805146ca3352de7efe6e6a9189a69b",
+    "owner_confirmation": "Both EA source files have not been uploaded; branch mt5-feed was recreated; both JSON files do not yet exist. Audit awaits attached originals.",
+    "ea_original_filenames": [
+      "CEBONK_NEWS_ASTROLOGY_BBMA_v1.24_DRAFT(1).txt",
+      "CEBONK_BBMA_4MOMEN_v1.30_GITHUB_RAW(1).mq5"
+    ]
+  },
+  "http_gets": [
+    {
+      "checked_at": "2026-10-19T14:45:22.217775+00:00",
+      "url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/",
+      "method": "GET",
+      "status": 404,
+      "final_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/",
+      "bytes": 9115,
+      "sha256": "70d613e3acfba24fd2876fcbacaf639e1e111ef4d54baf70761c47673f37d6a3",
+      "content_type": "text/html; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:45:22 GMT",
+      "cache_control": null,
+      "age": "279",
+      "valid_json": false,
+      "body_preview": "<!DOCTYPE html>\n<html>\n  <head>\n    <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-"
+    },
+    {
+      "checked_at": "2026-10-19T14:45:22.218586+00:00",
+      "url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/index.html",
+      "method": "GET",
+      "status": 404,
+      "final_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/index.html",
+      "bytes": 9115,
+      "sha256": "70d613e3acfba24fd2876fcbacaf639e1e111ef4d54baf70761c47673f37d6a3",
+      "content_type": "text/html; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:45:22 GMT",
+      "cache_control": null,
+      "age": "0",
+      "valid_json": false,
+      "body_preview": "<!DOCTYPE html>\n<html>\n  <head>\n    <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-"
+    },
+    {
+      "checked_at": "2026-10-19T14:45:22.219145+00:00",
+      "url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/assets/astro-news-v1.js",
+      "method": "GET",
+      "status": 404,
+      "final_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/assets/astro-news-v1.js",
+      "bytes": 9115,
+      "sha256": "70d613e3acfba24fd2876fcbacaf639e1e111ef4d54baf70761c47673f37d6a3",
+      "content_type": "text/html; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:45:22 GMT",
+      "cache_control": null,
+      "age": "0",
+      "valid_json": false,
+      "body_preview": "<!DOCTYPE html>\n<html>\n  <head>\n    <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-"
+    },
+    {
+      "checked_at": "2026-10-19T14:45:22.219550+00:00",
+      "url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/?audit=1792421122",
+      "method": "GET",
+      "status": 404,
+      "final_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/?audit=1792421122",
+      "bytes": 9115,
+      "sha256": "70d613e3acfba24fd2876fcbacaf639e1e111ef4d54baf70761c47673f37d6a3",
+      "content_type": "text/html; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:45:22 GMT",
+      "cache_control": null,
+      "age": "279",
+      "valid_json": false,
+      "body_preview": "<!DOCTYPE html>\n<html>\n  <head>\n    <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-"
+    },
+    {
+      "checked_at": "2026-10-19T14:45:22.459953+00:00",
+      "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/news-astrology-mt5.json",
+      "method": "GET",
+      "status": 404,
+      "final_url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/news-astrology-mt5.json",
+      "bytes": 14,
+      "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+      "content_type": "text/plain; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:45:22 GMT",
+      "cache_control": null,
+      "age": null,
+      "valid_json": false,
+      "body_preview": "404: Not Found"
+    },
+    {
+      "checked_at": "2026-10-19T14:45:22.485146+00:00",
+      "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/astro-4momen-mt5.json",
+      "method": "GET",
+      "status": 404,
+      "final_url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/astro-4momen-mt5.json",
+      "bytes": 14,
+      "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+      "content_type": "text/plain; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:45:22 GMT",
+      "cache_control": null,
+      "age": null,
+      "valid_json": false,
+      "body_preview": "404: Not Found"
+    },
+    {
+      "checked_at": "2026-10-19T14:45:22.519016+00:00",
+      "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/astro_news/data/news_windows.json",
+      "method": "GET",
+      "status": 200,
+      "final_url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/astro_news/data/news_windows.json",
+      "bytes": 3356,
+      "sha256": "90e113a76ff8d196fe8014ea7571d573a039533449c7f653339cc2d666698bfe",
+      "content_type": "text/plain; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:45:22 GMT",
+      "cache_control": "max-age=300",
+      "age": null,
+      "valid_json": true,
+      "json_type": "dict",
+      "keys": [
+        "model",
+        "source",
+        "experimental",
+        "calendar_checked",
+        "calendar_type",
+        "policy",
+        "events",
+        "window_count"
+      ],
+      "metadata": {
+        "model": "CEBONK_ASTRO_NEWS_V1",
+        "calendar_checked": "2026-10-04",
+        "calendar_type": "WEBSITE_SNAPSHOT_NOT_LIVE",
+        "window_count": 5
+      }
+    },
+    {
+      "checked_at": "2026-10-19T14:45:22.519945+00:00",
+      "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/liquidity_sweep/weekly_atr/data/weekly.json",
+      "method": "GET",
+      "status": 200,
+      "final_url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/liquidity_sweep/weekly_atr/data/weekly.json",
+      "bytes": 292,
+      "sha256": "54d02ee3af742f58716da6eb991739be0870322ba1966d2c9cf1689d2e20cd76",
+      "content_type": "text/plain; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:45:22 GMT",
+      "cache_control": "max-age=300",
+      "age": null,
+      "valid_json": true,
+      "json_type": "dict",
+      "keys": [
+        "model",
+        "source",
+        "experimental",
+        "week_monday_wib",
+        "week_direction",
+        "total_slots",
+        "buy_minutes",
+        "sell_minutes",
+        "windows",
+        "status"
+      ],
+      "metadata": {
+        "model": "ASTRO_WEEKLY_V1"
+      }
+    },
+    {
+      "checked_at": "2026-10-19T14:45:22.742744+00:00",
+      "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/albiruni_intraday/data/majority_direct_v3.json",
+      "method": "GET",
+      "status": 200,
+      "final_url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/main/ea/albiruni_intraday/data/majority_direct_v3.json",
+      "bytes": 1056,
+      "sha256": "2d3a96c662e8dda274473fbd5222c03c97ac24f11a6360aa8036f2ede6009669",
+      "content_type": "text/plain; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:45:23 GMT",
+      "cache_control": "max-age=300",
+      "age": null,
+      "valid_json": true,
+      "json_type": "dict",
+      "keys": [
+        "model",
+        "date_wib",
+        "signal_id",
+        "direction",
+        "start_epoch",
+        "entry_epoch",
+        "core_epoch",
+        "end_epoch",
+        "valid_until_epoch",
+        "published_epoch",
+        "aspect",
+        "phase",
+        "buy_aspects",
+        "sell_aspects",
+        "reason",
+        "experimental",
+        "source",
+        "election",
+        "majority",
+        "summary",
+        "generated_at_utc",
+        "candidate_entry_wib",
+        "start_wib",
+        "core_wib",
+        "end_wib"
+      ],
+      "metadata": {
+        "model": "ALBIRUNI_MAJORITY_DIRECT_V3",
+        "generated_at_utc": "2026-10-18T23:35:36.000Z"
+      }
+    },
+    {
+      "checked_at": "2026-10-19T14:45:22.861552+00:00",
+      "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/cebonk-astro-swing-feed-v2/forecast.json",
+      "method": "GET",
+      "status": 200,
+      "final_url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/cebonk-astro-swing-feed-v2/forecast.json",
+      "bytes": 45871,
+      "sha256": "7418c5712aca79f26801b111ea878d4dde639824d3c01a46debcacaaef777484",
+      "content_type": "text/plain; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:45:23 GMT",
+      "cache_control": "max-age=300",
+      "age": null,
+      "valid_json": true,
+      "json_type": "dict",
+      "keys": [
+        "daily_source_method",
+        "expires_at_utc",
+        "generated_at_utc",
+        "horizon_end_wib",
+        "horizon_start_wib",
+        "liquidity_sessions",
+        "lunar_rank_broker_mode",
+        "m5_model",
+        "model_id",
+        "moon",
+        "schema_version",
+        "sessions",
+        "source_commit",
+        "swing_daily_inherited_weekly",
+        "validated_predictive_model",
+        "weekly_source_method",
+        "weeks",
+        "payload_sha256"
+      ],
+      "metadata": {
+        "generated_at_utc": 1792371039,
+        "source_commit": "b14c1db11e2f860118c84f0b48c30ea94779540a"
+      }
+    }
+  ],
+  "workflow_validation": {
+    "base": "f5daccf2ae805146ca3352de7efe6e6a9189a69b",
+    "changed_workflows": [
+      ".github/workflows/astro-candles.yml",
+      ".github/workflows/astro-daily-brief.yml",
+      ".github/workflows/astro-news.yml",
+      ".github/workflows/auto-sop.yml",
+      ".github/workflows/combined-split.yml",
+      ".github/workflows/combined2-ea.yml",
+      ".github/workflows/combined2-news-attack.yml",
+      ".github/workflows/musang-pdf.yml",
+      ".github/workflows/snd-auto.yml",
+      ".github/workflows/wallpaper-glass.yml"
+    ],
+    "all_yaml_parse": true,
+    "exact_pages_only_removal": true,
+    "protected_files_unchanged": true
+  },
+  "local_validation": {
+    "timestamp": "2026-10-19T14:45:02.035053+00:00",
+    "scope": "Existing CSV news/weekly feeds only; not the two missing JSON feed contracts",
+    "results": [
+      {
+        "command": [
+          "node",
+          "scripts/generate-astro-news.mjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test-astro-news-feed.mjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "ea/astro_news/tests/test_source.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/generate-astro-weekly.mjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "scripts/test-astro-weekly-feed.mjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "tests/astro-weekly.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "python3",
+          "ea/liquidity_sweep/weekly_atr/tests/test_weekly_auto.py"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "tests/astro-news.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "tests/astro-candles.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "tests/astro-candles.integration.cjs"
+        ],
+        "exit": 1,
+        "classification": "pre-existing failure on unchanged base commit",
+        "error": "tests/astro-candles.integration.cjs:8 expects text Astrologi harian &amp; Al-Biruni in index.html"
+      },
+      {
+        "command": [
+          "node",
+          "tests/astro-daily-brief.test.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "tests/astro-daily-brief.integration.cjs"
+        ],
+        "exit": 0
+      },
+      {
+        "command": [
+          "node",
+          "tests/wallpaper-glass.test.cjs"
+        ],
+        "exit": 0
+      }
+    ]
+  },
+  "scheduled_feed_runs": {
+    "news": [
+      {
+        "id": 39183744851,
+        "event": "schedule",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-19T01:05:46Z",
+        "updated_at": "2026-10-19T01:05:59Z",
+        "head_sha": "0a7147f117e595df8e7952e9aab32f85eb00aea5",
+        "html_url": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39183744851"
+      }
+    ],
+    "weekly": [
+      {
+        "id": 39164203110,
+        "event": "schedule",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-18T20:38:10Z",
+        "updated_at": "2026-10-18T20:38:22Z",
+        "head_sha": "ccb98dccacd372b7225cc07d36934ef36a22d5db",
+        "html_url": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39164203110"
+      }
+    ]
+  },
+  "limitations": [
+    "Pages source remains configured; owner must set Branch None and Save.",
+    "Two requested RAW endpoints return 404 and cannot be validated until original EA parsers are available.",
+    "Existing news and weekly contract checks do not validate either missing JSON contract.",
+    "MT5 terminal was unavailable for live WebRequest verification.",
+    "Code changes remain on an unmerged branch."
+  ],
+  "final_verification": {
+    "checked_at_utc": "2026-10-19T14:52:37.194015+00:00",
+    "repository-final": {
+      "visibility": "public",
+      "default_branch": "main",
+      "archived": false,
+      "has_pages": true
+    },
+    "pages-final": {
+      "url": "https://api.github.com/repos/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pages",
+      "status": "built",
+      "cname": null,
+      "custom_404": false,
+      "html_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/",
+      "build_type": "legacy",
+      "source": {
+        "branch": "main",
+        "path": "/"
+      },
+      "public": true,
+      "protected_domain_state": null,
+      "pending_domain_unverified_at": null,
+      "https_enforced": true
+    },
+    "main-final": {
+      "name": "main",
+      "sha": "f5daccf2ae805146ca3352de7efe6e6a9189a69b"
+    },
+    "mt5-feed-final": {
+      "name": "mt5-feed",
+      "sha": "f5daccf2ae805146ca3352de7efe6e6a9189a69b"
+    },
+    "pull_request": {
+      "autoMergeRequest": null,
+      "baseRefName": "main",
+      "headRefName": "codex/disable-pages-preserve-mt5-20261019",
+      "headRefOid": "0513f23d35748a61fefd0f849ffe5f0aa8b0c03c",
+      "isDraft": true,
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-19T14:50:35Z",
+          "conclusion": "FAILURE",
+          "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577983/job/118128465056",
+          "name": "verify",
+          "startedAt": "2026-10-19T14:50:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Astrology H1 H4 candle summaries"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-19T14:50:36Z",
+          "conclusion": "FAILURE",
+          "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577958/job/118128464566",
+          "name": "verify",
+          "startedAt": "2026-10-19T14:50:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Astrology daily whipsaw news brief"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-19T14:50:37Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577990/job/118128464504",
+          "name": "verify",
+          "startedAt": "2026-10-19T14:50:32Z",
+          "status": "COMPLETED",
+          "workflowName": "Web wallpaper glass skin"
+        }
+      ],
+      "url": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/pull/80"
+    },
+    "http_gets": [
+      {
+        "checked_at_utc": "2026-10-19T14:52:40.036765+00:00",
+        "url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/",
+        "status": 404,
+        "final_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/",
+        "bytes": 9115,
+        "sha256": "70d613e3acfba24fd2876fcbacaf639e1e111ef4d54baf70761c47673f37d6a3",
+        "server_date": "Mon, 19 Oct 2026 14:52:40 GMT",
+        "valid_json": false
+      },
+      {
+        "checked_at_utc": "2026-10-19T14:52:40.037805+00:00",
+        "url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/index.html",
+        "status": 404,
+        "final_url": "https://enggarprasetiyodaviandhoni.github.io/SEKTE-MUSANG-CEBONK-COMPANY-22-/index.html",
+        "bytes": 9115,
+        "sha256": "70d613e3acfba24fd2876fcbacaf639e1e111ef4d54baf70761c47673f37d6a3",
+        "server_date": "Mon, 19 Oct 2026 14:52:40 GMT",
+        "valid_json": false
+      },
+      {
+        "checked_at_utc": "2026-10-19T14:52:40.038445+00:00",
+        "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/news-astrology-mt5.json",
+        "status": 404,
+        "final_url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/news-astrology-mt5.json",
+        "bytes": 14,
+        "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+        "server_date": "Mon, 19 Oct 2026 14:52:40 GMT",
+        "valid_json": false
+      },
+      {
+        "checked_at_utc": "2026-10-19T14:52:40.039432+00:00",
+        "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/astro-4momen-mt5.json",
+        "status": 404,
+        "final_url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/mt5-feed/data/astro-4momen-mt5.json",
+        "bytes": 14,
+        "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+        "server_date": "Mon, 19 Oct 2026 14:52:40 GMT",
+        "valid_json": false
+      }
+    ]
+  },
+  "ci": {
+    "tested_code_commit": "0513f23d35748a61fefd0f849ffe5f0aa8b0c03c",
+    "workflow_tree_sha": "4d1289be8c8f0071a1d05dd9791e03ef59de6bd6",
+    "checks": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-19T14:50:35Z",
+        "conclusion": "FAILURE",
+        "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577983/job/118128465056",
+        "name": "verify",
+        "startedAt": "2026-10-19T14:50:31Z",
+        "status": "COMPLETED",
+        "workflowName": "Astrology H1 H4 candle summaries"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-19T14:50:36Z",
+        "conclusion": "FAILURE",
+        "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577958/job/118128464566",
+        "name": "verify",
+        "startedAt": "2026-10-19T14:50:31Z",
+        "status": "COMPLETED",
+        "workflowName": "Astrology daily whipsaw news brief"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-19T14:50:37Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39272577990/job/118128464504",
+        "name": "verify",
+        "startedAt": "2026-10-19T14:50:32Z",
+        "status": "COMPLETED",
+        "workflowName": "Web wallpaper glass skin"
+      }
+    ],
+    "failed_jobs_same_as_unchanged_baseline": true,
+    "failure": "astro-candles.integration.cjs:8: Astrology view and inputs must remain present after header simplification",
+    "subsequent_changes": "Audit documentation and evidence only; tested workflows and source unchanged."
+  }
+}

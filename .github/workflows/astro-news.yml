@@ -9,7 +9,6 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
-  pages: write
 concurrency:
   group: astro-news-install
   cancel-in-progress: false
@@ -55,7 +54,3 @@ jobs:
             git commit -m 'Load isolated Astrology News planner; retain existing engines'
             git push origin HEAD:main
           fi
-      - name: Request Pages rebuild after generated loader commit
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
