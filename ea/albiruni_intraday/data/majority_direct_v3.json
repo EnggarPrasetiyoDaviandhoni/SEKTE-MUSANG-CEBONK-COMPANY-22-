@@ -8,7 +8,7 @@
   "core_epoch": 1792572132,
   "end_epoch": 1792587091,
   "valid_until_epoch": 1792587091,
-  "published_epoch": 1792532470,
+  "published_epoch": 1792539575,
   "aspect": "Sun/Moon Trine 120deg orb 1.774deg",
   "phase": "APPLYING",
   "buy_aspects": 1,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "BUY"
   },
-  "generated_at_utc": "2026-10-20T21:41:10.000Z",
+  "generated_at_utc": "2026-10-20T23:39:35.000Z",
   "candidate_entry_wib": "2026-10-21 12:00:00 WIB",
   "start_wib": "2026-10-21 11:45:00 WIB",
   "core_wib": "2026-10-21 15:42:12 WIB",
