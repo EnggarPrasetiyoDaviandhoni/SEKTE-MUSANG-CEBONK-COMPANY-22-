@@ -1,0 +1,45 @@
+CARA PASANG — CEBONK COMPANY 22 v1.03
+
+PERSIAPAN
+1. Jalankan MT5 pada akun DEMO broker NOZAX, simbol XAUUSDc,
+   akun tipe HEDGING. Jangan live sebelum kompilasi + backtest + demo.
+2. MetaEditor: File > Open, pilih CEBONK_H1_M15_M5_v1.03.mq5,
+   simpan ke MQL5/Experts, compile (F7), perbaiki error jika ada.
+3. Attach EA ke chart XAUUSDc M5 (chart timeframe bukan sinyal H1/M15,
+   indikator TF tetap dibaca oleh iBands/iMA internal).
+4. Lepaskan EA lama dengan Magic yang sama dari chart lain.
+5. Pastikan MT5 Algo Trading ON, dan tombol di chart AUTOPILOT ON.
+
+DEFAULT PENTING
+Filter H1 ON | H1ReentryMaxAgeBars=3 | M15SignalMaxAgeBars=4
+M15 CSA/CSAK/CSM | M5 CSAK | SL outer BB M15 closed | TP RR 1:2
+FixedLot=0.01 | MaxSpreadPoints=70 | Session 07:00–24:00 SERVER
+MaxRiskPerTrade=0.5% | CombinedRisk=2% | MaxConcurrentPositions=8
+DailyDD gate 5% | sideways OFF | SELL quality OFF
+Telegram OFF sampai bot token/chat ID dan whitelist siap.
+
+JIKA TIDAK ENTRY
+Periksa tab Experts: WHY_SKIP=...
+- H1_REENTRY_NONE_OR_EXPIRED: filter H1 gagal / kedaluwarsa.
+- TF_DIRECTION: sinyal M15/M5 tidak searah atau tidak valid.
+- RISK_TRADE / RISK_TOTAL: risiko SL BB M15 melebihi batas.
+- DAILY_BASELINE_UNKNOWN: EA pertama kali attach setelah akun aktif
+  di hari server yang sama, baseline equity awal hari tak dapat dipercaya.
+  Tunggu hari server berikutnya atau uji Strategy Tester dari awal hari,
+  JANGAN matikan limit secara sembarangan.
+- MAX_POSITIONS: mencapai limit 8 (ubah hanya setelah analisis risiko).
+- SPREAD / INVALID_STOPS / STALE: harga atau eksekusi tidak aman.
+
+PROTOKOL BACKTEST
+A. Replikasi EA asli v1.01 (file lama, bukan EA baru).
+B. Test EA ini H1FilterEnabled=false, SL tetap BB M15.
+C. Test H1FilterEnabled=true, quality filters OFF.
+D/E/F. Aktifkan quality filters satu per satu/kombinasi.
+Uji 2024–2026, harga/ticks/spread sama, lihat BUY SELL terpisah,
+PF, equity DD, transaksi tiap bulan, jumlah posisi, frekuensi entry.
+Target winrate >=45% masing-masing arah, PF >1.13, monthly>0
+merupakan target pengembangan, BUKAN hasil yang sudah dicapai.
+
+STATUS REKAYASA
+EA source telah dibuat; MetaEditor compile NOT RUN;
+MT5 Strategy Tester NOT RUN; Telegram DEMO test NOT RUN.

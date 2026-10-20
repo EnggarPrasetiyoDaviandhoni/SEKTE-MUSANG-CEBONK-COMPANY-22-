@@ -1,0 +1,332 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD) — IMPLEMENTASI CODEX
+CEBONK COMPANY 22 — SINCE 2016
+PROJECT: BBMA H1 RE-ENTRY FILTER + M15 CSA/CSAK/CSM + M5 CSAK
+TARGET VERSION: v1.03 / 08 OKTOBER 2026
+STATUS: SPESIFIKASI; BELUM DIIMPLEMENTASIKAN, BELUM DIBACKTEST
+
+0. TUJUAN DAN SUMBER
+Gunakan file DOC-20261008-WA0018.txt sebagai source EA asli dan
+wr kecil dd besar(1).html sebagai baseline historis 2TF. Gunakan
+PRD_CODEX_CEBONK_2TF_v1.02_AUDIT_RISK.txt sebagai rujukan persyaratan
+risiko, kualitas, notifikasi, dan QA, KECUALI bagian yang secara eksplisit
+digantikan PRD v1.03 ini. Jangan mengasumsikan baseline 2TF sama dengan
+hasil 3TF yang belum diuji. Audit kode dulu, baru implementasi.
+
+1. PERUBAHAN STRATEGI YANG DISETUJUI
+Struktur lama: M15 CSA/CSAK/CSM -> M5 CSAK, SL BB M5.
+Struktur baru (DEFAULT):
+  TF_FILTER = H1: RE-ENTRY BBMA sebagai filter arah, bukan trigger entry.
+  TF_SIGNAL = M15: CSA / CSAK / CSM searah filter H1.
+  TF_ENTRY  = M5: CSAK searah H1 dan M15, setelah candle close.
+  SL_REF    = M15: LOW BB untuk BUY, TOP BB untuk SELL.
+  TP        = fixed RR 1:2 dari harga fill aktual dan SL final.
+Mode perbandingan opsional: H1FilterEnabled=false agar dapat diuji 2TF
+M15-M5, tetapi SL tetap BB M15 pada eksperimen yang hanya mematikan H1.
+Mode LegacyCompatibility terpisah hanya untuk mereproduksi hasil v1.01
+(SL BB M5); JANGAN mencampur hasil kedua mode.
+
+2. DEFINISI FILTER H1 RE-ENTRY (IMPLEMENTASI WAJIB DIKUNCI DAN DILOG)
+BB (semua TF): period=20, deviation=2.0, shift=0, applied close.
+MA5 & MA10: linear weighted, PRICE_HIGH/PRICE_LOW sesuai arah.
+Gunakan candle H1 tertutup; tidak boleh membaca candle berjalan untuk
+konfirmasi re-entry, no lookahead/no repaint.
+BUY H1: sesudah kondisi bullish/struktur bullish yang didefinisikan
+secara eksplisit, candle tertutup menyentuh zona MA5/MA10 LOW
+(wick low <= batas zona) lalu close kembali DI ATAS MA5/MA10 LOW;
+penutupan tidak boleh menembus area invalidasi bullish yang didefinisikan.
+SELL H1: simetris, candle menyentuh zona MA5/MA10 HIGH dan close
+kembali DI BAWAH MA5/MA10 HIGH, dalam struktur/bias bearish.
+H1 harus menghasilkan status BUY, SELL, atau NONE, dengan timestamp
+candle dan alasan. Jika struktur/bias ambigu atau data tidak lengkap,
+NONE => SKIP. Tuliskan secara eksplisit algoritme 'struktur bullish /
+bearish' yang dipakai dalam dokumentasi dan beri unit test; dilarang
+menambahkan interpretasi terselubung yang tidak bisa ditelusuri.
+H1ReentryMaxAgeBars=3 sebagai hipotesis awal, dihitung dari waktu CLOSE
+candle re-entry H1, bukan candle terbuka; pada >3 bar H1 penuh,
+filter dianggap expired. Jika terbentuk re-entry berlawanan, invalidate
+filter lama segera. Tidak memakai re-entry masa depan.
+PENTING: definisi presisi zona MA dan struktur di atas adalah rancangan
+implementasi yang harus divalidasi, bukan klaim rule baku dari file EA.
+
+3. KONFIRMASI M15 DAN ENTRY M5
+M15 valid BUY bila salah satu CSA/CSAK/CSM BUY berdasarkan logika source
+2TF yang sudah ada; SELL simetris. Pertahankan prioritas dan semantik
+source, termasuk penggunaan candle CLOSED (shift=1). M15 wajib searah
+H1 bila H1FilterEnabled=true. M15SignalMaxAgeBars=4 (awal pengujian);
+sinyal lebih tua harus expired. Dilarang reuse sinyal stale/repaint.
+M5 HANYA CSAK, searah M15 dan H1 (jika filter ON), memakai candle close.
+Entry paling lambat MaxEntryDelaySeconds=30 setelah M5 close dan hanya
+bila spread/session/risk guards aman. BUY = Ask; SELL = Bid.
+Satu event M5 yang sama tidak boleh memicu order ulang setelah restart,
+reconnect, multiple chart atau penolakan order. Event baru yang valid
+boleh entry asalkan exposure limit terpenuhi; tidak memaksa satu posisi
+saja, dan tidak mengharuskan entry setiap hari tanpa sinyal.
+Tiga status BUY / SELL / NONE harus diteruskan deterministik antar TF.
+Jika H1 BUY, M15 SELL, M5 SELL => SKIP. Jika H1 BUY, M15 BUY, M5
+SELL => SKIP. Jika H1 NONE => SKIP saat filter ON.
+
+4. ATURAN SL/TP FINAL — INI YANG MENGGANTIKAN SL BB M5
+SL BUY  = LOWER BAND Bollinger M15 dari candle M15 terakhir yang SUDAH
+          tertutup pada saat keputusan entry M5, minus SLBufferPoints
+          opsional (default 0) dalam _Point.
+SL SELL = UPPER BAND Bollinger M15 dari candle M15 terakhir yang SUDAH
+          tertutup pada saat keputusan entry M5, plus SLBufferPoints.
+DILARANG menggunakan Upper/Lower BB M5 untuk SL pada mode v1.03.
+DILARANG memakai candle M15 shift=0, karena bergerak saat backtest/live.
+Simpan timestamp M15 referensi dan nilai BB pada event entry untuk audit.
+Setelah order TERISI, hitung RR dari harga OPEN/FILL riil:
+  BUY: riskDistance = entryActual - SL; TP = entryActual + 2*riskDistance.
+  SELL: riskDistance = SL - entryActual; TP = entryActual - 2*riskDistance.
+Jangan mengeksekusi jika SL berada di sisi yang salah, jarak <=0,
+melanggar stops/freeze level atau batas risiko. Harga harus disesuaikan
+ke tick size broker dengan pembulatan konservatif; validasi kembali RR
+aktual setelah rounding. Jika harga fill berbeda dari quote awal,
+proses SL/TP wajib aman secara atomik sedapat mungkin; jangan sampai
+posisi tanpa SL akibat kegagalan modify. Jika server tidak dapat
+menerima stop sejak order awal, SKIP atau terapkan prosedur mitigasi
+ketat yang didokumentasikan, bukan membiarkan posisi telanjang.
+RR tetap 1:2; tidak ada BE, trailing, partial close, averaging, recovery,
+martingale, grid, atau auto reverse.
+
+5. MANAJEMEN RISIKO — PRIORITAS P0
+FixedLot default 0.01, input tetap tersedia. Karena jarak SL M15
+berpotensi lebih jauh dari M5, ukur risiko MONETER aktual setiap entry
+menggunakan OrderCalcProfit, tick size/value dan spesifikasi simbol,
+bukan perkiraan jumlah pip tetap. Saat risiko candidate melampaui batas,
+SKIP; jangan diam-diam menggeser SL atau memalsukan RR.
+Implementasi wajib mengambil semua ketentuan Risk Manager pada PRD
+v1.02: MaxRiskPerTrade, MaxCombinedRisk, max exposure/layer, daily DD,
+restart-safe state, max spread, posisi Magic+Symbol dan account CENT.
+Jangan gunakan batas satu posisi untuk meniadakan semua setup berikutnya.
+DailyDDLimitPercent default awal 5%; jika tercapai, STOP NEW ENTRIES
+sampai hari server berikutnya; jangan otomatis menutup posisi lama.
+Jadwalkan stress test gap/slippage dan peningkatan jarak BB M15.
+
+6. JAM TRADING, BROKER, EKSEKUSI
+Symbol default _Symbol (XAUUSDc NOZAX pada pengujian).
+MaxSpreadPoints=70, FixedLot=0.01, DeviationPoints=20 awal.
+StartHour=7, EndHour=24 menurut jam server broker terdeteksi, bukan WIB.
+At 00:00 no new entries; existing SL/TP must continue working.
+Autopilot OFF => no new orders. Tombol chart hanya AUTOPILOT ON/OFF;
+tidak perlu dashboard. Gunakan SSOT / DRY / modular anti-spaghetti.
+
+7. FILTER KUALITAS OPTIONAL, TANPA MENGUBAH SOP
+Tambahkan modul sideways regime filter dan SELL-quality filter dari PRD
+v1.02, masing-masing switch ON/OFF. Uji keduanya secara terpisah, jangan
+memaksa level ambang dengan overfitting. H1 re-entry sendiri adalah
+filter arah utama pada mode v1.03. Ketiga filter berbeda harus bisa
+terlihat jelas alasan SKIP-nya; tanpa stochastic indikator tambahan
+atau perubahan strategi diam-diam.
+
+8. TELEGRAM / PUSH
+Satu posisi yang benar-benar FILLED = satu notif ENTRY Telegram (jika
+ON), dedup by position identifier; partial fills bukan notif tambahan.
+Tampilkan:
+  SEKTE MUSANG TEORY CEBONK COMPANY 22
+  BUY/SELL | XAUUSDc | H1 RE-ENTRY > M15 CSA/CSAK/CSM > M5 CSAK
+  Harga ENTRY aktual | SL BB M15 | TP RR 1:2 | Spread | Waktu broker
+  OJO FULLMARGIN COK
+Saat klik AUTOPILOT ON/OFF, kirim satu pesan status terpisah bila enabled;
+status tidak dihitung sebagai ENTRY notification. Jangan mengklaim pesan
+terkirim jika jaringan gagal. WebRequest/retry tidak boleh menahan OnTick.
+Log kesalahan tanpa mencetak token atau chat ID sensitif. MT5 Push opsional.
+
+9. INPUT PENTING (USULAN DEFAULT, TUNABLE DAN WAJIB DIUJI)
+H1FilterEnabled=true
+TF_Filter=PERIOD_H1
+TF_Signal=PERIOD_M15
+TF_Entry=PERIOD_M5
+H1ReentryMaxAgeBars=3
+M15SignalMaxAgeBars=4
+MaxEntryDelaySeconds=30
+BBPeriod=20; BBDeviation=2.0
+SLReferenceTF=PERIOD_M15 (DIKUNCI di mode v1.03)
+SLBufferPoints=0
+RewardRiskRatio=2.0 (fixed)
+FixedLot=0.01
+MaxSpreadPoints=70
+StartHour=7; EndHour=24
+DailyDDLimitPercent=5.0
+EnableTelegram=true/false; EnableMT5Push=true/false
+StartAutopilot=true; sideways/sell quality filter toggles
+Semua input selain nilai konstanta standar yang tidak dapat diubah
+harus diperiksa validitasnya pada OnInit.
+
+10. TEST CASE WAJIB
+T01 H1 BUY re-entry closed + M15 CSA BUY + M5 CSAK BUY => BUY.
+T02 H1 BUY + M15 CSAK BUY + M5 CSAK BUY => BUY.
+T03 H1 BUY + M15 CSM BUY + M5 CSAK BUY => BUY.
+T04 H1 SELL + M15 salah satu CSA/CSAK/CSM SELL + M5 CSAK SELL => SELL.
+T05 H1 NONE / expired => SKIP jika filter ON.
+T06 H1 BUY + M15 SELL atau M5 SELL => SKIP.
+T07 H1 SELL + M15 BUY atau M5 BUY => SKIP.
+T08 M5 hanya CSM, bukan CSAK => SKIP.
+T09 Re-entry candle H1 masih berjalan => tidak diakui.
+T10 New opposite H1 re-entry menginvalidasi bias sebelumnya.
+T11 BUY SL = Low BB M15 shift=1, SELL SL = Top BB M15 shift=1.
+T12 Tidak ada SL BB M5 pada v1.03, juga pada H1 OFF non-legacy.
+T13 Harga BB M15 tidak berubah dalam candle M15 sedang berjalan.
+T14 RR benar 1:2 setelah actual fill, spread dan tick rounding.
+T15 SL di sisi keliru / broker stops invalid => SKIP, tanpa naked order.
+T16 M15 signal >4 bar atau H1 re-entry >3 bar => expired.
+T17 M5 execution >30 detik => SKIP.
+T18 Spread >70 => SKIP, ==70 sesuai <=70.
+T19 Multiple chart / restart / duplicate bar => max satu order/event.
+T20 Valid event berikutnya boleh entry jika exposure budget aman.
+T21 Daily DD cap tercapai => block new orders sampai reset server day.
+T22 Telegram satu ENTRY per posisi filled termasuk partial fill.
+T23 AUTOPILOT ON/OFF: status sekali per aksi; OFF tidak entry.
+T24 Test 07:00 inclusive, 24:00 exclusive, timezone server.
+T25 Tidak ada BE, trailing, partial, martingale, recovery.
+T26 Compare filter H1 OFF vs ON pada konfigurasi SL BB M15 sama.
+T27 Compare legacy 2TF SL BB M5 vs 2TF SL BB M15 secara terpisah.
+T28 Stress test spread, slippage, gap, akun CENT, restart, 31 layers.
+T29 Source compiles without material warnings (if MetaEditor available).
+T30 Tidak ada future-bar access/repaint/array out of range.
+
+11. PROTOKOL EVALUASI KUANTITATIF
+Data baseline 2TF (BUKAN hasil 3TF): 2024-01-01 s.d. 2026-10-02,
+9.645 trades, BUY WR 38.61%, SELL WR 28.81%, PF 1.13,
+Max equity DD relative 17.08%, net +12,611.87 (satuan laporan tester).
+KPI TARGET, BUKAN JAMINAN: BUY WR >=45%; SELL WR >=45%;
+PF >1.13 (ideal >=1.30); equity DD <17.08% (aspirasi <=10%);
+seluruh bulan penuh net >0 sebagai aspirasi; entry tetap aktif.
+Jangan melaporkan bulan Oktober 2026 parsial sebagai bulan penuh.
+Wajib ablation terpisah, pada biaya/tick data sama:
+ A: legacy M15-M5 SL BB M5 (replikasi original)
+ B: M15-M5 SL BB M15, H1 filter OFF
+ C: H1-M15-M5 SL BB M15, H1 filter ON
+ D: C + sideways filter
+ E: C + SELL-quality filter
+ F: C + dua filter.
+Laporkan per tahun, per bulan, BUY vs SELL: counts, WR, net, PF,
+expectancy, average win/loss, streak, relative/absolute equity DD,
+open exposure puncak, days with entry, skip reason distribution.
+Walk-forward/out-of-sample jujur; 2024-2026 sudah dilihat sehingga
+jangan klaim sebagai blind validation jika dipakai tuning. Hindari
+optimasi yang menaikkan WR dengan menghapus hampir semua SELL.
+Tidak ada janji semua kondisi pasar menang atau semua bulan positif.
+
+12. DELIVERABLE CODEX
+1) CEBONK_H1_M15_M5_v1.03.mq5 (EA final, minimalis)
+2) AUDIT_FINDINGS_v1.03.txt (confirmed bug vs hypothesis + evidence)
+3) CHANGELOG_v1.03.txt (diff SOP lama vs baru)
+4) TEST_MATRIX_v1.03.txt (T01-T30 PASS / FAIL / NOT TESTED)
+5) BACKTEST_ABLATION_v1.03.csv (A-F per bulan dan per arah)
+6) TELEGRAM_SETUP_v1.03.txt (whitelist & test status)
+7) PRD_COMPLIANCE_v1.03.txt (trace requirement ke fungsi/tes)
+Jika MetaEditor atau tester tidak tersedia, tulis COMPILE NOT RUN,
+BACKTEST NOT RUN; jangan mengarang hasil atau klaim target tercapai.
+Implementasi selesai secara engineering hanya setelah kode/tes P0
+terbukti benar; keberhasilan strategi tetap bergantung data backtest,
+out-of-sample, dan forward demo, tidak dijamin.
+
+PERINTAH UNTUK CODEX:
+Audit source dan HTML baseline. Implementasikan mesin 3TF H1 Re-entry
+-> M15 CSA/CSAK/CSM -> M5 CSAK dengan SL BB M15 dan TP fixed RR 1:2.
+Utamakan correctness, pencegahan kerugian, dedup order/notifikasi,
+kompatibilitas risk safeguards v1.02. Berikan source final dan bukti
+kompilasi/backtest jika tersedia. JANGAN mengganti SL ke BB M5,
+JANGAN menggunakan future data, JANGAN memasang BE/trailing/partial.
+
+END — CEBONK COMPANY 22
+
+ADDENDUM 2026-10-08 — ANTI-LAYER PER SETUPID H1-M15 (P0)
+-------------------------------------------------------
+Mengganti ekspektasi "max satu entry per candle M5" menjadi aturan
+yang lebih ketat: maksimal SATU order attempt untuk setiap SetupID,
+tanpa menutup peluang entry dari SetupID lain yang baru.
+
+SetupID = waktu open candle Re-entry H1 + waktu open candle konfirmasi
+M15 + arah transaksi BUY/SELL. Candle trigger M5 tidak boleh menjadi
+bagian dari SetupID. Bila filter H1 OFF, waktu H1=0 dan identitas
+menggunakan waktu M15 + arah. SetupID baru (perubahan event H1 atau
+konfirmasi M15) berhak entry lagi setelah seluruh guard terpenuhi.
+
+SSOT/keselamatan:
+- Klaim SetupID harus atomik, persisten, dan tersinkron dalam lock
+  account/server/symbol/Magic untuk beberapa chart dalam satu terminal.
+- Simpan identitas SetupID pada komentar order (panjang <=31 karakter)
+  untuk pengecekan ulang lewat broker history setelah restart/state hilang.
+- Setiap tambahan CSAK M5 pada setup yang sama wajib SKIP, beri log
+  WHY_SKIP=SETUP_ALREADY_USED atau SETUP_HISTORY_DUPLICATE.
+- Klaim yang sudah dibuat tidak dilepas pada respons order ambigu/gagal
+  agar tidak terjadi pengiriman order kedua untuk setup yang sama.
+- Batas posisi total, exposure gabungan, daily drawdown, spread,
+  dan validasi broker tetap berjalan. BUKAN batas satu posisi total.
+- Perubahan ini tidak mengubah sinyal H1/M15/M5, SL Top/Low BB M15,
+  TP fixed RR 1:2, maupun aturan 1 ENTRY notification per position.
+- Posisi legacy dari versi M5-only sebelum pembaruan tidak mempunyai
+  SetupID H1-M15 untuk pemetaan sempurna; wajib rencanakan migrasi.
+- Terminal yang berbeda tidak berbagi Terminal GlobalVariables;
+  klaim lintas terminal tidak dijamin tanpa koordinasi eksternal.
+
+Tambahan skenario acceptance:
+T31: M5 CSAK 07:05 lalu 07:10 dalam event H1-M15 sama => 1 order.
+T32: M15 event baru, H1 sama => entry baru boleh jika risk guard lolos.
+T33: H1 Re-entry event baru => SetupID baru.
+T34: Restart/multi-chart dalam satu terminal => anti-layer tetap aktif.
+T35: H1 filter OFF => dedup berdasarkan event M15 + arah.
+T36: Rejected/ambiguous order => tidak ada replay setup lama.
+T37: Periksa history deal/order, komentar broker, dan key<=63 karakter.
+T38: SL BB M15, TP RR 1:2, Telegram 1 posisi 1 notifikasi tak berubah.
+Status T31-T38: NOT TESTED pada MT5; perlu uji nyata, termasuk F7.
+
+ADDENDUM 2026-10-09 — v1.04 HARD NO-LAYER (OVERRIDES OVERLAPPING NEW SETUPS)
+--------------------------------------------------------------------------
+Root cause of reported layering: v1.03 MaxConcurrentPositions=8 and RiskOK guard could
+be bypassed by EnableRiskGuard=false. One-SetupID-per-order did not prohibit
+simultaneous positions generated by different H1/M15 events.
+
+v1.04 requirement: MAX ONE active EA position for Symbol+Magic, plus zero EA
+pending orders before submitting ANY new order, checked under shared trade lock.
+Hard no-layer check must apply even if EnableRiskGuard=false. Input
+MaxConcurrentPositions must equal 1; any other value prevents OnInit.
+Existing positions must NOT be closed automatically. SetupID H1+M15+direction
+and historical de-dup remain. After closure, new eligible setup + fresh
+M5 CSAK may enter, subject to all risk, spread, session, broker conditions.
+SL Lower/Upper BB M15 and TP fixed RR 1:2 unchanged; no BE/trailing/partial.
+Old v1.03/META AI.ex5 must be removed from all charts; GitHub commits do not
+update the user's compiled EA. Magic-different EAs or independent terminals
+are outside this cap.
+
+T39 existing EA position + new SetupID => WAIT_POSITION_CLOSE, no second entry.
+T40 pending EA order => WAIT_PENDING_ORDER, no second entry.
+T41 EnableRiskGuard=false => no layering remains enforced.
+T42 MaxConcurrentPositions=8 from old .set => OnInit fails closed.
+T43 previous position closed + NEW setup, valid M5 CSAK => may enter.
+T44 two charts/restart same Symbol+Magic => no overlap.
+T45 RR 1:2, M15 BB SL and per-position notifications unchanged.
+T46 startup Journal marker must say CEBONK v1.04 NO-LAYER STARTED.
+T47 2024–2026 MT5 backtest including monthly DD, WR BUY and SELL.
+STATUS: code updated in PR; compile/backtest/forward tests NOT RUN.
+
+ADDENDUM 2026-10-09 — v1.05 SELECTABLE SL BOLLINGER TF
+----------------------------------------------------
+User requests BB SL timeframe selectable via EA Inputs.
+Input ENUM_TIMEFRAMES TF_StopLoss default PERIOD_M15, not PERIOD_CURRENT.
+Choose any valid fixed MT5 timeframe (e.g., M5, M15, M30, H1, H4).
+Must use the LAST CLOSED candle (shift=1) from the selected SL TF.
+BUY = lower BB TF_StopLoss minus SLBufferPoints; SELL = upper BB
+TF_StopLoss plus SLBufferPoints. BBPeriod=20 and BBDeviation=2 default.
+TP calculated from actual entry to SL at fixed RR=1:2.
+Do not change H1 Re-entry/M15 CSA-CSAK-CSM/M5 CSAK logic,
+or hard no-layer one position plus pending-order guard.
+Indicator BB StopLoss handle shall be created at OnInit and released
+at OnDeinit. Handle/candle not ready => skip, NEVER fall back to M15.
+Validate price direction, broker min stops, tick rounding, risk guard,
+margin and 70-point MaxSpread guard as in earlier versions.
+Notification shows selected BB timeframe, not hardcoded BB M15.
+Stop TF selection changes only FUTURE orders, not open position SL.
+
+T48: TF_StopLoss=M15 reproduces old closed M15 BB level exactly.
+T49: TF_StopLoss=M5 BUY uses last closed M5 Lower BB.
+T50: TF_StopLoss=H1 SELL uses last closed H1 Upper BB.
+T51: PERIOD_CURRENT/invalid -> reject init fail closed.
+T52: Missing SL timeframe history/indicator -> SKIP SL_TF_BB_DATA.
+T53: Ineligible SL price/too tight stops -> SKIP, never submit unprotected.
+T54: TP 2 times risk, no BE/trailing/partial.
+T55: One active EA position / pending order cap maintained.
+T56: Telegram / MT5 notification prints correct SL TF.
+T57: Run actual F7 compile and 2024-2026 tests with M5/M15/H1 stop TF.
+STATUS: implemented in GitHub v1.05; actual MT5 compile/backtest NOT RUN.
