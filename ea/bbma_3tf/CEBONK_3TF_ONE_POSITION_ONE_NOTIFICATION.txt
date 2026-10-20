@@ -917,6 +917,17 @@ public:
                           " | SL "+PriceText(sl)+" | TP "+PriceText(tp));
       TelegramSend(msg);
    }
+
+   // One short notification for a closed position: no price, lot, or P/L.
+   void TPSL(const bool tp,const long position_id)
+   {
+      string msg=(tp ? "😅 TAKE PROFIT" : "🥲 STOP LOSE");
+      Print("CEBONK ",msg," | PositionID=",position_id);
+      if(m_push && !MQLInfoInteger(MQL_TESTER))
+         SendNotification(msg);
+      if(!TelegramSend(msg))
+         Print("TP/SL Telegram gagal utawa nonaktif | PositionID=",position_id);
+   }
 };
 
 input group "=== ENGINE ==="
@@ -1366,16 +1377,78 @@ string ShortTF(const ENUM_TIMEFRAMES timeframe)
    return value;
 }
 
+
+// Dedup terminal-persistent across EA restarts and broker trade transactions.
+string C3ClosedNotificationKey(const long position_id)
+{
+   return "CB22X:"+IntegerToString((long)AccountInfoInteger(ACCOUNT_LOGIN))+":"+
+          IntegerToString((long)InpMagic)+":"+IntegerToString(position_id);
+}
+
+// Broker SL/TP close deals can carry DEAL_MAGIC=0: verify origin via opening deal.
+void C3NotifyClosedTPSL(const ulong exit_deal)
+{
+   if(!HistoryDealSelect(exit_deal)) return;
+   if(HistoryDealGetString(exit_deal,DEAL_SYMBOL)!=g_core.SymbolName()) return;
+   if((ENUM_DEAL_ENTRY)HistoryDealGetInteger(exit_deal,DEAL_ENTRY)!=DEAL_ENTRY_OUT) return;
+
+   ENUM_DEAL_REASON reason=(ENUM_DEAL_REASON)HistoryDealGetInteger(exit_deal,DEAL_REASON);
+   if(reason!=DEAL_REASON_TP && reason!=DEAL_REASON_SL) return;
+   ENUM_DEAL_TYPE type=(ENUM_DEAL_TYPE)HistoryDealGetInteger(exit_deal,DEAL_TYPE);
+   if(type!=DEAL_TYPE_BUY && type!=DEAL_TYPE_SELL) return;
+   long position_id=HistoryDealGetInteger(exit_deal,DEAL_POSITION_ID);
+   if(position_id<=0) return;
+
+   // A partial fill must not generate a premature/duplicate closed-position alert.
+   for(int i=PositionsTotal()-1;i>=0;i--)
+   {
+      ulong ticket=PositionGetTicket(i);
+      if(ticket!=0 && (long)PositionGetInteger(POSITION_IDENTIFIER)==position_id)
+         return;
+   }
+   if(!HistorySelectByPosition((ulong)position_id)) return;
+
+   bool owned=false;
+   for(int i=0;i<HistoryDealsTotal();i++)
+   {
+      ulong deal=HistoryDealGetTicket(i);
+      if(deal==0 || HistoryDealGetString(deal,DEAL_SYMBOL)!=g_core.SymbolName()) continue;
+      ENUM_DEAL_ENTRY action=(ENUM_DEAL_ENTRY)HistoryDealGetInteger(deal,DEAL_ENTRY);
+      if((action==DEAL_ENTRY_IN || action==DEAL_ENTRY_INOUT) &&
+         (ulong)HistoryDealGetInteger(deal,DEAL_MAGIC)==InpMagic)
+      {
+         owned=true;
+         break;
+      }
+   }
+   if(!owned) return;
+
+   string key=C3ClosedNotificationKey(position_id);
+   if(GlobalVariableCheck(key)) return;
+   // Mark BEFORE WebRequest: at most one delivery attempt, including EA restarts.
+   // Telegram exact-once semantics cannot be guaranteed on network failures.
+   if(GlobalVariableSet(key,(double)TimeCurrent())==0)
+   {
+      Print("CLOSE NOTIFY dedup gagal | ",GetLastError()," | PositionID=",position_id);
+      return;
+   }
+   GlobalVariablesFlush();
+   g_notify.TPSL(reason==DEAL_REASON_TP,position_id);
+   C3ResetState(g_setup);
+}
+
 void OnTradeTransaction(const MqlTradeTransaction &trans,
                         const MqlTradeRequest &request,
                         const MqlTradeResult &result)
 {
    if(trans.type!=TRADE_TRANSACTION_DEAL_ADD || trans.deal==0) return;
    if(!HistoryDealSelect(trans.deal)) return;
-   if((ulong)HistoryDealGetInteger(trans.deal,DEAL_MAGIC)!=InpMagic) return;
    if(HistoryDealGetString(trans.deal,DEAL_SYMBOL)!=g_core.SymbolName()) return;
 
    ENUM_DEAL_ENTRY action=(ENUM_DEAL_ENTRY)HistoryDealGetInteger(trans.deal,DEAL_ENTRY);
+   // Opening notifications require own Magic; close ownership is verified via position history.
+   if((action==DEAL_ENTRY_IN || action==DEAL_ENTRY_INOUT) &&
+      (ulong)HistoryDealGetInteger(trans.deal,DEAL_MAGIC)!=InpMagic) return;
 
    if(action==DEAL_ENTRY_IN || action==DEAL_ENTRY_INOUT)
    {
@@ -1442,10 +1515,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
       return;
    }
 
-   // Trading logic unchanged: reset setup after TP or SL, without an extra alert.
-   if(action!=DEAL_ENTRY_OUT) return;
-   ENUM_DEAL_REASON reason=(ENUM_DEAL_REASON)HistoryDealGetInteger(trans.deal,DEAL_REASON);
-   if(reason!=DEAL_REASON_TP && reason!=DEAL_REASON_SL) return;
-   C3ResetState(g_setup);
+   // TP/SL notification is independent from Autopilot state and trading session.
+   if(action==DEAL_ENTRY_OUT) C3NotifyClosedTPSL(trans.deal);
 }
 //+------------------------------------------------------------------+
