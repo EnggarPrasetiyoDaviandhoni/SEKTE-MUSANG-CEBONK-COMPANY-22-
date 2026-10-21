@@ -1,0 +1,16 @@
+{
+  "base_commit": "602918367c1831188a770011c1a6ca3723f8520d",
+  "repository": "EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-",
+  "m5_source": "User latest EL2-only instruction; PRD v1.07 8.3A/8.4 and MUS-15/16, FMI-23",
+  "unchanged_website_sha256": {
+    "index.html": "5f84b8967fd1002a21c773c0842c5c7d7e8eccda43eefc74e4b009d44777d849",
+    "assets/astro-killzone-core.js": "cfe41d6f64f6fe1307dde20164a5de1ce5ee26604c8d53acbf0e47dcd2145c04",
+    "assets/astro-weekly-core.js": "0d2925f7f0f7de66395e18f99e936b618ead325b897c034e15c7019726521f35",
+    "assets/astro-swing-daily-core.js": "978eb4d8224513d4f81409c6624bb2d176e4f2d102e059b6645ee51c989c4aed",
+    "assets/mt5-broker-clock.js": "635c3daf2dae2bd3d0dedb16a67886a2961ef65668ea6d108de0005d8df55584",
+    "assets/moon-phase-calendar.js": "1badf4e6d0f1fe43eb21a02236aac4f19feefac0116ebc8089e6e3b4af5cbfbc"
+  },
+  "compiler": "NOT_COMPILED",
+  "strategy_tester": "NOT_RUN",
+  "previous_ea_commit": "d021c93c8c32ae09501aa19c4030fb12a6b39e6e"
+}

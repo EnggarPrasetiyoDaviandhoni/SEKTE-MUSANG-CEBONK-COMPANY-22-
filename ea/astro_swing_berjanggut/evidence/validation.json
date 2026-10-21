@@ -1,0 +1,170 @@
+{
+  "checked_at_utc": "2026-10-18T16:45:43.462192+00:00",
+  "ea_version": "1.12",
+  "feed_contract": "2.1.0",
+  "m5_model": "MUSANG_EL2_IB_CB1_RETEST",
+  "weekly_lock": "Monday 00:00 WIB; persisted BUY/SELL/WAIT; Killzone must align; daily is annotation",
+  "campuran_threshold": {
+    "share": 0.55,
+    "minimum_directional_minutes": 360,
+    "calendar_days": 7,
+    "score": "sum(abs(score)*5 minutes), directional slots only"
+  },
+  "sl_input": {
+    "name": "InpSLFibLevel",
+    "default": -0.236,
+    "existing_basket": "stored SL/TP retained; terminal execution not run"
+  },
+  "feed_tests": {
+    "status": "PASS",
+    "cases": 31
+  },
+  "weekly_strength_tests": {
+    "status": "PASS",
+    "cases": 3
+  },
+  "numeric_policy_host": {
+    "status": "PASS",
+    "assertions": 167
+  },
+  "json_feed_host": {
+    "status": "PASS",
+    "assertions": 41
+  },
+  "production_basket_net_host": {
+    "status": "PASS",
+    "assertions": 10
+  },
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
+  "source_structure": {
+    "status": "PASS",
+    "mql_files": 16
+  },
+  "parity": {
+    "status": "PASS",
+    "kind": "VM browser UMD versus Node; not browser UI automation",
+    "trading_dates": 20,
+    "seven_day_strength_dates": 28,
+    "weeks": [
+      "2026-03-02",
+      "2026-03-09",
+      "2026-03-30",
+      "2026-04-06"
+    ],
+    "astronomy_engine": "2.1.19",
+    "maximum_numeric_difference": 0,
+    "tolerance": 1e-09,
+    "coverage": [
+      "7-day weighted strength and weekly decision",
+      "weekly/daily bias",
+      "5 city sessions",
+      "focus and all windows",
+      "start/core/end timestamps",
+      "source scores",
+      "lunar illumination/rank",
+      "major moon events",
+      "US/UK/Australia DST before/after"
+    ]
+  },
+  "website_source_changed": false,
+  "original_website_regression": "PASS",
+  "metaeditor": "NOT_COMPILED",
+  "mt5_selftest": "NOT_RUN",
+  "strategy_tester": "NOT_RUN",
+  "broker_demo_live": "NOT_RUN",
+  "raw_feed_publication": {
+    "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/cebonk-astro-swing-feed-v2/forecast.json",
+    "http": 200,
+    "schema": "2.1.0",
+    "payload_sha256": "3251ac60929acfcd48361e5aae1db8124eb59301cb529f412a2551820218f493",
+    "generator_source_commit": "b14c1db11e2f860118c84f0b48c30ea94779540a",
+    "branch": "cebonk-astro-swing-feed-v2",
+    "daily_publisher": "ACTIVE_ON_MAIN",
+    "schedule_utc": "00:10 daily",
+    "deployment_pr": 79,
+    "workflow_run": 39117993191,
+    "workflow_conclusion": "success",
+    "workflow_url": "https://github.com/EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-/actions/runs/39117993191",
+    "no_query_default_url_validated": true
+  },
+  "archive_backfill_generator": {
+    "status": "PASS",
+    "publications": 2,
+    "note": "simulated as-of publication, not authentic historical archive"
+  },
+  "notification_host": {
+    "status": "PASS",
+    "assertions": 68,
+    "production_headers": [
+      "NotificationFormat.mqh",
+      "Notifier.mqh",
+      "Persistence.mqh"
+    ],
+    "coverage": [
+      "BUY/SELL",
+      "actual fill formatting and RR",
+      "ICT A/B",
+      "IPDA context",
+      "explicit BBMA unused",
+      "partial lot precision",
+      "UTF16-safe 255-character push chunks",
+      "complete Telegram JSON",
+      "durable chunk resume",
+      "retry and dedup",
+      "v1/v2/v3 state migration to v4",
+      "64-bit identifier precision",
+      "legacy 2+2 quota migrates as total four slots",
+      "reject out-of-range layer counter"
+    ],
+    "actual_messages_sent": false,
+    "real_telegram_mt5_delivery": "NOT_RUN"
+  },
+  "entry_policy": {
+    "direction": "weekly lock + Killzone Astrology",
+    "daily_filter": false,
+    "session_phase_filter": false,
+    "time_interval": "full session [start,end), not best window/core",
+    "technical": "ICT H4/H1/M15 + M5 Musang EL2",
+    "layers": {
+      "maximum": 4,
+      "phase_quotas": false,
+      "maximum_per_confirmation_batch": 2,
+      "additions": "new H1/M15/EL2, may use a later aligned Killzone"
+    },
+    "ipda_pd_entry_filter": true,
+    "ipda": {
+      "mode": "AUTO OR 20/40/60 closed D1",
+      "buy": "within range, below midpoint minus half point",
+      "sell": "within range, above midpoint plus half point",
+      "recheck": "fresh per-layer Ask BUY / Bid SELL",
+      "notification": "first qualifying range 20 ->40 ->60"
+    },
+    "take_profit": {
+      "source": "H4 ONLY",
+      "buy": "nearest eligible BSL",
+      "sell": "nearest eligible SSL",
+      "minimum_rr": 2,
+      "nearest_fails_rr": "WAIT, no farther-target substitution",
+      "excluded_sources": [
+        "H1",
+        "D1",
+        "PDH/PDL",
+        "prior week",
+        "IPDA",
+        "session"
+      ],
+      "existing_basket": "original stops retained; additions must match current nearest H4 target"
+    }
+  },
+  "feed_generator_changed_from_v1_10": false,
+  "prior_feed_tests_and_parity": "Unchanged generator/schema/libraries; prior parity and JS feed tests retained, native owner/policy tests rerun",
+  "production_preflight_host": {
+    "status": "PASS",
+    "assertions": 11,
+    "actual_orders_sent": false,
+    "method": "verbatim production CSBasket::Preflight with local broker API adapter"
+  }
+}

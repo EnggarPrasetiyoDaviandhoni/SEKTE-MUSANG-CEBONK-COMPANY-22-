@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "kind": "VM browser UMD versus Node; not browser UI automation",
+  "trading_dates": 20,
+  "seven_day_strength_dates": 28,
+  "weeks": [
+    "2026-03-02",
+    "2026-03-09",
+    "2026-03-30",
+    "2026-04-06"
+  ],
+  "astronomy_engine": "2.1.19",
+  "maximum_numeric_difference": 0,
+  "tolerance": 1e-9,
+  "coverage": [
+    "7-day weighted strength and weekly decision",
+    "weekly/daily bias",
+    "5 city sessions",
+    "focus and all windows",
+    "start/core/end timestamps",
+    "source scores",
+    "lunar illumination/rank",
+    "major moon events",
+    "US/UK/Australia DST before/after"
+  ]
+}
