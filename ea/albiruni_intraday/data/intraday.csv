@@ -1,2 +1,2 @@
 model,date_wib,signal_id,direction,start_epoch,entry_epoch,core_epoch,end_epoch,valid_until_epoch,published_epoch,aspect,phase
-ALBIRUNI_INTRADAY_V1,2026-10-21,NONE,WAIT,0,0,0,0,0,1792539575,NONE,NONE
+ALBIRUNI_INTRADAY_V1,2026-10-22,NONE,WAIT,0,0,0,0,0,1792618947,NONE,NONE
