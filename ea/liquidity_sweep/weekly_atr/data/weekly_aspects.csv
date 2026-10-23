@@ -1,1 +1,6 @@
 monday,week_direction,date,start_epoch,core_epoch,end_epoch,model,aspects_at_core
+2026-10-26,SELL,2026-10-26,1792969200,1792988100,1793026200,ASTRO_WEEKLY_V1,Sun Opposition Moon (orb 0.03 deg; TEPAT) | Sun Square Pluto (orb 0.33 deg; MENDEKAT)
+2026-10-26,SELL,2026-10-27,1793057400,1793067600,1793076000,ASTRO_WEEKLY_V1,Moon Square Mars (orb 0.02 deg; TEPAT) | Sun Square Pluto (orb 0.58 deg; MENJAUH)
+2026-10-26,SELL,2026-10-27,1793105100,1793112600,1793118600,ASTRO_WEEKLY_V1,Moon Square Jupiter (orb 0.01 deg; TEPAT) | Sun Square Pluto (orb 1.10 deg; MENJAUH)
+2026-10-26,SELL,2026-10-27,1793085000,1793092200,1793097300,ASTRO_WEEKLY_V1,Moon Opposition Mercury (orb 0.01 deg; TEPAT) | Sun Square Pluto (orb 0.87 deg; MENJAUH)
+2026-10-26,SELL,2026-10-30,1793335500,1793338500,1793340600,ASTRO_WEEKLY_V1,Moon Square Neptune (orb 0.01 deg; TEPAT) | Mercury Square Mars (orb 0.70 deg; MENDEKAT)

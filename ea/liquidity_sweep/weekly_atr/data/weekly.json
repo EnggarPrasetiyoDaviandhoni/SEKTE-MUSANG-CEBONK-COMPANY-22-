@@ -2,11 +2,57 @@
   "model": "ASTRO_WEEKLY_V1",
   "source": "Website CebonkCore V1 + CebonkAstroWeekly",
   "experimental": true,
-  "week_monday_wib": "2026-10-19",
-  "week_direction": "CAMPURAN",
+  "week_monday_wib": "2026-10-26",
+  "week_direction": "SELL",
   "total_slots": 1080,
-  "buy_minutes": 1115,
-  "sell_minutes": 1285,
-  "windows": [],
-  "status": "NO_TRADE"
+  "buy_minutes": 900,
+  "sell_minutes": 1835,
+  "windows": [
+    {
+      "date": "2026-10-26",
+      "direction": "SELL",
+      "start_epoch": 1792969200,
+      "core_epoch": 1792988100,
+      "end_epoch": 1793026200,
+      "minutes": 950,
+      "aspects_at_core": "Sun Opposition Moon (orb 0.03 deg; TEPAT) | Sun Square Pluto (orb 0.33 deg; MENDEKAT)"
+    },
+    {
+      "date": "2026-10-27",
+      "direction": "SELL",
+      "start_epoch": 1793057400,
+      "core_epoch": 1793067600,
+      "end_epoch": 1793076000,
+      "minutes": 310,
+      "aspects_at_core": "Moon Square Mars (orb 0.02 deg; TEPAT) | Sun Square Pluto (orb 0.58 deg; MENJAUH)"
+    },
+    {
+      "date": "2026-10-27",
+      "direction": "SELL",
+      "start_epoch": 1793105100,
+      "core_epoch": 1793112600,
+      "end_epoch": 1793118600,
+      "minutes": 225,
+      "aspects_at_core": "Moon Square Jupiter (orb 0.01 deg; TEPAT) | Sun Square Pluto (orb 1.10 deg; MENJAUH)"
+    },
+    {
+      "date": "2026-10-27",
+      "direction": "SELL",
+      "start_epoch": 1793085000,
+      "core_epoch": 1793092200,
+      "end_epoch": 1793097300,
+      "minutes": 205,
+      "aspects_at_core": "Moon Opposition Mercury (orb 0.01 deg; TEPAT) | Sun Square Pluto (orb 0.87 deg; MENJAUH)"
+    },
+    {
+      "date": "2026-10-30",
+      "direction": "SELL",
+      "start_epoch": 1793335500,
+      "core_epoch": 1793338500,
+      "end_epoch": 1793340600,
+      "minutes": 85,
+      "aspects_at_core": "Moon Square Neptune (orb 0.01 deg; TEPAT) | Mercury Square Mars (orb 0.70 deg; MENDEKAT)"
+    }
+  ],
+  "status": "READY"
 }
