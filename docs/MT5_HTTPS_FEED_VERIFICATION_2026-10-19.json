@@ -1,0 +1,846 @@
+{
+  "status": "STAGING_ACTIONS_VERIFIED_PRODUCTION_AND_MT5_PENDING",
+  "checked_at_utc": "2026-10-19T22:32:37.852148+00:00",
+  "source_repository": "EnggarPrasetiyoDaviandhoni/SEKTE-MUSANG-CEBONK-COMPANY-22-",
+  "branch": "codex/isolated-mt5-https-feeds-20261019",
+  "source_pins": {
+    "source_base_commit": "f5daccf2ae805146ca3352de7efe6e6a9189a69b",
+    "embedded_core_sha256": "b3de7ac2391e9b23b93d654c0d744433cc9cc002afb17506a317f06ba94afd61",
+    "files_sha256": {
+      "assets/astro-news-v1.js": "348927ac5aa35a7e78cdd7be5d5d6f9e66cfba17003ac5f26df3636b658c21bc",
+      "assets/triple-cycle-core.js": "b30e1a137120d63030f0ca5459a2704290340d7804fbf3ebed5d9673babbb005",
+      "assets/astro-moment-bias.js": "01b81d8a538014cdbf85d85911e2332c7723a819c39502f156b001cf3f0540bb"
+    },
+    "original_ea_sha256": {
+      "news": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b",
+      "moments": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+    }
+  },
+  "source_ea_modified": false,
+  "source_ea_committed": false,
+  "local_tests": {
+    "python_tests": 12,
+    "node_tests_with_real_ephemeris": 6,
+    "workflow_publication_guard_scenarios": 12,
+    "native_decoder_parity": {
+      "scope": "C++ compatibility harness for unchanged original decoder; not a live MT5 terminal",
+      "passed": 52,
+      "total": 52,
+      "cases": [
+        {
+          "kind": "news",
+          "case": "real generated payload",
+          "expected": true,
+          "python_accepted": true,
+          "original_decoder_accepted": true,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root model='WRONG'",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root schema_version=99",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root schema_version=True",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root schema_version=1.0",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root instrument='XAGUSD'",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root generated_at_utc=1792449007",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root generated_at_utc=1792449006000",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root generated_at_utc='1792449006'",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root expires_at_utc=1792449006",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root schedule_to_utc=1800225006",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "root revision='unsafe/id'",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "duplicate signal IDs",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "window out of coverage",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "overlap with another ID",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "bad direction",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "wrong WIB date",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "empty signals allowed by original",
+          "expected": true,
+          "python_accepted": true,
+          "original_decoder_accepted": true,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "news rejects neutral",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "news rejects session alias",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "news core at exclusive end",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "duplicate root key",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "escaped duplicate root key",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "trailing bytes",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "unpaired surrogate",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "news",
+          "case": "excessive JSON nesting",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "0c22a586439eb326ec6a0ebdb3ba54c73ff69875c201bb8d04653af41325fb4b"
+        },
+        {
+          "kind": "moments",
+          "case": "real generated payload",
+          "expected": true,
+          "python_accepted": true,
+          "original_decoder_accepted": true,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root model='WRONG'",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root schema_version=99",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root schema_version=True",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root schema_version=2.0",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root instrument='XAGUSD'",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root generated_at_utc=1792449005",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root generated_at_utc=1792449004000",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root generated_at_utc='1792449004'",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root expires_at_utc=1792449004",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root schedule_to_utc=1800225004",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "root revision='unsafe/id'",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "duplicate signal IDs",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "window out of coverage",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "overlap with another ID",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "bad direction",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "wrong WIB date",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "empty signals allowed by original",
+          "expected": true,
+          "python_accepted": true,
+          "original_decoder_accepted": true,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "moment neutral is valid",
+          "expected": true,
+          "python_accepted": true,
+          "original_decoder_accepted": true,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "millisecond timestamp mismatch",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "moment wrong midnight",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "duplicate root key",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "escaped duplicate root key",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "trailing bytes",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "unpaired surrogate",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        },
+        {
+          "kind": "moments",
+          "case": "excessive JSON nesting",
+          "expected": false,
+          "python_accepted": false,
+          "original_decoder_accepted": false,
+          "pass": true,
+          "ea_sha256": "2226d78922fea45bb41b1f8393f89350c5a27dc7cfb0801d9744f4ad3735544a"
+        }
+      ],
+      "checked_at_utc": "2026-10-19T22:32:32.538745+00:00"
+    }
+  },
+  "official_calendar": {
+    "checked_at_utc": 1792432312,
+    "sources": [
+      {
+        "agency": "BLS",
+        "url": "https://www.bls.gov/schedule/2026/10_sched.htm",
+        "sha256": "362eb29a5b132a41f14ac7f4a94e803690b4ef26472cc279813d05fb3cb1d69e",
+        "checked_at_utc": 1792432312
+      },
+      {
+        "agency": "FED",
+        "url": "https://www.federalreserve.gov/newsevents/2026-october.htm",
+        "sha256": "00e45b75fac454f485fe9804aa9a002970d37d1fab08b5f26e80f80318ed2460",
+        "checked_at_utc": 1792432312
+      },
+      {
+        "agency": "BLS",
+        "url": "https://www.bls.gov/schedule/2026/11_sched.htm",
+        "sha256": "67e5029903969e344658000d1a210a2a241957035e24def3d5d8878a644c55cd",
+        "checked_at_utc": 1792432312
+      },
+      {
+        "agency": "FED",
+        "url": "https://www.federalreserve.gov/newsevents/2026-november.htm",
+        "sha256": "49a4771753921f4b101d61a606fd97d1209d7ca7f977eb00c8a5614441e4c3fa",
+        "checked_at_utc": 1792432312
+      },
+      {
+        "agency": "BEA",
+        "url": "https://www.bea.gov/news/schedule",
+        "sha256": "c94fa95c88e978775f29c2fc935dff4ebce2791693772ecd73273a941caadf8d",
+        "checked_at_utc": 1792432312
+      }
+    ],
+    "supported_events_in_current_horizon": 7,
+    "unconfirmed_release_count": 0
+  },
+  "local_payloads": {
+    "news": {
+      "filename": "news-astrology-mt5.json",
+      "bytes": 4019,
+      "sha256": "e2885a9c67212976e6a3c947d6ab4501cc530df8b3d075990c19c5a5c3b83cc3",
+      "schema_version": 1,
+      "model": "CEBONK_NEWS_ASTROLOGY_V1",
+      "signal_count": 4,
+      "generated_at_utc": 1792431758,
+      "expires_at_utc": 1792561358,
+      "status": "local validated preview; not publicly deployed"
+    },
+    "moments": {
+      "filename": "astro-4momen-mt5.json",
+      "bytes": 4116,
+      "sha256": "9341f64b209ac17881f182a6e1c6d940eda486dfb7ea2b55fc92f0df910ee8a1",
+      "schema_version": 2,
+      "model": "CEBONK_FOUR_MOMENTS_ASTROLOGY_V1",
+      "signal_count": 9,
+      "generated_at_utc": 1792431758,
+      "expires_at_utc": 1792561358,
+      "status": "local validated preview; not publicly deployed"
+    }
+  },
+  "repository_creation": {
+    "attempted_at_utc": "2026-10-19T17:35:40.223318+00:00",
+    "requested_repository": "EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS",
+    "succeeded": false,
+    "status": "403",
+    "message": "Resource not accessible by integration"
+  },
+  "live_public_endpoint_verified": false,
+  "public_staging_verification": {
+    "checked_at_utc": "2026-10-19T20:05:13.734451+00:00",
+    "repository": "EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS",
+    "repository_public": true,
+    "pages_enabled": false,
+    "owner_created_repository_verified": true,
+    "integration_write_access_verified": true,
+    "branch": "staging",
+    "staging_commit_prefix": "1fbee30",
+    "draft_pull_request": 1,
+    "default_main_commit_prefix": "453df58",
+    "default_main_contains_only_readme": true,
+    "generator_source_commit": "597c6b31f7f03f6ff2640ac2fedf3b505c5c704c",
+    "native_decoder_cases_passed": 52,
+    "news": {
+      "http_status": 200,
+      "valid_json": true,
+      "identical_validated_bytes": true,
+      "schema_version": 1,
+      "signals": 4,
+      "sha256": "5a73d0903cf25e29bfafccd05e29b5ae8df8e9d864471352cdeb9b90d27e15df"
+    },
+    "moments": {
+      "http_status": 200,
+      "valid_json": true,
+      "identical_validated_bytes": true,
+      "schema_version": 2,
+      "signals": 9,
+      "sha256": "d8bffe41317686f51ae975a16e53a530aa9b86400e799bdc7871812a40a43d46"
+    },
+    "generated_at_utc": 1792440199,
+    "expires_at_utc": 1792569799,
+    "publication_mode": "manual staging only; not live EA or automatic production"
+  },
+  "calendar_runner_access_diagnostic": {
+    "run_id": 39316417839,
+    "bls_monthly_html_http_status": 403,
+    "bls_icalendar_http_status": 403,
+    "federal_reserve_http_status": 200,
+    "bea_http_status": 200,
+    "publishes_data": false,
+    "temporary_workflow_removed_after_audit": true
+  },
+  "production_automation_verified": false,
+  "live_mt5_webrequest_verified": false,
+  "draft_pull_request": 81,
+  "initial_github_actions": {
+    "source_commit": "89e34a7f671d66d68c418f38014817fd90b9f519",
+    "push_run_id": 39314810289,
+    "pull_request_run_id": 39314848132,
+    "checks": "success",
+    "feed_moments": "success",
+    "feed_news": "failure",
+    "news_error": "Official release calendar HTTP 403 from GitHub-hosted runner; no publication or fallback performed"
+  },
+  "repository_visibility_changed": false,
+  "pages_disabled_verification": {
+    "checked_at_utc": "2026-10-19T19:51:39.545197+00:00",
+    "owner_screenshot": "153684.jpg",
+    "owner_setting": "Branch: None; GitHub Pages source saved; GitHub Pages is currently disabled",
+    "pages_home_http_status": 404,
+    "pages_index_http_status": 404,
+    "authenticated_pages_api_http_status": 404,
+    "news_raw_http_status": 404,
+    "moments_raw_http_status": 404,
+    "website_shutdown_verified": true,
+    "pages_trigger_cleanup_pr": 80,
+    "pages_trigger_cleanup_merged": false
+  },
+  "unresolved": [
+    "Production main endpoints have not been published; both source and feed PRs remain draft and unmerged.",
+    "Six-hour cron is configured but not active on the source default branch while the workflow remains in the PR.",
+    "Verify WebRequest and feed acceptance in a separate MT5 demo terminal before switching running EA URLs or making the source private.",
+    "Both original source/mt5-feed RAW endpoints still return 404; running EA URLs remain unchanged.",
+    "PR #80 removing legacy Pages build requests is separate and unmerged; Pages itself is disabled and website returns 404."
+  ],
+  "source_main_or_mt5_feed_modified_by_codex": false,
+  "staging_actions_publication_verified": true,
+  "default_branch_cron_active": false,
+  "live_public_endpoint_scope": "production main; staging is verified separately",
+  "latest_staging_actions_verification": {
+    "checked_at_utc": "2026-10-19T22:31:14.171245+00:00",
+    "source_commit": "8983687450907df2e425d07a0072ae82b059c5b4",
+    "push_workflow_run": 39335344228,
+    "pr_workflow_run": 39335351166,
+    "checks": [
+      {
+        "name": "news-astrology-mt5.json",
+        "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS/staging/data/news-astrology-mt5.json",
+        "http_status": 200,
+        "sha256": "d5f7d02901161f6b05325b6e1cb2e864a5cea5952b3ff5aa25d60532024a7ff7",
+        "signals": 4,
+        "stable_signal_content": true,
+        "generated_at_utc": 1792449005,
+        "expires_at_utc": 1792578605,
+        "source_commit": "8983687450907df2e425d07a0072ae82b059c5b4",
+        "calendar_providers": [
+          "BEA",
+          "FED",
+          "NYFED"
+        ]
+      },
+      {
+        "name": "astro-4momen-mt5.json",
+        "url": "https://raw.githubusercontent.com/EnggarPrasetiyoDaviandhoni/CEBONK-MT5-FEEDS/staging/data/astro-4momen-mt5.json",
+        "http_status": 200,
+        "sha256": "0b213c3a520ed4608a78929836dc276143328c888668461f23b04d83b4578e84",
+        "signals": 9,
+        "stable_signal_content": true,
+        "generated_at_utc": 1792449003,
+        "expires_at_utc": 1792578603,
+        "source_commit": "8983687450907df2e425d07a0072ae82b059c5b4",
+        "calendar_providers": []
+      }
+    ],
+    "staging_commit": "f43c780de22b61b7f4e98a1649e540c0359ac442",
+    "publication_steps": [
+      {
+        "name": "checks",
+        "conclusion": "success",
+        "steps": {}
+      },
+      {
+        "name": "feed (news)",
+        "conclusion": "success",
+        "steps": {
+          "Validate destination and publication credentials": "success",
+          "Publish only this verified data file, preserving concurrent updates": "success",
+          "Verify anonymous HTTPS 200 and exact published bytes": "success"
+        }
+      },
+      {
+        "name": "feed (moments)",
+        "conclusion": "success",
+        "steps": {
+          "Validate destination and publication credentials": "success",
+          "Publish only this verified data file, preserving concurrent updates": "success",
+          "Verify anonymous HTTPS 200 and exact published bytes": "success"
+        }
+      }
+    ],
+    "token_target_write_verified": true,
+    "token_value_read": false,
+    "artifact_download_from_workspace": "HTTP 403 from artifact storage; cmp on runner and independent RAW/parser verification passed"
+  },
+  "calendar_transport_resolution": {
+    "selected_explicitly": "nyfed",
+    "new_york_fed_runner_http_status": 200,
+    "transport_diagnostic_run": 39334928562,
+    "original_bls_runner_http_status": 403,
+    "equal_release_count": 6,
+    "comparison": [
+      {
+        "month": "2026-10",
+        "events_equal": true,
+        "selected_releases": [
+          [
+            "cpi-20261014",
+            "CPI",
+            "BLS",
+            1791981000
+          ],
+          [
+            "nfp-20261002",
+            "NFP / Employment Situation",
+            "BLS",
+            1790944200
+          ],
+          [
+            "ppi-20261015",
+            "PPI",
+            "BLS",
+            1792067400
+          ]
+        ],
+        "bls_sha256": "362eb29a5b132a41f14ac7f4a94e803690b4ef26472cc279813d05fb3cb1d69e",
+        "nyfed_sha256": "b0c3b86d6d933c42999c2fcba191b833ba58bd1cf7ef1deefb3fe24c1d4876b3"
+      },
+      {
+        "month": "2026-11",
+        "events_equal": true,
+        "selected_releases": [
+          [
+            "cpi-20261110",
+            "CPI",
+            "BLS",
+            1794317400
+          ],
+          [
+            "nfp-20261106",
+            "NFP / Employment Situation",
+            "BLS",
+            1793971800
+          ],
+          [
+            "ppi-20261113",
+            "PPI",
+            "BLS",
+            1794576600
+          ]
+        ],
+        "bls_sha256": "67e5029903969e344658000d1a210a2a241957035e24def3d5d8878a644c55cd",
+        "nyfed_sha256": "ba232e08bbf9ce8c33b7a21e731c4559a337746f2d4c63447f6595b1bb64fce2"
+      }
+    ],
+    "date_time_inference_used": false,
+    "stale_fallback_used": false
+  },
+  "latest_preservation_verification": {
+    "source_repo": {
+      "private": false,
+      "has_pages": false
+    },
+    "source_refs": {
+      "refs/heads/main": "f6f3efca443be07a0a99ebd91f38fd4704fba57b",
+      "refs/heads/mt5-feed": "f5daccf2ae805146ca3352de7efe6e6a9189a69b"
+    },
+    "feed_main": {
+      "sha": "453df586d1c5865d2891bbca45282a02a33ea5fe"
+    },
+    "feed_staging": {
+      "sha": "f43c780de22b61b7f4e98a1649e540c0359ac442"
+    },
+    "source_pr": {
+      "number": 81,
+      "draft": true,
+      "merged": false,
+      "state": "open"
+    },
+    "feed_pr": {
+      "number": 1,
+      "draft": true,
+      "merged": false,
+      "state": "open"
+    },
+    "jobs": [
+      {
+        "name": "checks",
+        "conclusion": "success",
+        "steps": {}
+      },
+      {
+        "name": "feed (news)",
+        "conclusion": "success",
+        "steps": {
+          "Validate destination and publication credentials": "success",
+          "Publish only this verified data file, preserving concurrent updates": "success",
+          "Verify anonymous HTTPS 200 and exact published bytes": "success"
+        }
+      },
+      {
+        "name": "feed (moments)",
+        "conclusion": "success",
+        "steps": {
+          "Validate destination and publication credentials": "success",
+          "Publish only this verified data file, preserving concurrent updates": "success",
+          "Verify anonymous HTTPS 200 and exact published bytes": "success"
+        }
+      }
+    ],
+    "http_statuses": {
+      "pages": 404,
+      "old_news": 404,
+      "old_moments": 404,
+      "production_news": 404,
+      "production_moments": 404
+    },
+    "checked_at_utc": "2026-10-19T22:32:37.852148+00:00",
+    "source_main_change": {
+      "author": "github-actions[bot]",
+      "commit": "f6f3efca443be07a0a99ebd91f38fd4704fba57b",
+      "message": "data: update Al-Biruni intraday experimental schedule [skip ci]",
+      "scope": "six existing Al-Biruni intraday data files; independent of this task"
+    }
+  }
+}

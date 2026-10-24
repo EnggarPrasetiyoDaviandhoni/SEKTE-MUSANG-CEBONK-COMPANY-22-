@@ -1,0 +1,8 @@
+{
+  "name": "cebonk-mt5-feed-adapters",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "astronomy-engine": "2.1.19"
+  }
+}

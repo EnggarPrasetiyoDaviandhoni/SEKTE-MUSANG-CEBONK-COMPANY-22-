@@ -1,0 +1,183 @@
+name: MT5 isolated public HTTPS feeds
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/mt5-feeds/**'
+      - 'tests/mt5-feeds/**'
+      - '.github/workflows/mt5-public-feeds.yml'
+  push:
+    branches: [main, codex/isolated-mt5-https-feeds-20261019]
+    paths:
+      - 'scripts/mt5-feeds/**'
+      - 'tests/mt5-feeds/**'
+      - '.github/workflows/mt5-public-feeds.yml'
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish verified JSON (also requires MT5_ENABLE_PUBLISH=true)'
+        type: boolean
+        default: false
+      destination:
+        description: 'Use staging for pre-merge HTTP tests; main requires source main'
+        type: choice
+        options: [staging, main]
+        default: staging
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --prefix scripts/mt5-feeds --ignore-scripts --no-audit --no-fund
+      - name: Strict contracts, calendar parsing, immutable IDs and real model parity
+        run: |
+          python3 -m unittest discover -s tests/mt5-feeds -p 'test_*.py' -v
+          node --test tests/mt5-feeds/*.test.mjs
+
+  feed:
+    needs: checks
+    strategy:
+      fail-fast: false
+      matrix:
+        kind: [news, moments]
+    concurrency:
+      group: mt5-https-${{ github.repository }}-${{ matrix.kind }}-${{ github.event_name == 'pull_request' && github.ref || (inputs.destination == 'staging' && 'staging' || 'production') }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MT5_KIND: ${{ matrix.kind }}
+      MT5_PUBLIC_FEED_REPOSITORY: ${{ vars.MT5_PUBLIC_FEED_REPOSITORY }}
+      MT5_TARGET_BRANCH: ${{ (github.ref == 'refs/heads/codex/isolated-mt5-https-feeds-20261019' || (github.event_name == 'workflow_dispatch' && inputs.destination == 'staging')) && 'staging' || 'main' }}
+      MT5_PUBLISH_ALLOWED: ${{ github.event_name != 'pull_request' && vars.MT5_ENABLE_PUBLISH == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/codex/isolated-mt5-https-feeds-20261019') && (github.event_name != 'workflow_dispatch' || inputs.publish) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --prefix scripts/mt5-feeds --ignore-scripts --no-audit --no-fund
+      - name: Check official release calendars without stale fallback
+        if: matrix.kind == 'news'
+        run: python3 scripts/mt5-feeds/sync_calendar.py --labor-calendar nyfed --out build/news-calendar.json
+      - name: Generate from the unchanged original models and validate the EA contract
+        shell: bash
+        run: |
+          if [ "$MT5_KIND" = news ]; then
+            file=news-astrology-mt5.json
+            node scripts/mt5-feeds/generate.mjs --kind news --calendar build/news-calendar.json --out "build/$file"
+          else
+            file=astro-4momen-mt5.json
+            node scripts/mt5-feeds/generate.mjs --kind moments --out "build/$file"
+          fi
+          python3 scripts/mt5-feeds/validate.py --kind "$MT5_KIND" --file "build/$file"
+          echo "MT5_FEED_FILE=$file" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-mt5-${{ matrix.kind }}
+          path: build/${{ env.MT5_FEED_FILE }}
+          if-no-files-found: error
+          retention-days: 2
+      - name: Validate destination and publication credentials
+        if: env.MT5_PUBLISH_ALLOWED == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.MT5_FEED_WRITE_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          target = os.environ.get('MT5_PUBLIC_FEED_REPOSITORY', '')
+          if not re.fullmatch(r'EnggarPrasetiyoDaviandhoni/[A-Za-z0-9_.-]+', target) or target.lower() == os.environ['GITHUB_REPOSITORY'].lower():
+              raise SystemExit('Set MT5_PUBLIC_FEED_REPOSITORY to a separate public data repository owned by EnggarPrasetiyoDaviandhoni')
+          if not os.environ.get('GH_TOKEN'):
+              raise SystemExit('Configure MT5_FEED_WRITE_TOKEN: Contents read/write on the public data repository only')
+          branch = os.environ['MT5_TARGET_BRANCH']
+          if branch not in ('main', 'staging') or (branch == 'main' and os.environ['GITHUB_REF'] != 'refs/heads/main'):
+              raise SystemExit('Production publication requires source main; use staging to test this PR')
+          repo = json.loads(subprocess.check_output(['gh', 'api', 'repos/' + target], text=True))
+          if repo.get('private') is not False or repo.get('visibility') != 'public' or repo.get('default_branch') != 'main' or repo.get('has_pages') is not False:
+              raise SystemExit('Destination must be public, use main, and have Pages disabled')
+          if branch == 'staging':
+              endpoint = 'repos/' + target + '/git/ref/heads/staging'
+              check = subprocess.run(['gh', 'api', endpoint], capture_output=True, text=True)
+              if check.returncode:
+                  if json.loads(check.stdout).get('status') != '404':
+                      raise SystemExit('Cannot inspect destination staging branch')
+                  base = json.loads(subprocess.check_output(['gh', 'api', 'repos/' + target + '/git/ref/heads/main'], text=True))['object']['sha']
+                  create = subprocess.run(['gh', 'api', '--method', 'POST', 'repos/' + target + '/git/refs', '-f', 'ref=refs/heads/staging', '-f', 'sha=' + base], capture_output=True, text=True)
+                  if create.returncode:
+                      # The other matrix job may have created the same ref first.
+                      subprocess.run(['gh', 'api', endpoint], check=True, stdout=subprocess.DEVNULL)
+          PY
+      - uses: actions/checkout@v4
+        if: env.MT5_PUBLISH_ALLOWED == 'true'
+        with:
+          repository: ${{ env.MT5_PUBLIC_FEED_REPOSITORY }}
+          ref: ${{ env.MT5_TARGET_BRANCH }}
+          path: public-feed
+          token: ${{ secrets.MT5_FEED_WRITE_TOKEN }}
+      - name: Publish only this verified data file, preserving concurrent updates
+        if: env.MT5_PUBLISH_ALLOWED == 'true'
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, subprocess
+          allowed = {'README.md', '.gitignore', 'LICENSE', 'data/news-astrology-mt5.json', 'data/astro-4momen-mt5.json'}
+          tracked = subprocess.check_output(['git', '-C', 'public-feed', 'ls-files', '-z']).decode().split('\0')
+          if set(filter(None, tracked)) - allowed:
+              raise SystemExit('Destination contains unexpected source/files; stop rather than publish into the wrong repository')
+          PY
+          python3 scripts/mt5-feeds/validate.py --kind "$MT5_KIND" --file "build/$MT5_FEED_FILE" --previous "public-feed/data/$MT5_FEED_FILE"
+          mkdir -p public-feed/data
+          cp "build/$MT5_FEED_FILE" "public-feed/data/$MT5_FEED_FILE"
+          git -C public-feed config user.name 'github-actions[bot]'
+          git -C public-feed config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C public-feed add -- "data/$MT5_FEED_FILE"
+          if ! git -C public-feed diff --cached --quiet; then
+            git -C public-feed commit -m "data: refresh verified MT5 $MT5_KIND feed [skip ci]"
+            pushed=false
+            for attempt in 1 2 3; do
+              git -C public-feed fetch origin "$MT5_TARGET_BRANCH"
+              git -C public-feed rebase "origin/$MT5_TARGET_BRANCH"
+              if git -C public-feed push origin "HEAD:$MT5_TARGET_BRANCH"; then pushed=true; break; fi
+              sleep 2
+            done
+            test "$pushed" = true
+          fi
+      - name: Verify anonymous HTTPS 200 and exact published bytes
+        if: env.MT5_PUBLISH_ALLOWED == 'true'
+        shell: bash
+        run: |
+          url="https://raw.githubusercontent.com/$MT5_PUBLIC_FEED_REPOSITORY/$MT5_TARGET_BRANCH/data/$MT5_FEED_FILE"
+          verified=false
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --max-time 20 "$url?run=$GITHUB_RUN_ID&attempt=$attempt" -o /tmp/mt5-public-feed.json && cmp "build/$MT5_FEED_FILE" /tmp/mt5-public-feed.json; then
+              python3 scripts/mt5-feeds/validate.py --kind "$MT5_KIND" --file /tmp/mt5-public-feed.json
+              verified=true
+              break
+            fi
+            sleep 10
+          done
+          test "$verified" = true
+          echo "PASS: $MT5_KIND public HTTPS GET 200, identical bytes, valid current EA contract" >> "$GITHUB_STEP_SUMMARY"
+      - name: Report staging status
+        if: env.MT5_PUBLISH_ALLOWED != 'true'
+        run: echo 'Validation only. No public feed was deployed and no live EA URL should be changed.' >> "$GITHUB_STEP_SUMMARY"
