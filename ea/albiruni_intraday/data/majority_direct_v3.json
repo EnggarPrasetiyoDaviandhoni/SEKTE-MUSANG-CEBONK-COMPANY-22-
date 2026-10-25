@@ -8,7 +8,7 @@
   "core_epoch": 1792969124,
   "end_epoch": 1792980689,
   "valid_until_epoch": 1792980689,
-  "published_epoch": 1792935504,
+  "published_epoch": 1792964286,
   "aspect": "Moon/Venus Oposisi 180deg orb 1.695deg",
   "phase": "APPLYING",
   "buy_aspects": 1,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "BUY"
   },
-  "generated_at_utc": "2026-10-25T13:38:24.000Z",
+  "generated_at_utc": "2026-10-25T21:38:06.000Z",
   "candidate_entry_wib": "2026-10-26 03:15:00 WIB",
   "start_wib": "2026-10-26 03:00:00 WIB",
   "core_wib": "2026-10-26 05:58:44 WIB",
