@@ -1,6 +1,6 @@
 {
   "model": "ALBIRUNI_INTRADAY_V1",
-  "date_wib": "2026-10-28",
+  "date_wib": "2026-10-29",
   "signal_id": "NONE",
   "direction": "WAIT",
   "start_epoch": 0,
@@ -8,7 +8,7 @@
   "core_epoch": 0,
   "end_epoch": 0,
   "valid_until_epoch": 0,
-  "published_epoch": 1793144491,
+  "published_epoch": 1793224114,
   "aspect": "NONE",
   "phase": "NONE",
   "reason": "WAIT_ELECTION_TIME_NOT_FAVORABLE",
@@ -19,6 +19,18 @@
     "status": "MERUGIKAN",
     "reason": "WAKTU_KLASIK_TIDAK_MENDUKUNG",
     "entry": {
+      "status": "CAMPURAN",
+      "eligible": false,
+      "reason": "BENEFIC_MALEFIC_BERCAMPUR",
+      "benefic": 1,
+      "malefic": 1,
+      "moonRulerAspect": false,
+      "beneficCore": true,
+      "model": "ELECTION_SCREEN_RESEARCH_V1",
+      "marketValidated": false,
+      "note": "Klasifikasi menguntungkan/merugikan adalah heuristik konservatif dari prinsip §527; bukan rumus arah BUY/SELL, probabilitas profit, atau jaminan entry."
+    },
+    "beforeExact": {
       "status": "MERUGIKAN",
       "eligible": false,
       "reason": "KONTAK_MALEFIC_PADA_PENANDA_PENTING",
@@ -30,20 +42,8 @@
       "marketValidated": false,
       "note": "Klasifikasi menguntungkan/merugikan adalah heuristik konservatif dari prinsip §527; bukan rumus arah BUY/SELL, probabilitas profit, atau jaminan entry."
     },
-    "beforeExact": {
-      "status": "MERUGIKAN",
-      "eligible": false,
-      "reason": "KONTAK_MALEFIC_PADA_PENANDA_PENTING",
-      "benefic": 0,
-      "malefic": 1,
-      "moonRulerAspect": true,
-      "beneficCore": false,
-      "model": "ELECTION_SCREEN_RESEARCH_V1",
-      "marketValidated": false,
-      "note": "Klasifikasi menguntungkan/merugikan adalah heuristik konservatif dari prinsip §527; bukan rumus arah BUY/SELL, probabilitas profit, atau jaminan entry."
-    },
-    "entry_wib": "2026-10-28 20:45:00 WIB",
-    "check_wib": "2026-10-28 23:26:10 WIB",
+    "entry_wib": "2026-10-29 09:00:00 WIB",
+    "check_wib": "2026-10-29 12:01:07 WIB",
     "reference": {
       "latitude": -6.2,
       "longitude": 106.8167,
@@ -53,14 +53,14 @@
     "checkedCandidates": 1
   },
   "summary": {
-    "buyMinutes": 75,
-    "sellMinutes": 210,
-    "buyVotes": 5,
-    "sellVotes": 14,
+    "buyMinutes": 0,
+    "sellMinutes": 855,
+    "buyVotes": 16,
+    "sellVotes": 83,
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "SELL"
   },
-  "generated_at_utc": "2026-10-27T23:41:31.000Z",
+  "generated_at_utc": "2026-10-28T21:48:34.000Z",
   "candidate_entry_wib": null,
   "start_wib": null,
   "core_wib": null,
