@@ -8,7 +8,7 @@
   "core_epoch": 0,
   "end_epoch": 0,
   "valid_until_epoch": 0,
-  "published_epoch": 1793310612,
+  "published_epoch": 1793317624,
   "aspect": "NONE",
   "phase": "NONE",
   "reason": "NO_APPLYING_EXACT_BEFORE_CORE",
@@ -32,7 +32,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "SELL"
   },
-  "generated_at_utc": "2026-10-29T21:50:12.000Z",
+  "generated_at_utc": "2026-10-29T23:47:04.000Z",
   "candidate_entry_wib": null,
   "start_wib": null,
   "core_wib": null,
