@@ -1,2 +1,2 @@
 model,date_wib,signal_id,direction,start_epoch,entry_epoch,core_epoch,end_epoch,valid_until_epoch,published_epoch,aspect,phase,buy_aspects,sell_aspects
-ALBIRUNI_MAJORITY_DIRECT_V3,2026-10-30,NONE,WAIT,0,0,0,0,0,1793317624,NONE,NONE,0,0
+ALBIRUNI_MAJORITY_DIRECT_V3,2026-11-02,AB-20261102-BUY-17935649002,BUY,1793552400,1793553300,1793564900,1793578309,1793578309,1793541124,Sun/Moon Square 90deg orb 1.735deg,APPLYING,2,1
