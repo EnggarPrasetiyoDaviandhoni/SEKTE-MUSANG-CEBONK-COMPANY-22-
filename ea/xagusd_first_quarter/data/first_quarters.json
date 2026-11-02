@@ -2,8 +2,8 @@
   "model": "CEBONK_XAG_FIRST_QUARTER_V1",
   "status": "READY",
   "source_engine": "astronomy-engine@2.1.19",
-  "generated_epoch": 1793499530,
-  "expires_epoch": 1793845130,
+  "generated_epoch": 1793606366,
+  "expires_epoch": 1793951966,
   "first_quarters": [
     {
       "phase_epoch": 1794916107,
@@ -68,6 +68,11 @@
     {
       "phase_epoch": 1825488040,
       "utc_date": "2027-11-06",
+      "moon_phase": "FIRST_QUARTER"
+    },
+    {
+      "phase_epoch": 1828070567,
+      "utc_date": "2027-12-06",
       "moon_phase": "FIRST_QUARTER"
     }
   ]
