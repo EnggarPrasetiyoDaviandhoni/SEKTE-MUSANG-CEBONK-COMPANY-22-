@@ -8,7 +8,7 @@
   "core_epoch": 1793787613,
   "end_epoch": 1793811600,
   "valid_until_epoch": 1793811600,
-  "published_epoch": 1793755168,
+  "published_epoch": 1793761216,
   "aspect": "Venus/Jupiter Sextile 60deg orb 0.364deg",
   "phase": "APPLYING",
   "buy_aspects": 1,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "BUY"
   },
-  "generated_at_utc": "2026-11-04T01:19:28.000Z",
+  "generated_at_utc": "2026-11-04T03:00:16.000Z",
   "candidate_entry_wib": "2026-11-04 00:15:00 WIB",
   "start_wib": "2026-11-04 00:00:00 WIB",
   "core_wib": "2026-11-04 17:20:13 WIB",
