@@ -2,8 +2,8 @@
   "model": "CEBONK_XAG_FIRST_QUARTER_V1",
   "status": "READY",
   "source_engine": "astronomy-engine@2.1.19",
-  "generated_epoch": 1793953174,
-  "expires_epoch": 1794298774,
+  "generated_epoch": 1794037030,
+  "expires_epoch": 1794382630,
   "first_quarters": [
     {
       "phase_epoch": 1794916107,
