@@ -8,7 +8,7 @@
   "core_epoch": 1794207719,
   "end_epoch": 1794222899,
   "valid_until_epoch": 1794222899,
-  "published_epoch": 1794162047,
+  "published_epoch": 1794185555,
   "aspect": "Sun/Moon Konjungsi 0deg orb 1.799deg",
   "phase": "APPLYING",
   "buy_aspects": 2,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "BUY"
   },
-  "generated_at_utc": "2026-11-08T18:20:47.000Z",
+  "generated_at_utc": "2026-11-09T00:52:35.000Z",
   "candidate_entry_wib": "2026-11-09 10:15:00 WIB",
   "start_wib": "2026-11-09 10:00:00 WIB",
   "core_wib": "2026-11-09 14:01:59 WIB",
