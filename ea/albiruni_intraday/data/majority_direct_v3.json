@@ -8,7 +8,7 @@
   "core_epoch": 1794292771,
   "end_epoch": 1794330000,
   "valid_until_epoch": 1794330000,
-  "published_epoch": 1794281602,
+  "published_epoch": 1794285481,
   "aspect": "Venus/Mars Sextile 60deg orb 0.076deg",
   "phase": "APPLYING",
   "buy_aspects": 0,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "SELL"
   },
-  "generated_at_utc": "2026-11-10T03:33:22.000Z",
+  "generated_at_utc": "2026-11-10T04:38:01.000Z",
   "candidate_entry_wib": "2026-11-10 10:45:00 WIB",
   "start_wib": "2026-11-10 10:30:00 WIB",
   "core_wib": "2026-11-10 13:39:31 WIB",
