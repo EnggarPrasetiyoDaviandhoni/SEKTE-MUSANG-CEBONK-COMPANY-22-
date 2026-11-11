@@ -8,7 +8,7 @@
   "core_epoch": 1794361638,
   "end_epoch": 1794375874,
   "valid_until_epoch": 1794375874,
-  "published_epoch": 1794359641,
+  "published_epoch": 1794365225,
   "aspect": "Moon/Saturn Trine 120deg orb 1.793deg",
   "phase": "APPLYING",
   "buy_aspects": 1,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "SELL"
   },
-  "generated_at_utc": "2026-11-11T01:14:01.000Z",
+  "generated_at_utc": "2026-11-11T02:47:05.000Z",
   "candidate_entry_wib": "2026-11-11 05:15:00 WIB",
   "start_wib": "2026-11-11 05:00:00 WIB",
   "core_wib": "2026-11-11 08:47:18 WIB",
