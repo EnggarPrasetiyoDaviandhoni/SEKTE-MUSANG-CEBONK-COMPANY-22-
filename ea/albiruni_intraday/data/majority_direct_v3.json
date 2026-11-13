@@ -8,7 +8,7 @@
   "core_epoch": 1794577906,
   "end_epoch": 1794589200,
   "valid_until_epoch": 1794589200,
-  "published_epoch": 1794534547,
+  "published_epoch": 1794540327,
   "aspect": "Moon/Saturn Square 90deg orb 1.786deg",
   "phase": "APPLYING",
   "buy_aspects": 1,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "SELL"
   },
-  "generated_at_utc": "2026-11-13T01:49:07.000Z",
+  "generated_at_utc": "2026-11-13T03:25:27.000Z",
   "candidate_entry_wib": "2026-11-13 17:15:00 WIB",
   "start_wib": "2026-11-13 17:00:00 WIB",
   "core_wib": "2026-11-13 20:51:46 WIB",
