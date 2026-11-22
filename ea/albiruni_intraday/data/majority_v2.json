@@ -1,6 +1,6 @@
 {
   "model": "ALBIRUNI_MAJORITY_V2",
-  "date_wib": "2026-11-20",
+  "date_wib": "2026-11-23",
   "signal_id": "NONE",
   "direction": "WAIT",
   "start_epoch": 0,
@@ -8,7 +8,7 @@
   "core_epoch": 0,
   "end_epoch": 0,
   "valid_until_epoch": 0,
-  "published_epoch": 1795147107,
+  "published_epoch": 1795378775,
   "aspect": "NONE",
   "phase": "NONE",
   "reason": "NO_APPLYING_EXACT_BEFORE_CORE",
@@ -25,14 +25,14 @@
     }
   },
   "summary": {
-    "buyMinutes": 1200,
-    "sellMinutes": 0,
-    "buyVotes": 207,
-    "sellVotes": 96,
+    "buyMinutes": 795,
+    "sellMinutes": 330,
+    "buyVotes": 74,
+    "sellVotes": 43,
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "BUY"
   },
-  "generated_at_utc": "2026-11-20T03:58:27.000Z",
+  "generated_at_utc": "2026-11-22T20:19:35.000Z",
   "candidate_entry_wib": null,
   "start_wib": null,
   "core_wib": null,
