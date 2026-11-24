@@ -8,7 +8,7 @@
   "core_epoch": 1795532008,
   "end_epoch": 1795539600,
   "valid_until_epoch": 1795539600,
-  "published_epoch": 1795497530,
+  "published_epoch": 1795503455,
   "aspect": "Sun/Moon Oposisi 180deg orb 1.834deg",
   "phase": "APPLYING",
   "buy_aspects": 2,
@@ -45,7 +45,7 @@
     "directionRule": "ASPECT_COUNT_MAJORITY_V2",
     "dominant": "BUY"
   },
-  "generated_at_utc": "2026-11-24T05:18:50.000Z",
+  "generated_at_utc": "2026-11-24T06:57:35.000Z",
   "candidate_entry_wib": "2026-11-24 18:45:00 WIB",
   "start_wib": "2026-11-24 18:30:00 WIB",
   "core_wib": "2026-11-24 21:53:28 WIB",
