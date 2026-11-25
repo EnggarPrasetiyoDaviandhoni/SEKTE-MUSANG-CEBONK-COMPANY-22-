@@ -1,2 +1,2 @@
 model,date_wib,signal_id,direction,start_epoch,entry_epoch,core_epoch,end_epoch,valid_until_epoch,published_epoch,aspect,phase,buy_aspects,sell_aspects
-ALBIRUNI_MAJORITY_DIRECT_V3,2026-11-24,AB-20261124-BUY-17955320084,BUY,1795519800,1795520700,1795532008,1795539600,1795539600,1795503455,Sun/Moon Oposisi 180deg orb 1.834deg,APPLYING,2,1
+ALBIRUNI_MAJORITY_DIRECT_V3,2026-11-25,NONE,WAIT,0,0,0,0,0,1795579827,NONE,NONE,0,0
