@@ -2,56 +2,56 @@
   "model": "ASTRO_WEEKLY_V1",
   "source": "Website CebonkCore V1 + CebonkAstroWeekly",
   "experimental": true,
-  "week_monday_wib": "2026-11-23",
+  "week_monday_wib": "2026-11-30",
   "week_direction": "BUY",
   "total_slots": 1080,
-  "buy_minutes": 4840,
-  "sell_minutes": 0,
+  "buy_minutes": 2210,
+  "sell_minutes": 1490,
   "windows": [
     {
-      "date": "2026-11-25",
+      "date": "2026-11-30",
       "direction": "BUY",
-      "start_epoch": 1795561200,
-      "core_epoch": 1795565400,
-      "end_epoch": 1795626000,
+      "start_epoch": 1795993200,
+      "core_epoch": 1796027700,
+      "end_epoch": 1796058000,
       "minutes": 1080,
-      "aspects_at_core": "Moon Sextile Saturn (orb 0.00 deg; TEPAT) | Uranus Trine Pluto (orb 0.27 deg; MENDEKAT)"
+      "aspects_at_core": "Moon Conjunction Jupiter (orb 0.00 deg; TEPAT) | Sun Trine Saturn (orb 0.11 deg; MENJAUH)"
     },
     {
-      "date": "2026-11-27",
+      "date": "2026-12-01",
       "direction": "BUY",
-      "start_epoch": 1795741800,
-      "core_epoch": 1795789800,
-      "end_epoch": 1795798800,
-      "minutes": 950,
-      "aspects_at_core": "Venus Sextile Jupiter (orb 0.39 deg; MENDEKAT) | Moon Trine Mercury (orb 0.00 deg; TEPAT)"
+      "start_epoch": 1796112300,
+      "core_epoch": 1796119200,
+      "end_epoch": 1796144400,
+      "minutes": 535,
+      "aspects_at_core": "Uranus Trine Pluto (orb 0.12 deg; MENJAUH) | Sun Trine Saturn (orb 1.20 deg; MENJAUH)"
     },
     {
-      "date": "2026-11-26",
+      "date": "2026-12-01",
       "direction": "BUY",
-      "start_epoch": 1795651500,
-      "core_epoch": 1795665300,
-      "end_epoch": 1795699800,
-      "minutes": 805,
-      "aspects_at_core": "Moon Trine Venus (orb 0.04 deg; TEPAT) | Uranus Trine Pluto (orb 0.20 deg; MENDEKAT)"
+      "start_epoch": 1796079600,
+      "core_epoch": 1796082600,
+      "end_epoch": 1796099100,
+      "minutes": 325,
+      "aspects_at_core": "Sun Trine Saturn (orb 0.77 deg; MENJAUH) | Uranus Trine Pluto (orb 0.09 deg; MENJAUH)"
     },
     {
-      "date": "2026-11-23",
+      "date": "2026-12-03",
       "direction": "BUY",
-      "start_epoch": 1795413600,
-      "core_epoch": 1795452900,
-      "end_epoch": 1795453200,
-      "minutes": 660,
-      "aspects_at_core": "Sun Trine Neptune (orb 0.31 deg; MENDEKAT) | Uranus Trine Pluto (orb 0.35 deg; MENDEKAT)"
+      "start_epoch": 1796259000,
+      "core_epoch": 1796264400,
+      "end_epoch": 1796272200,
+      "minutes": 220,
+      "aspects_at_core": "Moon Trine Pluto (orb 0.21 deg; MENDEKAT) | Moon Trine Uranus (orb 0.02 deg; TEPAT)"
     },
     {
-      "date": "2026-11-24",
+      "date": "2026-12-02",
       "direction": "BUY",
-      "start_epoch": 1795474800,
-      "core_epoch": 1795479300,
-      "end_epoch": 1795493700,
-      "minutes": 315,
-      "aspects_at_core": "Sun Trine Neptune (orb 0.00 deg; TEPAT) | Uranus Trine Pluto (orb 0.33 deg; MENDEKAT)"
+      "start_epoch": 1796200200,
+      "core_epoch": 1796202600,
+      "end_epoch": 1796203200,
+      "minutes": 50,
+      "aspects_at_core": "Moon Sextile Mercury (orb 0.01 deg; TEPAT) | Uranus Trine Pluto (orb 0.18 deg; MENJAUH)"
     }
   ],
   "status": "READY"
